@@ -1,0 +1,52 @@
+﻿# Dependencies
+node_modules/
+.pnp/
+.pnp.js
+
+# Testing
+/coverage
+
+# Production
+/build
+/dist
+
+# Misc
+.DS_Store
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Mobile specific
+*.apk
+*.aab
+*.hprof
+.cxx/
+*.keystore
+!debug.keystore
+
+# iOS specific
+ios/build/
+ios/Pods/
+ios/Podfile.lock
+ios/*.xcworkspace
+ios/*.pbxuser
+ios/*.mode1v3
+ios/*.mode2v3
+ios/*.perspectivev3
+ios/*.xcuserstate
+ios/xcshareddata/
+ios/xcuserdata/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo

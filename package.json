@@ -1,0 +1,25 @@
+﻿{
+  "name": "notesheet",
+  "version": "0.1.0",
+  "description": "Aplicación Multiplataforma para Músicos de Iglesia",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "web": "cd apps/web && npm run dev",
+    "mobile": "cd apps/mobile && npm run start",
+    "android": "cd apps/mobile && npm run android",
+    "ios": "cd apps/mobile && npm run ios"
+  },
+  "keywords": [
+    "music",
+    "church",
+    "react",
+    "react-native",
+    "vite"
+  ],
+  "author": "",
+  "license": "MIT"
+}
