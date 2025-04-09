@@ -1,6 +1,9 @@
-﻿{
+{
   "name": "@notesheet/api",
   "version": "0.1.0",
   "main": "src/index.js",
-  "private": true
+  "private": true,
+  "dependencies": {
+    "firebase": "^11.6.0"
+  }
 }
