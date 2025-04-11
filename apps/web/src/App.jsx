@@ -6,6 +6,7 @@ import { AuthProvider } from "./context/AuthContext";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import Dashboard from "./pages/Dashboard"; // Importa el Dashboard
 import NotFound from "./pages/NotFound";
 
 // Componentes
@@ -24,6 +25,13 @@ function App() {
               <Route path="/" element={<Home />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
+              
+              {/* Ruta protegida para el Dashboard */}
+              <Route path="/dashboard" element={
+                <ProtectedRoute>
+                  <Dashboard />
+                </ProtectedRoute>
+              } />
               
               {/* Ruta 404 */}
               <Route path="*" element={<NotFound />} />
