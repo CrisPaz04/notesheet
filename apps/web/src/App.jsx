@@ -1,4 +1,5 @@
-﻿import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+﻿// src/App.jsx
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 
 // Páginas
@@ -16,9 +17,9 @@ function App() {
   return (
     <Router>
       <AuthProvider>
-        <div className="flex flex-col min-h-screen bg-light">
+        <div className="d-flex flex-column min-vh-100">
           <Navbar />
-          <main className="flex-grow container mx-auto px-4 py-8">
+          <main className="flex-grow-1 container py-4">
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/login" element={<Login />} />

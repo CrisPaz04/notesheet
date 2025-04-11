@@ -1,4 +1,5 @@
-﻿import { Link } from "react-router-dom";
+﻿// src/components/Navbar.jsx
+import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 function Navbar() {
@@ -13,29 +14,52 @@ function Navbar() {
   };
 
   return (
-    <nav className="bg-dark text-white shadow-md">
-      <div className="container mx-auto px-4 py-3 flex justify-between items-center">
-        <Link to="/" className="text-xl font-bold">NoteSheet</Link>
+    <nav className="navbar navbar-expand-lg navbar-dark bg-dark">
+      <div className="container">
+        <Link className="navbar-brand" to="/">NoteSheet</Link>
         
-        <div className="flex space-x-4">
-          {currentUser ? (
-            <>
-              <Link to="/dashboard" className="hover:text-primary">Dashboard</Link>
-              <Link to="/songs/new" className="hover:text-primary">Nueva Canción</Link>
-              <Link to="/playlists/new" className="hover:text-primary">Nueva Lista</Link>
-              <button 
-                onClick={handleLogout} 
-                className="hover:text-red-400"
-              >
-                Cerrar Sesión
-              </button>
-            </>
-          ) : (
-            <>
-              <Link to="/login" className="hover:text-primary">Iniciar Sesión</Link>
-              <Link to="/register" className="hover:text-primary">Registrarse</Link>
-            </>
-          )}
+        <button 
+          className="navbar-toggler" 
+          type="button" 
+          data-bs-toggle="collapse" 
+          data-bs-target="#navbarNav"
+        >
+          <span className="navbar-toggler-icon"></span>
+        </button>
+        
+        <div className="collapse navbar-collapse" id="navbarNav">
+          <ul className="navbar-nav ms-auto">
+            {currentUser ? (
+              <>
+                <li className="nav-item">
+                  <Link className="nav-link" to="/dashboard">Dashboard</Link>
+                </li>
+                <li className="nav-item">
+                  <Link className="nav-link" to="/songs/new">Nueva Canción</Link>
+                </li>
+                <li className="nav-item">
+                  <Link className="nav-link" to="/playlists/new">Nueva Lista</Link>
+                </li>
+                <li className="nav-item">
+                  <button 
+                    onClick={handleLogout} 
+                    className="nav-link btn btn-link"
+                  >
+                    Cerrar Sesión
+                  </button>
+                </li>
+              </>
+            ) : (
+              <>
+                <li className="nav-item">
+                  <Link className="nav-link" to="/login">Iniciar Sesión</Link>
+                </li>
+                <li className="nav-item">
+                  <Link className="nav-link" to="/register">Registrarse</Link>
+                </li>
+              </>
+            )}
+          </ul>
         </div>
       </div>
     </nav>

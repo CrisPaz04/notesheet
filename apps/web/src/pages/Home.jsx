@@ -1,45 +1,59 @@
-﻿import { Link } from "react-router-dom";
+﻿// src/pages/Home.jsx
+import { Link } from "react-router-dom";
 
 function Home() {
   return (
-    <div className="flex flex-col items-center">
-      <section className="text-center mb-10">
-        <h1 className="text-4xl font-bold mb-4">NoteSheet</h1>
-        <p className="text-xl mb-6">Una aplicación multiplataforma para músicos de iglesia</p>
-        <div className="flex gap-4 justify-center">
+    <div className="d-flex flex-column align-items-center">
+      <section className="text-center mb-5">
+        <h1 className="display-4 mb-4">NoteSheet</h1>
+        <p className="lead mb-4">Una aplicación multiplataforma para músicos de iglesia</p>
+        <div className="d-flex gap-3 justify-content-center">
           <Link 
             to="/register" 
-            className="bg-primary text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition"
+            className="btn btn-primary px-4 py-2"
           >
             Comenzar
           </Link>
           <Link 
             to="/login" 
-            className="bg-gray-200 text-gray-800 px-6 py-2 rounded-lg hover:bg-gray-300 transition"
+            className="btn btn-light px-4 py-2"
           >
             Iniciar Sesión
           </Link>
         </div>
       </section>
       
-      <section className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-10 w-full">
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <h2 className="text-xl font-semibold mb-3">Notación Simple</h2>
-          <p>Crea y edita canciones usando una notación sencilla en formato Markdown.</p>
+      <section className="row g-4 mb-5 w-100">
+        <div className="col-md-4">
+          <div className="card h-100">
+            <div className="card-body">
+              <h2 className="card-title h5 mb-3">Notación Simple</h2>
+              <p className="card-text">Crea y edita canciones usando una notación sencilla en formato Markdown.</p>
+            </div>
+          </div>
         </div>
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <h2 className="text-xl font-semibold mb-3">Transposición Automática</h2>
-          <p>Cambia la tonalidad de tus canciones con un solo clic.</p>
+        <div className="col-md-4">
+          <div className="card h-100">
+            <div className="card-body">
+              <h2 className="card-title h5 mb-3">Transposición Automática</h2>
+              <p className="card-text">Cambia la tonalidad de tus canciones con un solo clic.</p>
+            </div>
+          </div>
         </div>
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <h2 className="text-xl font-semibold mb-3">Disponible Siempre</h2>
-          <p>Accede a tus canciones desde cualquier dispositivo, web o móvil.</p>
+        <div className="col-md-4">
+          <div className="card h-100">
+            <div className="card-body">
+              <h2 className="card-title h5 mb-3">Disponible Siempre</h2>
+              <p className="card-text">Accede a tus canciones desde cualquier dispositivo, web o móvil.</p>
+            </div>
+          </div>
         </div>
       </section>
       
-      <section className="bg-white p-8 rounded-lg shadow-md w-full">
-        <h2 className="text-2xl font-semibold mb-4">Ejemplo de Notación</h2>
-        <pre className="bg-gray-100 p-4 rounded overflow-auto text-sm">
+      <section className="card w-100 mb-4">
+        <div className="card-body">
+          <h2 className="card-title h4 mb-3">Ejemplo de Notación</h2>
+          <pre className="bg-light p-3 rounded overflow-auto small">
 {`# Título: Mi Primera Canción
 # Tonalidad: DO Mayor
 # Tipo: Adoración
@@ -58,7 +72,8 @@ FA       SOL       DO      LA-
 Santo, Santo, Santo es el Señor
 FA       SOL      DO
 Digno de adoración`}
-        </pre>
+          </pre>
+        </div>
       </section>
     </div>
   );
