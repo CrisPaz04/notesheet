@@ -17,9 +17,12 @@
     "@notesheet/api": "^0.1.0",
     "@notesheet/core": "^0.1.0",
     "bootstrap": "^5.3.5",
+    "bootstrap-icons": "^1.11.3",
+    "easymde": "^2.20.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "react-router-dom": "^7.5.0"
+    "react-router-dom": "^7.5.0",
+    "react-simplemde-editor": "^5.2.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.21.0",

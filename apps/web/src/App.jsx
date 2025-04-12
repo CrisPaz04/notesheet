@@ -6,7 +6,9 @@ import { AuthProvider } from "./context/AuthContext";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
-import Dashboard from "./pages/Dashboard"; // Importa el Dashboard
+import Dashboard from "./pages/Dashboard";
+import SongEditor from "./pages/SongEditor";
+import SongView from "./pages/SongView";
 import NotFound from "./pages/NotFound";
 
 // Componentes
@@ -26,10 +28,21 @@ function App() {
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               
-              {/* Ruta protegida para el Dashboard */}
+              {/* Rutas protegidas */}
               <Route path="/dashboard" element={
                 <ProtectedRoute>
                   <Dashboard />
+                </ProtectedRoute>
+              } />
+              <Route path="/songs/new" element={
+                <ProtectedRoute>
+                  <SongEditor />
+                </ProtectedRoute>
+              } />
+              <Route path="/songs/:id" element={<SongView />} />
+              <Route path="/songs/:id/edit" element={
+                <ProtectedRoute>
+                  <SongEditor />
                 </ProtectedRoute>
               } />
               
