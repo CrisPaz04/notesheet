@@ -1,4 +1,3 @@
-// SongEditor.jsx con todas las actualizaciones
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
@@ -7,7 +6,6 @@ import { transposeContent, detectNotationSystem } from "@notesheet/core";
 import SimpleMDE from "react-simplemde-editor";
 import "easymde/dist/easymde.min.css";
 
-// Arrays de pares de tonalidades relativas (mayor y menor)
 const RELATIVE_KEYS = [
   { major: "DO", minor: "LAm", english: { major: "C", minor: "Am" } },
   { major: "SOL", minor: "MIm", english: { major: "G", minor: "Em" } },
@@ -26,7 +24,6 @@ const RELATIVE_KEYS = [
   { major: "DOb", minor: "LAbm", english: { major: "Cb", minor: "Abm" } }
 ];
 
-// Extraer listas planas de tonalidades para usar en otros lugares
 const MAJOR_KEYS = RELATIVE_KEYS.map(pair => pair.major);
 const MINOR_KEYS = RELATIVE_KEYS.map(pair => pair.minor);
 const ALL_KEYS = [...MAJOR_KEYS, ...MINOR_KEYS];

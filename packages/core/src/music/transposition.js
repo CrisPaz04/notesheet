@@ -234,6 +234,9 @@ export const transposeLine = (line, semitones, targetSystem = null, keySignature
  */
 export const transposeContent = (content, sourceKey, targetKey, targetSystem = null) => {
   try {
+    // Detectar el sistema de notación actual si no se proporciona uno
+    const detectedSystem = targetSystem || detectNotationSystem(content);
+    
     // Determinar si las tonalidades son mayores o menores
     const sourceIsMinor = sourceKey.includes('m');
     const targetIsMinor = targetKey.includes('m');
@@ -267,11 +270,13 @@ export const transposeContent = (content, sourceKey, targetKey, targetSystem = n
     // Determinar si usar sostenidos o bemoles basado en la tonalidad destino
     const keySignature = getKeySignature(targetKey);
     
-    // Procesar línea por línea
-    return content
+    // Procesar línea por línea manteniendo el mismo sistema de notación
+    const transposedContent = content
       .split('\n')
-      .map(line => transposeLine(line, semitones, targetSystem, keySignature))
+      .map(line => transposeLine(line, semitones, detectedSystem, keySignature))
       .join('\n');
+    
+    return transposedContent;
   } catch (error) {
     console.error('Error transponiendo contenido:', error);
     return content; // Devolver el contenido original si hay error

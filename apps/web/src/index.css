@@ -1,5 +1,4 @@
-﻿/* Estilos personalizados adicionales */
-.editor-wrapper {
+﻿.editor-wrapper {
   background-color: white;
   border-radius: 0.5rem;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
@@ -17,4 +16,16 @@
   border-left: 4px solid #0d6efd;
   padding-left: 1rem;
   margin: 1rem 0;
+  position: relative;
+}
+
+.song-section pre {
+  width: 100%;
+  text-align: center;
+  margin-left: -0.5rem; 
+  padding-left: 0.5rem;
+}
+
+.song-section h3 {
+  text-align: center;
 }

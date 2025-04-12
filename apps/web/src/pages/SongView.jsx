@@ -237,10 +237,20 @@ function SongView() {
               Tonalidad: {currentKey}
             </button>
             <div className="dropdown-menu dropdown-menu-end" style={{ maxHeight: '400px', overflowY: 'auto', width: '300px' }}>
-              <div className="px-2">
+              <div className="px-3">
+                <div className="mb-3">
+                  <button 
+                    className="btn btn-sm btn-outline-secondary w-100"
+                    onClick={resetTransposition}
+                    disabled={currentKey === originalKey}
+                  >
+                    Restaurar original ({originalKey})
+                  </button>
+                </div>
+                
                 {RELATIVE_KEYS.map((pair, index) => (
                   <div className="mb-2" key={index}>
-                    <div className="d-flex gap-1 mb-1">
+                    <div className="d-flex gap-1 mb-2">
                       <button 
                         className={`btn btn-sm flex-grow-1 ${currentKey === pair.major ? 'btn-primary' : 'btn-outline-secondary'}`}
                         onClick={() => handleTranspose(pair.major, true)}
@@ -259,15 +269,6 @@ function SongView() {
                     {index < RELATIVE_KEYS.length - 1 && <hr className="my-1" />}
                   </div>
                 ))}
-                <div className="border-top pt-2 mt-2">
-                  <button 
-                    className="btn btn-sm btn-outline-secondary w-100"
-                    onClick={resetTransposition}
-                    disabled={currentKey === originalKey}
-                  >
-                    Restaurar original ({originalKey})
-                  </button>
-                </div>
               </div>
             </div>
           </div>
