@@ -1,13 +1,32 @@
-// SongView.jsx - Modificaciones para tipo de notación y visualización
+// SongView.jsx con todas las actualizaciones
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { getSongById } from "@notesheet/api";
-import { formatSong, transposeContent, convertNotationSystem } from "@notesheet/core";
+import { formatSong, transposeContent, convertNotationSystem, detectNotationSystem } from "@notesheet/core";
 import { useAuth } from "../context/AuthContext";
 
-// Arrays de tonalidades
-const MAJOR_KEYS = ["DO", "SOL", "RE", "LA", "MI", "SI", "FA#", "DO#", "FA", "SIb", "MIb", "LAb", "REb", "SOLb", "DOb"];
-const MINOR_KEYS = ["LAm", "MIm", "SIm", "FA#m", "DO#m", "SOL#m", "RE#m", "LA#m", "REm", "SOLm", "DOm", "FAm", "SIbm", "MIbm", "LAbm"];
+// Arrays de pares de tonalidades relativas (mayor y menor)
+const RELATIVE_KEYS = [
+  { major: "DO", minor: "LAm", english: { major: "C", minor: "Am" } },
+  { major: "SOL", minor: "MIm", english: { major: "G", minor: "Em" } },
+  { major: "RE", minor: "SIm", english: { major: "D", minor: "Bm" } },
+  { major: "LA", minor: "FA#m", english: { major: "A", minor: "F#m" } },
+  { major: "MI", minor: "DO#m", english: { major: "E", minor: "C#m" } },
+  { major: "SI", minor: "SOL#m", english: { major: "B", minor: "G#m" } },
+  { major: "FA#", minor: "RE#m", english: { major: "F#", minor: "D#m" } },
+  { major: "DO#", minor: "LA#m", english: { major: "C#", minor: "A#m" } },
+  { major: "FA", minor: "REm", english: { major: "F", minor: "Dm" } },
+  { major: "SIb", minor: "SOLm", english: { major: "Bb", minor: "Gm" } },
+  { major: "MIb", minor: "DOm", english: { major: "Eb", minor: "Cm" } },
+  { major: "LAb", minor: "FAm", english: { major: "Ab", minor: "Fm" } },
+  { major: "REb", minor: "SIbm", english: { major: "Db", minor: "Bbm" } },
+  { major: "SOLb", minor: "MIbm", english: { major: "Gb", minor: "Ebm" } },
+  { major: "DOb", minor: "LAbm", english: { major: "Cb", minor: "Abm" } }
+];
+
+// Extraer listas planas de tonalidades para usar en otros lugares
+const MAJOR_KEYS = RELATIVE_KEYS.map(pair => pair.major);
+const MINOR_KEYS = RELATIVE_KEYS.map(pair => pair.minor);
 const ALL_KEYS = [...MAJOR_KEYS, ...MINOR_KEYS];
 
 function SongView() {
@@ -17,7 +36,8 @@ function SongView() {
   const [error, setError] = useState("");
   const [currentKey, setCurrentKey] = useState("");
   const [originalKey, setOriginalKey] = useState("");
-  const [fontSize, setFontSize] = useState(16);
+  const [originalContent, setOriginalContent] = useState(""); // Contenido original para transposiciones exactas
+  const [fontSize, setFontSize] = useState(18); // Aumentado el tamaño base a 18px
   const [notationSystem, setNotationSystem] = useState("latin"); // latin (DO-RE-MI) o english (C-D-E)
   
   const { id } = useParams();
@@ -31,6 +51,11 @@ function SongView() {
         setSong(loadedSong);
         setCurrentKey(loadedSong.key || "DO");
         setOriginalKey(loadedSong.key || "DO");
+        setOriginalContent(loadedSong.content || ""); // Guardar el contenido original
+        
+        // Detectar automáticamente el sistema de notación
+        const detectedSystem = detectNotationSystem(loadedSong.content);
+        setNotationSystem(detectedSystem);
         
         // Formatear la canción para mostrarla
         const formatted = formatSong(loadedSong.content);
@@ -48,12 +73,20 @@ function SongView() {
     }
   }, [id]);
 
-  const handleTranspose = (newKey) => {
-    if (newKey === currentKey || !song) return;
+  const handleTranspose = (newKey, maintainNotation = false) => {
+    if (newKey === currentKey || !song || !originalContent) return;
     
     try {
-      const transposedContent = transposeContent(song.content, currentKey, newKey);
-      const formatted = formatSong(transposedContent);
+      // Siempre transponemos desde el contenido original y la tonalidad original
+      const transposedContent = transposeContent(originalContent, originalKey, newKey);
+      
+      // Después aplicamos el sistema de notación actual si es necesario
+      let finalContent = transposedContent;
+      if (notationSystem === "english") {
+        finalContent = convertNotationSystem(transposedContent, "english");
+      }
+      
+      const formatted = formatSong(finalContent);
       setFormattedSong(formatted);
       setCurrentKey(newKey);
     } catch (error) {
@@ -61,12 +94,43 @@ function SongView() {
     }
   };
 
+  const resetTransposition = () => {
+    if (currentKey !== originalKey) {
+      try {
+        // Usamos el contenido original directamente
+        let finalContent = originalContent;
+        
+        // Aplicamos el sistema de notación actual si es necesario
+        if (notationSystem === "english") {
+          finalContent = convertNotationSystem(originalContent, "english");
+        }
+        
+        const formatted = formatSong(finalContent);
+        setFormattedSong(formatted);
+        setCurrentKey(originalKey);
+      } catch (error) {
+        setError("Error al restaurar la tonalidad original: " + error.message);
+      }
+    }
+  };
+
   const handleChangeNotation = (system) => {
     if (system === notationSystem || !song) return;
     
     try {
+      // Obtenemos el contenido actual (que puede estar transpuesto)
+      let baseContent;
+      
+      if (currentKey === originalKey) {
+        // Si estamos en la tonalidad original, usamos el contenido original
+        baseContent = originalContent;
+      } else {
+        // Si estamos en otra tonalidad, calculamos la transposición desde el original
+        baseContent = transposeContent(originalContent, originalKey, currentKey);
+      }
+      
       // Convertir la notación
-      const convertedContent = convertNotationSystem(formattedSong.rawContent, system);
+      const convertedContent = convertNotationSystem(baseContent, system);
       const formatted = formatSong(convertedContent);
       setFormattedSong(formatted);
       setNotationSystem(system);
@@ -82,19 +146,13 @@ function SongView() {
   };
 
   const decreaseFontSize = () => {
-    if (fontSize > 12) {
+    if (fontSize > 14) {
       setFontSize(fontSize - 2);
     }
   };
 
   const resetFontSize = () => {
-    setFontSize(16);
-  };
-
-  const resetTransposition = () => {
-    if (currentKey !== originalKey) {
-      handleTranspose(originalKey);
-    }
+    setFontSize(18); // El tamaño normal ahora es 18px
   };
 
   const handlePrint = () => {
@@ -178,43 +236,40 @@ function SongView() {
             >
               Tonalidad: {currentKey}
             </button>
-            <ul className="dropdown-menu">
-              <li className="dropdown-header">Tonalidades Mayores</li>
-              {MAJOR_KEYS.map((note) => (
-                <li key={note}>
+            <div className="dropdown-menu dropdown-menu-end" style={{ maxHeight: '400px', overflowY: 'auto', width: '300px' }}>
+              <div className="px-2">
+                {RELATIVE_KEYS.map((pair, index) => (
+                  <div className="mb-2" key={index}>
+                    <div className="d-flex gap-1 mb-1">
+                      <button 
+                        className={`btn btn-sm flex-grow-1 ${currentKey === pair.major ? 'btn-primary' : 'btn-outline-secondary'}`}
+                        onClick={() => handleTranspose(pair.major, true)}
+                      >
+                        {pair.major}
+                        {pair.major === originalKey && " (Original)"}
+                      </button>
+                      <button 
+                        className={`btn btn-sm flex-grow-1 ${currentKey === pair.minor ? 'btn-primary' : 'btn-outline-secondary'}`}
+                        onClick={() => handleTranspose(pair.minor, true)}
+                      >
+                        {pair.minor}
+                        {pair.minor === originalKey && " (Original)"}
+                      </button>
+                    </div>
+                    {index < RELATIVE_KEYS.length - 1 && <hr className="my-1" />}
+                  </div>
+                ))}
+                <div className="border-top pt-2 mt-2">
                   <button 
-                    className="dropdown-item" 
-                    type="button"
-                    onClick={() => handleTranspose(note)}
+                    className="btn btn-sm btn-outline-secondary w-100"
+                    onClick={resetTransposition}
+                    disabled={currentKey === originalKey}
                   >
-                    {note} {note === originalKey ? "(Original)" : ""}
+                    Restaurar original ({originalKey})
                   </button>
-                </li>
-              ))}
-              <li><hr className="dropdown-divider" /></li>
-              <li className="dropdown-header">Tonalidades Menores</li>
-              {MINOR_KEYS.map((note) => (
-                <li key={note}>
-                  <button 
-                    className="dropdown-item" 
-                    type="button"
-                    onClick={() => handleTranspose(note)}
-                  >
-                    {note} {note === originalKey ? "(Original)" : ""}
-                  </button>
-                </li>
-              ))}
-              <li><hr className="dropdown-divider" /></li>
-              <li>
-                <button 
-                  className="dropdown-item" 
-                  type="button"
-                  onClick={resetTransposition}
-                >
-                  Restaurar tonalidad original
-                </button>
-              </li>
-            </ul>
+                </div>
+              </div>
+            </div>
           </div>
           
           <div className="dropdown">
@@ -317,7 +372,7 @@ function SongView() {
       <div id="song-content" className="card" style={{ fontSize: `${fontSize}px` }}>
         <div className="card-body">
           <div className="text-center mb-4">
-            <h2 className="h4">{song.title || "Sin título"}</h2>
+            <h3 className="mb-2">{song.title || "Sin título"}</h3>
             <div className="d-flex justify-content-between">
               <small className="text-muted">{song.type || "Sin tipo"}</small>
               <small className="text-muted">{currentKey}</small>
