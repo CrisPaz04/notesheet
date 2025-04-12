@@ -1,8 +1,27 @@
-// packages/core/src/music/transposition.js (versión actualizada)
+// packages/core/src/music/transposition.js
 
 // Definición de notas en notación latina y anglosajona
 const LATIN_NOTES = ['DO', 'DO#', 'RE', 'RE#', 'MI', 'FA', 'FA#', 'SOL', 'SOL#', 'LA', 'LA#', 'SI'];
 const ENGLISH_NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+
+// Arrays de pares de tonalidades relativas (mayor y menor)
+const RELATIVE_KEYS = [
+  { major: "DO", minor: "LAm", english: { major: "C", minor: "Am" } },
+  { major: "SOL", minor: "MIm", english: { major: "G", minor: "Em" } },
+  { major: "RE", minor: "SIm", english: { major: "D", minor: "Bm" } },
+  { major: "LA", minor: "FA#m", english: { major: "A", minor: "F#m" } },
+  { major: "MI", minor: "DO#m", english: { major: "E", minor: "C#m" } },
+  { major: "SI", minor: "SOL#m", english: { major: "B", minor: "G#m" } },
+  { major: "FA#", minor: "RE#m", english: { major: "F#", minor: "D#m" } },
+  { major: "DO#", minor: "LA#m", english: { major: "C#", minor: "A#m" } },
+  { major: "FA", minor: "REm", english: { major: "F", minor: "Dm" } },
+  { major: "SIb", minor: "SOLm", english: { major: "Bb", minor: "Gm" } },
+  { major: "MIb", minor: "DOm", english: { major: "Eb", minor: "Cm" } },
+  { major: "LAb", minor: "FAm", english: { major: "Ab", minor: "Fm" } },
+  { major: "REb", minor: "SIbm", english: { major: "Db", minor: "Bbm" } },
+  { major: "SOLb", minor: "MIbm", english: { major: "Gb", minor: "Ebm" } },
+  { major: "DOb", minor: "LAbm", english: { major: "Cb", minor: "Abm" } }
+];
 
 // Mapeo entre sostenidos y bemoles
 const SHARP_TO_FLAT = {
@@ -44,7 +63,7 @@ const KEY_TO_INDEX = {
 /**
  * Determina si una tonalidad usa sostenidos o bemoles
  * @param {string} key - La tonalidad a evaluar
- * @returns {string} 'sharp' o 'flat'
+ * @returns {string} 'sharp', 'flat' o 'natural'
  */
 const getKeySignature = (key) => {
   // Eliminar "m" si es una tonalidad menor
@@ -127,6 +146,20 @@ export const transposeNote = (note, semitones, targetSystem = null, keySignature
 };
 
 /**
+ * Obtiene el par de relativas para una tonalidad dada
+ * @param {string} key - Tonalidad a buscar
+ * @returns {Object|null} - Par de tonalidades relativas o null si no se encuentra
+ */
+const getRelativeKeyPair = (key) => {
+  const isMinor = key.includes('m');
+  for (const pair of RELATIVE_KEYS) {
+    if (isMinor && pair.minor === key) return pair;
+    if (!isMinor && pair.major === key) return pair;
+  }
+  return null;
+};
+
+/**
  * Transpone una tonalidad completa a otra
  * @param {string} sourceKey - Tonalidad de origen
  * @param {string} targetKey - Tonalidad de destino
@@ -134,24 +167,35 @@ export const transposeNote = (note, semitones, targetSystem = null, keySignature
  */
 export const getKeyDistance = (sourceKey, targetKey) => {
   // Manejar tonalidades menores
-  let sourceIsMinor = false;
-  let targetIsMinor = false;
-  let sourceKeyBase = sourceKey;
-  let targetKeyBase = targetKey;
+  let sourceIsMinor = sourceKey.endsWith('m');
+  let targetIsMinor = targetKey.endsWith('m');
   
-  if (sourceKey.endsWith('m')) {
-    sourceIsMinor = true;
-    sourceKeyBase = sourceKey.slice(0, -1);
-  }
+  // Obtener las tonalidades relativas para calcular la transposición correcta
+  let sourceKeyForCalc = sourceKey;
+  let targetKeyForCalc = targetKey;
   
-  if (targetKey.endsWith('m')) {
-    targetIsMinor = true;
-    targetKeyBase = targetKey.slice(0, -1);
+  // Si ambas son menores o ambas son mayores, calculamos directamente
+  if (sourceIsMinor === targetIsMinor) {
+    // Eliminar 'm' si son menores para obtener el índice
+    if (sourceIsMinor) {
+      sourceKeyForCalc = sourceKey.slice(0, -1);
+      targetKeyForCalc = targetKey.slice(0, -1);
+    }
+  } else {
+    // Si una es mayor y otra menor, obtenemos sus relativas
+    const sourcePair = getRelativeKeyPair(sourceKey);
+    const targetPair = getRelativeKeyPair(targetKey);
+    
+    if (sourcePair && targetPair) {
+      // Usamos las mayores para calcular la distancia
+      sourceKeyForCalc = sourceIsMinor ? sourcePair.major : sourceKey;
+      targetKeyForCalc = targetIsMinor ? targetPair.major : targetKey;
+    }
   }
   
   // Obtener índices
-  const sourceIndex = KEY_TO_INDEX[sourceKeyBase];
-  const targetIndex = KEY_TO_INDEX[targetKeyBase];
+  const sourceIndex = KEY_TO_INDEX[sourceKeyForCalc];
+  const targetIndex = KEY_TO_INDEX[targetKeyForCalc];
   
   if (sourceIndex === undefined || targetIndex === undefined) {
     throw new Error('Tonalidad inválida');
@@ -159,9 +203,6 @@ export const getKeyDistance = (sourceKey, targetKey) => {
   
   // Calcular diferencia de semitonos
   let semitones = (targetIndex - sourceIndex + 12) % 12;
-  
-  // Para escalas menores naturales, usamos la misma lógica que las mayores
-  // ya que la transposición de notas ocurrirá individualmente
   
   return semitones;
 };
@@ -193,7 +234,35 @@ export const transposeLine = (line, semitones, targetSystem = null, keySignature
  */
 export const transposeContent = (content, sourceKey, targetKey, targetSystem = null) => {
   try {
-    const semitones = getKeyDistance(sourceKey, targetKey);
+    // Determinar si las tonalidades son mayores o menores
+    const sourceIsMinor = sourceKey.includes('m');
+    const targetIsMinor = targetKey.includes('m');
+    
+    // Obtener las tonalidades relativas para calcular la transposición correcta
+    let sourceKeyForCalc = sourceKey;
+    let targetKeyForCalc = targetKey;
+    
+    // Si la transposición es entre una mayor y su relativa menor (o viceversa),
+    // las notas deben ser las mismas
+    if (sourceIsMinor !== targetIsMinor) {
+      // Encontrar el par de relativas correspondiente
+      const sourcePair = RELATIVE_KEYS.find(pair => 
+        sourceIsMinor ? pair.minor === sourceKey : pair.major === sourceKey
+      );
+      
+      const targetPair = RELATIVE_KEYS.find(pair => 
+        targetIsMinor ? pair.minor === targetKey : pair.major === targetKey
+      );
+      
+      if (sourcePair && targetPair) {
+        // Usar las mayores para calcular la distancia
+        sourceKeyForCalc = sourceIsMinor ? sourcePair.major : sourceKey;
+        targetKeyForCalc = targetIsMinor ? targetPair.major : targetKey;
+      }
+    }
+    
+    // Calcular la diferencia de semitonos usando las tonalidades ajustadas
+    const semitones = getKeyDistance(sourceKeyForCalc, targetKeyForCalc);
     
     // Determinar si usar sostenidos o bemoles basado en la tonalidad destino
     const keySignature = getKeySignature(targetKey);

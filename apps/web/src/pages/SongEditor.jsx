@@ -44,12 +44,12 @@ function SongEditor() {
   const [error, setError] = useState("");
   const [isNewSong, setIsNewSong] = useState(true);
   const [contentUpdatePending, setContentUpdatePending] = useState(false);
-  const [lastExtractTime, setLastExtractTime] = useState(0);
+  const [disableMetadataExtraction, setDisableMetadataExtraction] = useState(false);
   
   const { currentUser } = useAuth();
   const navigate = useNavigate();
   const { id } = useParams();
-  const extractTimeoutRef = useRef(null);
+  const editorRef = useRef(null);
 
   // Al cargar, verifica si es una canción nueva o existente
   useEffect(() => {
@@ -74,8 +74,10 @@ Escribe aquí la letra y los acordes
 FA       SOL       DO      LA-
 Escribe aquí la letra y los acordes
 `);
-      // Extracción inicial de metadatos
-      extractMetadataDebounced(300);
+      // Extraer metadatos iniciales (solo una vez al cargar)
+      setTimeout(() => {
+        extractMetadata();
+      }, 500);
     }
   }, [id]);
 
@@ -97,69 +99,37 @@ Escribe aquí la letra y los acordes
     }
   };
 
-  // Función para extraer metadatos con debounce
-  const extractMetadataDebounced = (delay = 1000) => {
-    if (extractTimeoutRef.current) {
-      clearTimeout(extractTimeoutRef.current);
-    }
-    
-    extractTimeoutRef.current = setTimeout(() => {
-      const now = Date.now();
-      if (now - lastExtractTime > delay) {
-        extractMetadata();
-        setLastExtractTime(now);
-      }
-    }, delay);
-  };
-
   // Extraer metadatos del contenido
   const extractMetadata = () => {
-    if (!content) return;
-    
-    let updatedFields = {};
-    let changed = false;
+    if (!content || disableMetadataExtraction) return;
     
     // Extraer título
     const titleMatch = content.match(/^#\s*(?:Canción|Título|Title):\s*(.+)$/m);
-    if (titleMatch && titleMatch[1] && titleMatch[1].trim() !== title) {
-      updatedFields.title = titleMatch[1].trim();
-      changed = true;
+    if (titleMatch && titleMatch[1]) {
+      setTitle(titleMatch[1].trim());
     }
 
     // Extraer tonalidad
     const keyMatch = content.match(/^#\s*(?:Tonalidad|Key):\s*(.+)$/m);
     if (keyMatch && keyMatch[1]) {
       const keyValue = keyMatch[1].trim().split(" ")[0]; // Tomar solo la nota, no "Mayor/Menor"
-      if (keyValue !== key) {
-        updatedFields.key = keyValue;
-        changed = true;
-      }
+      setKey(keyValue);
     }
 
     // Extraer tipo
     const typeMatch = content.match(/^#\s*(?:Tipo|Type):\s*(.+)$/m);
-    if (typeMatch && typeMatch[1] && typeMatch[1].trim() !== type) {
+    if (typeMatch && typeMatch[1]) {
       const typeValue = typeMatch[1].trim();
       // Solo actualizar si el tipo está en la lista permitida
       if (SONG_TYPES.includes(typeValue)) {
-        updatedFields.type = typeValue;
-        changed = true;
+        setType(typeValue);
       }
     }
     
     // Extraer autor
     const authorMatch = content.match(/^#\s*(?:Autor|Author):\s*(.+)$/m);
-    if (authorMatch && authorMatch[1] && authorMatch[1].trim() !== author) {
-      updatedFields.author = authorMatch[1].trim();
-      changed = true;
-    }
-    
-    // Actualizar estados solo si hay cambios
-    if (changed) {
-      if (updatedFields.title) setTitle(updatedFields.title);
-      if (updatedFields.key) setKey(updatedFields.key);
-      if (updatedFields.type) setType(updatedFields.type);
-      if (updatedFields.author) setAuthor(updatedFields.author);
+    if (authorMatch && authorMatch[1]) {
+      setAuthor(authorMatch[1].trim());
     }
   };
 
@@ -174,6 +144,9 @@ Escribe aquí la letra y los acordes
   // Actualizar el contenido con los metadatos
   const updateContentMetadata = () => {
     if (!content) return;
+    
+    // Desactivar extracción de metadatos para evitar ciclos
+    setDisableMetadataExtraction(true);
     
     let updatedContent = content;
     
@@ -218,6 +191,11 @@ Escribe aquí la letra y los acordes
     if (updatedContent !== content) {
       setContent(updatedContent);
     }
+    
+    // Re-activar extracción de metadatos después de un breve retraso
+    setTimeout(() => {
+      setDisableMetadataExtraction(false);
+    }, 500);
   };
 
   // Handlers para cambios de campos
@@ -287,12 +265,35 @@ Escribe aquí la letra y los acordes
     status: false,
     toolbar: false, // Quitar la barra de herramientas completamente
     placeholder: "Escribe tu canción aquí usando la notación musical...",
+    // Esto es crucial para solucionar el problema del foco
+    shortcuts: {
+      "toggleBlockquote": null,
+      "toggleBold": null,
+      "cleanBlock": null,
+      "toggleHeadingSmaller": null,
+      "toggleItalic": null,
+      "drawLink": null,
+      "toggleUnorderedList": null,
+      "togglePreview": null,
+      "toggleCodeBlock": null,
+      "drawImage": null,
+      "toggleOrderedList": null,
+      "toggleHeadingBigger": null,
+      "toggleSideBySide": null,
+      "toggleFullScreen": null
+    }
   };
 
-  // Handler para cambios en el editor
+  // Handler para cambios en el editor - esta es la clave para solucionar el problema de foco
   const handleEditorChange = (value) => {
+    // Solo actualizar el contenido, sin extraer metadatos inmediatamente
     setContent(value);
-    extractMetadataDebounced();
+  };
+
+  // Handler para cuando el editor pierde el foco
+  const handleEditorBlur = () => {
+    // Extraer metadatos cuando el editor pierde el foco
+    extractMetadata();
   };
 
   if (loading && !content) {
@@ -423,8 +424,10 @@ Escribe aquí la letra y los acordes
             {author && <small className="text-muted d-block mt-1">Autor: {author}</small>}
           </div>
           <SimpleMDE
+            ref={editorRef}
             value={content}
             onChange={handleEditorChange}
+            onBlur={handleEditorBlur}
             options={editorOptions}
           />
           <small className="form-text text-muted mt-2">
