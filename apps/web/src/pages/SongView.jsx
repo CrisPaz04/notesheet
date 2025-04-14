@@ -1,9 +1,20 @@
-// SongView.jsx con todas las actualizaciones
+// SongView.jsx optimizado para instrumentos transpositores
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { getSongById } from "@notesheet/api";
-import { formatSong, transposeContent, convertNotationSystem, detectNotationSystem } from "@notesheet/core";
+import { 
+  formatSong, 
+  transposeContent, 
+  convertNotationSystem, 
+  detectNotationSystem, 
+  TRANSPOSING_INSTRUMENTS,
+  INSTRUMENT_GROUPS,
+  transposeForInstrument,
+  getVisualKeyForInstrument
+} from "@notesheet/core";
 import { useAuth } from "../context/AuthContext";
+import { InstrumentSelector } from "../components/InstrumentSelector";
+import { getUserPreferences, updateUserPreferences } from "@notesheet/api";
 
 // Arrays de pares de tonalidades relativas (mayor y menor)
 const RELATIVE_KEYS = [
@@ -24,7 +35,7 @@ const RELATIVE_KEYS = [
   { major: "DOb", minor: "LAbm", english: { major: "Cb", minor: "Abm" } }
 ];
 
-// Extraer listas planas de tonalidades para usar en otros lugares
+// Versión simplificada para tonalidades
 const MAJOR_KEYS = RELATIVE_KEYS.map(pair => pair.major);
 const MINOR_KEYS = RELATIVE_KEYS.map(pair => pair.minor);
 const ALL_KEYS = [...MAJOR_KEYS, ...MINOR_KEYS];
@@ -34,31 +45,72 @@ function SongView() {
   const [formattedSong, setFormattedSong] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [currentKey, setCurrentKey] = useState("");
-  const [originalKey, setOriginalKey] = useState("");
+  
+  // Referencias a tonalidades
+  const [baseKey, setBaseKey] = useState(""); // Tonalidad base para trompeta
+  const [displayKey, setDisplayKey] = useState(""); // Tonalidad visual para el instrumento actual
+  const [targetKey, setTargetKey] = useState(""); // Tonalidad objetivo tras transposición
+  
   const [originalContent, setOriginalContent] = useState(""); // Contenido original para transposiciones exactas
-  const [fontSize, setFontSize] = useState(18); // Aumentado el tamaño base a 18px
+  const [fontSize, setFontSize] = useState(18); // Tamaño base de fuente
   const [notationSystem, setNotationSystem] = useState("latin"); // latin (DO-RE-MI) o english (C-D-E)
+  const [currentInstrument, setCurrentInstrument] = useState("bb_trumpet"); // Por defecto, trompeta en Sib
   
   const { id } = useParams();
   const { currentUser } = useAuth();
 
+  // Cargar canción y preferencias de usuario
   useEffect(() => {
     const loadSong = async () => {
       try {
         setLoading(true);
+        
+        // Si hay un usuario autenticado, cargar sus preferencias
+        if (currentUser) {
+          try {
+            const prefs = await getUserPreferences(currentUser.uid);
+            if (prefs.defaultInstrument) {
+              setCurrentInstrument(prefs.defaultInstrument);
+            }
+          } catch (error) {
+            console.error("Error loading user preferences:", error);
+          }
+        }
+        
+        // Cargar la canción
         const loadedSong = await getSongById(id);
         setSong(loadedSong);
-        setCurrentKey(loadedSong.key || "DO");
-        setOriginalKey(loadedSong.key || "DO");
-        setOriginalContent(loadedSong.content || ""); // Guardar el contenido original
         
-        // Detectar automáticamente el sistema de notación
+        // Establecer tonalidad base (la que se ve para trompeta)
+        const songKey = loadedSong.key || "DO";
+        setBaseKey(songKey);
+        setTargetKey(songKey);
+        
+        // Guardar el contenido original para futuras transposiciones
+        setOriginalContent(loadedSong.content || "");
+        
+        // Detectar el sistema de notación automáticamente
         const detectedSystem = detectNotationSystem(loadedSong.content);
         setNotationSystem(detectedSystem);
         
-        // Formatear la canción para mostrarla
-        const formatted = formatSong(loadedSong.content);
+        // Establecer la tonalidad visual según el instrumento seleccionado
+        const visualKey = getVisualKeyForInstrument(songKey, currentInstrument);
+        setDisplayKey(visualKey);
+        
+        // Preparar el contenido para mostrar según el instrumento
+        let contentToShow = loadedSong.content;
+        
+        // Si el instrumento no es trompeta, aplicar transposición
+        if (currentInstrument !== "bb_trumpet") {
+          contentToShow = transposeForInstrument(
+            contentToShow,
+            "bb_trumpet", 
+            currentInstrument
+          );
+        }
+        
+        // Formatear para visualización
+        const formatted = formatSong(contentToShow);
         setFormattedSong(formatted);
       } catch (error) {
         setError("Error al cargar la canción: " + error.message);
@@ -71,74 +123,158 @@ function SongView() {
     if (id) {
       loadSong();
     }
-  }, [id]);
+  }, [id, currentUser, currentInstrument]);
 
-  const handleTranspose = (newKey, maintainNotation = false) => {
-    if (newKey === currentKey || !song || !originalContent) return;
+  // Función para transposición a una nueva tonalidad
+  const handleTranspose = (newKey) => {
+    if (newKey === targetKey || !song || !originalContent) return;
     
     try {
-      // Siempre transponemos desde el contenido original y la tonalidad original
-      const transposedContent = transposeContent(originalContent, originalKey, newKey);
+      // Establecer nueva tonalidad objetivo
+      setTargetKey(newKey);
       
-      // Después aplicamos el sistema de notación actual si es necesario
-      let finalContent = transposedContent;
-      if (notationSystem === "english") {
-        finalContent = convertNotationSystem(transposedContent, "english");
+      // Calcular la transposición desde la tonalidad base (trompeta) a la nueva tonalidad
+      let transposedContent = transposeContent(originalContent, baseKey, newKey);
+      
+      // Si el instrumento actual no es trompeta, aplicar transposición adicional
+      if (currentInstrument !== "bb_trumpet") {
+        transposedContent = transposeForInstrument(
+          transposedContent,
+          "bb_trumpet", 
+          currentInstrument
+        );
       }
       
-      const formatted = formatSong(finalContent);
+      // Aplicar sistema de notación si es necesario
+      if (notationSystem === "english") {
+        transposedContent = convertNotationSystem(transposedContent, "english");
+      }
+      
+      // Actualizar tonalidad visual para el instrumento actual
+      const visualKey = getVisualKeyForInstrument(newKey, currentInstrument);
+      setDisplayKey(visualKey);
+      
+      // Formatear y mostrar
+      const formatted = formatSong(transposedContent);
       setFormattedSong(formatted);
-      setCurrentKey(newKey);
+      
+      console.log("Transposición aplicada:", {
+        desdeKey: baseKey,
+        hastaKey: newKey,
+        instrumento: currentInstrument,
+        tonalidad_visual: visualKey
+      });
     } catch (error) {
       setError("Error al transponer: " + error.message);
+      console.error("Error completo:", error);
     }
   };
 
+  // Función para restaurar tonalidad original
   const resetTransposition = () => {
-    if (currentKey !== originalKey) {
-      try {
-        // Usamos el contenido original directamente
-        let finalContent = originalContent;
-        
-        // Aplicamos el sistema de notación actual si es necesario
-        if (notationSystem === "english") {
-          finalContent = convertNotationSystem(originalContent, "english");
-        }
-        
-        const formatted = formatSong(finalContent);
-        setFormattedSong(formatted);
-        setCurrentKey(originalKey);
-      } catch (error) {
-        setError("Error al restaurar la tonalidad original: " + error.message);
-      }
+    if (targetKey !== baseKey) {
+      handleTranspose(baseKey);
     }
   };
 
+  // Función para cambiar sistema de notación
   const handleChangeNotation = (system) => {
     if (system === notationSystem || !song) return;
     
     try {
-      // Obtenemos el contenido actual (que puede estar transpuesto)
-      let baseContent;
+      setNotationSystem(system);
       
-      if (currentKey === originalKey) {
-        // Si estamos en la tonalidad original, usamos el contenido original
-        baseContent = originalContent;
-      } else {
-        // Si estamos en otra tonalidad, calculamos la transposición desde el original
-        baseContent = transposeContent(originalContent, originalKey, currentKey);
+      // Empezamos desde el contenido original
+      let contentToProcess = originalContent;
+      
+      // Si estamos en una tonalidad diferente a la base, primero transponemos
+      if (targetKey !== baseKey) {
+        contentToProcess = transposeContent(contentToProcess, baseKey, targetKey);
       }
       
-      // Convertir la notación
-      const convertedContent = convertNotationSystem(baseContent, system);
-      const formatted = formatSong(convertedContent);
+      // Aplicar transposición de instrumento si necesario
+      if (currentInstrument !== "bb_trumpet") {
+        contentToProcess = transposeForInstrument(
+          contentToProcess,
+          "bb_trumpet", 
+          currentInstrument
+        );
+      }
+      
+      // Convertir sistema de notación
+      contentToProcess = convertNotationSystem(contentToProcess, system);
+      
+      // Formatear y mostrar
+      const formatted = formatSong(contentToProcess);
       setFormattedSong(formatted);
-      setNotationSystem(system);
     } catch (error) {
-      setError("Error al cambiar el sistema de notación: " + error.message);
+      setError("Error al cambiar sistema de notación: " + error.message);
+      console.error("Error completo:", error);
+    }
+  };
+  
+  // Función para cambiar de instrumento
+  const handleInstrumentChange = async (instrumentId) => {
+    if (instrumentId === currentInstrument || !song || !originalContent) return;
+    
+    try {
+      // Actualizar el instrumento actual
+      setCurrentInstrument(instrumentId);
+      
+      // Guardar preferencia de usuario
+      if (currentUser) {
+        try {
+          await updateUserPreferences(currentUser.uid, {
+            defaultInstrument: instrumentId
+          });
+        } catch (error) {
+          console.error("Error saving instrument preference:", error);
+        }
+      }
+      
+      // Empezamos desde el contenido original
+      let contentToProcess = originalContent;
+      
+      // Si estamos en una tonalidad diferente a la base, primero transponemos
+      if (targetKey !== baseKey) {
+        contentToProcess = transposeContent(contentToProcess, baseKey, targetKey);
+      }
+      
+      // Aplicar transposición para el nuevo instrumento
+      if (instrumentId !== "bb_trumpet") {
+        contentToProcess = transposeForInstrument(
+          contentToProcess,
+          "bb_trumpet", 
+          instrumentId
+        );
+      }
+      
+      // Aplicar sistema de notación si necesario
+      if (notationSystem === "english") {
+        contentToProcess = convertNotationSystem(contentToProcess, "english");
+      }
+      
+      // Actualizar tonalidad visual para el nuevo instrumento
+      const visualKey = getVisualKeyForInstrument(targetKey, instrumentId);
+      setDisplayKey(visualKey);
+      
+      // Formatear y mostrar
+      const formatted = formatSong(contentToProcess);
+      setFormattedSong(formatted);
+      
+      console.log("Cambio de instrumento:", {
+        instrumento: TRANSPOSING_INSTRUMENTS[instrumentId].name,
+        transposicion: TRANSPOSING_INSTRUMENTS[instrumentId].transposition,
+        tonalidad_base: targetKey,
+        tonalidad_visual: visualKey
+      });
+    } catch (error) {
+      setError("Error al cambiar de instrumento: " + error.message);
+      console.error("Error completo:", error);
     }
   };
 
+  // Funciones para ajustar tamaño de texto
   const increaseFontSize = () => {
     if (fontSize < 24) {
       setFontSize(fontSize + 2);
@@ -152,7 +288,7 @@ function SongView() {
   };
 
   const resetFontSize = () => {
-    setFontSize(18); // El tamaño normal ahora es 18px
+    setFontSize(18);
   };
 
   const handlePrint = () => {
@@ -192,6 +328,11 @@ function SongView() {
     };
   }, []);
 
+  // Obtener el nombre del instrumento actual
+  const getCurrentInstrumentName = () => {
+    return TRANSPOSING_INSTRUMENTS[currentInstrument]?.name || "Trompeta en Sib";
+  };
+
   if (loading) {
     return (
       <div className="d-flex justify-content-center align-items-center">
@@ -223,10 +364,14 @@ function SongView() {
 
   return (
     <div>
-      <div className="d-flex justify-content-between align-items-center mb-4 no-print">
-        <h1 className="h2 mb-0">{song.title || "Sin título"}</h1>
-        
+      <div className="d-flex justify-content-end align-items-center mb-4 no-print">
         <div className="d-flex gap-2">
+          <InstrumentSelector 
+            selectedInstrument={currentInstrument}
+            onChange={handleInstrumentChange}
+            instruments={TRANSPOSING_INSTRUMENTS}
+          />
+          
           <div className="dropdown">
             <button 
               className="btn btn-outline-primary dropdown-toggle" 
@@ -234,7 +379,7 @@ function SongView() {
               data-bs-toggle="dropdown"
               aria-expanded="false"
             >
-              Tonalidad: {currentKey}
+              Tonalidad: {displayKey}
             </button>
             <div className="dropdown-menu dropdown-menu-end" style={{ maxHeight: '400px', overflowY: 'auto', width: '300px' }}>
               <div className="px-3">
@@ -242,9 +387,9 @@ function SongView() {
                   <button 
                     className="btn btn-sm btn-outline-secondary w-100"
                     onClick={resetTransposition}
-                    disabled={currentKey === originalKey}
+                    disabled={targetKey === baseKey}
                   >
-                    Restaurar original ({originalKey})
+                    Restaurar original ({baseKey})
                   </button>
                 </div>
                 
@@ -252,18 +397,18 @@ function SongView() {
                   <div className="mb-2" key={index}>
                     <div className="d-flex gap-1 mb-2">
                       <button 
-                        className={`btn btn-sm flex-grow-1 ${currentKey === pair.major ? 'btn-primary' : 'btn-outline-secondary'}`}
-                        onClick={() => handleTranspose(pair.major, true)}
+                        className={`btn btn-sm flex-grow-1 ${targetKey === pair.major ? 'btn-primary' : 'btn-outline-secondary'}`}
+                        onClick={() => handleTranspose(pair.major)}
                       >
                         {pair.major}
-                        {pair.major === originalKey && " (Original)"}
+                        {pair.major === baseKey && " (Original)"}
                       </button>
                       <button 
-                        className={`btn btn-sm flex-grow-1 ${currentKey === pair.minor ? 'btn-primary' : 'btn-outline-secondary'}`}
-                        onClick={() => handleTranspose(pair.minor, true)}
+                        className={`btn btn-sm flex-grow-1 ${targetKey === pair.minor ? 'btn-primary' : 'btn-outline-secondary'}`}
+                        onClick={() => handleTranspose(pair.minor)}
                       >
                         {pair.minor}
-                        {pair.minor === originalKey && " (Original)"}
+                        {pair.minor === baseKey && " (Original)"}
                       </button>
                     </div>
                     {index < RELATIVE_KEYS.length - 1 && <hr className="my-1" />}
@@ -354,31 +499,23 @@ function SongView() {
         </div>
       </div>
 
-      <div className="card mb-4 no-print">
-        <div className="card-body">
-          <div className="row mb-3">
-            <div className="col-sm-4">
-              <p className="mb-1"><strong>Tonalidad:</strong> {currentKey}</p>
-            </div>
-            <div className="col-sm-4">
-              <p className="mb-1"><strong>Tipo:</strong> {song.type || "No especificado"}</p>
-            </div>
-            <div className="col-sm-4">
-              <p className="mb-1"><strong>Autor:</strong> {song.author || "No especificado"}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
       <div id="song-content" className="card" style={{ fontSize: `${fontSize}px` }}>
         <div className="card-body">
           <div className="text-center mb-4">
             <h3 className="mb-2">{song.title || "Sin título"}</h3>
-            <div className="d-flex justify-content-between">
-              <small className="text-muted">{song.type || "Sin tipo"}</small>
-              <small className="text-muted">{currentKey}</small>
+            <div className="row">
+              <div className="col-4 text-start">
+                <small className="text-muted">Instrumento: {getCurrentInstrumentName()}</small><br/>
+                <small className="text-muted">Tonalidad: {displayKey}</small>
+              </div>
+              <div className="col-4">
+                {/* Centro - vacío para equilibrar */}
+              </div>
+              <div className="col-4 text-end">
+                <small className="text-muted">Autor: {song.author || "No especificado"}</small><br/>
+                <small className="text-muted">Tipo: {song.type || "No especificado"}</small>
+              </div>
             </div>
-            {song.author && <small className="text-muted d-block mt-1">Autor: {song.author}</small>}
           </div>
           
           {formattedSong && formattedSong.sections.map((section, index) => (
