@@ -245,8 +245,10 @@ export const transposeContent = (content, sourceKey, targetKey, targetSystem = n
     let sourceKeyForCalc = sourceKey;
     let targetKeyForCalc = targetKey;
     
-    // Si la transposición es entre una mayor y su relativa menor (o viceversa),
-    // las notas deben ser las mismas
+    // Determinar el tipo de notación (sostenidos o bemoles) para la tonalidad destino
+    let keySignature;
+    
+    // Si estamos transponiendo entre relativas (mayor a menor o viceversa)
     if (sourceIsMinor !== targetIsMinor) {
       // Encontrar el par de relativas correspondiente
       const sourcePair = RELATIVE_KEYS.find(pair => 
@@ -258,17 +260,24 @@ export const transposeContent = (content, sourceKey, targetKey, targetSystem = n
       );
       
       if (sourcePair && targetPair) {
+        // Para transposiciones entre relativas, usar la firma de la tonalidad mayor
+        const majorKey = targetIsMinor ? 
+          targetPair.major : // Si el destino es menor, obtener su relativa mayor
+          targetKey;         // Si el destino es mayor, usarlo directamente
+        
+        keySignature = getKeySignature(majorKey);
+        
         // Usar las mayores para calcular la distancia
         sourceKeyForCalc = sourceIsMinor ? sourcePair.major : sourceKey;
         targetKeyForCalc = targetIsMinor ? targetPair.major : targetKey;
       }
+    } else {
+      // Si ambas son del mismo tipo (mayor-mayor o menor-menor)
+      keySignature = getKeySignature(targetKey);
     }
     
     // Calcular la diferencia de semitonos usando las tonalidades ajustadas
     const semitones = getKeyDistance(sourceKeyForCalc, targetKeyForCalc);
-    
-    // Determinar si usar sostenidos o bemoles basado en la tonalidad destino
-    const keySignature = getKeySignature(targetKey);
     
     // Procesar línea por línea manteniendo el mismo sistema de notación
     const transposedContent = content
