@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { createSong, getSongById, updateSong } from "@notesheet/api";
-import { transposeContent, detectNotationSystem } from "@notesheet/core";
+import { createSong, getSongById, updateSong, addVoiceToSong, removeVoiceFromSong } from "@notesheet/api";
+import { transposeContent, detectNotationSystem, TRANSPOSING_INSTRUMENTS } from "@notesheet/core";
 import SimpleMDE from "react-simplemde-editor";
 import "easymde/dist/easymde.min.css";
 
@@ -31,17 +31,31 @@ const ALL_KEYS = [...MAJOR_KEYS, ...MINOR_KEYS];
 // Tipos de canciones
 const SONG_TYPES = ["Júbilo", "Adoración", "Moderada"];
 
+// Instrumentos soportados para voces adicionales
+const VOICE_INSTRUMENTS = [
+  { id: "bb_trumpet", name: "Trompeta en Sib" },
+  { id: "bb_trombone", name: "Trombón en Sib" },
+  { id: "eb_alto_sax", name: "Saxofón Alto en Mib" },
+];
+
 function SongEditor() {
   const [title, setTitle] = useState("");
   const [key, setKey] = useState("DO");
   const [type, setType] = useState("Adoración");
-  const [author, setAuthor] = useState("");
+  const [version, setVersion] = useState(""); // Cambiado de author a version
   const [content, setContent] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [isNewSong, setIsNewSong] = useState(true);
   const [contentUpdatePending, setContentUpdatePending] = useState(false);
   const [disableMetadataExtraction, setDisableMetadataExtraction] = useState(false);
+  
+  // Estado para voces adicionales
+  const [voices, setVoices] = useState({});
+  const [currentVoiceTab, setCurrentVoiceTab] = useState("main"); // "main" para la principal, o "instrumento-número" para voces
+  const [showVoicesManager, setShowVoicesManager] = useState(false);
+  const [newVoiceInstrument, setNewVoiceInstrument] = useState("bb_trumpet");
+  const [newVoiceNumber, setNewVoiceNumber] = useState("1");
   
   const { currentUser } = useAuth();
   const navigate = useNavigate();
@@ -58,7 +72,7 @@ function SongEditor() {
       setContent(`# Título: Nueva Canción
 # Tonalidad: DO Mayor
 # Tipo: Adoración
-# Autor: 
+# Versión de: 
 
 ## Intro
 DO SOL | LA- FA | DO SOL | DO--
@@ -86,8 +100,16 @@ Escribe aquí la letra y los acordes
       setTitle(song.title || "");
       setKey(song.key || "DO");
       setType(song.type || "Adoración");
-      setAuthor(song.author || "");
+      
+      // Cambio de author a version
+      setVersion(song.version || "");
+      
       setContent(song.content || "");
+      
+      // Cargar voces adicionales si existen
+      if (song.voices) {
+        setVoices(song.voices);
+      }
     } catch (error) {
       setError("Error al cargar la canción: " + error.message);
       console.error("Error loading song:", error);
@@ -123,10 +145,10 @@ Escribe aquí la letra y los acordes
       }
     }
     
-    // Extraer autor
-    const authorMatch = content.match(/^#\s*(?:Autor|Author):\s*(.+)$/m);
-    if (authorMatch && authorMatch[1]) {
-      setAuthor(authorMatch[1].trim());
+    // Extraer versión (antes author)
+    const versionMatch = content.match(/^#\s*(?:Versión de|Versión|Version|Autor|Author):\s*(.+)$/m);
+    if (versionMatch && versionMatch[1]) {
+      setVersion(versionMatch[1].trim());
     }
   };
 
@@ -169,18 +191,18 @@ Escribe aquí la letra y los acordes
       `# Tipo: ${type}`
     );
     
-    // Actualizar autor
-    const authorRegex = /^#\s*(?:Autor|Author):\s*.+$/m;
-    if (updatedContent.match(authorRegex)) {
+    // Actualizar versión (antes autor)
+    const versionRegex = /^#\s*(?:Versión de|Versión|Version|Autor|Author):\s*.+$/m;
+    if (updatedContent.match(versionRegex)) {
       updatedContent = updatedContent.replace(
-        authorRegex,
-        `# Autor: ${author}`
+        versionRegex,
+        `# Versión de: ${version}`
       );
     } else {
-      // Si no existe la línea de autor, agregarla después de Tipo
+      // Si no existe la línea de versión, agregarla después de Tipo
       updatedContent = updatedContent.replace(
         /^#\s*(?:Tipo|Type):\s*.+$/m,
-        `# Tipo: ${type}\n# Autor: ${author}`
+        `# Tipo: ${type}\n# Versión de: ${version}`
       );
     }
     
@@ -211,8 +233,8 @@ Escribe aquí la letra y los acordes
     setContentUpdatePending(true);
   };
   
-  const handleAuthorChange = (e) => {
-    setAuthor(e.target.value);
+  const handleVersionChange = (e) => {
+    setVersion(e.target.value);
     setContentUpdatePending(true);
   };
 
@@ -235,15 +257,17 @@ Escribe aquí la letra y los acordes
         title,
         key,
         type,
-        author,
+        version, // Cambio de author a version
         content,
+        voices, // Incluir las voces adicionales
         userId: currentUser.uid
       };
 
+      let savedSong;
       if (isNewSong) {
-        await createSong(songData);
+        savedSong = await createSong(songData);
       } else {
-        await updateSong(id, songData);
+        savedSong = await updateSong(id, songData);
       }
 
       navigate("/dashboard");
@@ -252,6 +276,133 @@ Escribe aquí la letra y los acordes
       console.error("Error saving song:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Funciones para manejar las voces adicionales
+  const handleAddVoice = async () => {
+    if (!newVoiceInstrument || !newVoiceNumber) return;
+    
+    // Comprobar si ya existe esta voz
+    if (voices[newVoiceInstrument] && voices[newVoiceInstrument][newVoiceNumber]) {
+      setError("Esta voz ya existe");
+      return;
+    }
+    
+    // Crear una copia de la estructura de voces actual
+    const updatedVoices = { ...voices };
+    
+    // Asegurarse de que existe la estructura para este instrumento
+    if (!updatedVoices[newVoiceInstrument]) {
+      updatedVoices[newVoiceInstrument] = {};
+    }
+    
+    // Crear una versión de la voz basada en el contenido principal
+    const voiceContent = content;
+    updatedVoices[newVoiceInstrument][newVoiceNumber] = voiceContent;
+    
+    // Actualizar el estado
+    setVoices(updatedVoices);
+    
+    // Si no es una canción nueva, guardar la voz en la base de datos
+    if (!isNewSong && id) {
+      try {
+        await addVoiceToSong(id, newVoiceInstrument, newVoiceNumber, voiceContent);
+      } catch (error) {
+        console.error("Error adding voice:", error);
+        setError("Error al añadir la voz: " + error.message);
+      }
+    }
+    
+    // Cambiar a la pestaña de la nueva voz
+    setCurrentVoiceTab(`${newVoiceInstrument}-${newVoiceNumber}`);
+    
+    // Resetear el formulario
+    setNewVoiceInstrument("bb_trumpet");
+    setNewVoiceNumber("1");
+    setShowVoicesManager(false);
+  };
+  
+  const handleRemoveVoice = async (instrumentId, voiceNumber) => {
+    if (!confirm(`¿Estás seguro de eliminar la voz ${voiceNumber} de ${TRANSPOSING_INSTRUMENTS[instrumentId]?.name}?`)) {
+      return;
+    }
+    
+    // Crear una copia de la estructura de voces actual
+    const updatedVoices = { ...voices };
+    
+    // Eliminar la voz
+    if (updatedVoices[instrumentId] && updatedVoices[instrumentId][voiceNumber]) {
+      delete updatedVoices[instrumentId][voiceNumber];
+      
+      // Si no quedan voces para este instrumento, eliminar la entrada
+      if (Object.keys(updatedVoices[instrumentId]).length === 0) {
+        delete updatedVoices[instrumentId];
+      }
+      
+      // Actualizar el estado
+      setVoices(updatedVoices);
+      
+      // Si no es una canción nueva, guardar el cambio en la base de datos
+      if (!isNewSong && id) {
+        try {
+          await removeVoiceFromSong(id, instrumentId, voiceNumber);
+        } catch (error) {
+          console.error("Error removing voice:", error);
+          setError("Error al eliminar la voz: " + error.message);
+        }
+      }
+      
+      // Si estábamos editando esta voz, cambiar a la principal
+      if (currentVoiceTab === `${instrumentId}-${voiceNumber}`) {
+        setCurrentVoiceTab("main");
+      }
+    }
+  };
+  
+  const handleVoiceTabChange = (tabId) => {
+    // Si el tab es "main", mostrar el contenido principal
+    if (tabId === "main") {
+      setCurrentVoiceTab("main");
+      return;
+    }
+    
+    // En otro caso, el tabId debe ser "instrumentId-voiceNumber"
+    const [instrumentId, voiceNumber] = tabId.split('-');
+    
+    // Comprobar si existe la voz
+    if (voices[instrumentId] && voices[instrumentId][voiceNumber]) {
+      setCurrentVoiceTab(tabId);
+    } else {
+      // Si no existe, mostrar el contenido principal
+      setCurrentVoiceTab("main");
+    }
+  };
+
+  // Función para obtener el contenido de la voz actual
+  const getCurrentVoiceContent = () => {
+    if (currentVoiceTab === "main") {
+      return content;
+    }
+    
+    const [instrumentId, voiceNumber] = currentVoiceTab.split('-');
+    return voices[instrumentId]?.[voiceNumber] || content;
+  };
+  
+  // Función para actualizar el contenido de la voz actual
+  const updateCurrentVoiceContent = (newContent) => {
+    if (currentVoiceTab === "main") {
+      setContent(newContent);
+      return;
+    }
+    
+    const [instrumentId, voiceNumber] = currentVoiceTab.split('-');
+    
+    // Actualizar la voz en el estado
+    const updatedVoices = { ...voices };
+    if (updatedVoices[instrumentId] && updatedVoices[instrumentId][voiceNumber]) {
+      updatedVoices[instrumentId][voiceNumber] = newContent;
+      setVoices(updatedVoices);
     }
   };
 
@@ -281,16 +432,77 @@ Escribe aquí la letra y los acordes
     }
   };
 
-  // Handler para cambios en el editor - esta es la clave para solucionar el problema de foco
+  // Handler para cambios en el editor
   const handleEditorChange = (value) => {
-    // Solo actualizar el contenido, sin extraer metadatos inmediatamente
-    setContent(value);
+    // Actualizar el contenido de la voz actual
+    updateCurrentVoiceContent(value);
   };
 
   // Handler para cuando el editor pierde el foco
   const handleEditorBlur = () => {
-    // Extraer metadatos cuando el editor pierde el foco
-    extractMetadata();
+    // Extraer metadatos cuando el editor pierde el foco (solo para contenido principal)
+    if (currentVoiceTab === "main") {
+      extractMetadata();
+    }
+  };
+
+  // Función para generar las pestañas de voces
+  const renderVoiceTabs = () => {
+    // La pestaña principal ahora se muestra como "Principal (Trompeta en Sib 1)"
+    const mainInstrumentName = TRANSPOSING_INSTRUMENTS["bb_trumpet"]?.name || "Trompeta en Sib";
+    const voiceTabs = [{ 
+      id: "main", 
+      label: `Principal (${mainInstrumentName} 1)` 
+    }];
+    
+    // Añadir las voces adicionales
+    Object.entries(voices).forEach(([instrumentId, instrumentVoices]) => {
+      Object.keys(instrumentVoices).sort().forEach(voiceNumber => {
+        const instrumentName = TRANSPOSING_INSTRUMENTS[instrumentId]?.name || instrumentId;
+        voiceTabs.push({
+          id: `${instrumentId}-${voiceNumber}`,
+          label: `${instrumentName} ${voiceNumber}`,
+          removable: true // Las voces adicionales pueden eliminarse
+        });
+      });
+    });
+    
+    return (
+      <div className="mb-3">
+        <ul className="nav nav-tabs">
+          {voiceTabs.map(tab => (
+            <li className="nav-item" key={tab.id}>
+              <button 
+                className={`nav-link ${currentVoiceTab === tab.id ? 'active' : ''}`}
+                onClick={() => handleVoiceTabChange(tab.id)}
+              >
+                {tab.label}
+                {tab.removable && (
+                  <button 
+                    className="btn btn-sm ms-2 text-danger"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const [instId, voiceNum] = tab.id.split('-');
+                      handleRemoveVoice(instId, voiceNum);
+                    }}
+                  >
+                    &times;
+                  </button>
+                )}
+              </button>
+            </li>
+          ))}
+          <li className="nav-item">
+            <button 
+              className="nav-link"
+              onClick={() => setShowVoicesManager(!showVoicesManager)}
+            >
+              {showVoicesManager ? 'Cancelar' : '+ Añadir Voz'}
+            </button>
+          </li>
+        </ul>
+      </div>
+    );
   };
 
   if (loading && !content) {
@@ -341,13 +553,13 @@ Escribe aquí la letra y los acordes
               />
             </div>
             <div className="col-md-6">
-              <label htmlFor="author" className="form-label">Autor</label>
+              <label htmlFor="version" className="form-label">Versión de</label>
               <input
                 type="text"
                 className="form-control"
-                id="author"
-                value={author}
-                onChange={handleAuthorChange}
+                id="version"
+                value={version}
+                onChange={handleVersionChange}
               />
             </div>
           </div>
@@ -418,11 +630,59 @@ Escribe aquí la letra y los acordes
               <small className="text-muted">{type}</small>
               <small className="text-muted">{key}</small>
             </div>
-            {author && <small className="text-muted d-block mt-1">Autor: {author}</small>}
+            {version && <small className="text-muted d-block mt-1">Versión de: {version}</small>}
           </div>
+          
+          {/* Pestañas para voces */}
+          {renderVoiceTabs()}
+          
+          {/* Formulario para añadir voces */}
+          {showVoicesManager && (
+            <div className="card mb-3">
+              <div className="card-body">
+                <h5 className="card-title">Añadir Voz</h5>
+                <div className="row">
+                  <div className="col-md-6 mb-2">
+                    <label className="form-label">Instrumento</label>
+                    <select 
+                      className="form-select"
+                      value={newVoiceInstrument}
+                      onChange={(e) => setNewVoiceInstrument(e.target.value)}
+                    >
+                      {VOICE_INSTRUMENTS.map(inst => (
+                        <option key={inst.id} value={inst.id}>{inst.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="col-md-6 mb-2">
+                    <label className="form-label">Número de Voz</label>
+                    <select 
+                      className="form-select"
+                      value={newVoiceNumber}
+                      onChange={(e) => setNewVoiceNumber(e.target.value)}
+                    >
+                      {[1, 2, 3, 4].map(num => (
+                        <option key={num} value={num.toString()}>{num}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+                <div className="mt-2">
+                  <button 
+                    className="btn btn-primary"
+                    onClick={handleAddVoice}
+                  >
+                    Añadir Voz
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+          
+          {/* Editor de contenido */}
           <SimpleMDE
             ref={editorRef}
-            value={content}
+            value={getCurrentVoiceContent()}
             onChange={handleEditorChange}
             onBlur={handleEditorBlur}
             options={editorOptions}
