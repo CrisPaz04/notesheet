@@ -52,34 +52,3 @@ export const INSTRUMENT_GROUPS = [
     instruments: ["concert"]
   }
 ];
-
-/**
- * Calcula la transposición correcta entre dos instrumentos
- * @param {string} fromInstrument - ID del instrumento de origen
- * @param {string} toInstrument - ID del instrumento de destino
- * @returns {number} - Diferencia en semitonos entre los instrumentos
- */
-export const calculateTranspositionInterval = (fromInstrument, toInstrument) => {
-  const fromTransposition = TRANSPOSING_INSTRUMENTS[fromInstrument]?.transposition || 0;
-  const toTransposition = TRANSPOSING_INSTRUMENTS[toInstrument]?.transposition || 0;
-  
-  // La diferencia es la transposición de destino menos la de origen
-  return toTransposition - fromTransposition;
-};
-
-/**
- * Obtiene la tonalidad visual para mostrar al usuario según el instrumento
- * Por ejemplo, una canción en DO para trompeta sería SOL para saxofón alto
- * @param {string} key - Tonalidad base (como se ve para trompeta)
- * @param {string} instrument - ID del instrumento seleccionado
- * @returns {string} - Tonalidad a mostrar para ese instrumento
- */
-export const getVisualKeyForInstrument = (key, instrument) => {
-  if (instrument === "bb_trumpet" || !key) return key;
-  
-  // Implementar lógica para calcular la tonalidad visual
-  // Esto podría requerir una función más compleja que utilice
-  // las funciones de transposición existentes
-  
-  return key + " (transpuesto)"; // Placeholder
-};
