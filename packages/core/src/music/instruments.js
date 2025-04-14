@@ -17,10 +17,10 @@ export const TRANSPOSING_INSTRUMENTS = {
     description: "Piano, Guitarra, Bajo, Flauta (suena un tono más bajo)"
   },
   "eb_alto_sax": {
-    name: "Saxofón Alto en Mib",
-    transposition: 9, // Sube una sexta mayor (9 semitonos)
-    description: "Sube una sexta mayor desde trompeta (DO → LA)"
-  },
+  name: "Saxofón Alto en Mib",
+  transposition: 7, // Sube una quinta justa (7 semitonos)
+  description: "Sube una quinta justa desde trompeta (DO → SOL)"
+},
   "bb_tenor_sax": {
     name: "Saxofón Tenor en Sib",
     transposition: 12, // Una octava exacta
