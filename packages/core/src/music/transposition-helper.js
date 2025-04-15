@@ -9,7 +9,7 @@ import { TRANSPOSING_INSTRUMENTS } from './instruments';
  * @param {string} toInstrument - ID del instrumento de destino
  * @returns {string} - Contenido transpuesto para el instrumento de destino
  */
-// Corregir en packages/core/src/music/transposition-helper.js
+// Corrección para mantener consistencia en el sistema de notación
 export function transposeForInstrument(content, fromInstrument, toInstrument) {
   // Si los instrumentos son iguales, no hay transposición
   if (fromInstrument === toInstrument) return content;
@@ -24,11 +24,36 @@ export function transposeForInstrument(content, fromInstrument, toInstrument) {
   // Si no hay diferencia de transposición, retornamos el contenido original
   if (transpositionInterval === 0) return content;
   
-  // Para la transposición de instrumentos necesitamos encontrar todas las notas musicales
-  // en el contenido y transponerlas manualmente
-
   // Expresión regular para detectar notas musicales (incluyendo menores)
   const noteRegex = /\b(DO|RE|MI|FA|SOL|LA|SI|C|D|E|F|G|A|B)(?:#|b)?(?:m)?\b/g;
+  
+  // Definimos las escalas completas
+  const LATIN_NOTES = ['DO', 'DO#', 'RE', 'RE#', 'MI', 'FA', 'FA#', 'SOL', 'SOL#', 'LA', 'LA#', 'SI'];
+  const LATIN_NOTES_FLAT = ['DO', 'REb', 'RE', 'MIb', 'MI', 'FA', 'SOLb', 'SOL', 'LAb', 'LA', 'SIb', 'SI'];
+  const ENGLISH_NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+  const ENGLISH_NOTES_FLAT = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'];
+  
+  // Mapa de notas para una búsqueda más sencilla
+  const noteToIndexMap = {
+    // Notas latinas
+    'DO': 0, 'DO#': 1, 'REb': 1, 'RE': 2, 'RE#': 3, 'MIb': 3, 'MI': 4, 
+    'FA': 5, 'FA#': 6, 'SOLb': 6, 'SOL': 7, 'SOL#': 8, 'LAb': 8, 
+    'LA': 9, 'LA#': 10, 'SIb': 10, 'SI': 11,
+    // Notas inglesas
+    'C': 0, 'C#': 1, 'Db': 1, 'D': 2, 'D#': 3, 'Eb': 3, 'E': 4, 
+    'F': 5, 'F#': 6, 'Gb': 6, 'G': 7, 'G#': 8, 'Ab': 8, 
+    'A': 9, 'A#': 10, 'Bb': 10, 'B': 11
+  };
+  
+  // Detectar el sistema de notación predominante (latino o anglosajón)
+  const latinNoteRegex = /\b(DO|RE|MI|FA|SOL|LA|SI)(?:#|b)?\b/g;
+  const englishNoteRegex = /\b(C|D|E|F|G|A|B)(?:#|b)?\b/g;
+  
+  const latinMatches = content.match(latinNoteRegex) || [];
+  const englishMatches = content.match(englishNoteRegex) || [];
+  
+  // Determinar el sistema de notación predominante
+  const isLatinPredominant = latinMatches.length >= englishMatches.length;
   
   // Procesar línea por línea
   const lines = content.split('\n');
@@ -41,10 +66,6 @@ export function transposeForInstrument(content, fromInstrument, toInstrument) {
     // Reemplazar cada nota con su versión transpuesta
     return line.replace(noteRegex, match => {
       try {
-        // Implementación directa de transposición de nota
-        // sin depender de transposeContent con parámetros nulos
-        if (match.length === 0) return match;
-        
         // Verificar si es una nota menor
         let isMinor = false;
         let normalizedNote = match;
@@ -53,59 +74,40 @@ export function transposeForInstrument(content, fromInstrument, toInstrument) {
           normalizedNote = match.slice(0, -1);
         }
         
-        // Determine si es notación latina o anglosajona
-        const isLatin = normalizedNote.length > 1 && normalizedNote !== 'SI';
+        // Determinar si es notación latina o anglosajona
+        const isLatinNote = normalizedNote.length > 1 && normalizedNote !== 'SI' && normalizedNote !== 'MI';
         
-        // Definir las escalas según el sistema
-        const LATIN_NOTES = ['DO', 'DO#', 'RE', 'RE#', 'MI', 'FA', 'FA#', 'SOL', 'SOL#', 'LA', 'LA#', 'SI'];
-        const ENGLISH_NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+        // Obtener el índice de la nota usando el mapa
+        let noteIndex = noteToIndexMap[normalizedNote];
         
-        // Mapear la nota a un índice
-        const sourceArray = isLatin ? LATIN_NOTES : ENGLISH_NOTES;
-        
-        // Buscar la nota base (sin alteraciones)
-        let baseNote = normalizedNote;
-        let alteration = '';
-        
-        if (normalizedNote.includes('#')) {
-          baseNote = normalizedNote.replace('#', '');
-          alteration = '#';
-        } else if (normalizedNote.includes('b')) {
-          baseNote = normalizedNote.replace('b', '');
-          alteration = 'b';
-        }
-        
-        // Buscar el índice de la nota
-        let noteIndex = -1;
-        for (let i = 0; i < sourceArray.length; i++) {
-          if (sourceArray[i] === baseNote + alteration) {
-            noteIndex = i;
-            break;
+        // Si no encontramos la nota en el mapa, intento especial para SI y MI
+        if (noteIndex === undefined) {
+          // Tratamiento especial para 'SI' y 'MI'
+          if (normalizedNote === 'SI') {
+            noteIndex = 11;  // SI es la nota 11 en la escala cromática
+          } else if (normalizedNote === 'MI') {
+            noteIndex = 4;   // MI es la nota 4 en la escala cromática
+          } else {
+            console.warn(`Nota no reconocida: ${normalizedNote}`);
+            return match;  // Devolver la nota original si no la reconocemos
           }
         }
-        
-        if (noteIndex === -1) {
-          // Si no encontramos la nota exacta, buscar la nota base
-          for (let i = 0; i < sourceArray.length; i++) {
-            if (sourceArray[i] === baseNote) {
-              noteIndex = i;
-              break;
-            }
-          }
-          
-          // Ajustar por la alteración
-          if (alteration === '#') noteIndex++;
-          if (alteration === 'b') noteIndex--;
-        }
-        
-        // Si todavía no encontramos la nota, devolver la original
-        if (noteIndex === -1) return match;
         
         // Calcular el nuevo índice después de transposición
         const newIndex = (noteIndex + transpositionInterval + 12) % 12;
         
+        // Usar el sistema de notación predominante para todas las notas
+        let targetArray;
+        if (isLatinPredominant) {
+          // Usar notación latina para todas las notas
+          targetArray = normalizedNote.includes('b') ? LATIN_NOTES_FLAT : LATIN_NOTES;
+        } else {
+          // Usar notación anglosajona para todas las notas
+          targetArray = normalizedNote.includes('b') ? ENGLISH_NOTES_FLAT : ENGLISH_NOTES;
+        }
+        
         // Obtener la nueva nota
-        let transposedNote = sourceArray[newIndex];
+        let transposedNote = targetArray[newIndex];
         
         // Añadir 'm' si era una nota menor
         if (isMinor) {
@@ -136,47 +138,67 @@ export function getVisualKeyForInstrument(baseKey, instrument) {
   
   // Definimos las escalas completas en notación latina
   const KEYS_MAJOR = ['DO', 'DO#', 'RE', 'RE#', 'MI', 'FA', 'FA#', 'SOL', 'SOL#', 'LA', 'LA#', 'SI'];
-  const KEYS_MAJOR_ALT = ['DO', 'REb', 'RE', 'MIb', 'MI', 'FA', 'SOLb', 'SOL', 'LAb', 'LA', 'SIb', 'SI'];
+  const KEYS_MAJOR_ALT = ['DO', 'REb', 'RE', 'MIb', 'MI', 'FA', 'SOLb', 'SOL', 'LAb', 'LA', 'SIb', 'SI', 'DOb'];
   
-  // Identificar si el key tiene sostenidos, bemoles o es natural
-  const isSharp = baseKey.includes('#');
-  const isFlat = baseKey.includes('b');
+  // Mapa de tonalidades para una búsqueda más sencilla
+  const keyToIndexMap = {
+    // Tonalidades mayores con sostenidos
+    'DO': 0, 'DO#': 1, 'RE': 2, 'RE#': 3, 'MI': 4, 'FA': 5,
+    'FA#': 6, 'SOL': 7, 'SOL#': 8, 'LA': 9, 'LA#': 10, 'SI': 11,
+    // Tonalidades mayores con bemoles
+    'REb': 1, 'MIb': 3, 'SOLb': 6, 'LAb': 8, 'SIb': 10, 'DOb': 11,
+    // Tonalidades menores con sostenidos
+    'DOm': 0, 'DO#m': 1, 'REm': 2, 'RE#m': 3, 'MIm': 4, 'FAm': 5,
+    'FA#m': 6, 'SOLm': 7, 'SOL#m': 8, 'LAm': 9, 'LA#m': 10, 'SIm': 11,
+    // Tonalidades menores con bemoles
+    'REbm': 1, 'MIbm': 3, 'SOLbm': 6, 'LAbm': 8, 'SIbm': 10, 'DObm': 11,
+    // Tonalidades inglesas
+    'C': 0, 'C#': 1, 'D': 2, 'D#': 3, 'E': 4, 'F': 5,
+    'F#': 6, 'G': 7, 'G#': 8, 'A': 9, 'A#': 10, 'B': 11,
+    'Db': 1, 'Eb': 3, 'Gb': 6, 'Ab': 8, 'Bb': 10, 'Cb': 11,
+    'Cm': 0, 'C#m': 1, 'Dm': 2, 'D#m': 3, 'Em': 4, 'Fm': 5,
+    'F#m': 6, 'Gm': 7, 'G#m': 8, 'Am': 9, 'A#m': 10, 'Bm': 11,
+    'Dbm': 1, 'Ebm': 3, 'Gbm': 6, 'Abm': 8, 'Bbm': 10, 'Cbm': 11
+  };
+  
+  // Identificar si es menor
   const isMinor = baseKey.includes('m');
   
-  // Normalizar la tonalidad base
-  let normalizedKey = baseKey;
-  if (isMinor) {
-    normalizedKey = baseKey.slice(0, -1); // Quitar 'm' para tonalidades menores
-  }
+  // Identificar si usa bemoles o sostenidos
+  const usesFlats = baseKey.includes('b');
   
-  // Elegir la escala correcta para evitar enarmónicos incorrectos
-  const keysScale = isFlat ? KEYS_MAJOR_ALT : KEYS_MAJOR;
+  // Obtener el índice de la tonalidad base
+  let keyIndex = keyToIndexMap[baseKey];
   
-  // Buscar el índice de la tonalidad en la escala
-  let keyIndex = -1;
-  for (let i = 0; i < keysScale.length; i++) {
-    if (keysScale[i] === normalizedKey) {
-      keyIndex = i;
-      break;
-    }
-  }
-  
-  if (keyIndex === -1) {
-    console.error(`Tonalidad no reconocida: ${baseKey}`);
+  if (keyIndex === undefined) {
+    console.warn(`Tonalidad no reconocida: ${baseKey}`);
     return baseKey; // Fallback a la tonalidad original
   }
   
   // Aplicar transposición del instrumento
   const instrumentTransposition = TRANSPOSING_INSTRUMENTS[instrument].transposition;
-  const newIndex = (keyIndex + instrumentTransposition + 12) % 12; // +12 para evitar índices negativos
+  const newIndex = (keyIndex + instrumentTransposition + 12) % 12;
   
-  // Obtener la nueva tonalidad
-  let transposedKey = keysScale[newIndex];
-  
-  // Si es menor, añadir 'm' de nuevo
+  // Determinar si la nueva tonalidad debe usar sostenidos o bemoles (mantener la preferencia original)
+  let targetScale;
   if (isMinor) {
-    transposedKey += 'm';
+    if (usesFlats) {
+      // Escala menor con bemoles
+      targetScale = ['DOm', 'REbm', 'REm', 'MIbm', 'MIm', 'FAm', 'SOLbm', 'SOLm', 'LAbm', 'LAm', 'SIbm', 'SIm'];
+    } else {
+      // Escala menor con sostenidos
+      targetScale = ['DOm', 'DO#m', 'REm', 'RE#m', 'MIm', 'FAm', 'FA#m', 'SOLm', 'SOL#m', 'LAm', 'LA#m', 'SIm'];
+    }
+  } else {
+    if (usesFlats) {
+      // Escala mayor con bemoles
+      targetScale = ['DO', 'REb', 'RE', 'MIb', 'MI', 'FA', 'SOLb', 'SOL', 'LAb', 'LA', 'SIb', 'SI'];
+    } else {
+      // Escala mayor con sostenidos
+      targetScale = ['DO', 'DO#', 'RE', 'RE#', 'MI', 'FA', 'FA#', 'SOL', 'SOL#', 'LA', 'LA#', 'SI'];
+    }
   }
   
-  return transposedKey;
+  // Obtener la nueva tonalidad
+  return targetScale[newIndex];
 }
