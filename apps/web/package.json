@@ -14,6 +14,7 @@
     "@codemirror/lang-markdown": "^6.3.2",
     "@codemirror/state": "^6.5.2",
     "@codemirror/view": "^6.36.5",
+    "@hello-pangea/dnd": "^18.0.1",
     "@notesheet/api": "^0.1.0",
     "@notesheet/core": "^0.1.0",
     "bootstrap": "^5.3.5",

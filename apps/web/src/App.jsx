@@ -12,6 +12,9 @@ import SongEditor from "./pages/SongEditor";
 import SongView from "./pages/SongView";
 import NotFound from "./pages/NotFound";
 import UserPreferences from "./pages/UserPreferences";
+import PlaylistsList from "./pages/PlaylistsList";
+import PlaylistEditor from "./pages/PlaylistEditor";
+import PlaylistView from "./pages/PlaylistView";
 
 // Componentes
 import Navbar from "./components/Navbar";
@@ -54,6 +57,22 @@ function App() {
                   <UserPreferences />
                 </ProtectedRoute>
               } />
+              <Route path="/playlists" element={
+  <ProtectedRoute>
+    <PlaylistsList />
+  </ProtectedRoute>
+} />
+<Route path="/playlists/new" element={
+  <ProtectedRoute>
+    <PlaylistEditor />
+  </ProtectedRoute>
+} />
+<Route path="/playlists/:id" element={<PlaylistView />} />
+<Route path="/playlists/:id/edit" element={
+  <ProtectedRoute>
+    <PlaylistEditor />
+  </ProtectedRoute>
+} />
               
               {/* Ruta 404 */}
               <Route path="*" element={<NotFound />} />
