@@ -35,6 +35,11 @@ function Navbar() {
                   <Link className="nav-link" to="/dashboard">Dashboard</Link>
                 </li>
                 <li className="nav-item">
+  <Link className="nav-link" to="/preferences">
+    <i className="bi bi-gear"></i> Preferencias
+  </Link>
+</li>
+                <li className="nav-item">
                   <Link className="nav-link" to="/songs/new">Nueva Canción</Link>
                 </li>
                 <li className="nav-item">

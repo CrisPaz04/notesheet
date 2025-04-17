@@ -1,4 +1,4 @@
-// SongView.jsx actualizado para múltiples voces por instrumento
+// apps/web/src/pages/SongView.jsx
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { getSongById } from "@notesheet/api";
@@ -70,8 +70,15 @@ function SongView() {
         if (currentUser) {
           try {
             const prefs = await getUserPreferences(currentUser.uid);
+            // Aplicar preferencias del usuario
             if (prefs.defaultInstrument) {
               setCurrentInstrument(prefs.defaultInstrument);
+            }
+            if (prefs.defaultNotationSystem) {
+              setNotationSystem(prefs.defaultNotationSystem);
+            }
+            if (prefs.defaultFontSize) {
+              setFontSize(prefs.defaultFontSize);
             }
           } catch (error) {
             console.error("Error loading user preferences:", error);
@@ -110,9 +117,11 @@ function SongView() {
         // Guardar el contenido original para futuras transposiciones
         setOriginalContent(contentToLoad);
         
-        // Detectar el sistema de notación automáticamente
-        const detectedSystem = detectNotationSystem(contentToLoad);
-        setNotationSystem(detectedSystem);
+        // Detectar el sistema de notación automáticamente si no se especifica en preferencias
+        if (!currentUser || !notationSystem) {
+          const detectedSystem = detectNotationSystem(contentToLoad);
+          setNotationSystem(detectedSystem);
+        }
         
         // Establecer la tonalidad visual según el instrumento seleccionado
         const visualKey = getVisualKeyForInstrument(songKey, currentInstrument);
@@ -128,6 +137,11 @@ function SongView() {
             "bb_trumpet", 
             currentInstrument
           );
+        }
+        
+        // Aplicar sistema de notación si es necesario
+        if (notationSystem === "english") {
+          contentToShow = convertNotationSystem(contentToShow, "english");
         }
         
         // Formatear para visualización
@@ -204,6 +218,17 @@ function SongView() {
     
     try {
       setNotationSystem(system);
+      
+      // Guardar preferencia si el usuario está autenticado
+      if (currentUser) {
+        try {
+          updateUserPreferences(currentUser.uid, {
+            defaultNotationSystem: system
+          });
+        } catch (error) {
+          console.error("Error saving notation preference:", error);
+        }
+      }
       
       // Empezamos desde el contenido original
       let contentToProcess = originalContent;
@@ -360,18 +385,54 @@ function SongView() {
   // Funciones para ajustar tamaño de texto
   const increaseFontSize = () => {
     if (fontSize < 24) {
-      setFontSize(fontSize + 2);
+      const newSize = fontSize + 2;
+      setFontSize(newSize);
+      
+      // Guardar preferencia si el usuario está autenticado
+      if (currentUser) {
+        try {
+          updateUserPreferences(currentUser.uid, {
+            defaultFontSize: newSize
+          });
+        } catch (error) {
+          console.error("Error saving font size preference:", error);
+        }
+      }
     }
   };
 
   const decreaseFontSize = () => {
     if (fontSize > 14) {
-      setFontSize(fontSize - 2);
+      const newSize = fontSize - 2;
+      setFontSize(newSize);
+      
+      // Guardar preferencia si el usuario está autenticado
+      if (currentUser) {
+        try {
+          updateUserPreferences(currentUser.uid, {
+            defaultFontSize: newSize
+          });
+        } catch (error) {
+          console.error("Error saving font size preference:", error);
+        }
+      }
     }
   };
 
   const resetFontSize = () => {
-    setFontSize(18);
+    const defaultSize = 18;
+    setFontSize(defaultSize);
+    
+    // Guardar preferencia si el usuario está autenticado
+    if (currentUser) {
+      try {
+        updateUserPreferences(currentUser.uid, {
+          defaultFontSize: defaultSize
+        });
+      } catch (error) {
+        console.error("Error saving font size preference:", error);
+      }
+    }
   };
 
   const handlePrint = () => {

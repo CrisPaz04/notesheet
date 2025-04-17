@@ -1,6 +1,7 @@
-﻿// src/App.jsx
+﻿// apps/web/src/App.jsx
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
+import { useTheme } from "./hooks/useTheme";
 
 // Páginas
 import Home from "./pages/Home";
@@ -10,6 +11,7 @@ import Dashboard from "./pages/Dashboard";
 import SongEditor from "./pages/SongEditor";
 import SongView from "./pages/SongView";
 import NotFound from "./pages/NotFound";
+import UserPreferences from "./pages/UserPreferences";
 
 // Componentes
 import Navbar from "./components/Navbar";
@@ -17,10 +19,12 @@ import Footer from "./components/Footer";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 function App() {
+  const { theme } = useTheme();
+  
   return (
     <Router>
       <AuthProvider>
-        <div className="d-flex flex-column min-vh-100">
+        <div className={`d-flex flex-column min-vh-100 ${theme === 'dark' ? 'bg-dark text-light' : ''}`}>
           <Navbar />
           <main className="flex-grow-1 container py-4">
             <Routes>
@@ -43,6 +47,11 @@ function App() {
               <Route path="/songs/:id/edit" element={
                 <ProtectedRoute>
                   <SongEditor />
+                </ProtectedRoute>
+              } />
+              <Route path="/preferences" element={
+                <ProtectedRoute>
+                  <UserPreferences />
                 </ProtectedRoute>
               } />
               
