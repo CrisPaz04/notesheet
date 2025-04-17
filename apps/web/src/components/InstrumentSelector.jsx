@@ -1,25 +1,6 @@
 // apps/web/src/components/InstrumentSelector.jsx
 import React from "react";
-
-// Agrupaciones lógicas para el selector de UI
-const INSTRUMENT_GROUPS = [
-  {
-    name: "Instrumentos de Referencia",
-    instruments: ["bb_trumpet"]
-  },
-  {
-    name: "Instrumentos en Sib",
-    instruments: ["bb_trombone", "bb_tenor_sax"]
-  },
-  {
-    name: "Instrumentos en Mib",
-    instruments: ["eb_alto_sax"]
-  },
-  {
-    name: "Instrumentos en DO (Concierto)",
-    instruments: ["concert"]
-  }
-];
+import { INSTRUMENT_GROUPS } from "@notesheet/core";
 
 export function InstrumentSelector({ 
   selectedInstrument, 
