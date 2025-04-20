@@ -1,5 +1,3 @@
-// packages/core/src/music/notation.js
-
 /**
  * Convierte la notación de una canción entre sistemas latinos y anglosajones
  * @param {string} content - Contenido de la canción con notación musical
@@ -141,4 +139,51 @@ export const formatSong = (content, options = {}) => {
     sections,
     rawContent: processedContent
   };
+};
+
+/**
+ * Extrae solo la letra de una canción (sin acordes)
+ * @param {string} content - Contenido de la canción con acordes
+ * @returns {string} Contenido con solo la letra (sin acordes)
+ */
+export const extractLyricsOnly = (content) => {
+  if (!content) return "";
+  
+  // Procesar línea por línea
+  const lines = content.split('\n');
+  const processedLines = lines.map(line => {
+    // Mantener líneas de metadatos (# Título, etc.)
+    if (line.startsWith('#')) {
+      return line;
+    }
+    
+    // Mantener títulos de secciones (## Intro, etc.)
+    if (line.startsWith('##')) {
+      return line;
+    }
+    
+    // Eliminar acordes (palabras que coinciden con patrones de acordes)
+    return line.replace(/\b(DO|RE|MI|FA|SOL|LA|SI|C|D|E|F|G|A|B)(?:#|b)?(?:m)?\b/g, '')
+               .replace(/\|\s*\|/g, '') // Eliminar barras dobles vacías
+               .replace(/\s{2,}/g, ' ') // Reemplazar múltiples espacios por uno solo
+               .trim();
+  });
+  
+  // Eliminar líneas vacías consecutivas
+  let result = '';
+  let previousLineEmpty = false;
+  
+  processedLines.forEach(line => {
+    const isCurrentLineEmpty = line.trim() === '';
+    
+    if (isCurrentLineEmpty && previousLineEmpty) {
+      // No agregar otra línea vacía
+      return;
+    }
+    
+    result += line + '\n';
+    previousLineEmpty = isCurrentLineEmpty;
+  });
+  
+  return result.trim();
 };

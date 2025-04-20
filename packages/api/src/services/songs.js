@@ -33,6 +33,11 @@ export const createSong = async (songData) => {
       dataToSave.voices = {};
     }
     
+    // Asegurarse de que lyricsOnly exista
+    if (!dataToSave.lyricsOnly) {
+      dataToSave.lyricsOnly = ""; // Campo vacío por defecto
+    }
+    
     const docRef = await addDoc(songsCollection, {
       ...dataToSave,
       createdAt: new Date(),
@@ -92,6 +97,11 @@ export const getSongById = async (songId) => {
       // Asegurarse de que voices sea un objeto si no está definido
       if (!songData.voices) {
         songData.voices = {};
+      }
+      
+      // Asegurarse de que lyricsOnly exista
+      if (!songData.lyricsOnly) {
+        songData.lyricsOnly = ""; // Campo vacío por defecto
       }
       
       return {

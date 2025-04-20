@@ -1,11 +1,18 @@
+// apps/web/src/pages/SongEditor.jsx
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { createSong, getSongById, updateSong, addVoiceToSong, removeVoiceFromSong } from "@notesheet/api";
-import { transposeContent, detectNotationSystem, TRANSPOSING_INSTRUMENTS } from "@notesheet/core";
+import { 
+  transposeContent, 
+  detectNotationSystem, 
+  TRANSPOSING_INSTRUMENTS,
+  extractLyricsOnly 
+} from "@notesheet/core";
 import SimpleMDE from "react-simplemde-editor";
 import "easymde/dist/easymde.min.css";
 
+// Arrays de pares de tonalidades relativas (mayor y menor)
 const RELATIVE_KEYS = [
   { major: "DO", minor: "LAm", english: { major: "C", minor: "Am" } },
   { major: "SOL", minor: "MIm", english: { major: "G", minor: "Em" } },
@@ -24,6 +31,7 @@ const RELATIVE_KEYS = [
   { major: "DOb", minor: "LAbm", english: { major: "Cb", minor: "Abm" } }
 ];
 
+// Versión simplificada para tonalidades
 const MAJOR_KEYS = RELATIVE_KEYS.map(pair => pair.major);
 const MINOR_KEYS = RELATIVE_KEYS.map(pair => pair.minor);
 const ALL_KEYS = [...MAJOR_KEYS, ...MINOR_KEYS];
@@ -32,18 +40,16 @@ const ALL_KEYS = [...MAJOR_KEYS, ...MINOR_KEYS];
 const SONG_TYPES = ["Júbilo", "Adoración", "Moderada"];
 
 // Instrumentos soportados para voces adicionales
-const VOICE_INSTRUMENTS = [
-  { id: "bb_trumpet", name: "Trompeta en Sib" },
-  { id: "bb_trombone", name: "Trombón en Sib" },
-  { id: "eb_alto_sax", name: "Saxofón Alto en Mib" },
-];
+const VOICE_INSTRUMENTS = Object.entries(TRANSPOSING_INSTRUMENTS)
+  .map(([id, instrument]) => ({ id, name: instrument.name }));
 
 function SongEditor() {
   const [title, setTitle] = useState("");
   const [key, setKey] = useState("DO");
   const [type, setType] = useState("Adoración");
-  const [version, setVersion] = useState(""); // Cambiado de author a version
+  const [version, setVersion] = useState(""); // Versión
   const [content, setContent] = useState("");
+  const [lyricsOnly, setLyricsOnly] = useState(""); // Nueva: contenido de solo letra
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [isNewSong, setIsNewSong] = useState(true);
@@ -52,7 +58,8 @@ function SongEditor() {
   
   // Estado para voces adicionales
   const [voices, setVoices] = useState({});
-  const [currentVoiceTab, setCurrentVoiceTab] = useState("main"); // "main" para la principal, o "instrumento-número" para voces
+  // Pestañas: "main" (principal), "lyrics" (solo letra), "instrumento-número" (voces)
+  const [currentTab, setCurrentTab] = useState("main");
   const [showVoicesManager, setShowVoicesManager] = useState(false);
   const [newVoiceInstrument, setNewVoiceInstrument] = useState("bb_trumpet");
   const [newVoiceNumber, setNewVoiceNumber] = useState("1");
@@ -85,6 +92,20 @@ Escribe aquí la letra y los acordes
 FA       SOL       DO      LA-
 Escribe aquí la letra y los acordes
 `);
+      // Generar versión solo letra
+      generateLyricsOnly(`# Título: Nueva Canción
+# Tonalidad: DO Mayor
+# Tipo: Adoración
+# Versión de: 
+
+## Intro
+
+## Verso 1
+Escribe aquí la letra y los acordes
+
+## Coro
+Escribe aquí la letra y los acordes
+`);
       // Extraer metadatos iniciales (solo una vez al cargar)
       setTimeout(() => {
         extractMetadata();
@@ -104,7 +125,16 @@ Escribe aquí la letra y los acordes
       // Cambio de author a version
       setVersion(song.version || "");
       
+      // Cargar contenido principal
       setContent(song.content || "");
+      
+      // Cargar o generar contenido de solo letra
+      if (song.lyricsOnly) {
+        setLyricsOnly(song.lyricsOnly);
+      } else {
+        // Si no existe, generar a partir del contenido principal
+        generateLyricsOnly(song.content || "");
+      }
       
       // Cargar voces adicionales si existen
       if (song.voices) {
@@ -116,6 +146,47 @@ Escribe aquí la letra y los acordes
     } finally {
       setLoading(false);
     }
+  };
+
+  // Generar versión de solo letra a partir del contenido con acordes
+  const generateLyricsOnly = (contentWithChords) => {
+    // Primero, procesamos línea por línea
+    const lines = contentWithChords.split('\n');
+    const processedLines = lines.map(line => {
+      // Mantener líneas de metadatos (# Título, etc.)
+      if (line.startsWith('#')) {
+        return line;
+      }
+      
+      // Mantener títulos de secciones (## Intro, etc.)
+      if (line.startsWith('##')) {
+        return line;
+      }
+      
+      // Eliminar acordes (palabras que coinciden con patrones de acordes)
+      return line.replace(/\b(DO|RE|MI|FA|SOL|LA|SI|C|D|E|F|G|A|B)(?:#|b)?(?:m)?\b/g, '')
+                 .replace(/\|\s*\|/g, '') // Eliminar barras dobles vacías
+                 .replace(/\s{2,}/g, ' ') // Reemplazar múltiples espacios por uno solo
+                 .trim();
+    });
+    
+    // Eliminar líneas vacías consecutivas
+    let result = '';
+    let previousLineEmpty = false;
+    
+    processedLines.forEach(line => {
+      const isCurrentLineEmpty = line.trim() === '';
+      
+      if (isCurrentLineEmpty && previousLineEmpty) {
+        // No agregar otra línea vacía
+        return;
+      }
+      
+      result += line + '\n';
+      previousLineEmpty = isCurrentLineEmpty;
+    });
+    
+    setLyricsOnly(result.trim());
   };
 
   // Extraer metadatos del contenido
@@ -211,6 +282,46 @@ Escribe aquí la letra y los acordes
       setContent(updatedContent);
     }
     
+    // También actualizar metadatos en la vista de solo letras
+    let updatedLyrics = lyricsOnly;
+    
+    // Actualizar título en lyricsOnly
+    updatedLyrics = updatedLyrics.replace(
+      /^#\s*(?:Canción|Título|Title):\s*.+$/m,
+      `# Título: ${title}`
+    );
+    
+    // Actualizar tonalidad en lyricsOnly
+    updatedLyrics = updatedLyrics.replace(
+      /^#\s*(?:Tonalidad|Key):\s*.+$/m,
+      `# Tonalidad: ${key} ${keyType}`
+    );
+    
+    // Actualizar tipo en lyricsOnly
+    updatedLyrics = updatedLyrics.replace(
+      /^#\s*(?:Tipo|Type):\s*.+$/m,
+      `# Tipo: ${type}`
+    );
+    
+    // Actualizar versión en lyricsOnly
+    if (updatedLyrics.match(versionRegex)) {
+      updatedLyrics = updatedLyrics.replace(
+        versionRegex,
+        `# Versión de: ${version}`
+      );
+    } else {
+      // Si no existe la línea de versión, agregarla después de Tipo
+      updatedLyrics = updatedLyrics.replace(
+        /^#\s*(?:Tipo|Type):\s*.+$/m,
+        `# Tipo: ${type}\n# Versión de: ${version}`
+      );
+    }
+    
+    // Solo actualizar si cambió
+    if (updatedLyrics !== lyricsOnly) {
+      setLyricsOnly(updatedLyrics);
+    }
+    
     // Re-activar extracción de metadatos después de un breve retraso
     setTimeout(() => {
       setDisableMetadataExtraction(false);
@@ -257,9 +368,10 @@ Escribe aquí la letra y los acordes
         title,
         key,
         type,
-        version, // Cambio de author a version
+        version,
         content,
-        voices, // Incluir las voces adicionales
+        lyricsOnly,  // Guardar versión de solo letra
+        voices,      // Incluir las voces adicionales
         userId: currentUser.uid
       };
 
@@ -276,6 +388,54 @@ Escribe aquí la letra y los acordes
       console.error("Error saving song:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Función para generar automáticamente la letra
+  const handleGenerateLyrics = () => {
+    if (currentTab === "main") {
+      generateLyricsOnly(content);
+    }
+  };
+
+  // Sincronizar secciones entre contenido principal y letra
+  const syncSections = () => {
+    // Extraer secciones del contenido principal
+    const sectionRegex = /^##\s+(.+)$/gm;
+    const mainSections = [];
+    let match;
+    
+    while ((match = sectionRegex.exec(content)) !== null) {
+      mainSections.push({ title: match[1], index: match.index });
+    }
+    
+    // Si no hay secciones, no hacemos nada
+    if (mainSections.length === 0) return;
+    
+    // Verificar si las mismas secciones existen en lyricsOnly
+    const lyricsSections = [];
+    sectionRegex.lastIndex = 0; // Resetear el índice
+    
+    while ((match = sectionRegex.exec(lyricsOnly)) !== null) {
+      lyricsSections.push({ title: match[1], index: match.index });
+    }
+    
+    // Si faltan secciones en lyricsOnly, agregarlas
+    if (lyricsSections.length < mainSections.length) {
+      let updatedLyrics = lyricsOnly;
+      
+      // Para cada sección en el contenido principal
+      for (const section of mainSections) {
+        // Verificar si esta sección existe en lyricsOnly
+        const sectionExists = lyricsSections.some(s => s.title === section.title);
+        
+        if (!sectionExists) {
+          // Agregar la sección al final
+          updatedLyrics += `\n\n## ${section.title}\n`;
+        }
+      }
+      
+      setLyricsOnly(updatedLyrics);
     }
   };
 
@@ -315,7 +475,7 @@ Escribe aquí la letra y los acordes
     }
     
     // Cambiar a la pestaña de la nueva voz
-    setCurrentVoiceTab(`${newVoiceInstrument}-${newVoiceNumber}`);
+    setCurrentTab(`${newVoiceInstrument}-${newVoiceNumber}`);
     
     // Resetear el formulario
     setNewVoiceInstrument("bb_trumpet");
@@ -354,16 +514,33 @@ Escribe aquí la letra y los acordes
       }
       
       // Si estábamos editando esta voz, cambiar a la principal
-      if (currentVoiceTab === `${instrumentId}-${voiceNumber}`) {
-        setCurrentVoiceTab("main");
+      if (currentTab === `${instrumentId}-${voiceNumber}`) {
+        setCurrentTab("main");
       }
     }
   };
   
-  const handleVoiceTabChange = (tabId) => {
+  const handleTabChange = (tabId) => {
+    // Guardar cualquier cambio pendiente
+    if (currentTab === "main" && tabId !== "main") {
+      // Si vamos de main a otra pestaña, sincronizar metadatos
+      updateContentMetadata();
+      
+      // Si vamos a la pestaña de letra, asegurarse de que las secciones estén sincronizadas
+      if (tabId === "lyrics") {
+        syncSections();
+      }
+    }
+    
     // Si el tab es "main", mostrar el contenido principal
     if (tabId === "main") {
-      setCurrentVoiceTab("main");
+      setCurrentTab("main");
+      return;
+    }
+    
+    // Si el tab es "lyrics", mostrar la letra
+    if (tabId === "lyrics") {
+      setCurrentTab("lyrics");
       return;
     }
     
@@ -372,31 +549,40 @@ Escribe aquí la letra y los acordes
     
     // Comprobar si existe la voz
     if (voices[instrumentId] && voices[instrumentId][voiceNumber]) {
-      setCurrentVoiceTab(tabId);
+      setCurrentTab(tabId);
     } else {
       // Si no existe, mostrar el contenido principal
-      setCurrentVoiceTab("main");
+      setCurrentTab("main");
     }
   };
 
-  // Función para obtener el contenido de la voz actual
-  const getCurrentVoiceContent = () => {
-    if (currentVoiceTab === "main") {
+  // Función para obtener el contenido de la pestaña actual
+  const getCurrentTabContent = () => {
+    if (currentTab === "main") {
       return content;
     }
     
-    const [instrumentId, voiceNumber] = currentVoiceTab.split('-');
+    if (currentTab === "lyrics") {
+      return lyricsOnly;
+    }
+    
+    const [instrumentId, voiceNumber] = currentTab.split('-');
     return voices[instrumentId]?.[voiceNumber] || content;
   };
   
-  // Función para actualizar el contenido de la voz actual
-  const updateCurrentVoiceContent = (newContent) => {
-    if (currentVoiceTab === "main") {
+  // Función para actualizar el contenido de la pestaña actual
+  const updateCurrentTabContent = (newContent) => {
+    if (currentTab === "main") {
       setContent(newContent);
       return;
     }
     
-    const [instrumentId, voiceNumber] = currentVoiceTab.split('-');
+    if (currentTab === "lyrics") {
+      setLyricsOnly(newContent);
+      return;
+    }
+    
+    const [instrumentId, voiceNumber] = currentTab.split('-');
     
     // Actualizar la voz en el estado
     const updatedVoices = { ...voices };
@@ -434,32 +620,37 @@ Escribe aquí la letra y los acordes
 
   // Handler para cambios en el editor
   const handleEditorChange = (value) => {
-    // Actualizar el contenido de la voz actual
-    updateCurrentVoiceContent(value);
+    // Actualizar el contenido de la pestaña actual
+    updateCurrentTabContent(value);
+    
+    // Si estamos editando el contenido principal, actualizar automáticamente la letra
+    // Pero solo si no han editado manualmente la letra
+    if (currentTab === "main") {
+      // Posible lógica para actualización automática si se desea
+    }
   };
 
   // Handler para cuando el editor pierde el foco
   const handleEditorBlur = () => {
     // Extraer metadatos cuando el editor pierde el foco (solo para contenido principal)
-    if (currentVoiceTab === "main") {
+    if (currentTab === "main") {
       extractMetadata();
     }
   };
 
-  // Función para generar las pestañas de voces
-  const renderVoiceTabs = () => {
-    // La pestaña principal ahora se muestra como "Principal (Trompeta en Sib 1)"
-    const mainInstrumentName = TRANSPOSING_INSTRUMENTS["bb_trumpet"]?.name || "Trompeta en Sib";
-    const voiceTabs = [{ 
-      id: "main", 
-      label: `Principal (${mainInstrumentName} 1)` 
-    }];
+  // Función para generar las pestañas
+  const renderTabs = () => {
+    // La pestaña principal y la de letra siempre están presentes
+    const tabs = [
+      { id: "main", label: "Acordes y Letra" },
+      { id: "lyrics", label: "Solo Letra" }
+    ];
     
     // Añadir las voces adicionales
     Object.entries(voices).forEach(([instrumentId, instrumentVoices]) => {
       Object.keys(instrumentVoices).sort().forEach(voiceNumber => {
         const instrumentName = TRANSPOSING_INSTRUMENTS[instrumentId]?.name || instrumentId;
-        voiceTabs.push({
+        tabs.push({
           id: `${instrumentId}-${voiceNumber}`,
           label: `${instrumentName} ${voiceNumber}`,
           removable: true // Las voces adicionales pueden eliminarse
@@ -470,11 +661,11 @@ Escribe aquí la letra y los acordes
     return (
       <div className="mb-3">
         <ul className="nav nav-tabs">
-          {voiceTabs.map(tab => (
+          {tabs.map(tab => (
             <li className="nav-item" key={tab.id}>
               <button 
-                className={`nav-link ${currentVoiceTab === tab.id ? 'active' : ''}`}
-                onClick={() => handleVoiceTabChange(tab.id)}
+                className={`nav-link ${currentTab === tab.id ? 'active' : ''}`}
+                onClick={() => handleTabChange(tab.id)}
               >
                 {tab.label}
                 {tab.removable && (
@@ -633,8 +824,8 @@ Escribe aquí la letra y los acordes
             {version && <small className="text-muted d-block mt-1">Versión de: {version}</small>}
           </div>
           
-          {/* Pestañas para voces */}
-          {renderVoiceTabs()}
+          {/* Pestañas para contenido/letra/voces */}
+          {renderTabs()}
           
           {/* Formulario para añadir voces */}
           {showVoicesManager && (
@@ -679,18 +870,44 @@ Escribe aquí la letra y los acordes
             </div>
           )}
           
+          {/* Mostrar botón "Generar letra automáticamente" solo en pestaña de letra */}
+          {currentTab === "lyrics" && (
+            <div className="mb-3">
+              <button 
+                className="btn btn-outline-primary"
+                onClick={handleGenerateLyrics}
+                title="Extraer automáticamente la letra de la canción desde la pestaña principal"
+              >
+                <i className="bi bi-magic"></i> Generar letra automáticamente
+              </button>
+              <small className="text-muted ms-2">
+                Esto reemplazará cualquier texto en la pestaña de letra.
+              </small>
+            </div>
+          )}
+          
           {/* Editor de contenido */}
           <SimpleMDE
             ref={editorRef}
-            value={getCurrentVoiceContent()}
+            value={getCurrentTabContent()}
             onChange={handleEditorChange}
             onBlur={handleEditorBlur}
             options={editorOptions}
           />
-          <small className="form-text text-muted mt-2">
-            Usa el formato de notación: <code className="song-notation">DO SOL LA- FA</code> para los acordes.
-            Usa <code className="song-notation">## Título</code> para crear secciones.
-          </small>
+          
+          {/* Mostrar ayuda contextual según la pestaña actual */}
+          {currentTab === "main" && (
+            <small className="form-text text-muted mt-2">
+              Usa el formato de notación: <code className="song-notation">DO SOL LA- FA</code> para los acordes.
+              Usa <code className="song-notation">## Título</code> para crear secciones.
+            </small>
+          )}
+          
+          {currentTab === "lyrics" && (
+            <small className="form-text text-muted mt-2">
+              Escribe solo la letra, sin acordes. Mantén los títulos de sección con <code className="song-notation">## Título</code>.
+            </small>
+          )}
         </div>
       </div>
     </div>
