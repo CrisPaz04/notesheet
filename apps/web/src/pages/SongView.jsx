@@ -762,12 +762,12 @@ function SongView() {
               <div 
                 ref={chordsViewRef}
                 className="song-view"
-                style={{ fontSize: `${fontSize}px` }}
-              >
+                style={{ fontSize: `${fontSize}px !important` }}
+              > 
                 {formattedSong && formattedSong.sections.map((section, index) => (
                   <div key={index} className="song-section-modern">
                     <h3 className="song-section-title">{section.title}</h3>
-                    <div className="song-section-content">
+                    <div className="song-section-content" style={{ fontSize: `${fontSize}px` }}>
                       {section.content}
                     </div>
                   </div>
@@ -785,12 +785,12 @@ function SongView() {
               <div 
                 ref={lyricsViewRef}
                 className="song-view"
-                style={{ fontSize: `${fontSize}px` }}
+                style={{ fontSize: `${fontSize}px !important` }}
               >
                 {formattedLyricsOnly && formattedLyricsOnly.sections.map((section, index) => (
                   <div key={index} className="song-section-modern">
                     <h3 className="song-section-title">{section.title}</h3>
-                    <div className="song-section-content">
+                    <div className="song-section-content" style={{ fontSize: `${fontSize}px` }}>
                       {section.content}
                     </div>
                   </div>
