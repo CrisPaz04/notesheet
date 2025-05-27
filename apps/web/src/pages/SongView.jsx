@@ -14,8 +14,9 @@ import {
 import { useAuth } from "../context/AuthContext";
 import { InstrumentSelector } from "../components/InstrumentSelector";
 import { getUserPreferences, updateUserPreferences } from "@notesheet/api";
+import LoadingSpinner from "../components/LoadingSpinner";
 
-// Arrays de pares de tonalidades relativas (mayor y menor)
+// Arrays de pares de tonalidades relativas
 const RELATIVE_KEYS = [
   { major: "DO", minor: "LAm", english: { major: "C", minor: "Am" } },
   { major: "SOL", minor: "MIm", english: { major: "G", minor: "Em" } },
@@ -34,11 +35,6 @@ const RELATIVE_KEYS = [
   { major: "DOb", minor: "LAbm", english: { major: "Cb", minor: "Abm" } }
 ];
 
-// Versión simplificada para tonalidades
-const MAJOR_KEYS = RELATIVE_KEYS.map(pair => pair.major);
-const MINOR_KEYS = RELATIVE_KEYS.map(pair => pair.minor);
-const ALL_KEYS = [...MAJOR_KEYS, ...MINOR_KEYS];
-
 function SongView() {
   const [song, setSong] = useState(null);
   const [formattedSong, setFormattedSong] = useState(null);
@@ -47,21 +43,26 @@ function SongView() {
   const [error, setError] = useState("");
   
   // Referencias a tonalidades
-  const [baseKey, setBaseKey] = useState(""); // Tonalidad base para trompeta
-  const [displayKey, setDisplayKey] = useState(""); // Tonalidad visual para el instrumento actual
-  const [targetKey, setTargetKey] = useState(""); // Tonalidad objetivo tras transposición
+  const [baseKey, setBaseKey] = useState("");
+  const [displayKey, setDisplayKey] = useState("");
+  const [targetKey, setTargetKey] = useState("");
   
-  const [originalContent, setOriginalContent] = useState(""); // Contenido original para transposiciones exactas
-  const [fontSize, setFontSize] = useState(18); // Tamaño base de fuente
-  const [notationSystem, setNotationSystem] = useState("latin"); // latin (DO-RE-MI) o english (C-D-E)
-  const [currentInstrument, setCurrentInstrument] = useState("bb_trumpet"); // Por defecto, trompeta en Sib
-  const [selectedVoice, setSelectedVoice] = useState(null); // Voz seleccionada (null = versión principal)
-  const [availableVoices, setAvailableVoices] = useState({}); // Voces disponibles por instrumento
+  const [originalContent, setOriginalContent] = useState("");
+  const [fontSize, setFontSize] = useState(18);
+  const [notationSystem, setNotationSystem] = useState("latin");
+  const [currentInstrument, setCurrentInstrument] = useState("bb_trumpet");
+  const [selectedVoice, setSelectedVoice] = useState(null);
+  const [availableVoices, setAvailableVoices] = useState({});
   
   // Estado para la vista dual
   const [activeView, setActiveView] = useState(0); // 0 = Acordes, 1 = Letra
   const [touchStart, setTouchStart] = useState(null);
   const [touchEnd, setTouchEnd] = useState(null);
+
+  // Estados para dropdowns
+  const [showKeyDropdown, setShowKeyDropdown] = useState(false);
+  const [showInstrumentDropdown, setShowInstrumentDropdown] = useState(false);
+  const [showNotationDropdown, setShowNotationDropdown] = useState(false);
 
   // Referencias para posiciones de scroll
   const chordsScrollPosition = useRef(0);
@@ -72,21 +73,17 @@ function SongView() {
   const { id } = useParams();
   const { currentUser } = useAuth();
 
-  // Función para extraer solo la letra de una canción (sin acordes)
+  // Función para extraer solo la letra de una canción
   const extractLyricsOnly = (formattedSongData) => {
     if (!formattedSongData || !formattedSongData.sections) return null;
     
-    // Crear una copia profunda para no modificar el original
     const lyricsOnlySections = formattedSongData.sections.map(section => {
-      // Crear un objeto nuevo para cada sección
       const newSection = { ...section };
       
-      // Eliminar los acordes de las líneas (todo lo que está entre DO y FA#, etc.)
-      // Esta regex busca palabras que sean acordes y los elimina, manteniendo el texto
       newSection.content = section.content
         .replace(/\b(DO|RE|MI|FA|SOL|LA|SI|C|D|E|F|G|A|B)(?:#|b)?(?:m)?\b/g, '')
-        .replace(/\|\s*\|/g, '') // Eliminar barras dobles vacías
-        .replace(/\s{2,}/g, ' ') // Reemplazar múltiples espacios por uno solo
+        .replace(/\|\s*\|/g, '')
+        .replace(/\s{2,}/g, ' ')
         .trim();
       
       return newSection;
@@ -104,11 +101,10 @@ function SongView() {
       try {
         setLoading(true);
         
-        // Si hay un usuario autenticado, cargar sus preferencias
+        // Cargar preferencias del usuario si está autenticado
         if (currentUser) {
           try {
             const prefs = await getUserPreferences(currentUser.uid);
-            // Aplicar preferencias del usuario
             if (prefs.defaultInstrument) {
               setCurrentInstrument(prefs.defaultInstrument);
             }
@@ -127,7 +123,7 @@ function SongView() {
         const loadedSong = await getSongById(id);
         setSong(loadedSong);
         
-        // Establecer tonalidad base (la que se ve para trompeta)
+        // Establecer tonalidad base
         const songKey = loadedSong.key || "DO";
         setBaseKey(songKey);
         setTargetKey(songKey);
@@ -135,40 +131,35 @@ function SongView() {
         // Guardar lista de voces disponibles
         setAvailableVoices(loadedSong.voices || {});
         
-        // Determinar qué contenido mostrar (principal o voz específica)
+        // Determinar qué contenido mostrar
         let contentToLoad;
         
-        // Comprobar si tenemos una voz específica para este instrumento
         if (selectedVoice && 
             loadedSong.voices && 
             loadedSong.voices[currentInstrument] && 
             loadedSong.voices[currentInstrument][selectedVoice]) {
-          // Usar el contenido de la voz específica
           contentToLoad = loadedSong.voices[currentInstrument][selectedVoice];
         } else {
-          // Usar el contenido principal
           contentToLoad = loadedSong.content || "";
-          // Resetear la voz seleccionada si no está disponible
           if (selectedVoice) setSelectedVoice(null);
         }
         
-        // Guardar el contenido original para futuras transposiciones
+        // Guardar el contenido original
         setOriginalContent(contentToLoad);
         
-        // Detectar el sistema de notación automáticamente si no se especifica en preferencias
+        // Detectar sistema de notación si no se especifica
         if (!currentUser || !notationSystem) {
           const detectedSystem = detectNotationSystem(contentToLoad);
           setNotationSystem(detectedSystem);
         }
         
-        // Establecer la tonalidad visual según el instrumento seleccionado
+        // Establecer tonalidad visual según el instrumento
         const visualKey = getVisualKeyForInstrument(songKey, currentInstrument);
         setDisplayKey(visualKey);
         
-        // Preparar el contenido para mostrar según el instrumento
+        // Preparar contenido para mostrar
         let contentToShow = contentToLoad;
         
-        // Si el instrumento no es trompeta, aplicar transposición
         if (currentInstrument !== "bb_trumpet") {
           contentToShow = transposeForInstrument(
             contentToShow,
@@ -177,7 +168,6 @@ function SongView() {
           );
         }
         
-        // Aplicar sistema de notación si es necesario
         if (notationSystem === "english") {
           contentToShow = convertNotationSystem(contentToShow, "english");
         }
@@ -186,7 +176,7 @@ function SongView() {
         const formatted = formatSong(contentToShow);
         setFormattedSong(formatted);
         
-        // Crear la versión de solo letras
+        // Crear versión de solo letras
         const lyricsOnly = extractLyricsOnly(formatted);
         setFormattedLyricsOnly(lyricsOnly);
       } catch (error) {
@@ -215,7 +205,6 @@ function SongView() {
   const handleTouchEnd = () => {
     if (!touchStart || !touchEnd) return;
     
-    // Guardar posición de scroll actual antes de cambiar vista
     if (activeView === 0 && chordsViewRef.current) {
       chordsScrollPosition.current = chordsViewRef.current.scrollTop;
     } else if (activeView === 1 && lyricsViewRef.current) {
@@ -250,18 +239,15 @@ function SongView() {
     }
   }, [activeView]);
 
-  // Función para transposición a una nueva tonalidad
+  // Función para transposición
   const handleTranspose = (newKey) => {
     if (newKey === targetKey || !song || !originalContent) return;
     
     try {
-      // Establecer nueva tonalidad objetivo
       setTargetKey(newKey);
       
-      // Calcular la transposición desde la tonalidad base (trompeta) a la nueva tonalidad
       let transposedContent = transposeContent(originalContent, baseKey, newKey);
       
-      // Si el instrumento actual no es trompeta, aplicar transposición adicional
       if (currentInstrument !== "bb_trumpet") {
         transposedContent = transposeForInstrument(
           transposedContent,
@@ -270,29 +256,20 @@ function SongView() {
         );
       }
       
-      // Aplicar sistema de notación si es necesario
       if (notationSystem === "english") {
         transposedContent = convertNotationSystem(transposedContent, "english");
       }
       
-      // Actualizar tonalidad visual para el instrumento actual
       const visualKey = getVisualKeyForInstrument(newKey, currentInstrument);
       setDisplayKey(visualKey);
       
-      // Formatear y mostrar
       const formatted = formatSong(transposedContent);
       setFormattedSong(formatted);
       
-      // Actualizar versión de solo letras
       const lyricsOnly = extractLyricsOnly(formatted);
       setFormattedLyricsOnly(lyricsOnly);
       
-      console.log("Transposición aplicada:", {
-        desdeKey: baseKey,
-        hastaKey: newKey,
-        instrumento: currentInstrument,
-        tonalidad_visual: visualKey
-      });
+      setShowKeyDropdown(false);
     } catch (error) {
       setError("Error al transponer: " + error.message);
       console.error("Error completo:", error);
@@ -312,8 +289,8 @@ function SongView() {
     
     try {
       setNotationSystem(system);
+      setShowNotationDropdown(false);
       
-      // Guardar preferencia si el usuario está autenticado
       if (currentUser) {
         try {
           updateUserPreferences(currentUser.uid, {
@@ -324,15 +301,12 @@ function SongView() {
         }
       }
       
-      // Empezamos desde el contenido original
       let contentToProcess = originalContent;
       
-      // Si estamos en una tonalidad diferente a la base, primero transponemos
       if (targetKey !== baseKey) {
         contentToProcess = transposeContent(contentToProcess, baseKey, targetKey);
       }
       
-      // Aplicar transposición de instrumento si necesario
       if (currentInstrument !== "bb_trumpet") {
         contentToProcess = transposeForInstrument(
           contentToProcess,
@@ -341,14 +315,11 @@ function SongView() {
         );
       }
       
-      // Convertir sistema de notación
       contentToProcess = convertNotationSystem(contentToProcess, system);
       
-      // Formatear y mostrar
       const formatted = formatSong(contentToProcess);
       setFormattedSong(formatted);
       
-      // Actualizar versión de solo letras
       const lyricsOnly = extractLyricsOnly(formatted);
       setFormattedLyricsOnly(lyricsOnly);
     } catch (error) {
@@ -362,11 +333,10 @@ function SongView() {
     if (instrumentId === currentInstrument && !selectedVoice) return;
     
     try {
-      // Actualizar el instrumento actual
       setCurrentInstrument(instrumentId);
-      setSelectedVoice(null); // Resetear la voz al cambiar de instrumento
+      setSelectedVoice(null);
+      setShowInstrumentDropdown(false);
       
-      // Guardar preferencia de usuario
       if (currentUser) {
         try {
           await updateUserPreferences(currentUser.uid, {
@@ -377,19 +347,13 @@ function SongView() {
         }
       }
       
-      // Determinar qué contenido mostrar (principal o voz específica)
-      let contentToProcess;
-      
-      // Usar siempre el contenido principal al cambiar de instrumento
-      contentToProcess = song.content;
+      let contentToProcess = song.content;
       setOriginalContent(contentToProcess);
       
-      // Si estamos en una tonalidad diferente a la base, primero transponemos
       if (targetKey !== baseKey) {
         contentToProcess = transposeContent(contentToProcess, baseKey, targetKey);
       }
       
-      // Aplicar transposición para el nuevo instrumento
       if (instrumentId !== "bb_trumpet") {
         contentToProcess = transposeForInstrument(
           contentToProcess,
@@ -398,92 +362,20 @@ function SongView() {
         );
       }
       
-      // Aplicar sistema de notación si necesario
       if (notationSystem === "english") {
         contentToProcess = convertNotationSystem(contentToProcess, "english");
       }
       
-      // Actualizar tonalidad visual para el nuevo instrumento
       const visualKey = getVisualKeyForInstrument(targetKey, instrumentId);
       setDisplayKey(visualKey);
       
-      // Formatear y mostrar
       const formatted = formatSong(contentToProcess);
       setFormattedSong(formatted);
       
-      // Actualizar versión de solo letras
       const lyricsOnly = extractLyricsOnly(formatted);
       setFormattedLyricsOnly(lyricsOnly);
-      
-      console.log("Cambio de instrumento:", {
-        instrumento: TRANSPOSING_INSTRUMENTS[instrumentId].name,
-        transposicion: TRANSPOSING_INSTRUMENTS[instrumentId].transposition,
-        tonalidad_base: targetKey,
-        tonalidad_visual: visualKey
-      });
     } catch (error) {
       setError("Error al cambiar de instrumento: " + error.message);
-      console.error("Error completo:", error);
-    }
-  };
-  
-  // Función para cambiar de voz
-  const handleVoiceChange = async (voiceNumber) => {
-    if (voiceNumber === selectedVoice) return;
-    
-    try {
-      setSelectedVoice(voiceNumber);
-      
-      // Determinar qué contenido mostrar
-      let contentToProcess;
-      
-      if (voiceNumber && 
-          song.voices && 
-          song.voices[currentInstrument] && 
-          song.voices[currentInstrument][voiceNumber]) {
-        // Usar el contenido de la voz específica
-        contentToProcess = song.voices[currentInstrument][voiceNumber];
-      } else {
-        // Usar el contenido principal
-        contentToProcess = song.content;
-      }
-      
-      // Guardar este contenido como original para futuras transposiciones
-      setOriginalContent(contentToProcess);
-      
-      // Si estamos en una tonalidad diferente a la base, aplicar transposición
-      if (targetKey !== baseKey) {
-        contentToProcess = transposeContent(contentToProcess, baseKey, targetKey);
-      }
-      
-      // Aplicar transposición para el instrumento actual
-      if (currentInstrument !== "bb_trumpet") {
-        contentToProcess = transposeForInstrument(
-          contentToProcess,
-          "bb_trumpet", 
-          currentInstrument
-        );
-      }
-      
-      // Aplicar sistema de notación si necesario
-      if (notationSystem === "english") {
-        contentToProcess = convertNotationSystem(contentToProcess, "english");
-      }
-      
-      // Formatear y mostrar
-      const formatted = formatSong(contentToProcess);
-      setFormattedSong(formatted);
-      
-      // Actualizar versión de solo letras
-      const lyricsOnly = extractLyricsOnly(formatted);
-      setFormattedLyricsOnly(lyricsOnly);
-      
-      console.log("Cambio de voz:", {
-        instrumento: TRANSPOSING_INSTRUMENTS[currentInstrument].name,
-        voz: voiceNumber || "Principal",
-      });
-    } catch (error) {
-      setError("Error al cambiar de voz: " + error.message);
       console.error("Error completo:", error);
     }
   };
@@ -494,7 +386,6 @@ function SongView() {
       const newSize = fontSize + 2;
       setFontSize(newSize);
       
-      // Guardar preferencia si el usuario está autenticado
       if (currentUser) {
         try {
           updateUserPreferences(currentUser.uid, {
@@ -512,7 +403,6 @@ function SongView() {
       const newSize = fontSize - 2;
       setFontSize(newSize);
       
-      // Guardar preferencia si el usuario está autenticado
       if (currentUser) {
         try {
           updateUserPreferences(currentUser.uid, {
@@ -529,7 +419,6 @@ function SongView() {
     const defaultSize = 18;
     setFontSize(defaultSize);
     
-    // Guardar preferencia si el usuario está autenticado
     if (currentUser) {
       try {
         updateUserPreferences(currentUser.uid, {
@@ -545,54 +434,14 @@ function SongView() {
     window.print();
   };
 
-  // Estilo de impresión
-  useEffect(() => {
-    const style = document.createElement('style');
-    style.id = 'print-style';
-    style.innerHTML = `
-      @media print {
-        body * {
-          visibility: hidden;
-        }
-        #song-content, #song-content * {
-          visibility: visible;
-        }
-        #song-content {
-          position: absolute;
-          left: 0;
-          top: 0;
-          width: 100%;
-        }
-        .no-print {
-          display: none !important;
-        }
-      }
-    `;
-    document.head.appendChild(style);
-
-    return () => {
-      const printStyle = document.getElementById('print-style');
-      if (printStyle) {
-        document.head.removeChild(printStyle);
-      }
-    };
-  }, []);
-
-  // Obtener el nombre del instrumento actual
-  const getCurrentInstrumentName = () => {
-    const baseName = TRANSPOSING_INSTRUMENTS[currentInstrument]?.name || "Trompeta en Sib";
-    if (selectedVoice) {
-      return `${baseName} ${selectedVoice}`;
-    }
-    // Si no hay voz seleccionada, mostrar como voz 1 por defecto
-    return `${baseName} 1`;
-  };
-
   if (loading) {
     return (
-      <div className="d-flex justify-content-center align-items-center">
-        <div className="spinner-border text-primary" role="status">
-          <span className="visually-hidden">Cargando...</span>
+      <div className="song-view-container">
+        <div className="container">
+          <LoadingSpinner 
+            text="Cargando canción..." 
+            subtext="Preparando la vista musical"
+          />
         </div>
       </div>
     );
@@ -600,311 +449,366 @@ function SongView() {
 
   if (error) {
     return (
-      <div className="alert alert-danger" role="alert">
-        {error}
+      <div className="song-view-container">
+        <div className="container">
+          <div className="alert alert-danger fade-in" role="alert">
+            <i className="bi bi-exclamation-triangle-fill me-2"></i>
+            {error}
+          </div>
+        </div>
       </div>
     );
   }
 
   if (!song) {
     return (
-      <div className="text-center">
-        <h2>Canción no encontrada</h2>
-        <Link to="/dashboard" className="btn btn-primary mt-3">
-          Volver al Dashboard
-        </Link>
+      <div className="song-view-container">
+        <div className="container">
+          <div className="text-center fade-in">
+            <h2 className="text-white mb-4">Canción no encontrada</h2>
+            <Link to="/dashboard" className="btn-song-primary">
+              <i className="bi bi-arrow-left me-2"></i>
+              Volver al Dashboard
+            </Link>
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div>
-      <div className="d-flex justify-content-end align-items-center mb-4 no-print">
-        <div className="d-flex gap-2">
-          <InstrumentSelector 
-            selectedInstrument={currentInstrument}
-            selectedVoice={selectedVoice}
-            onInstrumentChange={handleInstrumentChange}
-            onVoiceChange={handleVoiceChange}
-            instruments={TRANSPOSING_INSTRUMENTS}
-            availableVoices={availableVoices}
-          />
+    <div className="song-view-container">
+      <div className="container">
+        {/* Header de la canción */}
+        <div className="song-header fade-in">
+          <h1 className="song-title-main">{song.title || "Sin título"}</h1>
           
-          <div className="dropdown">
-            <button 
-              className="btn btn-outline-primary dropdown-toggle" 
-              type="button"
-              data-bs-toggle="dropdown"
-              aria-expanded="false"
-            >
-              Tonalidad: {displayKey}
-            </button>
-            <div className="dropdown-menu dropdown-menu-end" style={{ maxHeight: '400px', overflowY: 'auto', width: '300px' }}>
-              <div className="px-3">
-                <div className="mb-3">
-                  <button 
-                    className="btn btn-sm btn-outline-secondary w-100"
-                    onClick={resetTransposition}
-                    disabled={targetKey === baseKey}
-                  >
-                    Restaurar original ({getVisualKeyForInstrument(baseKey, currentInstrument)})
-                  </button>
+          <div className="song-meta-grid">
+            <div className="song-meta-item">
+              <div className="song-meta-label">
+                <i className="bi bi-music-note me-1"></i>
+                Instrumento
+              </div>
+              <div className="song-meta-value">
+                {TRANSPOSING_INSTRUMENTS[currentInstrument]?.name || "Trompeta en Sib"}
+                {selectedVoice && ` ${selectedVoice}`}
+              </div>
+            </div>
+            
+            <div className="song-meta-item">
+              <div className="song-meta-label">
+                <i className="bi bi-key me-1"></i>
+                Tonalidad
+              </div>
+              <div className="song-meta-value">{displayKey}</div>
+            </div>
+            
+            <div className="song-meta-item">
+              <div className="song-meta-label">
+                <i className="bi bi-heart me-1"></i>
+                Tipo
+              </div>
+              <div className="song-meta-value">{song.type || "No especificado"}</div>
+            </div>
+            
+            {song.version && (
+              <div className="song-meta-item">
+                <div className="song-meta-label">
+                  <i className="bi bi-person me-1"></i>
+                  Versión de
                 </div>
+                <div className="song-meta-value">{song.version}</div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Barra de controles */}
+        <div className="controls-toolbar fade-in-delay no-print">
+          <div className="controls-row">
+            <div className="controls-group">
+              {/* Selector de Instrumento */}
+              <div className="control-dropdown">
+                <button
+                  className={`dropdown-button ${showInstrumentDropdown ? 'active' : ''}`}
+                  onClick={() => {
+                    setShowInstrumentDropdown(!showInstrumentDropdown);
+                    setShowKeyDropdown(false);
+                    setShowNotationDropdown(false);
+                  }}
+                >
+                  <i className="bi bi-music-note-beamed"></i>
+                  <span>{TRANSPOSING_INSTRUMENTS[currentInstrument]?.name || "Trompeta"}</span>
+                  <i className={`bi bi-chevron-${showInstrumentDropdown ? 'up' : 'down'}`}></i>
+                </button>
                 
-                {RELATIVE_KEYS.map((pair, index) => {
-                  // Calcular las tonalidades visuales para este instrumento
-                  const majorVisualKey = getVisualKeyForInstrument(pair.major, currentInstrument);
-                  const minorVisualKey = getVisualKeyForInstrument(pair.minor, currentInstrument);
-                  
-                  return (
-                    <div className="mb-2" key={index}>
-                      <div className="d-flex gap-1 mb-2">
-                        <button 
-                          className={`btn btn-sm flex-grow-1 ${displayKey === majorVisualKey ? 'btn-primary' : 'btn-outline-secondary'}`}
-                          onClick={() => handleTranspose(pair.major)}
-                        >
-                          {majorVisualKey}
-                          {pair.major === baseKey && " (Original)"}
-                        </button>
-                        <button 
-                          className={`btn btn-sm flex-grow-1 ${displayKey === minorVisualKey ? 'btn-primary' : 'btn-outline-secondary'}`}
-                          onClick={() => handleTranspose(pair.minor)}
-                        >
-                          {minorVisualKey}
-                          {pair.minor === baseKey && " (Original)"}
-                        </button>
+                {showInstrumentDropdown && (
+                  <div className="dropdown-menu-custom">
+                    {Object.entries(TRANSPOSING_INSTRUMENTS).map(([id, instrument]) => (
+                      <div
+                        key={id}
+                        className={`dropdown-item-custom ${currentInstrument === id ? 'active' : ''}`}
+                        onClick={() => handleInstrumentChange(id)}
+                      >
+                        {instrument.name}
+                        <div style={{ fontSize: '0.8rem', opacity: 0.7 }}>
+                          {instrument.description}
+                        </div>
                       </div>
-                      {index < RELATIVE_KEYS.length - 1 && <hr className="my-1" />}
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Selector de Tonalidad */}
+              <div className="control-dropdown">
+                <button
+                  className={`dropdown-button ${showKeyDropdown ? 'active' : ''}`}
+                  onClick={() => {
+                    setShowKeyDropdown(!showKeyDropdown);
+                    setShowInstrumentDropdown(false);
+                    setShowNotationDropdown(false);
+                  }}
+                >
+                  <i className="bi bi-key"></i>
+                  <span>Tonalidad: {displayKey}</span>
+                  <i className={`bi bi-chevron-${showKeyDropdown ? 'up' : 'down'}`}></i>
+                </button>
+                
+                {showKeyDropdown && (
+                  <div className="dropdown-menu-custom">
+                    <div className="dropdown-item-custom" onClick={resetTransposition}>
+                      <strong>Original ({getVisualKeyForInstrument(baseKey, currentInstrument)})</strong>
                     </div>
-                  );
-                })}
+                    <hr style={{ margin: '0.5rem 0', border: 'none', height: '1px', background: 'rgba(255,255,255,0.1)' }} />
+                    {RELATIVE_KEYS.map((pair, index) => {
+                      const majorVisualKey = getVisualKeyForInstrument(pair.major, currentInstrument);
+                      const minorVisualKey = getVisualKeyForInstrument(pair.minor, currentInstrument);
+                      
+                      return (
+                        <div key={index}>
+                          <div style={{ display: 'flex', gap: '0.5rem', padding: '0.25rem 0.5rem' }}>
+                            <div
+                              className={`dropdown-item-custom ${displayKey === majorVisualKey ? 'active' : ''}`}
+                              onClick={() => handleTranspose(pair.major)}
+                              style={{ flex: 1, margin: 0, padding: '0.5rem' }}
+                            >
+                              {majorVisualKey}
+                              {pair.major === baseKey && " (Original)"}
+                            </div>
+                            <div
+                              className={`dropdown-item-custom ${displayKey === minorVisualKey ? 'active' : ''}`}
+                              onClick={() => handleTranspose(pair.minor)}
+                              style={{ flex: 1, margin: 0, padding: '0.5rem' }}
+                            >
+                              {minorVisualKey}
+                              {pair.minor === baseKey && " (Original)"}
+                            </div>
+                          </div>
+                          {index < RELATIVE_KEYS.length - 1 && (
+                            <hr style={{ margin: '0.25rem 0', border: 'none', height: '1px', background: 'rgba(255,255,255,0.05)' }} />
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
-            </div>
-          </div>
-          
-          <div className="dropdown">
-            <button 
-              className="btn btn-outline-secondary dropdown-toggle" 
-              type="button"
-              data-bs-toggle="dropdown"
-              aria-expanded="false"
-            >
-              Notación: {notationSystem === "latin" ? "DO-RE-MI" : "C-D-E"}
-            </button>
-            <ul className="dropdown-menu">
-              <li>
-                <button 
-                  className="dropdown-item" 
-                  type="button"
-                  onClick={() => handleChangeNotation("latin")}
-                >
-                  DO-RE-MI (Latina)
-                </button>
-              </li>
-              <li>
-                <button 
-                  className="dropdown-item" 
-                  type="button"
-                  onClick={() => handleChangeNotation("english")}
-                >
-                  C-D-E (Anglosajona)
-                </button>
-              </li>
-            </ul>
-          </div>
-          
-          <div className="btn-group">
-            <button
-              className="btn btn-outline-secondary"
-              onClick={decreaseFontSize}
-              title="Disminuir tamaño"
-            >
-              A-
-            </button>
-            <button
-              className="btn btn-outline-secondary"
-              onClick={resetFontSize}
-              title="Tamaño normal"
-            >
-              A
-            </button>
-            <button
-              className="btn btn-outline-secondary"
-              onClick={increaseFontSize}
-              title="Aumentar tamaño"
-            >
-              A+
-            </button>
-          </div>
-          
-          <div className="btn-group">
-            <button
-              className={`btn btn-outline-${activeView === 0 ? 'primary' : 'secondary'}`}
-              onClick={() => setActiveView(0)}
-              title="Ver acordes"
-            >
-              <i className="bi bi-music-note-list"></i>
-            </button>
-            <button
-              className={`btn btn-outline-${activeView === 1 ? 'primary' : 'secondary'}`}
-              onClick={() => setActiveView(1)}
-              title="Ver letra"
-            >
-              <i className="bi bi-card-text"></i>
-            </button>
-          </div>
-          
-          <button
-            className="btn btn-outline-secondary"
-            onClick={handlePrint}
-            title="Imprimir"
-          >
-            <i className="bi bi-printer"></i> Imprimir
-          </button>
-          
-          {currentUser && currentUser.uid === song.userId && (
-            <Link 
-              to={`/songs/${id}/edit`} 
-              className="btn btn-primary"
-            >
-              Editar
-            </Link>
-          )}
-          
-          <Link 
-            to="/dashboard" 
-            className="btn btn-outline-secondary"
-          >
-            Volver
-          </Link>
-        </div>
-      </div>
 
-      <div id="song-content" className="position-relative">
-        {/* Encabezado fijo (igual para ambas vistas) */}
-        <div className="card mb-3">
-          <div className="card-body text-center">
-            <h3 className="mb-2">{song.title || "Sin título"}</h3>
-            <div className="row">
-              <div className="col-4 text-start">
-                <small className="text-muted">
-                  Instrumento: {getCurrentInstrumentName()}
-                </small><br/>
-                <small className="text-muted">Tonalidad: {displayKey}</small>
-              </div>
-              <div className="col-4">
-                {/* Centro - vacío para equilibrar */}
-                <small className="text-muted">Versión de: {song.version || "No especificado"}</small><br/>
-                <small className="text-muted">Tipo: {song.type || "No especificado"}</small>
+              {/* Selector de Notación */}
+              <div className="control-dropdown">
+                <button
+                  className={`dropdown-button ${showNotationDropdown ? 'active' : ''}`}
+                  onClick={() => {
+                    setShowNotationDropdown(!showNotationDropdown);
+                    setShowInstrumentDropdown(false);
+                    setShowKeyDropdown(false);
+                  }}
+                >
+                  <i className="bi bi-alphabet"></i>
+                  <span>{notationSystem === "latin" ? "DO-RE-MI" : "C-D-E"}</span>
+                  <i className={`bi bi-chevron-${showNotationDropdown ? 'up' : 'down'}`}></i>
+                </button>
+                
+                {showNotationDropdown && (
+                  <div className="dropdown-menu-custom">
+                    <div
+                      className={`dropdown-item-custom ${notationSystem === 'latin' ? 'active' : ''}`}
+                      onClick={() => handleChangeNotation("latin")}
+                    >
+                      DO-RE-MI (Latina)
+                    </div>
+                    <div
+                      className={`dropdown-item-custom ${notationSystem === 'english' ? 'active' : ''}`}
+                      onClick={() => handleChangeNotation("english")}
+                    >
+                      C-D-E (Anglosajona)
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
-          </div>
-        </div>
-        {/* Indicador de vista - puntos para saber en qué vista estamos */}
-        <div className="text-center mb-3">
-          <div className="d-inline-flex">
-            <button 
-              onClick={() => setActiveView(0)} 
-              className={`btn btn-sm mx-1 ${activeView === 0 ? 'btn-primary' : 'btn-outline-secondary'}`}
-              style={{ width: '30px', height: '10px', padding: 0, borderRadius: '10px' }}
-            />
-            <button 
-              onClick={() => setActiveView(1)} 
-              className={`btn btn-sm mx-1 ${activeView === 1 ? 'btn-primary' : 'btn-outline-secondary'}`}
-              style={{ width: '30px', height: '10px', padding: 0, borderRadius: '10px' }}
-            />
-          </div>
-          <div className="text-muted small mt-1">
-            {activeView === 0 ? 'Deslizar a la derecha para ver solo letra' : 'Deslizar a la izquierda para ver acordes'}
+            
+            <div className="controls-group">
+              {/* Controles de fuente */}
+              <div className="font-controls">
+                <button
+                  className="font-control-btn"
+                  onClick={decreaseFontSize}
+                  title="Disminuir tamaño"
+                >
+                  A-
+                </button>
+                <button
+                  className="font-control-btn"
+                  onClick={resetFontSize}
+                  title="Tamaño normal"
+                >
+                  A
+                </button>
+                <button
+                  className="font-control-btn"
+                  onClick={increaseFontSize}
+                  title="Aumentar tamaño"
+                >
+                  A+
+                </button>
+              </div>
+              
+              {/* Toggle de vista */}
+              <div className="view-toggle-controls">
+                <button
+                  className={`view-toggle-btn-song ${activeView === 0 ? 'active' : ''}`}
+                  onClick={() => setActiveView(0)}
+                >
+                  <i className="bi bi-music-note-list"></i>
+                  Acordes
+                </button>
+                <button
+                  className={`view-toggle-btn-song ${activeView === 1 ? 'active' : ''}`}
+                  onClick={() => setActiveView(1)}
+                >
+                  <i className="bi bi-card-text"></i>
+                  Letra
+                </button>
+              </div>
+              
+              {/* Botones de acción */}
+              <div className="action-buttons-song">
+                <button
+                  className="btn-song-action"
+                  onClick={handlePrint}
+                  title="Imprimir"
+                >
+                  <i className="bi bi-printer"></i>
+                  Imprimir
+                </button>
+                
+                {currentUser && currentUser.uid === song.userId && (
+                  <Link 
+                    to={`/songs/${id}/edit`} 
+                    className="btn-song-action btn-song-primary"
+                  >
+                    <i className="bi bi-pencil"></i>
+                    Editar
+                  </Link>
+                )}
+                
+                <Link 
+                  to="/dashboard" 
+                  className="btn-song-action"
+                >
+                  <i className="bi bi-arrow-left"></i>
+                  Volver
+                </Link>
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Contenedor de vistas con swipe */}
-        <div 
-          onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
-          style={{ 
-            width: '100%',
-            overflow: 'hidden',
-            position: 'relative'
-          }}
-        >
-          {/* Vista de acordes */}
-          <div 
-            ref={chordsViewRef}
-            className="card" 
-            style={{ 
-              fontSize: `${fontSize}px`,
-              transform: `translateX(${activeView * -100}%)`,
-              transition: 'transform 0.3s ease-out',
-              width: '100%',
-              position: activeView === 0 ? 'relative' : 'absolute',
-              height: activeView === 0 ? 'auto' : '100%',
-              overflow: activeView === 0 ? 'visible' : 'hidden',
-              visibility: activeView === 0 ? 'visible' : 'hidden'
-            }}
-          >
-            <div className="card-body">
-              {formattedSong && formattedSong.sections.map((section, index) => (
-                <div key={index} className="song-section mb-4 text-center">
-                  <h3 className="h5 mb-3">{section.title}</h3>
-                  <pre className="mb-0" style={{ 
-                    whiteSpace: 'pre-wrap', 
-                    fontFamily: 'inherit'
-                  }}>
-                    {section.content}
-                  </pre>
-                </div>
-              ))}
-              
-              {(!formattedSong || formattedSong.sections.length === 0) && (
-                <p className="text-center text-muted">
-                  No hay contenido disponible para esta canción.
-                </p>
-              )}
+        {/* Contenido de la canción */}
+        <div className="song-content slide-up">
+          {/* Indicador de vista */}
+          <div className="view-indicator no-print">
+            <div className="view-dots">
+              <button 
+                onClick={() => setActiveView(0)} 
+                className={`view-dot ${activeView === 0 ? 'active' : ''}`}
+              />
+              <button 
+                onClick={() => setActiveView(1)} 
+                className={`view-dot ${activeView === 1 ? 'active' : ''}`}
+              />
+            </div>
+            <div className="view-hint">
+              {activeView === 0 ? 'Deslizar para ver solo letra →' : '← Deslizar para ver acordes'}
             </div>
           </div>
-          
-          {/* Vista de solo letras */}
+
+          {/* Contenedor de vistas con swipe */}
           <div 
-            ref={lyricsViewRef}
-            className="card"
-            style={{ 
-              fontSize: `${fontSize}px`,
-              transform: `translateX(${(activeView - 1) * 100 + 100}%)`,
-              transition: 'transform 0.3s ease-out',
-              width: '100%',
-              position: activeView === 1 ? 'relative' : 'absolute',
-              height: activeView === 1 ? 'auto' : '100%',
-              overflow: activeView === 1 ? 'visible' : 'hidden',
-              visibility: activeView === 1 ? 'visible' : 'hidden'
-            }}
+            className="song-sections-container"
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
           >
-            <div className="card-body">
-              {formattedLyricsOnly && formattedLyricsOnly.sections.map((section, index) => (
-                <div key={index} className="song-section mb-4 text-center">
-                  <h3 className="h5 mb-3">{section.title}</h3>
-                  <pre className="mb-0" style={{ 
-                    whiteSpace: 'pre-wrap', 
-                    fontFamily: 'inherit'
-                  }}>
-                    {section.content}
-                  </pre>
-                </div>
-              ))}
+            <div 
+              className="song-sections"
+              style={{ 
+                transform: `translateX(-${activeView * 50}%)`,
+              }}
+            >
+              {/* Vista de acordes */}
+              <div 
+                ref={chordsViewRef}
+                className="song-view"
+                style={{ fontSize: `${fontSize}px` }}
+              >
+                {formattedSong && formattedSong.sections.map((section, index) => (
+                  <div key={index} className="song-section-modern">
+                    <h3 className="song-section-title">{section.title}</h3>
+                    <div className="song-section-content">
+                      {section.content}
+                    </div>
+                  </div>
+                ))}
+                
+                {(!formattedSong || formattedSong.sections.length === 0) && (
+                  <div className="text-center" style={{ color: 'rgba(255, 255, 255, 0.6)', padding: '3rem' }}>
+                    <i className="bi bi-music-note-list" style={{ fontSize: '3rem', marginBottom: '1rem' }}></i>
+                    <p>No hay contenido disponible para esta canción.</p>
+                  </div>
+                )}
+              </div>
               
-              {(!formattedLyricsOnly || formattedLyricsOnly.sections.length === 0) && (
-                <p className="text-center text-muted">
-                  No hay contenido disponible para esta canción.
-                </p>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+              {/* Vista de solo letras */}
+              <div 
+                ref={lyricsViewRef}
+                className="song-view"
+                style={{ fontSize: `${fontSize}px` }}
+              >
+                {formattedLyricsOnly && formattedLyricsOnly.sections.map((section, index) => (
+                  <div key={index} className="song-section-modern">
+                    <h3 className="song-section-title">{section.title}</h3>
+                    <div className="song-section-content">
+                      {section.content}
+                    </div>
+                  </div>
+                ))}
+                
+                {(!formattedLyricsOnly || formattedLyricsOnly.sections.length === 0) && (
+                  <div className="text-center" style={{ color: 'rgba(255, 255, 255, 0.6)', padding: '3rem' }}>
+                    <i className="bi bi-card-text" style={{ fontSize: '3rem', marginBottom: '1rem' }}></i>
+                   <p>No hay contenido de letra disponible para esta canción.</p>
+                 </div>
+               )}
+             </div>
+           </div>
+         </div>
+       </div>
+     </div>
+   </div>
+ );
 }
 
 export default SongView;

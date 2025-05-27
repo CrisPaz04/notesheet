@@ -25,59 +25,143 @@ function Login() {
     }
   };
 
+  // Funciones placeholder para redes sociales
+  const handleGoogleLogin = () => {
+    console.log("Login con Google - Por implementar");
+  };
+
+  const handleFacebookLogin = () => {
+    console.log("Login con Facebook - Por implementar");
+  };
+
+  const handleAppleLogin = () => {
+    console.log("Login con Apple - Por implementar");
+  };
+
   return (
-    <div className="max-w-md mx-auto">
-      <h1 className="text-2xl font-bold mb-6 text-center">Iniciar Sesión</h1>
-      
-      {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-          {error}
+    <div className="login-container">
+      {/* Formas flotantes decorativas */}
+      <div className="floating-shapes">
+        <div className="shape"></div>
+        <div className="shape"></div>
+        <div className="shape"></div>
+      </div>
+
+      <div className="login-card">
+        {/* Header con icono */}
+        <div className="login-header">
+          <div className="login-icon">
+            <i className="bi bi-music-note-beamed"></i>
+          </div>
+          <h1 className="h3 mb-0">Bienvenido a NoteSheet</h1>
+          <p className="mb-0 opacity-75">Inicia sesión para continuar</p>
         </div>
-      )}
-      
-      <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg shadow-md">
-        <div className="mb-4">
-          <label className="block text-gray-700 mb-2" htmlFor="email">
-            Email
-          </label>
-          <input
-            id="email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded"
-            required
-          />
+
+        <div className="card-body p-4">
+          {error && (
+            <div className="alert alert-danger d-flex align-items-center" role="alert">
+              <i className="bi bi-exclamation-triangle-fill me-2"></i>
+              <div>{error}</div>
+            </div>
+          )}
+
+          {/* Botones de redes sociales */}
+          <div className="mb-4">
+            <div className="d-flex gap-2 mb-3">
+              <button 
+                onClick={handleGoogleLogin}
+                className="social-btn google"
+                type="button"
+              >
+                <i className="bi bi-google me-2"></i>
+                Google
+              </button>
+              <button 
+                onClick={handleFacebookLogin}
+                className="social-btn facebook"
+                type="button"
+              >
+                <i className="bi bi-facebook me-2"></i>
+                Facebook
+              </button>
+              <button 
+                onClick={handleAppleLogin}
+                className="social-btn apple"
+                type="button"
+              >
+                <i className="bi bi-apple me-2"></i>
+                Apple
+              </button>
+            </div>
+            
+            <div className="text-center">
+              <span className="text-muted small">o continúa con tu email</span>
+            </div>
+            <hr className="my-3" style={{borderColor: 'rgba(255, 255, 255, 0.1)'}} />
+          </div>
+
+          <form onSubmit={handleSubmit}>
+            <div className="form-floating">
+              <input
+                id="email"
+                type="email"
+                className="form-control"
+                placeholder="nombre@ejemplo.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+              <label htmlFor="email">
+                <i className="bi bi-envelope me-2"></i>
+                Correo electrónico
+              </label>
+            </div>
+
+            <div className="form-floating">
+              <input
+                id="password"
+                type="password"
+                className="form-control"
+                placeholder="Contraseña"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+              <label htmlFor="password">
+                <i className="bi bi-lock me-2"></i>
+                Contraseña
+              </label>
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="btn btn-login w-100 mb-3"
+            >
+              {loading ? (
+                <>
+                  <span className="spinner-border spinner-border-sm me-2" role="status"></span>
+                  Iniciando sesión...
+                </>
+              ) : (
+                <>
+                  <i className="bi bi-box-arrow-in-right me-2"></i>
+                  Iniciar Sesión
+                </>
+              )}
+            </button>
+          </form>
+
+          <div className="login-footer">
+            <p className="text-muted mb-0">
+              ¿No tienes una cuenta?{" "}
+              <Link to="/register" className="text-decoration-none fw-semibold">
+                Regístrate aquí
+              </Link>
+            </p>
+          </div>
         </div>
-        
-        <div className="mb-6">
-          <label className="block text-gray-700 mb-2" htmlFor="password">
-            Contraseña
-          </label>
-          <input
-            id="password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded"
-            required
-          />
-        </div>
-        
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full bg-primary text-white py-2 rounded hover:bg-blue-600 transition"
-        >
-          {loading ? "Iniciando sesión..." : "Iniciar Sesión"}
-        </button>
-        
-        <div className="mt-4 text-center">
-          <p>
-            ¿No tienes una cuenta? <Link to="/register" className="text-primary">Regístrate</Link>
-          </p>
-        </div>
-      </form>
+      </div>
     </div>
   );
 }

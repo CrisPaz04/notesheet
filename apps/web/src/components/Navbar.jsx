@@ -1,9 +1,9 @@
-﻿// src/components/Navbar.jsx
-import { Link } from "react-router-dom";
+﻿import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 function Navbar() {
   const { currentUser, logout } = useAuth();
+  const location = useLocation();
 
   const handleLogout = async () => {
     try {
@@ -13,56 +13,109 @@ function Navbar() {
     }
   };
 
+  // Función para determinar si un link está activo
+  const isActive = (path) => {
+    return location.pathname === path;
+  };
+
   return (
-    <nav className="navbar navbar-expand-lg navbar-dark bg-dark">
+    <nav className="navbar navbar-expand-lg navbar-dark-custom">
       <div className="container">
-        <Link className="navbar-brand" to="/">NoteSheet</Link>
+        <Link className="navbar-brand-custom" to={currentUser ? "/dashboard" : "/"}>
+          <i className="bi bi-music-note-beamed me-2"></i>
+          NoteSheet
+        </Link>
         
         <button 
-          className="navbar-toggler" 
+          className="navbar-toggler navbar-toggler-custom" 
           type="button" 
           data-bs-toggle="collapse" 
           data-bs-target="#navbarNav"
+          aria-controls="navbarNav"
+          aria-expanded="false"
+          aria-label="Toggle navigation"
         >
-          <span className="navbar-toggler-icon"></span>
+          <span className="navbar-toggler-icon navbar-toggler-icon-custom"></span>
         </button>
         
         <div className="collapse navbar-collapse" id="navbarNav">
-          <ul className="navbar-nav ms-auto">
+          <ul className="navbar-nav navbar-nav-custom ms-auto">
             {currentUser ? (
               <>
                 <li className="nav-item">
-                  <Link className="nav-link" to="/dashboard">Dashboard</Link>
+                  <Link 
+                    className={`nav-link ${isActive('/dashboard') ? 'active' : ''}`} 
+                    to="/dashboard"
+                  >
+                    <i className="bi bi-speedometer2"></i>
+                    Dashboard
+                  </Link>
                 </li>
                 <li className="nav-item">
-                  <Link className="nav-link" to="/preferences">
-                <i className="bi bi-gear"></i> Preferencias</Link>
+                  <Link 
+                    className={`nav-link ${isActive('/songs/new') ? 'active' : ''}`} 
+                    to="/songs/new"
+                  >
+                    <i className="bi bi-plus-circle"></i>
+                    Nueva Canción
+                  </Link>
                 </li>
                 <li className="nav-item">
-                  <Link className="nav-link" to="/songs/new">Nueva Canción</Link>
+                  <Link 
+                    className={`nav-link ${isActive('/playlists') ? 'active' : ''}`} 
+                    to="/playlists"
+                  >
+                    <i className="bi bi-collection-play"></i>
+                    Mis Listas
+                  </Link>
                 </li>
                 <li className="nav-item">
-                  <Link className="nav-link" to="/playlists">Listas</Link>
-                </li>
-                <li className="nav-item">
-                  <Link className="nav-link" to="/playlists/new">Nueva Lista</Link>
+                  <Link 
+                    className={`nav-link ${isActive('/preferences') ? 'active' : ''}`} 
+                    to="/preferences"
+                  >
+                    <i className="bi bi-gear"></i>
+                    Preferencias
+                  </Link>
                 </li>
                 <li className="nav-item">
                   <button 
                     onClick={handleLogout} 
-                    className="nav-link btn btn-link"
+                    className="btn btn-logout ms-2"
                   >
-                    Cerrar Sesión
+                    <i className="bi bi-box-arrow-right me-1"></i>
+                    Salir
                   </button>
                 </li>
               </>
             ) : (
               <>
                 <li className="nav-item">
-                  <Link className="nav-link" to="/login">Iniciar Sesión</Link>
+                  <Link 
+                    className={`nav-link ${isActive('/') ? 'active' : ''}`} 
+                    to="/"
+                  >
+                    <i className="bi bi-house"></i>
+                    Inicio
+                  </Link>
                 </li>
                 <li className="nav-item">
-                  <Link className="nav-link" to="/register">Registrarse</Link>
+                  <Link 
+                    className={`nav-link ${isActive('/login') ? 'active' : ''}`} 
+                    to="/login"
+                  >
+                    <i className="bi bi-box-arrow-in-right"></i>
+                    Iniciar Sesión
+                  </Link>
+                </li>
+                <li className="nav-item">
+                  <Link 
+                    className={`nav-link ${isActive('/register') ? 'active' : ''}`} 
+                    to="/register"
+                  >
+                    <i className="bi bi-person-plus"></i>
+                    Registrarse
+                  </Link>
                 </li>
               </>
             )}
