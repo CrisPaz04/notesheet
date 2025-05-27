@@ -1,9 +1,10 @@
 // apps/web/src/pages/PlaylistView.jsx
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, Link } from "react-router-dom";
 import { getPlaylistById, getSongById } from "@notesheet/api";
 import { useAuth } from "../context/AuthContext";
 import { formatSong } from "@notesheet/core";
+import LoadingSpinner from "../components/LoadingSpinner";
 
 function PlaylistView() {
   const [playlist, setPlaylist] = useState(null);
@@ -119,11 +120,25 @@ function PlaylistView() {
     window.print();
   };
 
+  // Formatear fecha
+  const formatDate = (date) => {
+    if (!date) return "Sin fecha";
+    return new Date(date.toDate()).toLocaleDateString('es-ES', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
+
   if (loading) {
     return (
-      <div className="d-flex justify-content-center align-items-center">
-        <div className="spinner-border text-primary" role="status">
-          <span className="visually-hidden">Cargando...</span>
+      <div className="playlists-container">
+        <div className="container">
+          <LoadingSpinner 
+            text="Cargando lista..." 
+            subtext="Preparando las canciones"
+          />
         </div>
       </div>
     );
@@ -131,138 +146,214 @@ function PlaylistView() {
 
   if (error) {
     return (
-      <div className="alert alert-danger" role="alert">
-        {error}
+      <div className="playlists-container">
+        <div className="container">
+          <div className="alert alert-danger fade-in" role="alert">
+            <i className="bi bi-exclamation-triangle-fill me-2"></i>
+            {error}
+          </div>
+        </div>
       </div>
     );
   }
 
   if (!playlist) {
     return (
-      <div className="text-center">
-        <h2>Lista no encontrada</h2>
-        <Link to="/playlists" className="btn btn-primary mt-3">
-          Volver a Mis Listas
-        </Link>
+      <div className="playlists-container">
+        <div className="container">
+          <div className="text-center fade-in">
+            <h2 className="text-white mb-4">Lista no encontrada</h2>
+            <Link to="/playlists" className="btn-playlist-primary btn-playlist-action">
+              <i className="bi bi-arrow-left me-2"></i>
+              Volver a Mis Listas
+            </Link>
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div>
-      <div className="d-flex justify-content-between align-items-center mb-4 no-print">
-        <div>
-          <h1 className="h2 mb-0">{playlist.name || "Lista sin nombre"}</h1>
-          <p className="text-muted mb-0">
-            {playlist.date ? new Date(playlist.date.toDate()).toLocaleDateString() : "Sin fecha"} · 
-            <span className="ms-2 badge bg-secondary">{playlist.public ? "Pública" : "Privada"}</span>
-          </p>
-        </div>
-        
-        <div className="d-flex gap-2">
-          <div className="btn-group">
-            <button
-              className="btn btn-outline-secondary"
-              onClick={decreaseFontSize}
-              title="Disminuir tamaño"
-            >
-              A-
-            </button>
-            <button
-              className="btn btn-outline-secondary"
-              onClick={resetFontSize}
-              title="Tamaño normal"
-            >
-              A
-            </button>
-            <button
-              className="btn btn-outline-secondary"
-              onClick={increaseFontSize}
-              title="Aumentar tamaño"
-            >
-              A+
-            </button>
+    <div className="playlists-container">
+      <div className="container">
+        {/* Header de la playlist */}
+        <div className="playlist-view-header fade-in">
+          <h1 className="playlist-view-title">{playlist.name || "Lista sin nombre"}</h1>
+          
+          <div className="playlist-view-meta">
+            <span>
+              <i className="bi bi-calendar3 me-1"></i>
+              {formatDate(playlist.date)}
+            </span>
+            <span className={`playlist-visibility-badge ${playlist.public ? 'public' : 'private'}`}>
+              <i className={`bi ${playlist.public ? 'bi-globe' : 'bi-lock'} me-1`}></i>
+              {playlist.public ? 'Lista Pública' : 'Lista Privada'}
+            </span>
+            <span>
+              <i className="bi bi-music-note-beamed me-1"></i>
+              {songs.length} canciones
+            </span>
           </div>
-          
-          <button
-            className="btn btn-outline-secondary"
-            onClick={handlePrint}
-            title="Imprimir"
-          >
-            <i className="bi bi-printer"></i> Imprimir
-          </button>
-          
-          {currentUser && currentUser.uid === playlist.creatorId && (
-            <Link to={`/playlists/${id}/edit`} className="btn btn-outline-primary">
-              <i className="bi bi-pencil"></i> Editar
-            </Link>
-          )}
-          
-          <Link to="/playlists" className="btn btn-outline-secondary">
-            Volver
-          </Link>
         </div>
-      </div>
 
-      <div id="playlist-content" className="mb-5" style={{ fontSize: `${fontSize}px` }}>
-        {songs.length === 0 ? (
-          <div className="card">
-            <div className="card-body text-center py-5">
-              <p className="mb-0">No hay canciones en esta lista.</p>
+        {/* Controles */}
+        <div className="controls-toolbar fade-in-delay no-print">
+          <div className="controls-row">
+            <div className="controls-group">
+              <h2 className="section-title mb-0">
+                <i className="bi bi-list-ol"></i>
+                Lista de Canciones
+              </h2>
             </div>
-          </div>
-        ) : (
-          songs.map((song, index) => (
-            <div key={song.id} className="card mb-4">
-              <div className="card-header d-flex justify-content-between align-items-center">
-                <div className="d-flex align-items-center">
-                  <span className="badge bg-secondary me-2">{index + 1}</span>
-                  <h3 className="h5 mb-0">
-                    <Link to={`/songs/${song.id}`} className={song.error ? "text-muted" : ""}>
-                      {song.title || "Sin título"}
-                    </Link>
-                  </h3>
-                </div>
-                <div>
-                  <span className="badge bg-light text-dark me-2">
-                    Tonalidad: {song.selectedKey || song.key || "?"}
-                  </span>
-                  <span className="badge bg-light text-dark">
-                    Tipo: {song.type || "No especificado"}
-                  </span>
-                </div>
+            
+            <div className="controls-group">
+              {/* Controles de fuente */}
+              <div className="font-controls">
+                <button
+                  className="font-control-btn"
+                  onClick={decreaseFontSize}
+                  title="Disminuir tamaño"
+                >
+                  A-
+                </button>
+                <button
+                  className="font-control-btn"
+                  onClick={resetFontSize}
+                  title="Tamaño normal"
+                >
+                  A
+                </button>
+                <button
+                  className="font-control-btn"
+                  onClick={increaseFontSize}
+                  title="Aumentar tamaño"
+                >
+                  A+
+                </button>
               </div>
               
-              {song.error ? (
-                <div className="card-body">
-                  <p className="text-danger">
-                    Esta canción no está disponible o ha sido eliminada.
-                  </p>
-                </div>
-              ) : (
-                <div className="card-body">
-                  {song.formattedContent && song.formattedContent.sections.map((section, sectionIndex) => (
-                    <div key={sectionIndex} className="song-section mb-4 text-center">
-                      <h4 className="h6 mb-3">{section.title}</h4>
-                      <pre className="mb-0" style={{ 
-                        whiteSpace: 'pre-wrap', 
-                        fontFamily: 'inherit'
-                      }}>
-                        {section.content}
-                      </pre>
-                    </div>
-                  ))}
-                  
-                  {(!song.formattedContent || song.formattedContent.sections.length === 0) && (
-                    <p className="text-center text-muted">
-                      No hay contenido disponible para esta canción.
-                    </p>
-                  )}
-                </div>
+              {/* Botones de acción */}
+              <div className="action-buttons-song">
+                <button
+                  className="btn-song-action"
+                  onClick={handlePrint}
+                  title="Imprimir"
+                >
+                  <i className="bi bi-printer"></i>
+                  Imprimir
+                </button>
+                
+                {currentUser && currentUser.uid === playlist.creatorId && (
+                  <Link 
+                    to={`/playlists/${id}/edit`} 
+                    className="btn-song-action btn-song-primary"
+                  >
+                    <i className="bi bi-pencil"></i>
+                    Editar
+                  </Link>
+                )}
+                
+                <Link 
+                  to="/playlists" 
+                  className="btn-song-action"
+                >
+                  <i className="bi bi-arrow-left"></i>
+                  Volver
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Contenido de las canciones */}
+        <div id="playlist-content" className="slide-up">
+          {songs.length === 0 ? (
+            <div className="empty-playlists-state">
+              <div className="empty-playlists-icon">
+                <i className="bi bi-music-note-list"></i>
+              </div>
+              <h3 className="empty-playlists-title">Esta lista está vacía</h3>
+              <p className="empty-playlists-description">
+                No hay canciones en esta lista. Edita la lista para agregar canciones.
+              </p>
+              {currentUser && currentUser.uid === playlist.creatorId && (
+                <Link to={`/playlists/${id}/edit`} className="btn-playlist-primary btn-playlist-action">
+                  <i className="bi bi-plus-circle me-2"></i>
+                  Agregar Canciones
+                </Link>
               )}
             </div>
-          ))
-        )}
+          ) : (
+            <div className="playlist-songs-section">
+              <div className="playlist-songs-header">
+                <h3 className="section-title">
+                  <i className="bi bi-music-note-list me-2"></i>
+                  Canciones de la Lista
+                </h3>
+              </div>
+              
+              {songs.map((song, index) => (
+                <div key={song.id}>
+                  {/* Item de la canción */}
+                  <div className="playlist-song-item">
+                    <div className="playlist-song-number">
+                      {index + 1}
+                    </div>
+                    
+                    <div className="playlist-song-content">
+                      <h4 className="playlist-song-title">
+                        {song.error ? (
+                          <span className="text-muted">{song.title}</span>
+                        ) : (
+                          <Link to={`/songs/${song.id}`} style={{ color: 'inherit', textDecoration: 'none' }}>
+                            {song.title || "Sin título"}
+                          </Link>
+                        )}
+                      </h4>
+                      <div className="playlist-song-meta">
+                        {song.error ? (
+                          <span className="text-danger">Esta canción no está disponible</span>
+                        ) : (
+                          <>
+                            <span>{song.type || "No especificado"}</span>
+                            {song.version && <span> • Versión de: {song.version}</span>}
+                          </>
+                        )}
+                      </div>
+                    </div>
+                    
+                    <div className="playlist-song-key">
+                      {song.selectedKey || song.key || "?"}
+                    </div>
+                  </div>
+                  
+                  {/* Contenido de la canción */}
+                  {!song.error && song.formattedContent && (
+                    <div className="song-content-section">
+                      {song.formattedContent.sections.map((section, sectionIndex) => (
+                        <div key={sectionIndex} className="song-section-modern">
+                          <h4 className="song-section-title">{section.title}</h4>
+                          <div className="song-section-content" style={{ fontSize: `${fontSize}px` }}>
+                            {section.content}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  
+                  {index < songs.length - 1 && (
+                    <hr style={{ 
+                      border: 'none', 
+                      height: '2px', 
+                      background: 'rgba(255, 255, 255, 0.1)', 
+                      margin: '2rem 0' 
+                    }} />
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
