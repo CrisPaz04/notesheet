@@ -1,4 +1,4 @@
-// apps/web/src/pages/PlaylistEditor.jsx - Con soporte de arrastrar y soltar
+// apps/web/src/pages/PlaylistEditor.jsx
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
@@ -24,24 +24,19 @@ function PlaylistEditor() {
   useEffect(() => {
     const initialize = async () => {
       try {
-        console.log('🔄 Iniciando carga del PlaylistEditor...'); // TEMPORAL
         setLoading(true);
         
         // Cargar todas las canciones disponibles
         if (currentUser) {
-          console.log('👤 Cargando canciones del usuario...'); // TEMPORAL
           const songs = await getAllSongs(currentUser.uid);
-          console.log('🎵 Canciones cargadas:', songs.length); // TEMPORAL
           setAvailableSongs(songs);
         }
         
         // Si hay ID, cargar la playlist existente
         if (id) {
-          console.log('📝 Cargando playlist existente...', id); // TEMPORAL
           setIsNewPlaylist(false);
           await loadPlaylist(id);
         } else {
-          console.log('✨ Creando nueva playlist...'); // TEMPORAL
           // Si es nueva, establecer la fecha de hoy
           const today = new Date();
           const formattedDate = today.toISOString().split('T')[0];
@@ -49,13 +44,12 @@ function PlaylistEditor() {
           setLoading(false);
         }
       } catch (error) {
-        console.error('❌ Error en initialize:', error); // TEMPORAL
         setError("Error al inicializar: " + error.message);
         console.error("Error initializing:", error);
         setLoading(false);
       }
     };
-  
+
     initialize();
   }, [id, currentUser]);
 
@@ -176,236 +170,49 @@ function PlaylistEditor() {
     return (
       <div className="playlists-container">
         <div className="container">
-          {/* Header */}
-          <div className="playlists-header fade-in">
-            <div className="d-flex justify-content-between align-items-center">
-              <div>
-                <h1 className="playlists-title">
-                  <i className="bi bi-music-note-list"></i>
-                  {isNewPlaylist ? "Nueva Lista" : "Editar Lista"}
-                </h1>
-                <p className="playlists-subtitle">
-                  {isNewPlaylist ? "Crea una nueva lista para organizar tus canciones" : "Modifica tu lista existente"}
-                </p>
-              </div>
-              
-              <button 
-                className="btn-playlist-primary btn-playlist-action" 
-                onClick={handleSave}
-                disabled={loading}
-              >
-                {loading ? (
-                  <>
-                    <span className="spinner-border spinner-border-sm me-2" role="status"></span>
-                    Guardando...
-                  </>
-                ) : (
-                  <>
-                    <i className="bi bi-check-circle me-2"></i>
-                    Guardar
-                  </>
-                )}
-              </button>
+          {/* Loading skeleton para playlist editor */}
+          <div className="playlist-editor-loading-skeleton fade-in">
+            <div className="skeleton-playlist-header">
+              <div className="skeleton skeleton-title"></div>
+              <div className="skeleton skeleton-button" style={{ width: '140px', height: '40px', marginLeft: 'auto' }}></div>
             </div>
-          </div>
-    
-          {error && (
-            <div className="alert alert-danger mb-4 fade-in" role="alert">
-              <i className="bi bi-exclamation-triangle-fill me-2"></i>
-              {error}
-            </div>
-          )}
-    
-          <div className="playlist-editor-grid fade-in-delay">
-            {/* Sidebar */}
-            <div className="playlist-editor-sidebar">
-              {/* Detalles de la Lista */}
-              <div className="playlist-editor-card">
-                <div className="playlist-editor-card-header">
-                  <i className="bi bi-gear me-2"></i>
-                  Detalles de la Lista
+            
+            <div className="skeleton-playlist-content">
+              <div className="skeleton-playlist-sidebar">
+                <div className="skeleton skeleton-card">
+                  <div className="skeleton skeleton-line medium"></div>
+                  <div className="skeleton skeleton-line short"></div>
+                  <div className="skeleton skeleton-line"></div>
                 </div>
-                <div className="playlist-editor-card-body">
-                  <div className="form-group-modern mb-3">
-                    <label className="form-label-modern">
-                      <i className="bi bi-card-heading me-2"></i>
-                      Nombre
-                    </label>
-                    <input
-                      type="text"
-                      className="form-control-modern"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      placeholder="Nombre de la lista"
-                    />
-                  </div>
-                  
-                  <div className="form-group-modern mb-3">
-                    <label className="form-label-modern">
-                      <i className="bi bi-calendar3 me-2"></i>
-                      Fecha
-                    </label>
-                    <input
-                      type="date"
-                      className="form-control-modern"
-                      value={date}
-                      onChange={(e) => setDate(e.target.value)}
-                    />
-                  </div>
-                  
-                  <div className="form-check-modern">
-                    <input
-                      type="checkbox"
-                      className="form-check-input-modern"
-                      id="isPublic"
-                      checked={isPublic}
-                      onChange={(e) => setIsPublic(e.target.checked)}
-                    />
-                    <label className="form-check-label-modern" htmlFor="isPublic">
-                      <i className="bi bi-globe me-2"></i>
-                      Lista pública
-                    </label>
-                    <div className="form-help-text">
-                      Las listas públicas pueden ser vistas por otros usuarios.
-                    </div>
+                
+                <div className="skeleton skeleton-card" style={{ marginTop: '1rem' }}>
+                  <div className="skeleton skeleton-line medium"></div>
+                  <div className="skeleton skeleton-list">
+                    <div className="skeleton skeleton-list-item"></div>
+                    <div className="skeleton skeleton-list-item"></div>
+                    <div className="skeleton skeleton-list-item"></div>
                   </div>
                 </div>
               </div>
               
-              {/* Canciones Disponibles */}
-              <div className="playlist-editor-card">
-                <div className="playlist-editor-card-header">
-                  <i className="bi bi-music-note-beamed me-2"></i>
-                  Canciones Disponibles
-                  <span className="badge bg-secondary ms-2">{availableSongs.length}</span>
-                </div>
-                <div className="playlist-editor-card-body p-0">
-                  <div className="available-songs-list">
-                    {availableSongs.length === 0 ? (
-                      <div className="empty-state-small">
-                        <i className="bi bi-music-note-list"></i>
-                        <p>No hay canciones disponibles</p>
-                      </div>
-                    ) : (
-                      availableSongs.map(song => (
-                        <button
-                          key={song.id}
-                          className={`available-song-item ${selectedSongs.some(s => s.id === song.id) ? 'disabled' : ''}`}
-                          onClick={() => addSong(song)}
-                          disabled={selectedSongs.some(s => s.id === song.id)}
-                        >
-                          <div className="available-song-content">
-                            <div className="available-song-title">{song.title || "Sin título"}</div>
-                            <div className="available-song-meta">{song.key || "Sin tonalidad"} • {song.type || "Sin tipo"}</div>
-                          </div>
-                          {!selectedSongs.some(s => s.id === song.id) && (
-                            <i className="bi bi-plus-circle available-song-add"></i>
-                          )}
-                        </button>
-                      ))
-                    )}
+              <div className="skeleton-playlist-main">
+                <div className="skeleton skeleton-card">
+                  <div className="skeleton skeleton-line medium"></div>
+                  <div className="skeleton skeleton-list">
+                    <div className="skeleton skeleton-list-item large"></div>
+                    <div className="skeleton skeleton-list-item large"></div>
+                    <div className="skeleton skeleton-list-item large"></div>
                   </div>
                 </div>
               </div>
             </div>
             
-            {/* Main Content */}
-            <div className="playlist-editor-main">
-              <div className="playlist-editor-card">
-                <div className="playlist-editor-card-header">
-                  <div>
-                    <i className="bi bi-list-ol me-2"></i>
-                    Canciones en la Lista
-                  </div>
-                  <span className="badge bg-primary">{selectedSongs.length} canciones</span>
-                </div>
-                <div className="playlist-editor-card-body p-0">
-                  {selectedSongs.length === 0 ? (
-                    <div className="empty-state">
-                      <div className="empty-state-icon">
-                        <i className="bi bi-music-note-list"></i>
-                      </div>
-                      <h4 className="empty-state-title">Lista vacía</h4>
-                      <p className="empty-state-description">
-                        No hay canciones en la lista. Añade canciones desde el panel izquierdo.
-                      </p>
-                    </div>
-                  ) : (
-                    <DragDropContext onDragEnd={handleDragEnd}>
-                      <Droppable droppableId="songs-list">
-                        {(provided) => (
-                          <div
-                            className="selected-songs-list"
-                            {...provided.droppableProps}
-                            ref={provided.innerRef}
-                          >
-                            {selectedSongs.map((song, index) => (
-                              <Draggable key={`${song.id}-${index}`} draggableId={`${song.id}-${index}`} index={index}>
-                                {(provided, snapshot) => (
-                                  <div
-                                    ref={provided.innerRef}
-                                    {...provided.draggableProps}
-                                    className={`selected-song-item ${snapshot.isDragging ? 'dragging' : ''}`}
-                                  >
-                                    <div className="selected-song-drag" {...provided.dragHandleProps}>
-                                      <i className="bi bi-grip-vertical"></i>
-                                    </div>
-                                    
-                                    <div className="selected-song-number">
-                                      {index + 1}
-                                    </div>
-                                    
-                                    <div className="selected-song-content">
-                                      <h5 className="selected-song-title">{song.title || "Sin título"}</h5>
-                                      <div className="selected-song-controls">
-                                        <label className="tonality-label">Tonalidad:</label>
-                                        <select
-                                          className="tonality-select"
-                                          value={song.key}
-                                          onChange={(e) => changeKey(song.id, e.target.value)}
-                                        >
-                                          <option value={song.originalKey}>Original ({song.originalKey})</option>
-                                          <option disabled>──────────</option>
-                                          <option value="DO">DO Mayor</option>
-                                          <option value="LAm">LA menor</option>
-                                          <option value="SOL">SOL Mayor</option>
-                                          <option value="MIm">MI menor</option>
-                                          <option value="RE">RE Mayor</option>
-                                          <option value="SIm">SI menor</option>
-                                          <option value="LA">LA Mayor</option>
-                                          <option value="FA#m">FA# menor</option>
-                                          <option value="MI">MI Mayor</option>
-                                          <option value="DO#m">DO# menor</option>
-                                          <option value="FA">FA Mayor</option>
-                                          <option value="REm">RE menor</option>
-                                          <option value="SIb">SIb Mayor</option>
-                                          <option value="SOLm">SOL menor</option>
-                                          <option value="MIb">MIb Mayor</option>
-                                          <option value="DOm">DO menor</option>
-                                        </select>
-                                      </div>
-                                    </div>
-                                    
-                                    <button
-                                      className="selected-song-remove"
-                                      onClick={() => removeSong(song.id)}
-                                      title="Eliminar canción"
-                                    >
-                                      <i className="bi bi-trash"></i>
-                                    </button>
-                                  </div>
-                                )}
-                              </Draggable>
-                            ))}
-                            {provided.placeholder}
-                          </div>
-                        )}
-                      </Droppable>
-                    </DragDropContext>
-                  )}
-                </div>
-              </div>
-            </div>
+            <LoadingSpinner 
+              size="medium"
+              text="Cargando editor de listas..." 
+              subtext="Organizando tu música"
+              type="playlist"
+            />
           </div>
         </div>
       </div>
@@ -413,196 +220,236 @@ function PlaylistEditor() {
   }
 
   return (
-    <div>
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <h1 className="h2 mb-0">
-          {isNewPlaylist ? "Nueva Lista" : "Editar Lista"}
-        </h1>
-        
-        <button 
-          className="btn btn-primary" 
-          onClick={handleSave}
-          disabled={loading}
-        >
-          {loading ? "Guardando..." : "Guardar"}
-        </button>
-      </div>
-
-      {error && (
-        <div className="alert alert-danger" role="alert">
-          {error}
+    <div className="playlists-container">
+      <div className="container">
+        {/* Header */}
+        <div className="playlists-header fade-in">
+          <div className="d-flex justify-content-between align-items-center">
+            <div>
+              <h1 className="playlists-title">
+                <i className="bi bi-music-note-list"></i>
+                {isNewPlaylist ? "Nueva Lista" : "Editar Lista"}
+              </h1>
+              <p className="playlists-subtitle">
+                {isNewPlaylist ? "Crea una nueva lista para organizar tus canciones" : "Modifica tu lista existente"}
+              </p>
+            </div>
+            
+            <button 
+              className="btn-playlist-primary btn-playlist-action" 
+              onClick={handleSave}
+              disabled={loading}
+            >
+              {loading ? (
+                <>
+                  <span className="spinner-border spinner-border-sm me-2" role="status"></span>
+                  Guardando...
+                </>
+              ) : (
+                <>
+                  <i className="bi bi-check-circle me-2"></i>
+                  Guardar
+                </>
+              )}
+            </button>
+          </div>
         </div>
-      )}
 
-      <div className="row">
-        <div className="col-md-4 mb-4">
-          <div className="card">
-            <div className="card-header">Detalles de la Lista</div>
-            <div className="card-body">
-              <div className="mb-3">
-                <label htmlFor="name" className="form-label">Nombre</label>
-                <input
-                  type="text"
-                  className="form-control"
-                  id="name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="Nombre de la lista"
-                />
+        {error && (
+          <div className="alert alert-danger mb-4 fade-in" role="alert">
+            <i className="bi bi-exclamation-triangle-fill me-2"></i>
+            {error}
+          </div>
+        )}
+
+        <div className="playlist-editor-grid fade-in-delay">
+          {/* Sidebar */}
+          <div className="playlist-editor-sidebar">
+            {/* Detalles de la Lista */}
+            <div className="playlist-editor-card">
+              <div className="playlist-editor-card-header">
+                <i className="bi bi-gear me-2"></i>
+                Detalles de la Lista
               </div>
-              
-              <div className="mb-3">
-                <label htmlFor="date" className="form-label">Fecha</label>
-                <input
-                  type="date"
-                  className="form-control"
-                  id="date"
-                  value={date}
-                  onChange={(e) => setDate(e.target.value)}
-                />
+              <div className="playlist-editor-card-body">
+                <div className="form-group-modern mb-3">
+                  <label className="form-label-modern">
+                    <i className="bi bi-card-heading me-2"></i>
+                    Nombre
+                  </label>
+                  <input
+                    type="text"
+                    className="form-control-modern"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="Nombre de la lista"
+                  />
+                </div>
+                
+                <div className="form-group-modern mb-3">
+                  <label className="form-label-modern">
+                    <i className="bi bi-calendar3 me-2"></i>
+                    Fecha
+                  </label>
+                  <input
+                    type="date"
+                    className="form-control-modern"
+                    value={date}
+                    onChange={(e) => setDate(e.target.value)}
+                  />
+                </div>
+                
+                <div className="form-check-modern">
+                  <input
+                    type="checkbox"
+                    className="form-check-input-modern"
+                    id="isPublic"
+                    checked={isPublic}
+                    onChange={(e) => setIsPublic(e.target.checked)}
+                  />
+                  <label className="form-check-label-modern" htmlFor="isPublic">
+                    <i className="bi bi-globe me-2"></i>
+                    Lista pública
+                  </label>
+                  <div className="form-help-text">
+                    Las listas públicas pueden ser vistas por otros usuarios.
+                  </div>
+                </div>
               </div>
-              
-              <div className="form-check mb-3">
-                <input
-                  type="checkbox"
-                  className="form-check-input"
-                  id="isPublic"
-                  checked={isPublic}
-                  onChange={(e) => setIsPublic(e.target.checked)}
-                />
-                <label className="form-check-label" htmlFor="isPublic">
-                  Lista pública
-                </label>
-                <div className="form-text">
-                  Las listas públicas pueden ser vistas por otros usuarios.
+            </div>
+            
+            {/* Canciones Disponibles */}
+            <div className="playlist-editor-card">
+              <div className="playlist-editor-card-header">
+                <i className="bi bi-music-note-beamed me-2"></i>
+                Canciones Disponibles
+                <span className="badge bg-secondary ms-2">{availableSongs.length}</span>
+              </div>
+              <div className="playlist-editor-card-body p-0">
+                <div className="available-songs-list">
+                  {availableSongs.length === 0 ? (
+                    <div className="empty-state-small">
+                      <i className="bi bi-music-note-list"></i>
+                      <p>No hay canciones disponibles</p>
+                    </div>
+                  ) : (
+                    availableSongs.map(song => (
+                      <button
+                        key={song.id}
+                        className={`available-song-item ${selectedSongs.some(s => s.id === song.id) ? 'disabled' : ''}`}
+                        onClick={() => addSong(song)}
+                        disabled={selectedSongs.some(s => s.id === song.id)}
+                      >
+                        <div className="available-song-content">
+                          <div className="available-song-title">{song.title || "Sin título"}</div>
+                          <div className="available-song-meta">{song.key || "Sin tonalidad"} • {song.type || "Sin tipo"}</div>
+                        </div>
+                        {!selectedSongs.some(s => s.id === song.id) && (
+                          <i className="bi bi-plus-circle available-song-add"></i>
+                        )}
+                      </button>
+                    ))
+                  )}
                 </div>
               </div>
             </div>
           </div>
           
-          <div className="card mt-4">
-            <div className="card-header">Canciones Disponibles</div>
-            <div className="card-body p-0">
-              <div className="list-group list-group-flush" style={{ maxHeight: '400px', overflowY: 'auto' }}>
-                {availableSongs.length === 0 ? (
-                  <div className="list-group-item text-muted">
-                    No hay canciones disponibles
+          {/* Main Content */}
+          <div className="playlist-editor-main">
+            <div className="playlist-editor-card">
+              <div className="playlist-editor-card-header">
+                <div>
+                  <i className="bi bi-list-ol me-2"></i>
+                  Canciones en la Lista
+                </div>
+                <span className="badge bg-primary">{selectedSongs.length} canciones</span>
+              </div>
+              <div className="playlist-editor-card-body p-0">
+                {selectedSongs.length === 0 ? (
+                  <div className="empty-state">
+                    <div className="empty-state-icon">
+                      <i className="bi bi-music-note-list"></i>
+                    </div>
+                    <h4 className="empty-state-title">Lista vacía</h4>
+                    <p className="empty-state-description">
+                      No hay canciones en la lista. Añade canciones desde el panel izquierdo.
+                    </p>
                   </div>
                 ) : (
-                  availableSongs.map(song => (
-                    <button
-                      key={song.id}
-                      className="list-group-item list-group-item-action d-flex justify-content-between align-items-center"
-                      onClick={() => addSong(song)}
-                      disabled={selectedSongs.some(s => s.id === song.id)}
-                    >
-                      <div>
-                        <div>{song.title || "Sin título"}</div>
-                        <small className="text-muted">{song.key || "Sin tonalidad"}</small>
-                      </div>
-                      {!selectedSongs.some(s => s.id === song.id) && (
-                        <i className="bi bi-plus-circle"></i>
-                      )}
-                    </button>
-                  ))
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <div className="col-md-8">
-          <div className="card">
-            <div className="card-header d-flex justify-content-between align-items-center">
-              <span>Canciones en la Lista</span>
-              <span className="badge bg-primary">{selectedSongs.length} canciones</span>
-            </div>
-            <div className="card-body p-0">
-              {selectedSongs.length === 0 ? (
-                <div className="p-4 text-center">
-                  <p className="mb-0 text-muted">No hay canciones en la lista. Añade canciones desde el panel izquierdo.</p>
-                </div>
-              ) : (
-                <DragDropContext onDragEnd={handleDragEnd}>
-                  <Droppable droppableId="songs-list">
-                    {(provided) => (
-                      <div
-                        className="list-group list-group-flush"
-                        {...provided.droppableProps}
-                        ref={provided.innerRef}
-                      >
-                        {selectedSongs.map((song, index) => (
-                          <Draggable key={`${song.id}-${index}`} draggableId={`${song.id}-${index}`} index={index}>
-                            {(provided, snapshot) => (
-                              <div
-                                ref={provided.innerRef}
-                                {...provided.draggableProps}
-                                className={`list-group-item ${snapshot.isDragging ? 'bg-light' : ''}`}
-                              >
-                                <div className="d-flex justify-content-between align-items-center mb-2">
-                                  <div className="d-flex align-items-center">
-                                    <div 
-                                      {...provided.dragHandleProps} 
-                                      className="me-2"
-                                      style={{ cursor: 'grab' }}
-                                    >
-                                      <i className="bi bi-grip-vertical"></i>
-                                    </div>
-                                    <h5 className="mb-0">
-                                      <span className="badge bg-secondary me-2">{index + 1}</span>
-                                      {song.title || "Sin título"}
-                                    </h5>
+                  <DragDropContext onDragEnd={handleDragEnd}>
+                    <Droppable droppableId="songs-list">
+                      {(provided) => (
+                        <div
+                          className="selected-songs-list"
+                          {...provided.droppableProps}
+                          ref={provided.innerRef}
+                        >
+                          {selectedSongs.map((song, index) => (
+                            <Draggable key={`${song.id}-${index}`} draggableId={`${song.id}-${index}`} index={index}>
+                              {(provided, snapshot) => (
+                                <div
+                                  ref={provided.innerRef}
+                                  {...provided.draggableProps}
+                                  className={`selected-song-item ${snapshot.isDragging ? 'dragging' : ''}`}
+                                >
+                                  <div className="selected-song-drag" {...provided.dragHandleProps}>
+                                    <i className="bi bi-grip-vertical"></i>
                                   </div>
+                                  
+                                  <div className="selected-song-number">
+                                    {index + 1}
+                                  </div>
+                                  
+                                  <div className="selected-song-content">
+                                    <h5 className="selected-song-title">{song.title || "Sin título"}</h5>
+                                    <div className="selected-song-controls">
+                                      <label className="tonality-label">Tonalidad:</label>
+                                      <select
+                                        className="tonality-select"
+                                        value={song.key}
+                                        onChange={(e) => changeKey(song.id, e.target.value)}
+                                      >
+                                        <option value={song.originalKey}>Original ({song.originalKey})</option>
+                                        <option disabled>──────────</option>
+                                        <option value="DO">DO Mayor</option>
+                                        <option value="LAm">LA menor</option>
+                                        <option value="SOL">SOL Mayor</option>
+                                        <option value="MIm">MI menor</option>
+                                        <option value="RE">RE Mayor</option>
+                                        <option value="SIm">SI menor</option>
+                                        <option value="LA">LA Mayor</option>
+                                        <option value="FA#m">FA# menor</option>
+                                        <option value="MI">MI Mayor</option>
+                                        <option value="DO#m">DO# menor</option>
+                                        <option value="FA">FA Mayor</option>
+                                        <option value="REm">RE menor</option>
+                                        <option value="SIb">SIb Mayor</option>
+                                        <option value="SOLm">SOL menor</option>
+                                        <option value="MIb">MIb Mayor</option>
+                                        <option value="DOm">DO menor</option>
+                                      </select>
+                                    </div>
+                                  </div>
+                                  
                                   <button
-                                    className="btn btn-sm btn-outline-danger"
+                                    className="selected-song-remove"
                                     onClick={() => removeSong(song.id)}
+                                    title="Eliminar canción"
                                   >
                                     <i className="bi bi-trash"></i>
                                   </button>
                                 </div>
-                                
-                                <div className="row g-2 align-items-center">
-                                  <div className="col-auto">
-                                    <label htmlFor={`key-${song.id}`} className="col-form-label">Tonalidad:</label>
-                                  </div>
-                                  <div className="col-auto">
-                                    <select
-                                      id={`key-${song.id}`}
-                                      className="form-select form-select-sm"
-                                      value={song.key}
-                                      onChange={(e) => changeKey(song.id, e.target.value)}
-                                    >
-                                      <option value={song.originalKey}>Original ({song.originalKey})</option>
-                                      <option disabled>──────────</option>
-                                      <option value="DO">DO Mayor</option>
-                                      <option value="LAm">LA menor</option>
-                                      <option value="SOL">SOL Mayor</option>
-                                      <option value="MIm">MI menor</option>
-                                      <option value="RE">RE Mayor</option>
-                                      <option value="SIm">SI menor</option>
-                                      <option value="LA">LA Mayor</option>
-                                      <option value="FA#m">FA# menor</option>
-                                      <option value="MI">MI Mayor</option>
-                                      <option value="DO#m">DO# menor</option>
-                                      <option value="FA">FA Mayor</option>
-                                      <option value="REm">RE menor</option>
-                                      <option value="SIb">SIb Mayor</option>
-                                      <option value="SOLm">SOL menor</option>
-                                      <option value="MIb">MIb Mayor</option>
-                                      <option value="DOm">DO menor</option>
-                                    </select>
-                                  </div>
-                                </div>
-                              </div>
-                            )}
-                          </Draggable>
-                        ))}
-                        {provided.placeholder}
-                      </div>
-                    )}
-                  </Droppable>
-                </DragDropContext>
-              )}
+                              )}
+                            </Draggable>
+                          ))}
+                          {provided.placeholder}
+                        </div>
+                      )}
+                    </Droppable>
+                  </DragDropContext>
+                )}
+              </div>
             </div>
           </div>
         </div>

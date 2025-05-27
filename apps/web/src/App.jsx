@@ -54,13 +54,26 @@ function AppLayout() {
   // Páginas donde NO queremos mostrar navbar y footer
   const authPages = ['/login', '/register'];
   // Páginas que necesitan pantalla completa (sin padding del container)
-  const fullScreenPages = ['/login', '/register', '/', '/dashboard', '/songs/new', '/playlists'];
+  const fullScreenPages = ['/login', '/register', '/', '/dashboard', '/songs/new', '/playlists', '/playlists/new', '/preferences'];
   
   const isAuthPage = authPages.includes(location.pathname);
   const isFullScreenPage = fullScreenPages.includes(location.pathname) || 
-                         location.pathname.match(/^\/songs\/[^\/]+\/edit$/) ||
-                         location.pathname.match(/^\/songs\/[^\/]+$/) ||
-                         location.pathname.match(/^\/playlists\/[^\/]+$/);
+                       location.pathname.match(/^\/songs\/[^\/]+\/edit$/) ||
+                       location.pathname.match(/^\/songs\/[^\/]+$/) ||
+                       location.pathname.match(/^\/playlists\/[^\/]+$/) ||
+                       location.pathname.match(/^\/playlists\/[^\/]+\/edit$/) ||
+                       // Detectar rutas 404 (rutas que no están definidas en nuestro sistema)
+                       (location.pathname !== '/' && 
+                        location.pathname !== '/home' && 
+                        location.pathname !== '/login' && 
+                        location.pathname !== '/register' && 
+                        location.pathname !== '/dashboard' && 
+                        location.pathname !== '/songs/new' && 
+                        location.pathname !== '/playlists' && 
+                        location.pathname !== '/playlists/new' && 
+                        location.pathname !== '/preferences' &&
+                        !location.pathname.match(/^\/songs\/[^\/]+/) &&
+                        !location.pathname.match(/^\/playlists\/[^\/]+/));
   
   return (
   <div className={`d-flex flex-column min-vh-100 ${theme === 'dark' ? 'bg-dark text-light' : ''}`}>
