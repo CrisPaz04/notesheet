@@ -2523,3 +2523,227 @@ html {
     align-self: flex-end;
   }
 }
+
+/* Light Theme Styles */
+:root[data-bs-theme="light"] {
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8f9fa;
+  --bg-tertiary: #e9ecef;
+  --text-primary: #212529;
+  --text-secondary: #6c757d;
+  --text-muted: #adb5bd;
+  --border-color: #dee2e6;
+  --accent-color: #0d6efd;
+  --accent-hover: #0b5ed7;
+}
+
+:root[data-bs-theme="dark"] {
+  --bg-primary: #1a1a2e;
+  --bg-secondary: #16213e;
+  --bg-tertiary: #0f3460;
+  --text-primary: #ffffff;
+  --text-secondary: rgba(255, 255, 255, 0.8);
+  --text-muted: rgba(255, 255, 255, 0.6);
+  --border-color: rgba(255, 255, 255, 0.1);
+  --accent-color: #64ffda;
+  --accent-hover: #26a69a;
+}
+
+/* Light theme overrides */
+[data-bs-theme="light"] .dashboard-container,
+[data-bs-theme="light"] .playlists-container,
+[data-bs-theme="light"] .song-view-container,
+[data-bs-theme="light"] .editor-container {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 50%, #dee2e6 100%);
+  color: #212529;
+}
+
+[data-bs-theme="light"] .dashboard-header,
+[data-bs-theme="light"] .playlists-header,
+[data-bs-theme="light"] .song-header,
+[data-bs-theme="light"] .editor-header,
+[data-bs-theme="light"] .playlist-view-header {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(0, 0, 0, 0.1);
+  color: #212529;
+}
+
+[data-bs-theme="light"] .welcome-title,
+[data-bs-theme="light"] .playlists-title,
+[data-bs-theme="light"] .song-title-main,
+[data-bs-theme="light"] .editor-title,
+[data-bs-theme="light"] .playlist-view-title {
+  color: #212529;
+}
+
+[data-bs-theme="light"] .welcome-subtitle,
+[data-bs-theme="light"] .playlists-subtitle,
+[data-bs-theme="light"] .editor-subtitle {
+  color: #6c757d;
+}
+
+[data-bs-theme="light"] .action-card,
+[data-bs-theme="light"] .recent-item,
+[data-bs-theme="light"] .playlist-card,
+[data-bs-theme="light"] .feature-card {
+  background: rgba(255, 255, 255, 0.8);
+  border-color: rgba(0, 0, 0, 0.1);
+  color: #212529;
+}
+
+[data-bs-theme="light"] .action-card:hover,
+[data-bs-theme="light"] .recent-item:hover,
+[data-bs-theme="light"] .playlist-card:hover {
+  background: rgba(255, 255, 255, 0.95);
+  border-color: rgba(13, 110, 253, 0.3);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+}
+
+[data-bs-theme="light"] .action-title,
+[data-bs-theme="light"] .recent-item-title,
+[data-bs-theme="light"] .playlist-card-title {
+  color: #212529;
+}
+
+[data-bs-theme="light"] .action-description,
+[data-bs-theme="light"] .recent-item-meta,
+[data-bs-theme="light"] .playlist-card-meta {
+  color: #6c757d;
+}
+
+[data-bs-theme="light"] .action-icon,
+[data-bs-theme="light"] .recent-item-icon {
+  color: #0d6efd;
+}
+
+[data-bs-theme="light"] .action-card:hover .action-icon,
+[data-bs-theme="light"] .action-card:hover .action-title {
+  color: #0b5ed7;
+}
+
+[data-bs-theme="light"] .search-input,
+[data-bs-theme="light"] .form-control-modern {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(0, 0, 0, 0.2);
+  color: #212529;
+}
+
+[data-bs-theme="light"] .search-input:focus,
+[data-bs-theme="light"] .form-control-modern:focus {
+  background: #ffffff;
+  border-color: #0d6efd;
+  box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+[data-bs-theme="light"] .search-input::placeholder,
+[data-bs-theme="light"] .form-control-modern::placeholder {
+  color: #6c757d;
+}
+
+[data-bs-theme="light"] .filter-tab,
+[data-bs-theme="light"] .view-toggle-btn {
+  color: #6c757d;
+  background: rgba(255, 255, 255, 0.5);
+}
+
+[data-bs-theme="light"] .filter-tab.active,
+[data-bs-theme="light"] .view-toggle-btn.active {
+  background: rgba(13, 110, 253, 0.2);
+  color: #0d6efd;
+}
+
+[data-bs-theme="light"] .section-title {
+  color: #212529;
+}
+
+[data-bs-theme="light"] .section-title i {
+  color: #0d6efd;
+}
+
+[data-bs-theme="light"] .btn-primary-dashboard {
+  background: linear-gradient(135deg, #0d6efd 0%, #0b5ed7 100%);
+}
+
+[data-bs-theme="light"] .song-section-title {
+  color: #0d6efd;
+}
+
+[data-bs-theme="light"] .song-section-content {
+  background: rgba(0, 0, 0, 0.05);
+  color: #212529;
+  border-left-color: #0d6efd;
+}
+
+[data-bs-theme="light"] .controls-toolbar,
+[data-bs-theme="light"] .metadata-section,
+[data-bs-theme="light"] .song-preview-card,
+[data-bs-theme="light"] .editor-main {
+  background: rgba(255, 255, 255, 0.8);
+  border-color: rgba(0, 0, 0, 0.1);
+}
+
+[data-bs-theme="light"] .dropdown-button,
+[data-bs-theme="light"] .font-control-btn,
+[data-bs-theme="light"] .view-toggle-btn-song,
+[data-bs-theme="light"] .btn-song-action {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(0, 0, 0, 0.2);
+  color: #212529;
+}
+
+[data-bs-theme="light"] .dropdown-button:hover,
+[data-bs-theme="light"] .font-control-btn:hover,
+[data-bs-theme="light"] .view-toggle-btn-song:hover,
+[data-bs-theme="light"] .btn-song-action:hover {
+  background: #ffffff;
+  border-color: rgba(0, 0, 0, 0.3);
+  color: #212529;
+}
+
+[data-bs-theme="light"] .dropdown-button.active,
+[data-bs-theme="light"] .view-toggle-btn-song.active {
+  background: rgba(13, 110, 253, 0.2);
+  color: #0d6efd;
+  border-color: #0d6efd;
+}
+
+/* Theme Toggle Button */
+.theme-toggle {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #64ffda 0%, #26a69a 100%);
+  border: none;
+  color: #1a1a2e;
+  font-size: 1.5rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+[data-bs-theme="light"] .theme-toggle {
+  background: linear-gradient(135deg, #0d6efd 0%, #0b5ed7 100%);
+  color: white;
+}
+
+.theme-toggle:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.3);
+}
+
+@media (max-width: 768px) {
+  .theme-toggle {
+    bottom: 1rem;
+    right: 1rem;
+    width: 50px;
+    height: 50px;
+    font-size: 1.2rem;
+  }
+}

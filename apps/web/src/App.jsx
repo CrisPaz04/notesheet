@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from "r
 import { AuthProvider } from "./context/AuthContext";
 import { useTheme } from "./hooks/useTheme";
 import { useAuth } from "./context/AuthContext";
+import ThemeToggle from "./components/ThemeToggle";
 
 // Páginas
 import Home from "./pages/Home";
@@ -62,66 +63,65 @@ function AppLayout() {
                          location.pathname.match(/^\/playlists\/[^\/]+$/);
   
   return (
-    <div className={`d-flex flex-column min-vh-100 ${theme === 'dark' ? 'bg-dark text-light' : ''}`}>
-      {/* Solo mostrar navbar si NO estamos en páginas de auth */}
-      {!isAuthPage && <Navbar />}
-      
-      <main className={`flex-grow-1 ${isFullScreenPage ? '' : 'container py-4'}`}>
-        <Routes>
-          {/* Ruta raíz con lógica condicional */}
-          <Route path="/" element={<RootRedirect />} />
-          <Route path="/home" element={<Home />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          
-          {/* Rutas protegidas */}
-          <Route path="/dashboard" element={
-            <ProtectedRoute>
-              <Dashboard />
-            </ProtectedRoute>
-          } />
-          <Route path="/songs/new" element={
-            <ProtectedRoute>
-              <SongEditor />
-            </ProtectedRoute>
-          } />
-          <Route path="/songs/:id" element={<SongView />} />
-          <Route path="/songs/:id/edit" element={
-            <ProtectedRoute>
-              <SongEditor />
-            </ProtectedRoute>
-          } />
-          <Route path="/preferences" element={
-            <ProtectedRoute>
-              <UserPreferences />
-            </ProtectedRoute>
-          } />
-          <Route path="/playlists" element={
-            <ProtectedRoute>
-              <PlaylistsList />
-            </ProtectedRoute>
-          } />
-          <Route path="/playlists/new" element={
-            <ProtectedRoute>
-              <PlaylistEditor />
-            </ProtectedRoute>
-          } />
-          <Route path="/playlists/:id" element={<PlaylistView />} />
-          <Route path="/playlists/:id/edit" element={
-            <ProtectedRoute>
-              <PlaylistEditor />
-            </ProtectedRoute>
-          } />
-          
-          {/* Ruta 404 */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </main>
-      
-      {/* Solo mostrar footer si NO estamos en páginas de auth */}
-      {!isAuthPage && <Footer />}
-    </div>
-  );
+  <div className={`d-flex flex-column min-vh-100 ${theme === 'dark' ? 'bg-dark text-light' : ''}`}>
+    {/* Solo mostrar navbar si NO estamos en páginas de auth */}
+    {!isAuthPage && <Navbar />}
+    
+    <main className={`flex-grow-1 ${isFullScreenPage ? '' : 'container py-4'}`}>
+      <Routes>
+        {/* Todas tus rutas existentes */}
+        <Route path="/" element={<RootRedirect />} />
+        <Route path="/home" element={<Home />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/dashboard" element={
+          <ProtectedRoute>
+            <Dashboard />
+          </ProtectedRoute>
+        } />
+        <Route path="/songs/new" element={
+          <ProtectedRoute>
+            <SongEditor />
+          </ProtectedRoute>
+        } />
+        <Route path="/songs/:id" element={<SongView />} />
+        <Route path="/songs/:id/edit" element={
+          <ProtectedRoute>
+            <SongEditor />
+          </ProtectedRoute>
+        } />
+        <Route path="/preferences" element={
+          <ProtectedRoute>
+            <UserPreferences />
+          </ProtectedRoute>
+        } />
+        <Route path="/playlists" element={
+          <ProtectedRoute>
+            <PlaylistsList />
+          </ProtectedRoute>
+        } />
+        <Route path="/playlists/new" element={
+          <ProtectedRoute>
+            <PlaylistEditor />
+          </ProtectedRoute>
+        } />
+        <Route path="/playlists/:id" element={<PlaylistView />} />
+        <Route path="/playlists/:id/edit" element={
+          <ProtectedRoute>
+            <PlaylistEditor />
+          </ProtectedRoute>
+        } />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </main>
+    
+    {/* Solo mostrar footer si NO estamos en páginas de auth */}
+    {!isAuthPage && <Footer />}
+    
+    {/* Botón de cambio de tema */}
+    <ThemeToggle />
+  </div>
+);
 }
 
 function App() {
