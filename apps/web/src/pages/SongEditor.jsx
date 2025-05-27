@@ -540,10 +540,38 @@ Escribe aquí la letra y los acordes
     return (
       <div className="editor-container">
         <div className="container">
-          <LoadingSpinner 
-            text="Cargando editor..." 
-            subtext="Preparando tu espacio de trabajo"
-          />
+          {/* Loading skeleton para editor */}
+          <div className="editor-loading-skeleton fade-in">
+            <div className="skeleton-editor-header">
+              <div className="skeleton skeleton-title"></div>
+              <div className="skeleton skeleton-subtitle"></div>
+            </div>
+            
+            <div className="skeleton-metadata-section">
+              <div className="skeleton-metadata-grid">
+                <div className="skeleton skeleton-input"></div>
+                <div className="skeleton skeleton-input"></div>
+                <div className="skeleton skeleton-input"></div>
+                <div className="skeleton skeleton-input"></div>
+              </div>
+            </div>
+            
+            <div className="skeleton-editor-main">
+              <div className="skeleton-tabs">
+                <div className="skeleton skeleton-tab"></div>
+                <div className="skeleton skeleton-tab"></div>
+                <div className="skeleton skeleton-tab"></div>
+              </div>
+              <div className="skeleton skeleton-editor-content"></div>
+            </div>
+            
+            <LoadingSpinner 
+              size="medium"
+              text="Cargando editor..." 
+              subtext="Preparando tu espacio de trabajo"
+              type="editor"
+            />
+          </div>
         </div>
       </div>
     );
