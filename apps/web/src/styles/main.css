@@ -1,0 +1,26 @@
+/* src/styles/main.css */
+
+/* Base Styles */
+@import './base/_variables.css';
+@import './base/_reset.css';
+@import './base/_typography.css';
+
+/* Components */
+@import './components/_login.css';
+@import './components/_navbar.css';
+@import './components/_dashboard.css';
+@import './components/_song-editor.css';
+@import './components/_song-viewer.css';
+@import './components/_playlists.css';
+/* (Iremos agregando estos imports conforme migremos cada componente) */
+
+/* Pages */
+@import './pages/_home.css';
+/* (Iremos agregando estos imports conforme migremos cada página) */
+
+/* Utilities */
+/* (Iremos agregando estos imports conforme migremos utilidades) */
+
+/* Temporary: Import remaining styles from index.css */
+/* TODO: Remove this once migration is complete */
+@import '../index.css';

@@ -54,7 +54,7 @@ function AppLayout() {
   // Páginas donde NO queremos mostrar navbar y footer
   const authPages = ['/login', '/register'];
   // Páginas que necesitan pantalla completa (sin padding del container)
-  const fullScreenPages = ['/login', '/register', '/', '/dashboard', '/songs/new', '/playlists', '/playlists/new', '/preferences'];
+  const fullScreenPages = ['/login', '/register', '/', '/home', '/dashboard', '/songs/new', '/playlists', '/playlists/new', '/preferences'];
   
   const isAuthPage = authPages.includes(location.pathname);
   const isFullScreenPage = fullScreenPages.includes(location.pathname) || 
@@ -73,7 +73,7 @@ function AppLayout() {
                         location.pathname !== '/playlists/new' && 
                         location.pathname !== '/preferences' &&
                         !location.pathname.match(/^\/songs\/[^\/]+/) &&
-                        !location.pathname.match(/^\/playlists\/[^\/]+/));
+                        !location.pathname.match(/^\/playlists\/[^\/]+/));                      
   
   return (
   <div className={`d-flex flex-column min-vh-100 ${theme === 'dark' ? 'bg-dark text-light' : ''}`}>
