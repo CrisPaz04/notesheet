@@ -7,7 +7,7 @@ function Login() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
+  const { login, loginWithGoogle } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -25,9 +25,25 @@ function Login() {
     }
   };
 
-  // Funciones placeholder para redes sociales
-  const handleGoogleLogin = () => {
-    console.log("Login con Google - Por implementar");
+  const handleGoogleLogin = async () => {
+    try {
+      setLoading(true);
+      setError(""); 
+      await loginWithGoogle();
+      navigate("/dashboard");
+    } catch (error) {
+      if (error.code === 'auth/popup-closed-by-user') {
+        return;
+      } else if (error.code === 'auth/popup-blocked') {
+        setError("Tu navegador bloqueó el popup. Por favor, permite popups para este sitio.");
+      } else if (error.code === 'auth/cancelled-popup-request') {
+        return;
+      } else {
+        setError("Error al iniciar sesión con Google. Por favor, intenta de nuevo.");
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleFacebookLogin = () => {

@@ -8,7 +8,7 @@ function Register() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const { register } = useAuth();
+  const { register, loginWithGoogle } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -32,9 +32,25 @@ function Register() {
     }
   };
 
-  // Funciones placeholder para redes sociales
-  const handleGoogleRegister = () => {
-    console.log("Registro con Google - Por implementar");
+  const handleGoogleRegister = async () => {
+    try {
+      setLoading(true);
+      setError("");
+      await loginWithGoogle();
+      navigate("/dashboard");
+    } catch (error) {
+      if (error.code === 'auth/popup-closed-by-user') {
+        return;
+      } else if (error.code === 'auth/popup-blocked') {
+        setError("Tu navegador bloqueó el popup. Por favor, permite popups para este sitio.");
+      } else if (error.code === 'auth/cancelled-popup-request') {
+        return;
+      } else {
+        setError("Error al registrarse con Google. Por favor, intenta de nuevo.");
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleFacebookRegister = () => {

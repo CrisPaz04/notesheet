@@ -4,77 +4,77 @@ function Home() {
   return (
     <div className="home-page">
       {/* Hero Section */}
-      <section className="home-hero">
-        <div className="container">
-          <div className="row align-items-center">
-            <div className="col-lg-6">
-              <div className="hero-content">
-                <h1 className="hero-title">
-                  NoteSheet
-                </h1>
-                <p className="hero-subtitle">
-                  La herramienta definitiva para músicos de iglesia. 
-                  Organiza, transpone y comparte tus canciones con facilidad.
-                </p>
-                <div className="d-flex cta-buttons">
-                  <Link to="/register" className="btn-hero-primary">
-                    <i className="bi bi-rocket-takeoff me-2"></i>
-                    Comenzar Gratis
-                  </Link>
-                  <Link to="/login" className="btn-hero-secondary">
-                    <i className="bi bi-box-arrow-in-right me-2"></i>
-                    Iniciar Sesión
-                  </Link>
-                </div>
-                
-                {/* Stats */}
-                <div className="row text-center mt-4">
-                  <div className="col-4">
-                    <div className="text-white">
-                      <h3 className="mb-0" style={{color: '#64ffda'}}>12+</h3>
-                      <small className="text-muted">Instrumentos</small>
-                    </div>
-                  </div>
-                  <div className="col-4">
-                    <div className="text-white">
-                      <h3 className="mb-0" style={{color: '#64ffda'}}>∞</h3>
-                      <small className="text-muted">Tonalidades</small>
-                    </div>
-                  </div>
-                  <div className="col-4">
-                    <div className="text-white">
-                      <h3 className="mb-0" style={{color: '#64ffda'}}>100%</h3>
-                      <small className="text-muted">Gratis</small>
-                    </div>
-                  </div>
-                </div>
+      <section className="home-hero-compact">
+  <div className="container">
+    <div className="row align-items-center">
+      <div className="col-lg-6">
+        <div className="hero-content">
+          <h1 className="hero-title">
+            NoteSheet
+          </h1>
+          <p className="hero-subtitle">
+            La herramienta definitiva para músicos de iglesia. 
+            Organiza, transpone y comparte tus canciones con facilidad.
+          </p>
+          <div className="d-flex cta-buttons">
+            <Link to="/register" className="btn-hero-primary">
+              <i className="bi bi-rocket-takeoff me-2"></i>
+              Comenzar Gratis
+            </Link>
+            <Link to="/login" className="btn-hero-secondary">
+              <i className="bi bi-box-arrow-in-right me-2"></i>
+              Iniciar Sesión
+            </Link>
+          </div>
+          
+          {/* Stats */}
+          <div className="row text-center mt-4">
+            <div className="col-4">
+              <div className="text-white">
+                <h3 className="mb-0" style={{color: '#64ffda'}}>12+</h3>
+                <small className="text-muted">Instrumentos</small>
               </div>
             </div>
-            
-            <div className="col-lg-6">
-              <div className="demo-card">
-                <div className="demo-header">
-                  <i className="bi bi-music-note-beamed me-2" style={{color: '#64ffda'}}></i>
-                  <h4 className="demo-title">Amazing Grace</h4>
-                </div>
-                <div className="demo-content">
-                  <div className="notation-demo">
-                    <div className="chord-line">DO        SOL       LA-      FA</div>
-                    <div className="lyric-line">Amazing grace, how sweet the sound</div>
-                    <div className="chord-line">DO        SOL          DO</div>
-                    <div className="lyric-line">That saved a wretch like me</div>
-                    <br />
-                    <div className="chord-line">DO        SOL       LA-      FA</div>
-                    <div className="lyric-line">I once was lost, but now am found</div>
-                    <div className="chord-line">DO        SOL       DO</div>
-                    <div className="lyric-line">Was blind but now I see</div>
-                  </div>
-                </div>
+            <div className="col-4">
+              <div className="text-white">
+                <h3 className="mb-0" style={{color: '#64ffda'}}>∞</h3>
+                <small className="text-muted">Tonalidades</small>
+              </div>
+            </div>
+            <div className="col-4">
+              <div className="text-white">
+                <h3 className="mb-0" style={{color: '#64ffda'}}>100%</h3>
+                <small className="text-muted">Gratis</small>
               </div>
             </div>
           </div>
         </div>
-      </section>
+      </div>
+      
+      <div className="col-lg-6">
+        <div className="demo-card">
+          <div className="demo-header">
+            <i className="bi bi-music-note-beamed me-2" style={{color: '#64ffda'}}></i>
+            <h4 className="demo-title">Amazing Grace</h4>
+          </div>
+          <div className="demo-content">
+            <div className="notation-demo">
+              <div className="chord-line">DO        SOL       LA-      FA</div>
+              <div className="lyric-line">Amazing grace, how sweet the sound</div>
+              <div className="chord-line">DO        SOL          DO</div>
+              <div className="lyric-line">That saved a wretch like me</div>
+              <br />
+              <div className="chord-line">DO        SOL       LA-      FA</div>
+              <div className="lyric-line">I once was lost, but now am found</div>
+              <div className="chord-line">DO        SOL       DO</div>
+              <div className="lyric-line">Was blind but now I see</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
 
       {/* Features Section */}
       <section className="features-section">
@@ -105,7 +105,7 @@ function Home() {
                 </div>
                 <h5 className="feature-title">Transposición Automática</h5>
                 <p className="feature-description">
-                  Cambia la tonalidad de cualquier canción con un clic. 
+                  Cambia la tonalidad de cualquier canción con un click. 
                   Perfecto para diferentes voces e instrumentos.
                 </p>
               </div>
@@ -157,7 +157,7 @@ function Home() {
                 </div>
                 <h5 className="feature-title">12+ Instrumentos</h5>
                 <p className="feature-description">
-                  Soporte para trompeta, saxofón, flauta, corno 
+                  Soporte para trompeta, saxofón, flauta, trombón, 
                   y muchos instrumentos transpositores más.
                 </p>
               </div>

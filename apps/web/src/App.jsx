@@ -131,8 +131,8 @@ function AppLayout() {
     {/* Solo mostrar footer si NO estamos en páginas de auth */}
     {!isAuthPage && <Footer />}
     
-    {/* Botón de cambio de tema */}
-    <ThemeToggle />
+    {/* Botón de cambio de tema - No mostrar en páginas de auth y home */}
+    {!['/', '/login', '/register'].includes(location.pathname) && <ThemeToggle />}
   </div>
 );
 }

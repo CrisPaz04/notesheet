@@ -1,5 +1,5 @@
 ﻿import { createContext, useState, useEffect, useContext } from 'react';
-import { auth, signIn, signOut, registerUser, authStateListener } from '@notesheet/api';
+import { auth, signIn, signOut, registerUser, authStateListener, signInWithGoogle } from '@notesheet/api';
 
 // Crear el contexto
 const AuthContext = createContext(null);
@@ -46,11 +46,20 @@ export function AuthProvider({ children }) {
     }
   };
 
+  const loginWithGoogle = async () => {
+    try {
+      return await signInWithGoogle();
+    } catch (error) {
+      throw error;
+    }
+  };
+
   const value = {
     currentUser,
     login,
     logout,
     register,
+    loginWithGoogle, 
     loading
   };
 
