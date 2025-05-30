@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { getAllSongs, deleteSong } from "@notesheet/api";
 import { useAuth } from "../context/AuthContext";
+import { getUserDisplayName } from "../utils/userHelpers";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { SkeletonGrid } from "../components/SkeletonCard";
 
@@ -72,12 +73,18 @@ function Dashboard() {
     setFilteredSongs(filtered);
   }, [songs, searchTerm, activeFilter]);
 
-  // Obtener saludo según la hora
   const getGreeting = () => {
+    const greetings = [
+      "Dios te bendiga",
+      "Bendiciones",
+      "Bendecido día",
+    ];
+
     const hour = new Date().getHours();
-    if (hour < 12) return "Buenos días";
-    if (hour < 18) return "Buenas tardes";
-    return "Buenas noches";
+    const day = new Date().getDay();
+    const index = (hour + day) % greetings.length;
+    
+    return greetings[index];
   };
 
   if (loading) {
@@ -118,9 +125,9 @@ function Dashboard() {
       <div className="container">
         {/* Header de bienvenida */}
         <div className="dashboard-header fade-in">
-          <h1 className="welcome-title">
-            {getGreeting()}, {currentUser?.email?.split('@')[0] || 'Músico'}
-          </h1>
+        <h1 className="welcome-title">
+          {getGreeting()}, {getUserDisplayName(currentUser)}
+        </h1>
           <p className="welcome-subtitle">
             ¿Qué te gustaría hacer hoy?
           </p>

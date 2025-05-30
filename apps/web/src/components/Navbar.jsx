@@ -1,5 +1,6 @@
 ﻿import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { getUserDisplayName, getUserInitials } from "../utils/userHelpers";
 
 function Navbar() {
   const { currentUser, logout } = useAuth();
@@ -79,13 +80,14 @@ function Navbar() {
                   </Link>
                 </li>
                 <li className="nav-item">
-                  <button 
-                    onClick={handleLogout} 
-                    className="btn btn-logout ms-2"
-                  >
-                    <i className="bi bi-box-arrow-right me-1"></i>
-                    Salir
-                  </button>
+                  <div className="user-indicator">
+                    <div className="user-avatar">
+                      {getUserInitials(currentUser)}
+                    </div>
+                    <span className="user-name">
+                      {getUserDisplayName(currentUser)}
+                    </span>
+                  </div>
                 </li>
               </>
             ) : (

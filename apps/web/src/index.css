@@ -896,13 +896,22 @@
   opacity: 0.8;
 }
 
+.navbar-nav-custom {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem; 
+}
+
 .navbar-nav-custom .nav-link {
   color: rgba(255, 255, 255, 0.8) !important;
   font-weight: 500;
   padding: 0.5rem 1rem !important;
   border-radius: 8px;
   transition: all 0.3s ease;
-  margin: 0 0.25rem;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  height: 44px; 
 }
 
 .navbar-nav-custom .nav-link:hover {
@@ -933,6 +942,58 @@
 
 .navbar-toggler-icon-custom {
   background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%28255, 255, 255, 0.75%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='m4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+}
+
+.user-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  margin-right: 0.5rem;
+  height: 44px;
+  box-sizing: border-box;
+}
+
+.user-avatar {
+  width: 32px;
+  height: 32px;
+  background: linear-gradient(135deg, #64ffda 0%, #26a69a 100%);
+  color: #1a1a2e;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 0.8rem;
+  flex-shrink: 0;
+}
+
+.user-name {
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 500;
+  font-size: 0.9rem;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Light theme overrides */
+[data-bs-theme="light"] .user-indicator {
+  background: rgba(0, 0, 0, 0.05);
+  border-color: rgba(0, 0, 0, 0.1);
+}
+
+[data-bs-theme="light"] .user-avatar {
+  background: linear-gradient(135deg, #0d6efd 0%, #0b5ed7 100%);
+  color: white;
+}
+
+[data-bs-theme="light"] .user-name {
+  color: rgba(33, 37, 41, 0.9);
 }
 
 .btn-logout {
@@ -1038,6 +1099,17 @@
   .footer-links {
     justify-content: center;
     flex-wrap: wrap;
+  }
+
+  .user-indicator {
+    justify-content: center;
+    margin: 0.5rem 0;
+    background: rgba(26, 26, 46, 0.95);
+    backdrop-filter: blur(10px);
+  }
+  
+  .user-name {
+    max-width: none;
   }
 }
 
