@@ -12,16 +12,17 @@
 @import './components/_song-editor.css';
 @import './components/_song-viewer.css';
 @import './components/_playlists.css';
-/* (Iremos agregando estos imports conforme migremos cada componente) */
+@import './components/_footer.css';
+@import './components/_theme-toggle.css';
 
 /* Pages */
 @import './pages/_home.css';
 @import './pages/_notfound.css';
 @import './pages/_preferences.css';
-/* (Iremos agregando estos imports conforme migremos cada página) */
 
 /* Utilities */
-/* (Iremos agregando estos imports conforme migremos utilidades) */
+@import './utilities/_animations.css';
+@import './utilities/_helpers.css';
 
 /* Temporary: Import remaining styles from index.css */
 /* TODO: Remove this once migration is complete */

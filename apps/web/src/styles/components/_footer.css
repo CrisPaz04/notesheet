@@ -1,0 +1,115 @@
+/* src/styles/components/_footer.css */
+
+/* Footer Styles - Dark Theme */
+.footer-dark-custom {
+    background: linear-gradient(135deg, var(--bg-dark-secondary) 0%, var(--bg-dark-tertiary) 100%);
+    border-top: 1px solid rgba(100, 255, 218, 0.1);
+    padding: 2rem 0 1rem 0;
+    margin-top: auto;
+  }
+  
+  .footer-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+  
+  .footer-brand {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+  }
+  
+  .footer-brand-name {
+    font-size: 1.2rem;
+    font-weight: 600;
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin: 0;
+  }
+  
+  .footer-brand-icon {
+    color: var(--color-primary);
+    font-size: 1.5rem;
+  }
+  
+  .footer-text {
+    color: var(--text-light-muted);
+    margin: 0;
+    font-size: 0.9rem;
+  }
+  
+  .footer-links {
+    display: flex;
+    gap: 1.5rem;
+    align-items: center;
+  }
+  
+  .footer-link {
+    color: var(--text-light-secondary);
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: var(--transition-fast);
+  }
+  
+  .footer-link:hover {
+    color: var(--color-primary);
+    text-decoration: none;
+  }
+  
+  .footer-divider {
+    width: 100%;
+    height: 1px;
+    background: var(--border-light);
+    margin: 1rem 0 0.5rem 0;
+  }
+  
+  /* Responsive Footer */
+  @media (max-width: 768px) {
+    .footer-content {
+      flex-direction: column;
+      text-align: center;
+    }
+    
+    .footer-links {
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+  }
+  
+  /* Light theme overrides */
+  [data-bs-theme="light"] .footer-dark-custom {
+    background: linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%);
+    border-top-color: rgba(0, 0, 0, 0.1);
+  }
+  
+  [data-bs-theme="light"] .footer-brand-name {
+    background: linear-gradient(135deg, #0d6efd 0%, #0b5ed7 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  
+  [data-bs-theme="light"] .footer-brand-icon {
+    color: #0d6efd;
+  }
+  
+  [data-bs-theme="light"] .footer-text {
+    color: #6c757d;
+  }
+  
+  [data-bs-theme="light"] .footer-link {
+    color: #495057;
+  }
+  
+  [data-bs-theme="light"] .footer-link:hover {
+    color: #0d6efd;
+  }
+  
+  [data-bs-theme="light"] .footer-divider {
+    background: rgba(0, 0, 0, 0.1);
+  }

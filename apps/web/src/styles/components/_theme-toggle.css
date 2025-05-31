@@ -1,0 +1,48 @@
+/* src/styles/components/_theme-toggle.css */
+
+/* Theme Toggle Button */
+.theme-toggle {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+    border: none;
+    color: var(--bg-dark-primary);
+    font-size: 1.5rem;
+    cursor: pointer;
+    transition: var(--transition-fast);
+    box-shadow: var(--shadow-medium);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .theme-toggle:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.3);
+  }
+  
+  /* Light theme overrides */
+  [data-bs-theme="light"] .theme-toggle {
+    background: linear-gradient(135deg, #0d6efd 0%, #0b5ed7 100%);
+    color: white;
+  }
+  
+  [data-bs-theme="light"] .theme-toggle:hover {
+    box-shadow: 0 12px 35px rgba(13, 110, 253, 0.3);
+  }
+  
+  /* Responsive Design */
+  @media (max-width: 768px) {
+    .theme-toggle {
+      bottom: 1rem;
+      right: 1rem;
+      width: 50px;
+      height: 50px;
+      font-size: 1.2rem;
+    }
+  }

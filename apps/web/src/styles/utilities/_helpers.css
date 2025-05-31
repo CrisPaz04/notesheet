@@ -1,0 +1,69 @@
+/* src/styles/utilities/_helpers.css */
+
+/* Editor Basic Styles */
+.editor-wrapper {
+    background-color: white;
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-light);
+    padding: 1rem;
+  }
+  
+  .song-notation {
+    font-family: monospace;
+    background-color: #f8f9fa;
+    padding: 0.125rem 0.25rem;
+    border-radius: var(--radius-sm);
+  }
+  
+  .song-section {
+    border-left: 4px solid #0d6efd;
+    padding-left: 1rem;
+    margin: 1rem 0;
+    position: relative;
+  }
+  
+  .song-section pre {
+    width: 100%;
+    text-align: center;
+    margin-left: -0.5rem; 
+    padding-left: 0.5rem;
+  }
+  
+  .song-section h3 {
+    text-align: center;
+  }
+  
+  /* Smooth Scrolling */
+  html {
+    scroll-behavior: smooth;
+  }
+  
+  /* Global Utility Classes */
+  .text-center {
+    text-align: center;
+  }
+  
+  .d-flex {
+    display: flex;
+  }
+  
+  .justify-content-center {
+    justify-content: center;
+  }
+  
+  .align-items-center {
+    align-items: center;
+  }
+  
+  /* Light theme overrides for helpers */
+  [data-bs-theme="light"] .song-section {
+    border-left-color: #0d6efd;
+  }
+  
+  [data-bs-theme="light"] .song-notation {
+    background-color: #f8f9fa;
+  }
+  
+  [data-bs-theme="light"] .editor-wrapper {
+    background-color: white;
+  }
