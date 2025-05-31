@@ -1,0 +1,74 @@
+/* src/styles/utilities/_responsive.css */
+
+/* Global Responsive Utilities */
+
+@media (max-width: 768px) {
+    /* Hero responsive */
+    .hero-title {
+      font-size: 2.5rem;
+    }
+    
+    .hero-subtitle {
+      font-size: 1.1rem;
+    }
+    
+    .cta-buttons {
+      flex-direction: column;
+      align-items: center;
+    }
+    
+    .btn-hero-primary,
+    .btn-hero-secondary {
+      width: 100%;
+      max-width: 300px;
+    }
+  
+    /* Dashboard responsive */
+    .action-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .recent-grid {
+      grid-template-columns: 1fr;
+    }
+    
+    .welcome-title {
+      font-size: 1.5rem;
+    }
+  
+    /* Content header responsive */
+    .content-header {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    
+    .content-header-left,
+    .content-header-right {
+      justify-content: center;
+    }
+    
+    .filter-tabs {
+      justify-content: center;
+    }
+  
+    /* Navbar responsive */
+    .navbar-nav-custom {
+      background: rgba(26, 26, 46, 0.95);
+      backdrop-filter: blur(10px);
+      border-radius: var(--radius-lg);
+      padding: var(--spacing-md);
+      margin-top: var(--spacing-md);
+      border: 1px solid var(--border-light);
+    }
+  
+    .user-indicator {
+      justify-content: center;
+      margin: var(--spacing-sm) 0;
+      background: rgba(26, 26, 46, 0.95);
+      backdrop-filter: blur(10px);
+    }
+    
+    .user-name {
+      max-width: none;
+    }
+  }
