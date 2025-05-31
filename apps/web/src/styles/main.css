@@ -16,6 +16,8 @@
 
 /* Pages */
 @import './pages/_home.css';
+@import './pages/_notfound.css';
+@import './pages/_preferences.css';
 /* (Iremos agregando estos imports conforme migremos cada página) */
 
 /* Utilities */
