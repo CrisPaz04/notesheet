@@ -230,6 +230,12 @@
     opacity: 1;
     visibility: visible;
   }
+
+  /* Loading States for Specific Components */
+.navbar-loading {
+  background: rgba(255, 255, 255, 0.05);
+  animation: skeleton-loading 1.5s infinite;
+}
   
   /* Stagger Animation */
   .stagger-animation > * {

@@ -1,43 +1,7 @@
-﻿.btn-animated::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
-  transition: left 0.5s;
-}
-
-.btn-animated:hover::before {
-  left: 100%;
-}
-
-.btn-animated:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
-}
-
-.btn-animated:active {
-  transform: translateY(0);
-  transition: all 0.1s;
-}
-
-/* Loading States for Specific Components */
+﻿/* Loading States for Specific Components */
 .navbar-loading {
   background: rgba(255, 255, 255, 0.05);
   animation: skeleton-loading 1.5s infinite;
-}
-
-/* Smooth Scrolling */
-html {
-  scroll-behavior: smooth;
-}
-
-/* Stagger Animation */
-.stagger-animation > * {
-  opacity: 0;
-  animation: fadeIn 0.5s ease-out forwards;
 }
 
 .playlists-header {
