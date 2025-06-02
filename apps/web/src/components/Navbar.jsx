@@ -1,4 +1,5 @@
-﻿import { Link, useLocation } from "react-router-dom";
+﻿// apps/web/src/components/Navbar.jsx
+import { Link, useLocation } from "react-router-dom";
 import { useState, useRef, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import { getUserDisplayName, getUserInitials } from "../utils/userHelpers";
@@ -6,7 +7,7 @@ import { useThemeWithAuth } from "../hooks/useThemeWithAuth";
 
 function Navbar() {
   const { currentUser, logout } = useAuth();
-  const { theme, changeTheme } = useThemeWithAuth();
+  const { getCurrentThemeInfo } = useThemeWithAuth();
   const location = useLocation();
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
@@ -34,23 +35,12 @@ function Navbar() {
     }
   };
 
-  const handleThemeToggle = () => {
-    console.log("Current theme:", theme);
-    const newTheme = theme === 'dark' ? 'light' : 'dark';
-    console.log("New theme:", newTheme);
-    console.log("HTML data-bs-theme before:", document.documentElement.getAttribute('data-bs-theme'));
-    changeTheme(newTheme);
-    setTimeout(() => {
-      console.log("HTML data-bs-theme after:", document.documentElement.getAttribute('data-bs-theme'));
-    }, 100);
-    
-    setIsUserDropdownOpen(false);
-  };
-
   // Función para determinar si un link está activo
   const isActive = (path) => {
     return location.pathname === path;
   };
+
+  const currentThemeInfo = getCurrentThemeInfo();
 
   return (
     <nav className="navbar navbar-expand-lg navbar-dark-custom">
@@ -147,13 +137,14 @@ function Navbar() {
                         <span>Preferencias</span>
                       </Link>
                       
-                      <button 
-                        className="user-dropdown-item" 
-                        onClick={handleThemeToggle}
+                      <Link 
+                        to="/preferences" 
+                        className="user-dropdown-item"
+                        onClick={() => setIsUserDropdownOpen(false)}
                       >
-                        <i className={`bi ${theme === 'dark' ? 'bi-sun' : 'bi-moon'}`}></i>
-                        <span>Tema {theme === 'dark' ? 'Claro' : 'Oscuro'}</span>
-                      </button>
+                        <i className="bi bi-palette"></i>
+                        <span>Temas ({currentThemeInfo.name})</span>
+                      </Link>
                       
                       <div className="user-dropdown-divider"></div>
                       

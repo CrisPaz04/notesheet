@@ -21,7 +21,7 @@ function UserPreferences() {
   });
   
   const { currentUser } = useAuth();
-  const { theme, changeTheme } = useThemeWithAuth();
+  const { theme, changeTheme, getThemesByCategory } = useThemeWithAuth();
 
   // Cargar preferencias al montar el componente
   useEffect(() => {
@@ -33,7 +33,8 @@ function UserPreferences() {
           // Combinar con valores por defecto
           setPreferences({
             ...preferences,
-            ...userPreferences
+            ...userPreferences,
+            defaultTheme: theme // Usar el tema actual del hook
           });
         }
       } catch (error) {
@@ -45,7 +46,7 @@ function UserPreferences() {
     };
 
     loadPreferences();
-  }, [currentUser]);
+  }, [currentUser, theme]);
 
   // Manejar cambios en los campos
   const handleChange = (field, value) => {
@@ -56,6 +57,12 @@ function UserPreferences() {
     // Limpiar mensajes de éxito/error
     setSuccess(false);
     setError("");
+  };
+
+  // Manejar cambio de tema
+  const handleThemeChange = async (newTheme) => {
+    handleChange('defaultTheme', newTheme);
+    await changeTheme(newTheme); // Cambiar tema inmediatamente
   };
 
   // Guardar preferencias
@@ -80,6 +87,8 @@ function UserPreferences() {
       setSaving(false);
     }
   };
+
+  const themesByCategory = getThemesByCategory();
 
   if (loading) {
     return (
@@ -168,14 +177,14 @@ function UserPreferences() {
                       <div className="notation-option">
                         <input
                           type="radio"
-                          id="notation-latin"
+                          id="notation-latin-system"
                           name="defaultNotationSystem"
                           value="latin"
                           checked={preferences.defaultNotationSystem === "latin"}
                           onChange={(e) => handleChange("defaultNotationSystem", e.target.value)}
                           className="notation-radio"
                         />
-                        <label htmlFor="notation-latin" className="notation-label">
+                        <label htmlFor="notation-latin-system" className="notation-label">
                           <div className="notation-preview">DO-RE-MI</div>
                           <div className="notation-name">Notación Latina</div>
                         </label>
@@ -184,14 +193,14 @@ function UserPreferences() {
                       <div className="notation-option">
                         <input
                           type="radio"
-                          id="notation-english"
+                          id="notation-english-system"
                           name="defaultNotationSystem"
                           value="english"
                           checked={preferences.defaultNotationSystem === "english"}
                           onChange={(e) => handleChange("defaultNotationSystem", e.target.value)}
                           className="notation-radio"
                         />
-                        <label htmlFor="notation-english" className="notation-label">
+                        <label htmlFor="notation-english-system" className="notation-label">
                           <div className="notation-preview">C-D-E</div>
                           <div className="notation-name">Notación Anglosajona</div>
                         </label>
@@ -232,71 +241,56 @@ function UserPreferences() {
               <div className="preferences-card slide-up-delay">
                 <div className="preferences-card-header">
                   <i className="bi bi-palette me-2"></i>
-                  Apariencia
+                  Temas de Apariencia
                 </div>
                 <div className="preferences-card-body">
                   <div className="form-group-modern">
                     <label className="form-label-modern">
-                      <i className="bi bi-moon-stars me-2"></i>
-                      Tema de la Aplicación
+                      <i className="bi bi-brush me-2"></i>
+                      Seleccionar Tema
                     </label>
-                    <div className="theme-options">
-                      <div className="theme-option">
-                        <input
-                          type="radio"
-                          id="theme-light"
-                          name="defaultTheme"
-                          value="light"
-                          checked={theme === "light"}
-                          onChange={() => {
-                            changeTheme("light");
-                            handleChange("defaultTheme", "light");
-                          }}
-                          className="theme-radio"
-                        />
-                        <label htmlFor="theme-light" className="theme-label">
-                          <div className="theme-preview light-theme">
-                            <div className="theme-header"></div>
-                            <div className="theme-content">
-                              <div className="theme-card"></div>
-                              <div className="theme-card"></div>
+                    
+                    {Object.entries(themesByCategory).map(([category, themes]) => (
+                      <div key={category} className="theme-category">
+                        <div className="theme-category-title">
+                          {category === 'classic' && 'Temas Clásicos'}
+                          {category === 'rainforest' && 'Temas de Bosque'}
+                          {category === 'newspaper' && 'Temas de Periódico'}
+                        </div>
+                        
+                        <div className="theme-options-grid">
+                          {themes.map((themeInfo) => (
+                            <div key={themeInfo.id} className="theme-option-wrapper">
+                              <input
+                                type="radio"
+                                id={`theme-${category}-${themeInfo.id}`}
+                                name="defaultTheme"
+                                value={themeInfo.id}
+                                checked={preferences.defaultTheme === themeInfo.id}
+                                onChange={() => handleThemeChange(themeInfo.id)}
+                                className="theme-radio"
+                              />
+                              <label htmlFor={`theme-${category}-${themeInfo.id}`} className="theme-label-new">
+                                <div className={`theme-preview-new ${themeInfo.id}`}>
+                                  <div className="theme-preview-header"></div>
+                                  <div className="theme-preview-content">
+                                    <div className="theme-preview-sidebar"></div>
+                                    <div className="theme-preview-main">
+                                      <div className="theme-preview-card"></div>
+                                      <div className="theme-preview-card"></div>
+                                    </div>
+                                  </div>
+                                </div>
+                                <div className="theme-info">
+                                  <div className="theme-name">{themeInfo.name}</div>
+                                  <div className="theme-description">{themeInfo.description}</div>
+                                </div>
+                              </label>
                             </div>
-                          </div>
-                          <div className="theme-name">
-                            <i className="bi bi-sun-fill me-2"></i>
-                            Claro
-                          </div>
-                        </label>
+                          ))}
+                        </div>
                       </div>
-                      
-                      <div className="theme-option">
-                        <input
-                          type="radio"
-                          id="theme-dark"
-                          name="defaultTheme"
-                          value="dark"
-                          checked={theme === "dark"}
-                          onChange={() => {
-                            changeTheme("dark");
-                            handleChange("defaultTheme", "dark");
-                          }}
-                          className="theme-radio"
-                        />
-                        <label htmlFor="theme-dark" className="theme-label">
-                          <div className="theme-preview dark-theme">
-                            <div className="theme-header"></div>
-                            <div className="theme-content">
-                              <div className="theme-card"></div>
-                              <div className="theme-card"></div>
-                            </div>
-                          </div>
-                          <div className="theme-name">
-                            <i className="bi bi-moon-fill me-2"></i>
-                            Oscuro
-                          </div>
-                        </label>
-                      </div>
-                    </div>
+                    ))}
                   </div>
                 </div>
               </div>

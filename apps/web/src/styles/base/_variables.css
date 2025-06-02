@@ -98,3 +98,610 @@
   --shadow-medium: 0 8px 25px rgba(0, 0, 0, 0.2);
   --shadow-heavy: 0 15px 35px rgba(0, 0, 0, 0.3);
 }
+
+/* Rainforest Light Theme - Basado en el dark mejorado */
+[data-bs-theme="rainforest-light"] {
+  /* Primary Colors - Verde natural más suave */
+  --color-primary: #3e4629;
+  --color-primary-dark: #2d3129;
+  --color-primary-light: rgba(62, 70, 41, 0.1);
+  
+  /* Background Colors - Tonos inspirados en el dark pero claros */
+  --bg-dark-primary: #f8faf6;
+  --bg-dark-secondary: #f2f5ed;
+  --bg-dark-tertiary: #eaf0e3;
+  
+  /* Text Colors - Más oscuros para mejor contraste */
+  --text-light-primary: #1e2220;
+  --text-light-secondary: #2a2f2b;
+  --text-light-muted: #3e4629;
+  
+  /* Border Colors */
+  --border-light: rgba(62, 70, 41, 0.2);
+  --border-light-hover: rgba(62, 70, 41, 0.3);
+  
+  /* Shadows */
+  --shadow-light: 0 4px 6px rgba(30, 34, 32, 0.1);
+  --shadow-medium: 0 8px 25px rgba(30, 34, 32, 0.15);
+  --shadow-heavy: 0 15px 35px rgba(30, 34, 32, 0.2);
+}
+
+/* Rainforest Dark Theme - Nuevos colores */
+[data-bs-theme="rainforest-dark"] {
+  /* Primary Colors - Verde claro para contraste */
+  --color-primary: #a6af92;
+  --color-primary-dark: #768a57;
+  --color-primary-light: rgba(166, 175, 146, 0.1);
+  
+  /* Background Colors - Verdes oscuros naturales */
+  --bg-dark-primary: #1e2220;
+  --bg-dark-secondary: #2a2f2b;
+  --bg-dark-tertiary: #363c37;
+  
+  /* Text Colors */
+  --text-light-primary: #d8ddc6;
+  --text-light-secondary: #a6af92;
+  --text-light-muted: #768a57;
+  
+  /* Border Colors */
+  --border-light: rgba(166, 175, 146, 0.2);
+  --border-light-hover: rgba(166, 175, 146, 0.3);
+  
+  /* Shadows */
+  --shadow-light: 0 4px 6px rgba(0, 0, 0, 0.2);
+  --shadow-medium: 0 8px 25px rgba(0, 0, 0, 0.3);
+  --shadow-heavy: 0 15px 35px rgba(0, 0, 0, 0.4);
+}
+
+/* Newspaper Light Theme - Papel amarillento */
+[data-bs-theme="newspaper-light"] {
+  /* Primary Colors - Negro intenso para texto/iconos */
+  --color-primary: #2c2c2c;
+  --color-primary-dark: #1a1a1a;
+  --color-primary-light: rgba(44, 44, 44, 0.1);
+  
+  /* Background Colors - Papel envejecido */
+  --bg-dark-primary: #f7f3e9;
+  --bg-dark-secondary: #f2ede0;
+  --bg-dark-tertiary: #ede7d7;
+  
+  /* Text Colors - Negro para legibilidad máxima */
+  --text-light-primary: #1a1a1a;
+  --text-light-secondary: #2c2c2c;
+  --text-light-muted: #4a4a4a;
+  
+  /* Border Colors */
+  --border-light: rgba(26, 26, 26, 0.15);
+  --border-light-hover: rgba(26, 26, 26, 0.25);
+  
+  /* Shadows */
+  --shadow-light: 0 4px 6px rgba(26, 26, 26, 0.1);
+  --shadow-medium: 0 8px 25px rgba(26, 26, 26, 0.15);
+  --shadow-heavy: 0 15px 35px rgba(26, 26, 26, 0.2);
+}
+
+/* Newspaper Dark Theme */
+[data-bs-theme="newspaper-dark"] {
+  /* Primary Colors - Amarillo vintage */
+  --color-primary: #e6d690;
+  --color-primary-dark: #d4c373;
+  --color-primary-light: rgba(230, 214, 144, 0.1);
+  
+  /* Background Colors - Papel oscuro envejecido */
+  --bg-dark-primary: #2e2d28;
+  --bg-dark-secondary: #3a3832;
+  --bg-dark-tertiary: #46443c;
+  
+  /* Text Colors */
+  --text-light-primary: #f5f2e8;
+  --text-light-secondary: #e6d690;
+  --text-light-muted: #d4c373;
+  
+  /* Border Colors */
+  --border-light: rgba(230, 214, 144, 0.2);
+  --border-light-hover: rgba(230, 214, 144, 0.3);
+  
+  /* Shadows */
+  --shadow-light: 0 4px 6px rgba(0, 0, 0, 0.2);
+  --shadow-medium: 0 8px 25px rgba(0, 0, 0, 0.3);
+  --shadow-heavy: 0 15px 35px rgba(0, 0, 0, 0.4);
+}
+
+/* Eliminar todos los gradientes - Navbar */
+[data-bs-theme="light"] .navbar-dark-custom {
+  background: #f8f9fa;
+  border-bottom-color: #0d6efd;
+}
+
+[data-bs-theme="dark"] .navbar-dark-custom {
+  background: #1a1a2e;
+  border-bottom-color: #64ffda;
+}
+
+[data-bs-theme="rainforest-light"] .navbar-dark-custom {
+  background: #f2f5ed;
+  border-bottom-color: #3e4629;
+}
+
+[data-bs-theme="rainforest-dark"] .navbar-dark-custom {
+  background: #1e2220;
+  border-bottom-color: #a6af92;
+}
+
+[data-bs-theme="newspaper-light"] .navbar-dark-custom {
+  background: #f5f0e0;
+  border-bottom-color: #1a1a1a;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+[data-bs-theme="newspaper-dark"] .navbar-dark-custom {
+  background: #2c2a23;
+  border-bottom-color: #f2e49b;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+/* Eliminar gradientes de brand */
+[data-bs-theme="light"] .navbar-brand-custom {
+  color: #0d6efd;
+}
+
+[data-bs-theme="dark"] .navbar-brand-custom {
+  color: #64ffda;
+}
+
+[data-bs-theme="rainforest-light"] .navbar-brand-custom {
+  color: #3e4629;
+}
+
+[data-bs-theme="rainforest-dark"] .navbar-brand-custom {
+  color: #a6af92;
+}
+
+[data-bs-theme="newspaper-light"] .navbar-brand-custom {
+  color: #1a1a1a;
+}
+
+[data-bs-theme="newspaper-dark"] .navbar-brand-custom {
+  color: #f2e49b;
+}
+
+/* Eliminar gradientes de botones */
+.btn-primary-dashboard,
+.btn-preferences-primary,
+.btn-song-primary,
+.btn-playlist-primary,
+.btn-editor-primary,
+.btn-hero-primary,
+.btn-notfound-primary {
+  background: var(--color-primary) !important;
+  color: var(--bg-dark-primary) !important;
+  border: none;
+}
+
+/* Ajustes específicos para temas claros en botones */
+[data-bs-theme="rainforest-light"] .btn-primary-dashboard,
+[data-bs-theme="rainforest-light"] .btn-preferences-primary,
+[data-bs-theme="rainforest-light"] .btn-song-primary,
+[data-bs-theme="rainforest-light"] .btn-playlist-primary,
+[data-bs-theme="rainforest-light"] .btn-editor-primary,
+[data-bs-theme="rainforest-light"] .btn-hero-primary,
+[data-bs-theme="rainforest-light"] .btn-notfound-primary {
+  color: #f5f7f2 !important;
+}
+
+[data-bs-theme="newspaper-light"] .btn-primary-dashboard,
+[data-bs-theme="newspaper-light"] .btn-preferences-primary,
+[data-bs-theme="newspaper-light"] .btn-song-primary,
+[data-bs-theme="newspaper-light"] .btn-playlist-primary,
+[data-bs-theme="newspaper-light"] .btn-editor-primary,
+[data-bs-theme="newspaper-light"] .btn-hero-primary,
+[data-bs-theme="newspaper-light"] .btn-notfound-primary {
+  color: #f7f3e9 !important;
+}
+
+/* User avatar sin gradientes */
+[data-bs-theme="light"] .user-avatar,
+[data-bs-theme="light"] .user-avatar-large {
+  background: #0d6efd;
+  color: white;
+}
+
+[data-bs-theme="dark"] .user-avatar,
+[data-bs-theme="dark"] .user-avatar-large {
+  background: #64ffda;
+  color: #1a1a2e;
+}
+
+[data-bs-theme="rainforest-light"] .user-avatar,
+[data-bs-theme="rainforest-light"] .user-avatar-large {
+  background: #3e4629;
+  color: #f8faf6;
+}
+
+[data-bs-theme="rainforest-dark"] .user-avatar,
+[data-bs-theme="rainforest-dark"] .user-avatar-large {
+  background: #a6af92;
+  color: #1e2220;
+}
+
+[data-bs-theme="newspaper-light"] .user-avatar,
+[data-bs-theme="newspaper-light"] .user-avatar-large {
+  background: #1a1a1a;
+  color: #faf6e8;
+}
+
+[data-bs-theme="newspaper-dark"] .user-avatar,
+[data-bs-theme="newspaper-dark"] .user-avatar-large {
+  background: #f2e49b;
+  color: #2c2a23;
+}
+
+/* Ajustes específicos para elementos de fondo */
+[data-bs-theme="rainforest-light"] .preferences-header,
+[data-bs-theme="rainforest-light"] .preferences-card,
+[data-bs-theme="rainforest-light"] .dashboard-header,
+[data-bs-theme="rainforest-light"] .song-header,
+[data-bs-theme="rainforest-light"] .controls-toolbar,
+[data-bs-theme="rainforest-light"] .song-content,
+[data-bs-theme="rainforest-light"] .playlists-header,
+[data-bs-theme="rainforest-light"] .playlist-card {
+  backdrop-filter: blur(2px);
+  background: rgba(238, 242, 232, 0.9);
+  border-color: rgba(84, 96, 62, 0.2);
+}
+
+[data-bs-theme="newspaper-light"] .preferences-header,
+[data-bs-theme="newspaper-light"] .preferences-card,
+[data-bs-theme="newspaper-light"] .dashboard-header,
+[data-bs-theme="newspaper-light"] .song-header,
+[data-bs-theme="newspaper-light"] .controls-toolbar,
+[data-bs-theme="newspaper-light"] .song-content,
+[data-bs-theme="newspaper-light"] .playlists-header,
+[data-bs-theme="newspaper-light"] .playlist-card {
+  backdrop-filter: none;
+  background: rgba(242, 237, 224, 0.95);
+  border-color: rgba(26, 26, 26, 0.15);
+  box-shadow: 0 4px 12px rgba(26, 26, 26, 0.1);
+}
+
+/* ===== CORRECCIONES COMPLETAS DE ELEMENTOS INTERACTIVOS ===== */
+
+/* NAVBAR - Ajustes completos para todos los temas */
+
+/* Light Theme - Navbar */
+[data-bs-theme="light"] .navbar-nav-custom .nav-link {
+  color: #495057 !important;
+}
+
+[data-bs-theme="light"] .navbar-nav-custom .nav-link:hover,
+[data-bs-theme="light"] .navbar-nav-custom .nav-link.active {
+  color: #0d6efd !important;
+  background: rgba(13, 110, 253, 0.1);
+}
+
+[data-bs-theme="light"] .user-indicator {
+  background: rgba(13, 110, 253, 0.1);
+  border-color: rgba(13, 110, 253, 0.2);
+}
+
+[data-bs-theme="light"] .user-indicator.clickable:hover {
+  background: rgba(13, 110, 253, 0.15);
+  border-color: rgba(13, 110, 253, 0.3);
+}
+
+[data-bs-theme="light"] .user-dropdown-menu {
+  background: rgba(255, 255, 255, 0.98);
+  border-color: rgba(13, 110, 253, 0.2);
+  box-shadow: 0 10px 30px rgba(13, 110, 253, 0.15);
+}
+
+[data-bs-theme="light"] .user-dropdown-header {
+  background: rgba(13, 110, 253, 0.05);
+}
+
+[data-bs-theme="light"] .user-dropdown-item {
+  color: #212529;
+}
+
+[data-bs-theme="light"] .user-dropdown-item:hover {
+  background: rgba(13, 110, 253, 0.1);
+  color: #212529;
+}
+
+/* Dark Theme - Navbar */
+[data-bs-theme="dark"] .navbar-nav-custom .nav-link {
+  color: #cccccc !important;
+}
+
+[data-bs-theme="dark"] .navbar-nav-custom .nav-link:hover,
+[data-bs-theme="dark"] .navbar-nav-custom .nav-link.active {
+  color: #64ffda !important;
+  background: rgba(100, 255, 218, 0.1);
+}
+
+[data-bs-theme="dark"] .user-indicator {
+  background: rgba(100, 255, 218, 0.1);
+  border-color: rgba(100, 255, 218, 0.2);
+}
+
+[data-bs-theme="dark"] .user-indicator.clickable:hover {
+  background: rgba(100, 255, 218, 0.15);
+  border-color: rgba(100, 255, 218, 0.3);
+}
+
+[data-bs-theme="dark"] .user-dropdown-menu {
+  background: rgba(26, 26, 46, 0.98);
+  border-color: rgba(100, 255, 218, 0.2);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+[data-bs-theme="dark"] .user-dropdown-header {
+  background: rgba(100, 255, 218, 0.05);
+}
+
+[data-bs-theme="dark"] .user-dropdown-item {
+  color: #ffffff;
+}
+
+[data-bs-theme="dark"] .user-dropdown-item:hover {
+  background: rgba(100, 255, 218, 0.1);
+  color: #ffffff;
+}
+
+/* Rainforest Light - Navbar */
+[data-bs-theme="rainforest-light"] .navbar-nav-custom .nav-link {
+  color: #2a2f2b !important;
+}
+
+[data-bs-theme="rainforest-light"] .navbar-nav-custom .nav-link:hover,
+[data-bs-theme="rainforest-light"] .navbar-nav-custom .nav-link.active {
+  color: #3e4629 !important;
+  background: rgba(62, 70, 41, 0.1);
+}
+
+[data-bs-theme="rainforest-light"] .user-indicator {
+  background: rgba(62, 70, 41, 0.1);
+  border-color: rgba(62, 70, 41, 0.2);
+}
+
+[data-bs-theme="rainforest-light"] .user-indicator.clickable:hover {
+  background: rgba(62, 70, 41, 0.15);
+  border-color: rgba(62, 70, 41, 0.3);
+}
+
+[data-bs-theme="rainforest-light"] .user-dropdown-menu {
+  background: rgba(248, 250, 246, 0.98);
+  border-color: rgba(62, 70, 41, 0.2);
+  box-shadow: 0 10px 30px rgba(30, 34, 32, 0.2);
+}
+
+[data-bs-theme="rainforest-light"] .user-dropdown-header {
+  background: rgba(62, 70, 41, 0.05);
+}
+
+[data-bs-theme="rainforest-light"] .user-dropdown-item {
+  color: #1e2220;
+}
+
+[data-bs-theme="rainforest-light"] .user-dropdown-item:hover {
+  background: rgba(62, 70, 41, 0.1);
+  color: #1e2220;
+}
+
+/* Rainforest Dark - Navbar */
+[data-bs-theme="rainforest-dark"] .navbar-nav-custom .nav-link {
+  color: #a6af92 !important;
+}
+
+[data-bs-theme="rainforest-dark"] .navbar-nav-custom .nav-link:hover,
+[data-bs-theme="rainforest-dark"] .navbar-nav-custom .nav-link.active {
+  color: #d8ddc6 !important;
+  background: rgba(166, 175, 146, 0.1);
+}
+
+[data-bs-theme="rainforest-dark"] .user-indicator {
+  background: rgba(166, 175, 146, 0.1);
+  border-color: rgba(166, 175, 146, 0.2);
+}
+
+[data-bs-theme="rainforest-dark"] .user-indicator.clickable:hover {
+  background: rgba(166, 175, 146, 0.15);
+  border-color: rgba(166, 175, 146, 0.3);
+}
+
+[data-bs-theme="rainforest-dark"] .user-dropdown-menu {
+  background: rgba(30, 34, 32, 0.98);
+  border-color: rgba(166, 175, 146, 0.2);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+[data-bs-theme="rainforest-dark"] .user-dropdown-header {
+  background: rgba(166, 175, 146, 0.05);
+}
+
+[data-bs-theme="rainforest-dark"] .user-dropdown-item {
+  color: #d8ddc6;
+}
+
+[data-bs-theme="rainforest-dark"] .user-dropdown-item:hover {
+  background: rgba(166, 175, 146, 0.1);
+  color: #d8ddc6;
+}
+
+/* Newspaper Light - Navbar */
+[data-bs-theme="newspaper-light"] .navbar-nav-custom .nav-link {
+  color: #1a1a1a !important;
+}
+
+[data-bs-theme="newspaper-light"] .navbar-nav-custom .nav-link:hover,
+[data-bs-theme="newspaper-light"] .navbar-nav-custom .nav-link.active {
+  color: #000000 !important;
+  background: rgba(26, 26, 26, 0.1);
+}
+
+[data-bs-theme="newspaper-light"] .user-indicator {
+  background: rgba(26, 26, 26, 0.1);
+  border-color: rgba(26, 26, 26, 0.2);
+}
+
+[data-bs-theme="newspaper-light"] .user-indicator.clickable:hover {
+  background: rgba(26, 26, 26, 0.15);
+  border-color: rgba(26, 26, 26, 0.3);
+}
+
+[data-bs-theme="newspaper-light"] .user-dropdown-menu {
+  background: rgba(250, 246, 232, 0.98);
+  border-color: rgba(26, 26, 26, 0.2);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+[data-bs-theme="newspaper-light"] .user-dropdown-header {
+  background: rgba(26, 26, 26, 0.05);
+}
+
+[data-bs-theme="newspaper-light"] .user-dropdown-item {
+  color: #000000;
+}
+
+[data-bs-theme="newspaper-light"] .user-dropdown-item:hover {
+  background: rgba(26, 26, 26, 0.1);
+  color: #000000;
+}
+
+/* Newspaper Dark - Navbar */
+[data-bs-theme="newspaper-dark"] .navbar-nav-custom .nav-link {
+  color: #f2e49b !important;
+}
+
+[data-bs-theme="newspaper-dark"] .navbar-nav-custom .nav-link:hover,
+[data-bs-theme="newspaper-dark"] .navbar-nav-custom .nav-link.active {
+  color: #f7f3e3 !important;
+  background: rgba(242, 228, 155, 0.1);
+}
+
+[data-bs-theme="newspaper-dark"] .user-indicator {
+  background: rgba(242, 228, 155, 0.1);
+  border-color: rgba(242, 228, 155, 0.2);
+}
+
+[data-bs-theme="newspaper-dark"] .user-indicator.clickable:hover {
+  background: rgba(242, 228, 155, 0.15);
+  border-color: rgba(242, 228, 155, 0.3);
+}
+
+[data-bs-theme="newspaper-dark"] .user-dropdown-menu {
+  background: rgba(44, 42, 35, 0.98);
+  border-color: rgba(242, 228, 155, 0.2);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+[data-bs-theme="newspaper-dark"] .user-dropdown-header {
+  background: rgba(242, 228, 155, 0.05);
+}
+
+[data-bs-theme="newspaper-dark"] .user-dropdown-item {
+  color: #f7f3e3;
+}
+
+[data-bs-theme="newspaper-dark"] .user-dropdown-item:hover {
+  background: rgba(242, 228, 155, 0.1);
+  color: #f7f3e3;
+}
+
+/* Corrección de colores de texto en user indicator */
+
+/* Rainforest Light - Textos más oscuros en user indicator */
+[data-bs-theme="rainforest-light"] .user-name,
+[data-bs-theme="rainforest-light"] .user-name-large {
+  color: #1e2220 !important;
+}
+
+[data-bs-theme="rainforest-light"] .user-email,
+[data-bs-theme="rainforest-light"] .user-email-small {
+  color: #2a2f2b !important;
+}
+
+/* Newspaper Light - Textos más oscuros en user indicator */
+[data-bs-theme="newspaper-light"] .user-name,
+[data-bs-theme="newspaper-light"] .user-name-large {
+  color: #000000 !important;
+}
+
+[data-bs-theme="newspaper-light"] .user-email,
+[data-bs-theme="newspaper-light"] .user-email-small {
+  color: #1a1a1a !important;
+}
+
+/* Asegurar que los dropdown arrows también sean visibles */
+[data-bs-theme="rainforest-light"] .dropdown-arrow {
+  color: #2a2f2b !important;
+}
+
+[data-bs-theme="newspaper-light"] .dropdown-arrow {
+  color: #1a1a1a !important;
+}
+
+/* Corrección del logo NoteSheet - Eliminar gradientes y usar colores sólidos */
+
+/* Resetear el efecto de gradiente en todos los temas */
+[data-bs-theme="light"] .navbar-brand-custom,
+[data-bs-theme="dark"] .navbar-brand-custom,
+[data-bs-theme="rainforest-light"] .navbar-brand-custom,
+[data-bs-theme="rainforest-dark"] .navbar-brand-custom,
+[data-bs-theme="newspaper-light"] .navbar-brand-custom,
+[data-bs-theme="newspaper-dark"] .navbar-brand-custom {
+  -webkit-background-clip: unset !important;
+  -webkit-text-fill-color: unset !important;
+  background-clip: unset !important;
+  background: none !important;
+}
+
+/* Colores sólidos para el logo en cada tema */
+[data-bs-theme="light"] .navbar-brand-custom {
+  color: #0d6efd !important;
+}
+
+[data-bs-theme="dark"] .navbar-brand-custom {
+  color: #64ffda !important;
+}
+
+[data-bs-theme="rainforest-light"] .navbar-brand-custom {
+  color: #3e4629 !important;
+}
+
+[data-bs-theme="rainforest-dark"] .navbar-brand-custom {
+  color: #a6af92 !important;
+}
+
+[data-bs-theme="newspaper-light"] .navbar-brand-custom {
+  color: #1a1a1a !important;
+}
+
+[data-bs-theme="newspaper-dark"] .navbar-brand-custom {
+  color: #f2e49b !important;
+}
+
+/* Efecto hover para el logo */
+[data-bs-theme="light"] .navbar-brand-custom:hover {
+  color: #0b5ed7 !important;
+}
+
+[data-bs-theme="dark"] .navbar-brand-custom:hover {
+  color: #26a69a !important;
+}
+
+[data-bs-theme="rainforest-light"] .navbar-brand-custom:hover {
+  color: #2d3129 !important;
+}
+
+[data-bs-theme="rainforest-dark"] .navbar-brand-custom:hover {
+  color: #d8ddc6 !important;
+}
+
+[data-bs-theme="newspaper-light"] .navbar-brand-custom:hover {
+  color: #000000 !important;
+}
+
+[data-bs-theme="newspaper-dark"] .navbar-brand-custom:hover {
+  color: #f7f3e3 !important;
+}
