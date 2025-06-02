@@ -705,3 +705,265 @@
 [data-bs-theme="newspaper-dark"] .navbar-brand-custom:hover {
   color: #f7f3e3 !important;
 }
+
+/* ===== INPUTS Y FORMULARIOS - CONSISTENCIA EN TODOS LOS TEMAS ===== */
+
+/* Form Controls - Light Theme */
+[data-bs-theme="light"] .form-control-modern,
+[data-bs-theme="light"] .dropdown-button,
+[data-bs-theme="light"] .search-input {
+  background: rgba(255, 255, 255, 0.9);
+  border: 2px solid rgba(13, 110, 253, 0.2);
+  color: #212529;
+}
+
+[data-bs-theme="light"] .form-control-modern:focus,
+[data-bs-theme="light"] .dropdown-button.active,
+[data-bs-theme="light"] .search-input:focus {
+  background: rgba(255, 255, 255, 1);
+  border-color: #0d6efd;
+  box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+/* Form Controls - Dark Theme */
+[data-bs-theme="dark"] .form-control-modern,
+[data-bs-theme="dark"] .dropdown-button,
+[data-bs-theme="dark"] .search-input {
+  background: rgba(255, 255, 255, 0.05);
+  border: 2px solid rgba(100, 255, 218, 0.2);
+  color: #ffffff;
+}
+
+[data-bs-theme="dark"] .form-control-modern:focus,
+[data-bs-theme="dark"] .dropdown-button.active,
+[data-bs-theme="dark"] .search-input:focus {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: #64ffda;
+  box-shadow: 0 0 0 0.2rem rgba(100, 255, 218, 0.25);
+}
+
+/* Form Controls - Rainforest Light */
+[data-bs-theme="rainforest-light"] .form-control-modern,
+[data-bs-theme="rainforest-light"] .dropdown-button,
+[data-bs-theme="rainforest-light"] .search-input {
+  background: rgba(255, 255, 255, 0.9);
+  border: 2px solid rgba(62, 70, 41, 0.3);
+  color: #1e2220;
+}
+
+[data-bs-theme="rainforest-light"] .form-control-modern:focus,
+[data-bs-theme="rainforest-light"] .dropdown-button.active,
+[data-bs-theme="rainforest-light"] .search-input:focus {
+  background: rgba(255, 255, 255, 1);
+  border-color: #3e4629;
+  box-shadow: 0 0 0 0.2rem rgba(62, 70, 41, 0.25);
+}
+
+/* Form Controls - Rainforest Dark */
+[data-bs-theme="rainforest-dark"] .form-control-modern,
+[data-bs-theme="rainforest-dark"] .dropdown-button,
+[data-bs-theme="rainforest-dark"] .search-input {
+  background: rgba(166, 175, 146, 0.05);
+  border: 2px solid rgba(166, 175, 146, 0.2);
+  color: #d8ddc6;
+}
+
+[data-bs-theme="rainforest-dark"] .form-control-modern:focus,
+[data-bs-theme="rainforest-dark"] .dropdown-button.active,
+[data-bs-theme="rainforest-dark"] .search-input:focus {
+  background: rgba(166, 175, 146, 0.08);
+  border-color: #a6af92;
+  box-shadow: 0 0 0 0.2rem rgba(166, 175, 146, 0.25);
+}
+
+/* Form Controls - Newspaper Light */
+[data-bs-theme="newspaper-light"] .form-control-modern,
+[data-bs-theme="newspaper-light"] .dropdown-button,
+[data-bs-theme="newspaper-light"] .search-input {
+  background: rgba(255, 255, 255, 0.95);
+  border: 2px solid rgba(26, 26, 26, 0.2);
+  color: #000000;
+}
+
+[data-bs-theme="newspaper-light"] .form-control-modern:focus,
+[data-bs-theme="newspaper-light"] .dropdown-button.active,
+[data-bs-theme="newspaper-light"] .search-input:focus {
+  background: rgba(255, 255, 255, 1);
+  border-color: #1a1a1a;
+  box-shadow: 0 0 0 0.2rem rgba(26, 26, 26, 0.15);
+}
+
+/* Form Controls - Newspaper Dark */
+[data-bs-theme="newspaper-dark"] .form-control-modern,
+[data-bs-theme="newspaper-dark"] .dropdown-button,
+[data-bs-theme="newspaper-dark"] .search-input {
+  background: rgba(242, 228, 155, 0.05);
+  border: 2px solid rgba(242, 228, 155, 0.2);
+  color: #f7f3e3;
+}
+
+[data-bs-theme="newspaper-dark"] .form-control-modern:focus,
+[data-bs-theme="newspaper-dark"] .dropdown-button.active,
+[data-bs-theme="newspaper-dark"] .search-input:focus {
+  background: rgba(242, 228, 155, 0.08);
+  border-color: #f2e49b;
+  box-shadow: 0 0 0 0.2rem rgba(242, 228, 155, 0.25);
+}
+
+/* ===== DROPDOWNS Y MENÚS - CONSISTENCIA EN TODOS LOS TEMAS ===== */
+
+/* Dropdown Menus - Light Theme */
+[data-bs-theme="light"] .dropdown-menu-custom,
+[data-bs-theme="light"] .key-dropdown-menu {
+  background: rgba(255, 255, 255, 0.98);
+  border: 2px solid rgba(13, 110, 253, 0.2);
+  box-shadow: 0 10px 30px rgba(13, 110, 253, 0.15);
+  backdrop-filter: blur(5px);
+}
+
+[data-bs-theme="light"] .dropdown-item-custom,
+[data-bs-theme="light"] .key-option {
+  color: #212529;
+}
+
+[data-bs-theme="light"] .dropdown-item-custom:hover,
+[data-bs-theme="light"] .key-option:hover {
+  background: rgba(13, 110, 253, 0.1);
+  color: #212529;
+}
+
+[data-bs-theme="light"] .dropdown-item-custom.active,
+[data-bs-theme="light"] .key-option.active {
+  background: rgba(13, 110, 253, 0.2);
+  color: #0d6efd;
+}
+
+/* Dropdown Menus - Dark Theme */
+[data-bs-theme="dark"] .dropdown-menu-custom,
+[data-bs-theme="dark"] .key-dropdown-menu {
+  background: rgba(26, 26, 46, 0.95);
+  border: 2px solid rgba(100, 255, 218, 0.3);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(10px);
+}
+
+[data-bs-theme="dark"] .dropdown-item-custom,
+[data-bs-theme="dark"] .key-option {
+  color: #ffffff;
+}
+
+[data-bs-theme="dark"] .dropdown-item-custom:hover,
+[data-bs-theme="dark"] .key-option:hover {
+  background: rgba(100, 255, 218, 0.1);
+  color: #64ffda;
+}
+
+[data-bs-theme="dark"] .dropdown-item-custom.active,
+[data-bs-theme="dark"] .key-option.active {
+  background: rgba(100, 255, 218, 0.2);
+  color: #64ffda;
+}
+
+/* Dropdown Menus - Rainforest Light */
+[data-bs-theme="rainforest-light"] .dropdown-menu-custom,
+[data-bs-theme="rainforest-light"] .key-dropdown-menu {
+  background: rgba(248, 250, 246, 0.98);
+  border: 2px solid rgba(62, 70, 41, 0.3);
+  box-shadow: 0 10px 30px rgba(30, 34, 32, 0.2);
+  backdrop-filter: blur(3px);
+}
+
+[data-bs-theme="rainforest-light"] .dropdown-item-custom,
+[data-bs-theme="rainforest-light"] .key-option {
+  color: #1e2220;
+}
+
+[data-bs-theme="rainforest-light"] .dropdown-item-custom:hover,
+[data-bs-theme="rainforest-light"] .key-option:hover {
+  background: rgba(62, 70, 41, 0.1);
+  color: #3e4629;
+}
+
+[data-bs-theme="rainforest-light"] .dropdown-item-custom.active,
+[data-bs-theme="rainforest-light"] .key-option.active {
+  background: rgba(62, 70, 41, 0.2);
+  color: #3e4629;
+}
+
+/* Dropdown Menus - Rainforest Dark */
+[data-bs-theme="rainforest-dark"] .dropdown-menu-custom,
+[data-bs-theme="rainforest-dark"] .key-dropdown-menu {
+  background: rgba(30, 34, 32, 0.95);
+  border: 2px solid rgba(166, 175, 146, 0.2);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(5px);
+}
+
+[data-bs-theme="rainforest-dark"] .dropdown-item-custom,
+[data-bs-theme="rainforest-dark"] .key-option {
+  color: #d8ddc6;
+}
+
+[data-bs-theme="rainforest-dark"] .dropdown-item-custom:hover,
+[data-bs-theme="rainforest-dark"] .key-option:hover {
+  background: rgba(166, 175, 146, 0.1);
+  color: #a6af92;
+}
+
+[data-bs-theme="rainforest-dark"] .dropdown-item-custom.active,
+[data-bs-theme="rainforest-dark"] .key-option.active {
+  background: rgba(166, 175, 146, 0.2);
+  color: #a6af92;
+}
+
+/* Dropdown Menus - Newspaper Light */
+[data-bs-theme="newspaper-light"] .dropdown-menu-custom,
+[data-bs-theme="newspaper-light"] .key-dropdown-menu {
+  background: rgba(250, 246, 232, 0.98);
+  border: 2px solid rgba(26, 26, 26, 0.2);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(1px);
+}
+
+[data-bs-theme="newspaper-light"] .dropdown-item-custom,
+[data-bs-theme="newspaper-light"] .key-option {
+  color: #000000;
+}
+
+[data-bs-theme="newspaper-light"] .dropdown-item-custom:hover,
+[data-bs-theme="newspaper-light"] .key-option:hover {
+  background: rgba(26, 26, 26, 0.1);
+  color: #000000;
+}
+
+[data-bs-theme="newspaper-light"] .dropdown-item-custom.active,
+[data-bs-theme="newspaper-light"] .key-option.active {
+  background: rgba(26, 26, 26, 0.15);
+  color: #1a1a1a;
+}
+
+/* Dropdown Menus - Newspaper Dark */
+[data-bs-theme="newspaper-dark"] .dropdown-menu-custom,
+[data-bs-theme="newspaper-dark"] .key-dropdown-menu {
+  background: rgba(44, 42, 35, 0.95);
+  border: 2px solid rgba(242, 228, 155, 0.2);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+}
+
+[data-bs-theme="newspaper-dark"] .dropdown-item-custom,
+[data-bs-theme="newspaper-dark"] .key-option {
+  color: #f7f3e3;
+}
+
+[data-bs-theme="newspaper-dark"] .dropdown-item-custom:hover,
+[data-bs-theme="newspaper-dark"] .key-option:hover {
+  background: rgba(242, 228, 155, 0.1);
+  color: #f2e49b;
+}
+
+[data-bs-theme="newspaper-dark"] .dropdown-item-custom.active,
+[data-bs-theme="newspaper-dark"] .key-option.active {
+  background: rgba(242, 228, 155, 0.2);
+  color: #f2e49b;
+}
