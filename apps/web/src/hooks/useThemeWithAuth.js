@@ -5,8 +5,18 @@ import { getUserPreferences, updateUserPreferences } from '@notesheet/api';
 
 export function useThemeWithAuth() {
   const [theme, setTheme] = useState(() => {
-    return localStorage.getItem('theme') || 'light';
+    // Obtener tema del localStorage primero
+    const storedTheme = localStorage.getItem('theme');
+    if (storedTheme) {
+      // Aplicar el tema inmediatamente
+      document.documentElement.setAttribute('data-bs-theme', storedTheme);
+      return storedTheme;
+    }
+    // Por defecto usar light
+    document.documentElement.setAttribute('data-bs-theme', 'light');
+    return 'light';
   });
+  
   const [loading, setLoading] = useState(true);
   const { currentUser } = useAuth();
 

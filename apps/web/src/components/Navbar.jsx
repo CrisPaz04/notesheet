@@ -35,8 +35,15 @@ function Navbar() {
   };
 
   const handleThemeToggle = () => {
+    console.log("Current theme:", theme);
     const newTheme = theme === 'dark' ? 'light' : 'dark';
+    console.log("New theme:", newTheme);
+    console.log("HTML data-bs-theme before:", document.documentElement.getAttribute('data-bs-theme'));
     changeTheme(newTheme);
+    setTimeout(() => {
+      console.log("HTML data-bs-theme after:", document.documentElement.getAttribute('data-bs-theme'));
+    }, 100);
+    
     setIsUserDropdownOpen(false);
   };
 
