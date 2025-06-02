@@ -171,14 +171,6 @@ function Dashboard() {
               <h3 className="action-title">Mis Listas</h3>
               <p className="action-description">Ver todas tus listas</p>
             </Link>
-
-            <Link to="/preferences" className="action-card card-hover">
-              <div className="action-icon">
-                <i className="bi bi-gear"></i>
-              </div>
-              <h3 className="action-title">Preferencias</h3>
-              <p className="action-description">Configurar tu experiencia</p>
-            </Link>
           </div>
         </div>
 
