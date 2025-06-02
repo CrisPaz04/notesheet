@@ -147,12 +147,12 @@ function UserPreferences() {
                 </div>
                 <div className="preferences-card-body">
                   <div className="form-group-modern mb-4">
-                    <label htmlFor="defaultInstrument" className="form-label-modern">
+                    <label htmlFor="pref-default-instrument" className="form-label-modern">
                       <i className="bi bi-music-note-beamed me-2"></i>
                       Instrumento Predeterminado
                     </label>
                     <select
-                      id="defaultInstrument"
+                      id="pref-default-instrument"
                       className="form-control-modern"
                       value={preferences.defaultInstrument}
                       onChange={(e) => handleChange("defaultInstrument", e.target.value)}
@@ -169,7 +169,7 @@ function UserPreferences() {
                   </div>
                   
                   <div className="form-group-modern mb-4">
-                    <label htmlFor="defaultNotationSystem" className="form-label-modern">
+                    <label className="form-label-modern">
                       <i className="bi bi-alphabet me-2"></i>
                       Sistema de Notación
                     </label>
@@ -177,14 +177,14 @@ function UserPreferences() {
                       <div className="notation-option">
                         <input
                           type="radio"
-                          id="notation-latin-system"
+                          id="pref-notation-latin-only"
                           name="defaultNotationSystem"
                           value="latin"
                           checked={preferences.defaultNotationSystem === "latin"}
                           onChange={(e) => handleChange("defaultNotationSystem", e.target.value)}
                           className="notation-radio"
                         />
-                        <label htmlFor="notation-latin-system" className="notation-label">
+                        <label htmlFor="pref-notation-latin-only" className="notation-label">
                           <div className="notation-preview">DO-RE-MI</div>
                           <div className="notation-name">Notación Latina</div>
                         </label>
@@ -193,14 +193,14 @@ function UserPreferences() {
                       <div className="notation-option">
                         <input
                           type="radio"
-                          id="notation-english-system"
+                          id="pref-notation-english-only"
                           name="defaultNotationSystem"
                           value="english"
                           checked={preferences.defaultNotationSystem === "english"}
                           onChange={(e) => handleChange("defaultNotationSystem", e.target.value)}
                           className="notation-radio"
                         />
-                        <label htmlFor="notation-english-system" className="notation-label">
+                        <label htmlFor="pref-notation-english-only" className="notation-label">
                           <div className="notation-preview">C-D-E</div>
                           <div className="notation-name">Notación Anglosajona</div>
                         </label>
@@ -209,7 +209,7 @@ function UserPreferences() {
                   </div>
                   
                   <div className="form-group-modern mb-4">
-                    <label htmlFor="defaultFontSize" className="form-label-modern">
+                    <label htmlFor="pref-font-size-slider" className="form-label-modern">
                       <i className="bi bi-fonts me-2"></i>
                       Tamaño de Fuente: <span className="font-size-value">{preferences.defaultFontSize}px</span>
                     </label>
@@ -220,7 +220,7 @@ function UserPreferences() {
                       <input
                         type="range"
                         className="font-size-slider"
-                        id="defaultFontSize"
+                        id="pref-font-size-slider"
                         min="14"
                         max="24"
                         step="2"
@@ -259,35 +259,38 @@ function UserPreferences() {
                         </div>
                         
                         <div className="theme-options-grid">
-                          {themes.map((themeInfo) => (
-                            <div key={themeInfo.id} className="theme-option-wrapper">
-                              <input
-                                type="radio"
-                                id={`theme-${category}-${themeInfo.id}`}
-                                name="defaultTheme"
-                                value={themeInfo.id}
-                                checked={preferences.defaultTheme === themeInfo.id}
-                                onChange={() => handleThemeChange(themeInfo.id)}
-                                className="theme-radio"
-                              />
-                              <label htmlFor={`theme-${category}-${themeInfo.id}`} className="theme-label-new">
-                                <div className={`theme-preview-new ${themeInfo.id}`}>
-                                  <div className="theme-preview-header"></div>
-                                  <div className="theme-preview-content">
-                                    <div className="theme-preview-sidebar"></div>
-                                    <div className="theme-preview-main">
-                                      <div className="theme-preview-card"></div>
-                                      <div className="theme-preview-card"></div>
+                          {themes.map((themeInfo, themeIndex) => {
+                            const uniqueId = `theme-selection-${category}-${themeIndex}-${themeInfo.id}`;
+                            return (
+                              <div key={themeInfo.id} className="theme-option-wrapper">
+                                <input
+                                  type="radio"
+                                  id={uniqueId}
+                                  name="defaultTheme"
+                                  value={themeInfo.id}
+                                  checked={preferences.defaultTheme === themeInfo.id}
+                                  onChange={() => handleThemeChange(themeInfo.id)}
+                                  className="theme-radio"
+                                />
+                                <label htmlFor={uniqueId} className="theme-label-new">
+                                  <div className={`theme-preview-new ${themeInfo.id}`}>
+                                    <div className="theme-preview-header"></div>
+                                    <div className="theme-preview-content">
+                                      <div className="theme-preview-sidebar"></div>
+                                      <div className="theme-preview-main">
+                                        <div className="theme-preview-card"></div>
+                                        <div className="theme-preview-card"></div>
+                                      </div>
                                     </div>
                                   </div>
-                                </div>
-                                <div className="theme-info">
-                                  <div className="theme-name">{themeInfo.name}</div>
-                                  <div className="theme-description">{themeInfo.description}</div>
-                                </div>
-                              </label>
-                            </div>
-                          ))}
+                                  <div className="theme-info">
+                                    <div className="theme-name">{themeInfo.name}</div>
+                                    <div className="theme-description">{themeInfo.description}</div>
+                                  </div>
+                                </label>
+                              </div>
+                            );
+                          })}
                         </div>
                       </div>
                     ))}
