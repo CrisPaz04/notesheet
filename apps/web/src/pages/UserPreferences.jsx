@@ -5,6 +5,7 @@ import { getUserPreferences, updateUserPreferences } from "@notesheet/api";
 import { TRANSPOSING_INSTRUMENTS } from "@notesheet/core";
 import { useThemeWithAuth } from "../hooks/useThemeWithAuth";
 import LoadingSpinner from "../components/LoadingSpinner";
+import PreferencesInstrumentSelector from "../components/PreferencesInstrumentSelector";
 
 function UserPreferences() {
   const [loading, setLoading] = useState(true);
@@ -146,27 +147,13 @@ function UserPreferences() {
                   Preferencias de Visualización
                 </div>
                 <div className="preferences-card-body">
-                  <div className="form-group-modern mb-4">
-                    <label htmlFor="pref-default-instrument" className="form-label-modern">
-                      <i className="bi bi-music-note-beamed me-2"></i>
-                      Instrumento Predeterminado
-                    </label>
-                    <select
-                      id="pref-default-instrument"
-                      className="form-control-modern"
-                      value={preferences.defaultInstrument}
-                      onChange={(e) => handleChange("defaultInstrument", e.target.value)}
-                    >
-                      {Object.entries(TRANSPOSING_INSTRUMENTS).map(([id, instrument]) => (
-                        <option key={id} value={id}>
-                          {instrument.name}
-                        </option>
-                      ))}
-                    </select>
-                    <div className="form-help-text">
-                      Este instrumento se seleccionará por defecto al abrir una canción.
-                    </div>
-                  </div>
+                <PreferencesInstrumentSelector
+                  value={preferences.defaultInstrument}
+                  onChange={(value) => handleChange("defaultInstrument", value)}
+                />
+                <div className="form-help-text">
+                  Este instrumento se seleccionará por defecto al abrir una canción.
+                </div>
                   
                   <div className="form-group-modern mb-4">
                     <label className="form-label-modern">

@@ -299,18 +299,29 @@ function PlaylistEditor() {
                   />
                 </div>
                 
-                <div className="form-check-modern">
-                  <input
-                    type="checkbox"
-                    className="form-check-input-modern"
-                    id="isPublic"
-                    checked={isPublic}
-                    onChange={(e) => setIsPublic(e.target.checked)}
-                  />
-                  <label className="form-check-label-modern" htmlFor="isPublic">
-                    <i className="bi bi-globe me-2"></i>
-                    Lista pública
+                <div className="form-group-modern mb-3">
+                  <label className="form-label-modern">
+                    <i className="bi bi-eye me-2"></i>
+                    Visibilidad
                   </label>
+                  <div className="visibility-toggle">
+                    <button
+                      type="button"
+                      className={`visibility-option ${!isPublic ? 'active' : ''}`}
+                      onClick={() => setIsPublic(false)}
+                    >
+                      <i className="bi bi-lock me-2"></i>
+                      Privada
+                    </button>
+                    <button
+                      type="button"
+                      className={`visibility-option ${isPublic ? 'active' : ''}`}
+                      onClick={() => setIsPublic(true)}
+                    >
+                      <i className="bi bi-globe me-2"></i>
+                      Pública
+                    </button>
+                  </div>
                   <div className="form-help-text">
                     Las listas públicas pueden ser vistas por otros usuarios.
                   </div>

@@ -8,9 +8,7 @@ import KeySelector from "../components/KeySelector";
 import LoadingSpinner from "../components/LoadingSpinner";
 import SimpleMDE from "react-simplemde-editor";
 import "easymde/dist/easymde.min.css";
-
-// Tipos de canciones
-const SONG_TYPES = ["Júbilo", "Adoración", "Moderada"];
+import TypeSelector from "../components/TypeSelector";
 
 // Instrumentos soportados para voces adicionales
 const VOICE_INSTRUMENTS = Object.entries(TRANSPOSING_INSTRUMENTS)
@@ -65,8 +63,8 @@ Escribe aquí la letra y los acordes
 FA       SOL       DO      LA-
 Escribe aquí la letra y los acordes
 `);
-      // Generar versión solo letra
-      generateLyricsOnly(`# Título: Nueva Canción
+// Generar versión solo letra
+generateLyricsOnly(`# Título: Nueva Canción
 # Tonalidad: DO Mayor
 # Tipo: Adoración
 # Versión de: 
@@ -682,21 +680,10 @@ Escribe aquí la letra y los acordes
               onChange={handleKeyChange}
             />
             
-            <div className="form-group-modern">
-              <label className="form-label-modern">
-                <i className="bi bi-heart"></i>
-                Tipo
-              </label>
-              <select
-                className="form-control-modern"
-                value={type}
-                onChange={(e) => handleTypeChange(e.target.value)}
-              >
-                {SONG_TYPES.map(t => (
-                  <option key={t} value={t}>{t}</option>
-                ))}
-              </select>
-            </div>
+            <TypeSelector
+              value={type}
+              onChange={handleTypeChange}
+            />
           </div>
         </div>
 

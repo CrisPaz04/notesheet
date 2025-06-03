@@ -967,3 +967,182 @@
   background: rgba(242, 228, 155, 0.2);
   color: #f2e49b;
 }
+
+/* ===== SELECT ELEMENTS - ESTILOS PARA TODOS LOS TEMAS ===== */
+
+/* Select - Light Theme */
+[data-bs-theme="light"] select.form-control-modern {
+  background: rgba(255, 255, 255, 0.9);
+  border: 2px solid rgba(13, 110, 253, 0.2);
+  color: #212529;
+}
+
+[data-bs-theme="light"] select.form-control-modern:focus {
+  background: rgba(255, 255, 255, 1);
+  border-color: #0d6efd;
+  box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+  color: #212529;
+}
+
+[data-bs-theme="light"] select.form-control-modern option {
+  background: #ffffff;
+  color: #212529;
+}
+
+/* Select - Dark Theme */
+[data-bs-theme="dark"] select.form-control-modern {
+  background: rgba(255, 255, 255, 0.05);
+  border: 2px solid rgba(100, 255, 218, 0.2);
+  color: #ffffff;
+}
+
+[data-bs-theme="dark"] select.form-control-modern:focus {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: #64ffda;
+  box-shadow: 0 0 0 0.2rem rgba(100, 255, 218, 0.25);
+  color: #ffffff;
+}
+
+[data-bs-theme="dark"] select.form-control-modern option {
+  background: #1a1a2e;
+  color: #ffffff;
+}
+
+/* Select - Rainforest Light */
+[data-bs-theme="rainforest-light"] select.form-control-modern {
+  background: rgba(255, 255, 255, 0.9);
+  border: 2px solid rgba(62, 70, 41, 0.3);
+  color: #1e2220;
+}
+
+[data-bs-theme="rainforest-light"] select.form-control-modern:focus {
+  background: rgba(255, 255, 255, 1);
+  border-color: #3e4629;
+  box-shadow: 0 0 0 0.2rem rgba(62, 70, 41, 0.25);
+  color: #1e2220;
+}
+
+[data-bs-theme="rainforest-light"] select.form-control-modern option {
+  background: #f8faf6;
+  color: #1e2220;
+}
+
+/* Select - Rainforest Dark */
+[data-bs-theme="rainforest-dark"] select.form-control-modern {
+  background: rgba(166, 175, 146, 0.05);
+  border: 2px solid rgba(166, 175, 146, 0.2);
+  color: #d8ddc6;
+}
+
+[data-bs-theme="rainforest-dark"] select.form-control-modern:focus {
+  background: rgba(166, 175, 146, 0.08);
+  border-color: #a6af92;
+  box-shadow: 0 0 0 0.2rem rgba(166, 175, 146, 0.25);
+  color: #d8ddc6;
+}
+
+[data-bs-theme="rainforest-dark"] select.form-control-modern option {
+  background: #1e2220;
+  color: #d8ddc6;
+}
+
+/* Select - Newspaper Light */
+[data-bs-theme="newspaper-light"] select.form-control-modern {
+  background: rgba(255, 255, 255, 0.95);
+  border: 2px solid rgba(26, 26, 26, 0.2);
+  color: #000000;
+}
+
+[data-bs-theme="newspaper-light"] select.form-control-modern:focus {
+  background: rgba(255, 255, 255, 1);
+  border-color: #1a1a1a;
+  box-shadow: 0 0 0 0.2rem rgba(26, 26, 26, 0.15);
+  color: #000000;
+}
+
+[data-bs-theme="newspaper-light"] select.form-control-modern option {
+  background: #f7f3e9;
+  color: #000000;
+}
+
+/* Select - Newspaper Dark */
+[data-bs-theme="newspaper-dark"] select.form-control-modern {
+  background: rgba(242, 228, 155, 0.05);
+  border: 2px solid rgba(242, 228, 155, 0.2);
+  color: #f7f3e3;
+}
+
+[data-bs-theme="newspaper-dark"] select.form-control-modern:focus {
+  background: rgba(242, 228, 155, 0.08);
+  border-color: #f2e49b;
+  box-shadow: 0 0 0 0.2rem rgba(242, 228, 155, 0.25);
+  color: #f7f3e3;
+}
+
+[data-bs-theme="newspaper-dark"] select.form-control-modern option {
+  background: #2e2d28;
+  color: #f7f3e3;
+}
+
+/* ===== VISIBILITY TOGGLE - ESTILOS PARA TODOS LOS TEMAS ===== */
+
+.visibility-toggle {
+  display: flex;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  margin-bottom: 0.5rem;
+}
+
+.visibility-option {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--text-light-secondary);
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  transition: var(--transition-fast);
+  font-size: 0.9rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.visibility-option:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-light-primary);
+}
+
+.visibility-option.active {
+  background: var(--color-primary);
+  color: var(--bg-dark-primary);
+}
+
+.visibility-option:not(:last-child) {
+  border-right: 1px solid var(--border-light);
+}
+
+/* Light theme overrides for visibility toggle */
+[data-bs-theme="light"] .visibility-toggle {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+[data-bs-theme="light"] .visibility-option:hover {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+[data-bs-theme="light"] .visibility-option.active {
+  color: white;
+}
+
+/* Rainforest Light */
+[data-bs-theme="rainforest-light"] .visibility-option.active {
+  color: #f8faf6;
+}
+
+/* Newspaper Light */
+[data-bs-theme="newspaper-light"] .visibility-option.active {
+  color: #f7f3e9;
+}
