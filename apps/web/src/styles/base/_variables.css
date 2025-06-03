@@ -1194,7 +1194,7 @@
   border-radius: 0 0 var(--radius-md) var(--radius-md);
   max-height: 200px;
   overflow-y: auto;
-  z-index: 2003; 
+  z-index: 9999;
   box-shadow: var(--shadow-heavy);
   min-width: 120px;
 }
