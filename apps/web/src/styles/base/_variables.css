@@ -1146,3 +1146,149 @@
 [data-bs-theme="newspaper-light"] .visibility-option.active {
   color: #f7f3e9;
 }
+
+/* ===== PLAYLIST KEY SELECTOR - ESTILOS SÓLIDOS SIN TRANSPARENCIAS ===== */
+
+.playlist-key-selector {
+  position: relative;
+  z-index: 2000; 
+}
+
+.playlist-key-dropdown {
+  background: var(--bg-dark-secondary);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  color: var(--text-light-primary);
+  padding: 0.25rem 0.5rem;
+  cursor: pointer;
+  transition: var(--transition-fast);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.85rem;
+  min-width: 120px;
+  white-space: nowrap;
+  position: relative;
+  z-index: 2001;
+}
+
+.playlist-key-dropdown:hover {
+  background: var(--bg-dark-tertiary);
+  border-color: var(--border-light-hover);
+}
+
+.playlist-key-dropdown.open {
+  border-color: var(--color-primary);
+  background: var(--bg-dark-tertiary);
+  z-index: 2002;
+}
+
+.playlist-key-dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: var(--bg-dark-secondary);
+  border: 1px solid var(--color-primary);
+  border-top: none;
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 2003; 
+  box-shadow: var(--shadow-heavy);
+  min-width: 120px;
+}
+
+.playlist-key-group {
+  padding: 0.25rem;
+}
+
+.playlist-key-option {
+  background: transparent;
+  border: none;
+  color: var(--text-light-secondary);
+  padding: 0.5rem;
+  cursor: pointer;
+  transition: var(--transition-fast);
+  width: 100%;
+  text-align: left;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+}
+
+.playlist-key-option:hover {
+  background: var(--bg-dark-tertiary);
+  color: var(--text-light-primary);
+}
+
+.playlist-key-option.active {
+  background: var(--color-primary);
+  color: var(--bg-dark-primary);
+}
+
+.playlist-key-option.original {
+  font-weight: 600;
+}
+
+.selected-songs-list {
+  min-height: 200px;
+  overflow: visible; /* Cambiado para permitir que los dropdowns se salgan */
+}
+
+.playlist-editor-card-body.p-0 {
+  overflow: visible; /* También este contenedor */
+}
+
+/* Light theme overrides for playlist key selector */
+[data-bs-theme="light"] .playlist-key-dropdown {
+  background: rgba(0, 0, 0, 0.05);
+  color: #212529;
+}
+
+[data-bs-theme="light"] .playlist-key-dropdown:hover {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+[data-bs-theme="light"] .playlist-key-dropdown-menu {
+  background: rgba(255, 255, 255, 0.98);
+  border-color: var(--color-primary);
+}
+
+[data-bs-theme="light"] .playlist-key-option {
+  color: #495057;
+}
+
+[data-bs-theme="light"] .playlist-key-option:hover {
+  background: rgba(0, 0, 0, 0.1);
+  color: #212529;
+}
+
+[data-bs-theme="light"] .playlist-key-option.active {
+  color: white;
+}
+
+/* Rainforest themes */
+[data-bs-theme="rainforest-light"] .playlist-key-dropdown-menu {
+  background: rgba(248, 250, 246, 0.98);
+}
+
+[data-bs-theme="rainforest-dark"] .playlist-key-dropdown-menu {
+  background: rgba(30, 34, 32, 0.98);
+}
+
+/* Newspaper themes */
+[data-bs-theme="newspaper-light"] .playlist-key-dropdown-menu {
+  background: rgba(250, 246, 232, 0.98);
+}
+
+[data-bs-theme="newspaper-light"] .playlist-key-option.active {
+  color: #f7f3e9;
+}
+
+[data-bs-theme="newspaper-dark"] .playlist-key-dropdown-menu {
+  background: rgba(44, 42, 35, 0.98);
+}
+
+[data-bs-theme="rainforest-light"] .playlist-key-option.active {
+  color: #f8faf6;
+}

@@ -5,6 +5,7 @@ import { useAuth } from "../context/AuthContext";
 import { createPlaylist, getPlaylistById, updatePlaylist, getAllSongs } from "@notesheet/api";
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import LoadingSpinner from "../components/LoadingSpinner";
+import PlaylistKeySelector from "../components/PlaylistKeySelector";
 
 function PlaylistEditor() {
   const [name, setName] = useState("");
@@ -416,30 +417,11 @@ function PlaylistEditor() {
                                     <h5 className="selected-song-title">{song.title || "Sin título"}</h5>
                                     <div className="selected-song-controls">
                                       <label className="tonality-label">Tonalidad:</label>
-                                      <select
-                                        className="tonality-select"
+                                      <PlaylistKeySelector
                                         value={song.key}
-                                        onChange={(e) => changeKey(song.id, e.target.value)}
-                                      >
-                                        <option value={song.originalKey}>Original ({song.originalKey})</option>
-                                        <option disabled>──────────</option>
-                                        <option value="DO">DO Mayor</option>
-                                        <option value="LAm">LA menor</option>
-                                        <option value="SOL">SOL Mayor</option>
-                                        <option value="MIm">MI menor</option>
-                                        <option value="RE">RE Mayor</option>
-                                        <option value="SIm">SI menor</option>
-                                        <option value="LA">LA Mayor</option>
-                                        <option value="FA#m">FA# menor</option>
-                                        <option value="MI">MI Mayor</option>
-                                        <option value="DO#m">DO# menor</option>
-                                        <option value="FA">FA Mayor</option>
-                                        <option value="REm">RE menor</option>
-                                        <option value="SIb">SIb Mayor</option>
-                                        <option value="SOLm">SOL menor</option>
-                                        <option value="MIb">MIb Mayor</option>
-                                        <option value="DOm">DO menor</option>
-                                      </select>
+                                        onChange={(newKey) => changeKey(song.id, newKey)}
+                                        originalKey={song.originalKey}
+                                      />
                                     </div>
                                   </div>
                                   
