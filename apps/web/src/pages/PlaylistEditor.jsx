@@ -404,6 +404,11 @@ function PlaylistEditor() {
                                   ref={provided.innerRef}
                                   {...provided.draggableProps}
                                   className={`selected-song-item ${snapshot.isDragging ? 'dragging' : ''}`}
+                                  style={{
+                                    ...provided.draggableProps.style,
+                                    zIndex: 1000 - index, // Z-index dinámico basado en la posición
+                                    position: 'relative'
+                                  }}
                                 >
                                   <div className="selected-song-drag" {...provided.dragHandleProps}>
                                     <i className="bi bi-grip-vertical"></i>

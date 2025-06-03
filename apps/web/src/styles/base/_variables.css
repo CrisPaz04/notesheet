@@ -1151,7 +1151,7 @@
 
 .playlist-key-selector {
   position: relative;
-  z-index: 2000; 
+  z-index: 1000;
 }
 
 .playlist-key-dropdown {
@@ -1169,7 +1169,7 @@
   min-width: 120px;
   white-space: nowrap;
   position: relative;
-  z-index: 2001;
+  z-index: 1001;
 }
 
 .playlist-key-dropdown:hover {
@@ -1180,23 +1180,23 @@
 .playlist-key-dropdown.open {
   border-color: var(--color-primary);
   background: var(--bg-dark-tertiary);
-  z-index: 2002;
+  z-index: 1002;
 }
 
 .playlist-key-dropdown-menu {
   position: absolute;
   top: 100%;
   left: 0;
-  right: 0;
+  min-width: 120px;
   background: var(--bg-dark-secondary);
   border: 1px solid var(--color-primary);
   border-top: none;
   border-radius: 0 0 var(--radius-md) var(--radius-md);
   max-height: 200px;
   overflow-y: auto;
-  z-index: 9999;
+  z-index: 9999 !important; 
   box-shadow: var(--shadow-heavy);
-  min-width: 120px;
+  isolation: isolate;
 }
 
 .playlist-key-group {
@@ -1230,13 +1230,42 @@
   font-weight: 600;
 }
 
+/* Asegurar que el item de la canción permita overflow visible para dropdowns */
+.selected-song-item {
+  position: relative;
+  overflow: visible !important;
+  counter-increment: song-counter -1; 
+  z-index: counter(song-counter); 
+}
+
+/* Cuando el dropdown está abierto, elevar todo el item */
+.selected-song-item:has(.playlist-key-dropdown.open) {
+  z-index: 1000 !important;
+}
+
+/* Fallback para navegadores que no soportan :has() */
+.selected-song-item.dropdown-open {
+  z-index: 1000 !important;
+}
+
+/* Asegurar que los contenedores padre permitan overflow visible */
 .selected-songs-list {
   min-height: 200px;
-  overflow: visible; /* Cambiado para permitir que los dropdowns se salgan */
+  overflow: visible !important;
+  position: relative;
+  counter-reset: song-counter 1000;
+}
+
+.playlist-editor-card-body {
+  overflow: visible !important;
 }
 
 .playlist-editor-card-body.p-0 {
-  overflow: visible; /* También este contenedor */
+  overflow: visible !important;
+}
+
+.playlist-editor-card {
+  overflow: visible !important;
 }
 
 /* Light theme overrides for playlist key selector */
