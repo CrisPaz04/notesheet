@@ -93,7 +93,7 @@ function MetronomeControls({
       <div className="mb-4">
         <label className="form-label fw-bold">Subdivisión</label>
         <div className="btn-group w-100" role="group">
-          {Object.entries(SUBDIVISIONS).map(([key, { name }]) => (
+          {Object.entries(SUBDIVISIONS).map(([key, { name, icon }]) => (
             <button
               key={key}
               type="button"
@@ -102,8 +102,11 @@ function MetronomeControls({
               }`}
               onClick={() => onSubdivisionChange(key)}
               disabled={isPlaying}
+              title={name}
             >
-              {name}
+              <span style={{ fontSize: '1.5rem', lineHeight: '1' }}>
+                {icon}
+              </span>
             </button>
           ))}
         </div>

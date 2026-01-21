@@ -213,6 +213,28 @@
   margin-top: 0.25rem;
 }
 
+/* Alert/Tip Box Styling */
+.tuner-container .alert-info {
+  background: rgba(100, 255, 218, 0.1);
+  border: 1px solid rgba(100, 255, 218, 0.3);
+  color: var(--text-light-primary);
+}
+
+.tuner-container .alert-info .bi {
+  color: var(--color-primary);
+}
+
+/* Light theme adjustments */
+[data-bs-theme="light"] .tuner-container .alert-info {
+  background: rgba(13, 110, 253, 0.1);
+  border: 1px solid rgba(13, 110, 253, 0.3);
+  color: var(--text-light-primary);
+}
+
+[data-bs-theme="light"] .tuner-container .alert-info .bi {
+  color: var(--color-primary);
+}
+
 /* Responsive */
 @media (max-width: 992px) {
   .tuner-header h1 {

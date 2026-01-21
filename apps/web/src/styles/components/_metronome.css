@@ -118,6 +118,19 @@
   margin-bottom: var(--spacing-sm);
 }
 
+/* Subdivision button styling */
+.metronome-controls .btn-group .btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-md);
+  min-height: 45px;
+}
+
+.metronome-controls .btn-group .btn span {
+  display: block;
+}
+
 .bpm-control-section .btn {
   min-width: 40px;
 }
@@ -222,6 +235,28 @@
 
 .tempo-preset-btn.active .preset-bpm {
   opacity: 1;
+}
+
+/* Alert/Tip Box Styling */
+.metronome-container .alert-info {
+  background: rgba(100, 255, 218, 0.1);
+  border: 1px solid rgba(100, 255, 218, 0.3);
+  color: var(--text-light-primary);
+}
+
+.metronome-container .alert-info .bi {
+  color: var(--color-primary);
+}
+
+/* Light theme adjustments */
+[data-bs-theme="light"] .metronome-container .alert-info {
+  background: rgba(13, 110, 253, 0.1);
+  border: 1px solid rgba(13, 110, 253, 0.3);
+  color: var(--text-light-primary);
+}
+
+[data-bs-theme="light"] .metronome-container .alert-info .bi {
+  color: var(--color-primary);
 }
 
 /* Responsive */

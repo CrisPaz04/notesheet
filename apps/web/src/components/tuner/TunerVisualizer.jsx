@@ -45,23 +45,15 @@ function TunerVisualizer({
     <div className="tuner-visualizer">
       {/* Note Display */}
       <div className="tuner-note-display">
-        {detectedNote ? (
-          <>
-            <div
-              className="tuner-note-name"
-              style={{ color: getStatusColor() }}
-            >
-              {detectedNote}
-            </div>
-            <div className="tuner-frequency">
-              {detectedFrequency ? `${detectedFrequency.toFixed(1)} Hz` : '--'}
-            </div>
-          </>
-        ) : (
-          <div className="tuner-note-name tuner-note-waiting">
-            {isRunning ? '♪' : '--'}
-          </div>
-        )}
+        <div
+          className={`tuner-note-name ${!detectedNote ? 'tuner-note-waiting' : ''}`}
+          style={{ color: detectedNote ? getStatusColor() : 'var(--text-light-secondary)' }}
+        >
+          {detectedNote || (isRunning ? '♪' : '--')}
+        </div>
+        <div className="tuner-frequency">
+          {detectedFrequency ? `${detectedFrequency.toFixed(1)} Hz` : '--- Hz'}
+        </div>
       </div>
 
       {/* Tuning Gauge */}
@@ -168,27 +160,24 @@ function TunerVisualizer({
 
       {/* Cents Display */}
       <div className="tuner-cents-display">
-        {detectedNote ? (
-          <>
-            <div
-              className="tuner-cents-value"
-              style={{ color: getStatusColor() }}
-            >
-              {centsDeviation > 0 ? '+' : ''}
-              {Math.round(centsDeviation)}¢
-            </div>
-            <div
-              className="tuner-status-text"
-              style={{ color: getStatusColor() }}
-            >
-              {getStatusText()}
-            </div>
-          </>
-        ) : (
-          <div className="tuner-status-text text-secondary">
-            {isRunning ? 'Toca una nota...' : 'Presiona Iniciar'}
-          </div>
-        )}
+        <div
+          className="tuner-cents-value"
+          style={{ color: detectedNote ? getStatusColor() : 'var(--text-light-secondary)' }}
+        >
+          {detectedNote
+            ? `${centsDeviation > 0 ? '+' : ''}${Math.round(centsDeviation)}¢`
+            : '0¢'
+          }
+        </div>
+        <div
+          className="tuner-status-text"
+          style={{ color: detectedNote ? getStatusColor() : 'var(--text-light-secondary)' }}
+        >
+          {detectedNote
+            ? getStatusText()
+            : (isRunning ? 'Toca una nota...' : 'Presiona Iniciar')
+          }
+        </div>
       </div>
     </div>
   );

@@ -21,10 +21,10 @@ export const TIME_SIGNATURES = {
 
 // Subdivision types
 export const SUBDIVISIONS = {
-  quarter: { name: 'Negras', clicksPerBeat: 1 },
-  eighth: { name: 'Corcheas', clicksPerBeat: 2 },
-  triplet: { name: 'Tresillos', clicksPerBeat: 3 },
-  sixteenth: { name: 'Semicorcheas', clicksPerBeat: 4 }
+  quarter: { name: 'Negras', icon: '♩', clicksPerBeat: 1 },
+  eighth: { name: 'Corcheas', icon: '♪', clicksPerBeat: 2 },
+  triplet: { name: 'Tresillos', icon: '♪³', clicksPerBeat: 3 },
+  sixteenth: { name: 'Semicorcheas', icon: '♬', clicksPerBeat: 4 }
 };
 
 class MetronomeEngine {
