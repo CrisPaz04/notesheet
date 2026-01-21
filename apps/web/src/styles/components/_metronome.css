@@ -2,6 +2,7 @@
 
 /* Container */
 .metronome-container {
+  background: var(--bg-dark-primary);
   min-height: 100vh;
   padding-top: var(--spacing-xl);
   padding-bottom: var(--spacing-xl);
@@ -239,23 +240,12 @@
 
 /* Alert/Tip Box Styling */
 .metronome-container .alert-info {
-  background: rgba(100, 255, 218, 0.1);
-  border: 1px solid rgba(100, 255, 218, 0.3);
+  background: var(--color-primary-light);
+  border: 1px solid var(--border-light);
   color: var(--text-light-primary);
 }
 
 .metronome-container .alert-info .bi {
-  color: var(--color-primary);
-}
-
-/* Light theme adjustments */
-[data-bs-theme="light"] .metronome-container .alert-info {
-  background: rgba(13, 110, 253, 0.1);
-  border: 1px solid rgba(13, 110, 253, 0.3);
-  color: var(--text-light-primary);
-}
-
-[data-bs-theme="light"] .metronome-container .alert-info .bi {
   color: var(--color-primary);
 }
 
