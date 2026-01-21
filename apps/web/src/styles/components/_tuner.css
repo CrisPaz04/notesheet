@@ -232,6 +232,32 @@
   box-shadow: 0 0 0 0.25rem var(--color-primary-light);
 }
 
+/* Override form controls (inputs and selects) */
+.tuner-container .form-control,
+.tuner-container .form-select {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid var(--border-light) !important;
+  color: var(--text-light-primary) !important;
+}
+
+.tuner-container .form-control:focus,
+.tuner-container .form-select:focus {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border-color: var(--color-primary) !important;
+  box-shadow: 0 0 0 0.25rem var(--color-primary-light) !important;
+  color: var(--text-light-primary) !important;
+}
+
+.tuner-container .form-control::placeholder {
+  color: var(--text-light-muted);
+}
+
+/* Select dropdown options */
+.tuner-container .form-select option {
+  background: var(--bg-dark-secondary);
+  color: var(--text-light-primary);
+}
+
 .reference-notes-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
