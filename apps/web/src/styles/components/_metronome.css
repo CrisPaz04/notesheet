@@ -1,0 +1,288 @@
+/* Metronome Styles - Theme-aware */
+
+/* Container */
+.metronome-container {
+  min-height: 100vh;
+  padding-top: var(--spacing-xl);
+  padding-bottom: var(--spacing-xl);
+}
+
+/* Header */
+.metronome-header h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--text-light-primary);
+  margin: 0 0 var(--spacing-sm) 0;
+}
+
+.metronome-header p {
+  color: var(--text-light-secondary);
+  margin: 0;
+}
+
+/* Main Card */
+.metronome-card {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-medium);
+}
+
+/* BPM Display */
+.bpm-display {
+  text-align: center;
+  margin-bottom: var(--spacing-lg);
+}
+
+.bpm-value {
+  font-size: 4rem;
+  font-weight: 700;
+  color: var(--color-primary);
+  line-height: 1;
+}
+
+.bpm-label {
+  font-size: 1rem;
+  color: var(--text-light-secondary);
+  margin-top: var(--spacing-sm);
+}
+
+/* Beat Visualizer */
+.metronome-visualizer {
+  margin: var(--spacing-xl) 0;
+}
+
+.beat-indicators {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: var(--spacing-md);
+  flex-wrap: wrap;
+}
+
+.beat-indicator {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: var(--bg-dark-tertiary);
+  border: 2px solid var(--border-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.1s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+
+.beat-indicator .beat-number {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-light-secondary);
+  transition: color 0.1s ease;
+}
+
+.beat-indicator.active {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  transform: scale(1.2);
+  box-shadow: 0 0 20px var(--color-primary);
+  animation: beatPulse 0.1s ease;
+}
+
+.beat-indicator.active .beat-number {
+  color: var(--bg-dark-primary);
+  font-weight: 700;
+}
+
+.beat-indicator.accent.active {
+  background: var(--color-primary-dark);
+  border-color: var(--color-primary-dark);
+  box-shadow: 0 0 25px var(--color-primary-dark);
+}
+
+@keyframes beatPulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.25);
+  }
+  100% {
+    transform: scale(1.2);
+  }
+}
+
+/* Controls */
+.metronome-controls .form-label {
+  color: var(--text-light-primary);
+  margin-bottom: var(--spacing-sm);
+}
+
+.bpm-control-section .btn {
+  min-width: 40px;
+}
+
+/* BPM Slider */
+.metronome-controls .form-range {
+  height: 8px;
+  background: var(--bg-dark-tertiary);
+  border-radius: 4px;
+  outline: none;
+  -webkit-appearance: none;
+}
+
+.metronome-controls .form-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 24px;
+  height: 24px;
+  background: var(--color-primary);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.metronome-controls .form-range::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+  box-shadow: 0 0 10px var(--color-primary);
+}
+
+.metronome-controls .form-range::-moz-range-thumb {
+  width: 24px;
+  height: 24px;
+  background: var(--color-primary);
+  border-radius: 50%;
+  cursor: pointer;
+  border: none;
+  transition: var(--transition-fast);
+}
+
+.metronome-controls .form-range::-moz-range-thumb:hover {
+  transform: scale(1.2);
+  box-shadow: 0 0 10px var(--color-primary);
+}
+
+.metronome-controls .form-range:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Tempo Presets */
+.tempo-presets .form-label {
+  color: var(--text-light-primary);
+}
+
+.presets-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--spacing-sm);
+}
+
+.tempo-preset-btn {
+  padding: var(--spacing-md);
+  background: var(--bg-dark-tertiary);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  color: var(--text-light-primary);
+  cursor: pointer;
+  transition: var(--transition-fast);
+  text-align: center;
+}
+
+.tempo-preset-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: var(--border-light-hover);
+  transform: translateY(-2px);
+}
+
+.tempo-preset-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.tempo-preset-btn.active {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: var(--bg-dark-primary);
+}
+
+.tempo-preset-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.preset-name {
+  font-weight: 600;
+  font-size: 0.9rem;
+  margin-bottom: 0.25rem;
+}
+
+.preset-bpm {
+  font-size: 0.75rem;
+  opacity: 0.8;
+}
+
+.tempo-preset-btn.active .preset-bpm {
+  opacity: 1;
+}
+
+/* Responsive */
+@media (max-width: 992px) {
+  .metronome-header h1 {
+    font-size: 2rem;
+  }
+
+  .bpm-value {
+    font-size: 3rem;
+  }
+
+  .beat-indicator {
+    width: 50px;
+    height: 50px;
+  }
+
+  .beat-indicator .beat-number {
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .metronome-container {
+    padding-top: var(--spacing-md);
+    padding-bottom: var(--spacing-md);
+  }
+
+  .metronome-header h1 {
+    font-size: 1.75rem;
+  }
+
+  .bpm-value {
+    font-size: 2.5rem;
+  }
+
+  .beat-indicators {
+    gap: var(--spacing-sm);
+  }
+
+  .beat-indicator {
+    width: 45px;
+    height: 45px;
+  }
+
+  .beat-indicator .beat-number {
+    font-size: 0.9rem;
+  }
+
+  .presets-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 576px) {
+  .beat-indicator {
+    width: 40px;
+    height: 40px;
+  }
+
+  .beat-indicator .beat-number {
+    font-size: 0.85rem;
+  }
+}

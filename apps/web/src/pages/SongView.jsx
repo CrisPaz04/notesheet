@@ -2,10 +2,10 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, Link } from "react-router-dom";
 import { getSongById } from "@notesheet/api";
-import { 
-  formatSong, 
-  transposeContent, 
-  convertNotationSystem, 
+import {
+  formatSong,
+  transposeContent,
+  convertNotationSystem,
   detectNotationSystem,
   TRANSPOSING_INSTRUMENTS,
   transposeForInstrument,
@@ -15,6 +15,9 @@ import { useAuth } from "../context/AuthContext";
 import { InstrumentSelector } from "../components/InstrumentSelector";
 import { getUserPreferences, updateUserPreferences } from "@notesheet/api";
 import LoadingSpinner from "../components/LoadingSpinner";
+import Modal from "../components/Modal";
+import Metronome from "./Metronome";
+import useModal from "../hooks/useModal";
 
 // Arrays de pares de tonalidades relativas
 const RELATIVE_KEYS = [
@@ -63,6 +66,9 @@ function SongView() {
   const [showKeyDropdown, setShowKeyDropdown] = useState(false);
   const [showInstrumentDropdown, setShowInstrumentDropdown] = useState(false);
   const [showNotationDropdown, setShowNotationDropdown] = useState(false);
+
+  // Modal de herramientas
+  const metronomeModal = useModal();
 
   // Referencias para posiciones de scroll
   const chordsScrollPosition = useRef(0);
@@ -697,13 +703,22 @@ function SongView() {
               <div className="action-buttons-song">
                 <button
                   className="btn-song-action"
+                  onClick={metronomeModal.open}
+                  title="Metrónomo"
+                >
+                  <i className="bi bi-hourglass-split"></i>
+                  Metrónomo
+                </button>
+
+                <button
+                  className="btn-song-action"
                   onClick={handlePrint}
                   title="Imprimir"
                 >
                   <i className="bi bi-printer"></i>
                   Imprimir
                 </button>
-                
+
                 {currentUser && currentUser.uid === song.userId && (
                   <Link 
                     to={`/songs/${id}/edit`} 
@@ -807,6 +822,16 @@ function SongView() {
          </div>
        </div>
      </div>
+
+     {/* Metronome Modal */}
+     <Modal
+       isOpen={metronomeModal.isOpen}
+       onClose={metronomeModal.close}
+       title="Metrónomo"
+       size="large"
+     >
+       <Metronome compact={true} />
+     </Modal>
    </div>
  );
 }

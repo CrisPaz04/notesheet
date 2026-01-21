@@ -5,16 +5,86 @@
  * Features: BPM control, time signatures, subdivisions, visual beat indicators
  */
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useAuth } from '../context/AuthContext';
+import { getMetronomePreferences } from '@notesheet/api';
+import useMetronome from '../hooks/useMetronome';
+import MetronomeControls from '../components/metronome/MetronomeControls';
+import MetronomeVisualizer from '../components/metronome/MetronomeVisualizer';
+import TempoPresets from '../components/metronome/TempoPresets';
 
 function Metronome({ compact = false }) {
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [bpm, setBpm] = useState(120);
+  const { currentUser } = useAuth();
+  const [preferencesLoaded, setPreferencesLoaded] = useState(false);
+  const [initialPreferences, setInitialPreferences] = useState({});
 
-  const togglePlay = () => {
-    setIsPlaying(!isPlaying);
-    // TODO: Implement metronome engine integration
-  };
+  // Load preferences from Firebase (with localStorage fallback)
+  useEffect(() => {
+    const loadPreferences = async () => {
+      try {
+        if (currentUser) {
+          // Try loading from Firebase first
+          const firebasePrefs = await getMetronomePreferences(currentUser.uid);
+          setInitialPreferences(firebasePrefs);
+        } else {
+          // Fall back to localStorage if not authenticated
+          const savedPrefs = localStorage.getItem('metronomePreferences');
+          if (savedPrefs) {
+            const prefs = JSON.parse(savedPrefs);
+            setInitialPreferences(prefs);
+          }
+        }
+      } catch (err) {
+        console.error('Error loading metronome preferences from Firebase:', err);
+        // Fall back to localStorage on error
+        try {
+          const savedPrefs = localStorage.getItem('metronomePreferences');
+          if (savedPrefs) {
+            const prefs = JSON.parse(savedPrefs);
+            setInitialPreferences(prefs);
+          }
+        } catch (localErr) {
+          console.error('Error loading metronome preferences from localStorage:', localErr);
+        }
+      } finally {
+        setPreferencesLoaded(true);
+      }
+    };
+
+    loadPreferences();
+  }, [currentUser]);
+
+  const {
+    isPlaying,
+    bpm,
+    timeSignature,
+    subdivision,
+    currentBeat,
+    loading,
+    error,
+    toggle,
+    updateBpm,
+    updateTimeSignature,
+    updateSubdivision,
+    tapTempo,
+    incrementBpm,
+    decrementBpm,
+    setPreset,
+    timeSignatureBeats,
+    subdivisionName
+  } = useMetronome(initialPreferences);
+
+  if (!preferencesLoaded) {
+    return (
+      <div className={compact ? '' : 'metronome-container container py-4'}>
+        <div className="text-center py-5">
+          <div className="spinner-border text-primary" role="status">
+            <span className="visually-hidden">Cargando...</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={compact ? '' : 'metronome-container container py-4'}>
@@ -30,52 +100,112 @@ function Metronome({ compact = false }) {
         </div>
       )}
 
-      <div className="metronome-card card p-4">
-        {/* BPM Display */}
-        <div className="text-center mb-4">
-          <div className="bpm-display">
-            <div className="bpm-value" style={{ fontSize: '4rem', fontWeight: '700', color: 'var(--color-primary)' }}>
-              {bpm}
+      <div className="row g-4">
+        {/* Main Metronome Display */}
+        <div className="col-lg-8">
+          <div className="metronome-card card p-4">
+            {/* Error Display */}
+            {error && (
+              <div className="alert alert-danger mb-4" role="alert">
+                <i className="bi bi-exclamation-triangle me-2"></i>
+                {error}
+              </div>
+            )}
+
+            {/* BPM Display */}
+            <div className="text-center mb-4">
+              <div className="bpm-display">
+                <div
+                  className="bpm-value"
+                  style={{
+                    fontSize: '4rem',
+                    fontWeight: '700',
+                    color: 'var(--color-primary)'
+                  }}
+                >
+                  {bpm}
+                </div>
+                <div className="bpm-label text-secondary">BPM</div>
+                <div className="text-secondary small mt-2">
+                  {timeSignature} • {subdivisionName}
+                </div>
+              </div>
             </div>
-            <div className="bpm-label text-secondary">BPM</div>
+
+            {/* Beat Visualizer */}
+            <MetronomeVisualizer
+              currentBeat={currentBeat}
+              totalBeats={timeSignatureBeats}
+              isPlaying={isPlaying}
+            />
+
+            {/* Main Control Button */}
+            <div className="d-flex gap-3 justify-content-center mt-4">
+              <button
+                className="btn btn-lg btn-primary px-5"
+                onClick={toggle}
+                disabled={loading}
+              >
+                {loading ? (
+                  <>
+                    <span
+                      className="spinner-border spinner-border-sm me-2"
+                      role="status"
+                      aria-hidden="true"
+                    ></span>
+                    Cargando...
+                  </>
+                ) : (
+                  <>
+                    <i
+                      className={`bi bi-${
+                        isPlaying ? 'pause' : 'play'
+                      }-fill me-2`}
+                    ></i>
+                    {isPlaying ? 'Pausar' : 'Iniciar'}
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* BPM Slider */}
-        <div className="mb-4">
-          <input
-            type="range"
-            className="form-range"
-            min="40"
-            max="240"
-            value={bpm}
-            onChange={(e) => setBpm(parseInt(e.target.value))}
-          />
-          <div className="d-flex justify-content-between text-secondary small">
-            <span>40</span>
-            <span>240</span>
+        {/* Controls Sidebar */}
+        <div className="col-lg-4">
+          <div className="card p-4 mb-4">
+            <MetronomeControls
+              bpm={bpm}
+              timeSignature={timeSignature}
+              subdivision={subdivision}
+              isPlaying={isPlaying}
+              onBpmChange={updateBpm}
+              onTimeSignatureChange={updateTimeSignature}
+              onSubdivisionChange={updateSubdivision}
+              onIncrement={incrementBpm}
+              onDecrement={decrementBpm}
+              onTapTempo={tapTempo}
+            />
           </div>
-        </div>
 
-        {/* Control Buttons */}
-        <div className="d-flex gap-3 justify-content-center">
-          <button
-            className="btn btn-lg btn-primary"
-            onClick={togglePlay}
-          >
-            <i className={`bi bi-${isPlaying ? 'pause' : 'play'}-fill me-2`}></i>
-            {isPlaying ? 'Pausar' : 'Iniciar'}
-          </button>
-        </div>
-
-        {/* Coming Soon Message */}
-        <div className="alert alert-info mt-4" role="alert">
-          <i className="bi bi-info-circle me-2"></i>
-          <strong>Fase 1 Completada:</strong> Interfaz básica creada.
-          Las funciones completas del metrónomo (motor de audio, subdivisiones,
-          compases) se implementarán en la Fase 2.
+          <div className="card p-4">
+            <TempoPresets
+              currentBpm={bpm}
+              onPresetSelect={setPreset}
+              isPlaying={isPlaying}
+            />
+          </div>
         </div>
       </div>
+
+      {/* Help Text */}
+      {!compact && (
+        <div className="alert alert-info mt-4" role="alert">
+          <i className="bi bi-info-circle me-2"></i>
+          <strong>Tip:</strong> No puedes cambiar la configuración mientras el
+          metrónomo está activo. Detén el metrónomo primero para ajustar el
+          tempo, compás o subdivisión.
+        </div>
+      )}
     </div>
   );
 }
