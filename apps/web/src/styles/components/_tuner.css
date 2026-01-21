@@ -1,0 +1,270 @@
+/* Tuner Styles - Theme-aware */
+
+/* Container */
+.tuner-container {
+  min-height: 100vh;
+  padding-top: var(--spacing-xl);
+  padding-bottom: var(--spacing-xl);
+}
+
+/* Header */
+.tuner-header h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--text-light-primary);
+  margin: 0 0 var(--spacing-sm) 0;
+}
+
+.tuner-header p {
+  color: var(--text-light-secondary);
+  margin: 0;
+}
+
+/* Main Card */
+.tuner-card {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-medium);
+}
+
+/* Visualizer */
+.tuner-visualizer {
+  padding: var(--spacing-lg) 0;
+}
+
+.tuner-note-display {
+  text-align: center;
+  margin-bottom: var(--spacing-xl);
+}
+
+.tuner-note-name {
+  font-size: 5rem;
+  font-weight: 700;
+  line-height: 1;
+  transition: color 0.3s ease;
+}
+
+.tuner-note-waiting {
+  color: var(--text-light-secondary);
+  opacity: 0.5;
+}
+
+.tuner-frequency {
+  font-size: 1.2rem;
+  color: var(--text-light-secondary);
+  margin-top: var(--spacing-sm);
+}
+
+/* Gauge */
+.tuner-gauge-container {
+  max-width: 400px;
+  margin: 0 auto var(--spacing-lg);
+  position: relative;
+}
+
+.tuner-gauge {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.tuner-gauge-labels {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: var(--spacing-sm);
+  padding: 0 var(--spacing-md);
+}
+
+.tuner-gauge-label {
+  font-size: 0.9rem;
+  color: var(--text-light-secondary);
+}
+
+.tuner-gauge-label-center {
+  font-weight: 700;
+  color: var(--text-light-primary);
+}
+
+/* Cents Display */
+.tuner-cents-display {
+  text-align: center;
+}
+
+.tuner-cents-value {
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1;
+  transition: color 0.3s ease;
+}
+
+.tuner-status-text {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-top: var(--spacing-sm);
+  transition: color 0.3s ease;
+}
+
+/* Controls */
+.tuner-controls .form-label {
+  color: var(--text-light-primary);
+  margin-bottom: var(--spacing-sm);
+}
+
+.tuner-controls .form-range {
+  height: 8px;
+  background: var(--bg-dark-tertiary);
+  border-radius: 4px;
+  outline: none;
+  -webkit-appearance: none;
+}
+
+.tuner-controls .form-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 24px;
+  height: 24px;
+  background: var(--color-primary);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.tuner-controls .form-range::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+  box-shadow: 0 0 10px var(--color-primary);
+}
+
+.tuner-controls .form-range::-moz-range-thumb {
+  width: 24px;
+  height: 24px;
+  background: var(--color-primary);
+  border-radius: 50%;
+  cursor: pointer;
+  border: none;
+  transition: var(--transition-fast);
+}
+
+.tuner-controls .form-range::-moz-range-thumb:hover {
+  transform: scale(1.2);
+  box-shadow: 0 0 10px var(--color-primary);
+}
+
+.tuner-controls .form-range:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Reference Tone Generator */
+.reference-tone-generator .form-label {
+  color: var(--text-light-primary);
+}
+
+.reference-notes-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+}
+
+.reference-note-btn {
+  padding: var(--spacing-md);
+  background: var(--bg-dark-tertiary);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  color: var(--text-light-primary);
+  cursor: pointer;
+  transition: var(--transition-fast);
+  text-align: center;
+  font-weight: 600;
+  position: relative;
+}
+
+.reference-note-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: var(--border-light-hover);
+  transform: translateY(-2px);
+}
+
+.reference-note-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.reference-note-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.reference-note-btn-primary {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: var(--bg-dark-primary);
+}
+
+.reference-note-btn-primary:hover:not(:disabled) {
+  background: var(--color-primary-dark);
+  border-color: var(--color-primary-dark);
+}
+
+.reference-note-label {
+  font-size: 0.7rem;
+  opacity: 0.8;
+  margin-top: 0.25rem;
+}
+
+/* Responsive */
+@media (max-width: 992px) {
+  .tuner-header h1 {
+    font-size: 2rem;
+  }
+
+  .tuner-note-name {
+    font-size: 4rem;
+  }
+
+  .tuner-cents-value {
+    font-size: 1.5rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .tuner-container {
+    padding-top: var(--spacing-md);
+    padding-bottom: var(--spacing-md);
+  }
+
+  .tuner-header h1 {
+    font-size: 1.75rem;
+  }
+
+  .tuner-note-name {
+    font-size: 3rem;
+  }
+
+  .tuner-frequency {
+    font-size: 1rem;
+  }
+
+  .tuner-cents-value {
+    font-size: 1.25rem;
+  }
+
+  .tuner-status-text {
+    font-size: 1rem;
+  }
+
+  .reference-notes-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 576px) {
+  .tuner-note-name {
+    font-size: 2.5rem;
+  }
+
+  .reference-notes-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

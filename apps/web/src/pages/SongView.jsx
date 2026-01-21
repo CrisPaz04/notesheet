@@ -17,6 +17,7 @@ import { getUserPreferences, updateUserPreferences } from "@notesheet/api";
 import LoadingSpinner from "../components/LoadingSpinner";
 import Modal from "../components/Modal";
 import Metronome from "./Metronome";
+import Tuner from "./Tuner";
 import useModal from "../hooks/useModal";
 
 // Arrays de pares de tonalidades relativas
@@ -69,6 +70,7 @@ function SongView() {
 
   // Modal de herramientas
   const metronomeModal = useModal();
+  const tunerModal = useModal();
 
   // Referencias para posiciones de scroll
   const chordsScrollPosition = useRef(0);
@@ -712,6 +714,15 @@ function SongView() {
 
                 <button
                   className="btn-song-action"
+                  onClick={tunerModal.open}
+                  title="Afinador"
+                >
+                  <i className="bi bi-soundwave"></i>
+                  Afinador
+                </button>
+
+                <button
+                  className="btn-song-action"
                   onClick={handlePrint}
                   title="Imprimir"
                 >
@@ -831,6 +842,16 @@ function SongView() {
        size="large"
      >
        <Metronome compact={true} />
+     </Modal>
+
+     {/* Tuner Modal */}
+     <Modal
+       isOpen={tunerModal.isOpen}
+       onClose={tunerModal.close}
+       title="Afinador"
+       size="large"
+     >
+       <Tuner compact={true} />
      </Modal>
    </div>
  );

@@ -16,6 +16,7 @@
 @import './components/_theme-toggle.css';
 @import './components/_modal.css';
 @import './components/_metronome.css';
+@import './components/_tuner.css';
 
 /* Pages */
 @import './pages/_home.css';
