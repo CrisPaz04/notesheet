@@ -14,6 +14,7 @@
 @import './components/_playlists.css';
 @import './components/_footer.css';
 @import './components/_theme-toggle.css';
+@import './components/_modal.css';
 
 /* Pages */
 @import './pages/_home.css';

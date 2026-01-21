@@ -85,12 +85,30 @@ function Navbar() {
                   </Link>
                 </li>
                 <li className="nav-item">
-                  <Link 
-                    className={`nav-link ${isActive('/playlists') ? 'active' : ''}`} 
+                  <Link
+                    className={`nav-link ${isActive('/playlists') ? 'active' : ''}`}
                     to="/playlists"
                   >
                     <i className="bi bi-collection-play"></i>
                     Mis Listas
+                  </Link>
+                </li>
+                <li className="nav-item">
+                  <Link
+                    className={`nav-link ${isActive('/metronome') ? 'active' : ''}`}
+                    to="/metronome"
+                  >
+                    <i className="bi bi-hourglass-split"></i>
+                    Metrónomo
+                  </Link>
+                </li>
+                <li className="nav-item">
+                  <Link
+                    className={`nav-link ${isActive('/tuner') ? 'active' : ''}`}
+                    to="/tuner"
+                  >
+                    <i className="bi bi-soundwave"></i>
+                    Afinador
                   </Link>
                 </li>
                 <li className="nav-item user-dropdown" ref={dropdownRef}>

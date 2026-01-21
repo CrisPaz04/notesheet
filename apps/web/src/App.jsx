@@ -16,6 +16,8 @@ import UserPreferences from "./pages/UserPreferences";
 import PlaylistsList from "./pages/PlaylistsList";
 import PlaylistEditor from "./pages/PlaylistEditor";
 import PlaylistView from "./pages/PlaylistView";
+import Metronome from "./pages/Metronome";
+import Tuner from "./pages/Tuner";
 
 // Componentes
 import Navbar from "./components/Navbar";
@@ -53,7 +55,7 @@ function AppLayout() {
   // Páginas donde NO queremos mostrar navbar y footer
   const authPages = ['/login', '/register'];
   // Páginas que necesitan pantalla completa (sin padding del container)
-  const fullScreenPages = ['/login', '/register', '/', '/home', '/dashboard', '/songs/new', '/playlists', '/playlists/new', '/preferences'];
+  const fullScreenPages = ['/login', '/register', '/', '/home', '/dashboard', '/songs/new', '/playlists', '/playlists/new', '/preferences', '/metronome', '/tuner'];
   
   const isAuthPage = authPages.includes(location.pathname);
   const isFullScreenPage = fullScreenPages.includes(location.pathname) || 
@@ -68,9 +70,11 @@ function AppLayout() {
                         location.pathname !== '/register' && 
                         location.pathname !== '/dashboard' && 
                         location.pathname !== '/songs/new' && 
-                        location.pathname !== '/playlists' && 
-                        location.pathname !== '/playlists/new' && 
+                        location.pathname !== '/playlists' &&
+                        location.pathname !== '/playlists/new' &&
                         location.pathname !== '/preferences' &&
+                        location.pathname !== '/metronome' &&
+                        location.pathname !== '/tuner' &&
                         !location.pathname.match(/^\/songs\/[^\/]+/) &&
                         !location.pathname.match(/^\/playlists\/[^\/]+/));                      
   
@@ -121,6 +125,16 @@ function AppLayout() {
           <Route path="/playlists/:id/edit" element={
             <ProtectedRoute>
               <PlaylistEditor />
+            </ProtectedRoute>
+          } />
+          <Route path="/metronome" element={
+            <ProtectedRoute>
+              <Metronome />
+            </ProtectedRoute>
+          } />
+          <Route path="/tuner" element={
+            <ProtectedRoute>
+              <Tuner />
             </ProtectedRoute>
           } />
           <Route path="*" element={<NotFound />} />
