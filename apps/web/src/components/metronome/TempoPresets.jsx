@@ -23,7 +23,7 @@ function TempoPresets({ currentBpm, onPresetSelect, isPlaying }) {
 
   return (
     <div className="tempo-presets">
-      <label className="form-label fw-bold mb-3">Tempo Clásicos</label>
+      <label className="form-label-modern mb-3">Tempo Clásicos</label>
       <div className="presets-grid">
         {TEMPO_PRESETS.map((preset) => (
           <button

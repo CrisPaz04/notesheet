@@ -76,10 +76,12 @@ function Metronome({ compact = false }) {
 
   if (!preferencesLoaded) {
     return (
-      <div className={compact ? '' : 'metronome-container container py-4'}>
-        <div className="text-center py-5">
-          <div className="spinner-border text-primary" role="status">
-            <span className="visually-hidden">Cargando...</span>
+      <div className={compact ? 'metronome-compact' : 'metronome-container'}>
+        <div className={compact ? '' : 'container'}>
+          <div className="text-center py-5">
+            <div className="spinner-border" role="status" style={{ color: 'var(--color-primary)' }}>
+              <span className="visually-hidden">Cargando...</span>
+            </div>
           </div>
         </div>
       </div>
@@ -87,16 +89,19 @@ function Metronome({ compact = false }) {
   }
 
   return (
-    <div className={compact ? '' : 'metronome-container container py-4'}>
+    <div className={compact ? 'metronome-compact' : 'metronome-container'}>
+      <div className={compact ? '' : 'container'}>
       {!compact && (
-        <div className="metronome-header mb-4">
-          <h1>
-            <i className="bi bi-hourglass-split me-2"></i>
-            Metrónomo
-          </h1>
-          <p className="text-secondary mb-0">
-            Practica con tempo preciso y visualización de tiempo
-          </p>
+        <div className="metronome-header fade-in">
+          <div>
+            <h1 className="metronome-title">
+              <i className="bi bi-hourglass-split"></i>
+              Metrónomo
+            </h1>
+            <p className="metronome-subtitle">
+              Practica con tempo preciso y visualización de tiempo
+            </p>
+          </div>
         </div>
       )}
 
@@ -199,13 +204,14 @@ function Metronome({ compact = false }) {
 
       {/* Help Text */}
       {!compact && (
-        <div className="alert alert-info mt-4" role="alert">
+        <div className="metronome-help-text mt-4">
           <i className="bi bi-info-circle me-2"></i>
           <strong>Tip:</strong> No puedes cambiar la configuración mientras el
           metrónomo está activo. Detén el metrónomo primero para ajustar el
           tempo, compás o subdivisión.
         </div>
       )}
+      </div>
     </div>
   );
 }

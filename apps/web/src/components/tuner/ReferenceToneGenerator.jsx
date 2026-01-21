@@ -44,7 +44,7 @@ function ReferenceToneGenerator({
 
   return (
     <div className="reference-tone-generator">
-      <label className="form-label fw-bold mb-3">
+      <label className="form-label-modern mb-3">
         <i className="bi bi-soundwave me-2"></i>
         Tonos de Referencia
       </label>
@@ -81,12 +81,10 @@ function ReferenceToneGenerator({
         </div>
       )}
 
-      <div className="alert alert-info mt-3" role="alert">
+      <div className="tuner-controls-hint mt-3">
         <i className="bi bi-info-circle me-2"></i>
-        <small>
-          Los tonos de referencia te ayudan a afinar tu instrumento.
-          LA4 (A4) es la nota de referencia estándar a {referenceFrequency} Hz.
-        </small>
+        Los tonos de referencia te ayudan a afinar tu instrumento.
+        LA4 (A4) es la nota de referencia estándar a {referenceFrequency} Hz.
       </div>
     </div>
   );

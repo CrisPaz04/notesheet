@@ -22,7 +22,7 @@ function MetronomeControls({
     <div className="metronome-controls">
       {/* BPM Control */}
       <div className="bpm-control-section mb-4">
-        <label className="form-label fw-bold">Tempo (BPM)</label>
+        <label className="form-label-modern">Tempo (BPM)</label>
 
         <div className="d-flex align-items-center gap-2 mb-3">
           <button
@@ -65,7 +65,7 @@ function MetronomeControls({
           disabled={isPlaying}
         />
 
-        <div className="d-flex justify-content-between text-secondary small">
+        <div className="d-flex justify-content-between metronome-controls-range-labels">
           <span>40</span>
           <span>120</span>
           <span>240</span>
@@ -74,9 +74,9 @@ function MetronomeControls({
 
       {/* Time Signature */}
       <div className="mb-4">
-        <label className="form-label fw-bold">Compás</label>
+        <label className="form-label-modern">Compás</label>
         <select
-          className="form-select"
+          className="form-control-modern"
           value={timeSignature}
           onChange={(e) => onTimeSignatureChange(e.target.value)}
           disabled={isPlaying}
@@ -91,7 +91,7 @@ function MetronomeControls({
 
       {/* Subdivision */}
       <div className="mb-4">
-        <label className="form-label fw-bold">Subdivisión</label>
+        <label className="form-label-modern">Subdivisión</label>
         <div className="btn-group w-100" role="group">
           {Object.entries(SUBDIVISIONS).map(([key, { name, icon }]) => (
             <button
@@ -115,14 +115,14 @@ function MetronomeControls({
       {/* Tap Tempo */}
       <div className="mb-3">
         <button
-          className="btn btn-outline-primary w-100"
+          className="btn-tap-tempo w-100"
           onClick={onTapTempo}
           disabled={isPlaying}
         >
           <i className="bi bi-hand-index-thumb me-2"></i>
           Tap Tempo
         </button>
-        <div className="text-secondary small text-center mt-2">
+        <div className="metronome-controls-hint text-center mt-2">
           Toca el botón al ritmo deseado (mínimo 2 veces)
         </div>
       </div>

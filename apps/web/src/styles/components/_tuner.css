@@ -4,27 +4,36 @@
 .tuner-container {
   background: var(--bg-dark-primary);
   min-height: 100vh;
-  padding-top: var(--spacing-xl);
-  padding-bottom: var(--spacing-xl);
+  padding: 2rem 0;
 }
 
-/* Ensure full width background (no white strips) */
-.tuner-container.container {
-  max-width: 100%;
-  padding-left: var(--spacing-xl);
-  padding-right: var(--spacing-xl);
+/* Compact mode for modal */
+.tuner-compact {
+  background: transparent;
 }
 
-/* Header */
-.tuner-header h1 {
-  font-size: 2.5rem;
-  font-weight: 700;
+/* Header - Matching song-editor and playlists style */
+.tuner-header {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-xl);
+  padding: 2rem;
+  margin-bottom: 2rem;
+  backdrop-filter: blur(10px);
+}
+
+.tuner-title {
   color: var(--text-light-primary);
-  margin: 0 0 var(--spacing-sm) 0;
+  font-size: 1.75rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
 }
 
-.tuner-header p {
-  color: var(--text-light-secondary);
+.tuner-subtitle {
+  color: var(--text-light-muted);
   margin: 0;
 }
 
@@ -126,9 +135,76 @@
 }
 
 /* Controls */
+.tuner-controls .form-label-modern {
+  color: var(--text-light-secondary);
+  font-size: 0.9rem;
+  font-weight: 500;
+  margin-bottom: var(--spacing-sm);
+  display: block;
+}
+
 .tuner-controls .form-label {
   color: var(--text-light-primary);
   margin-bottom: var(--spacing-sm);
+}
+
+/* Form controls - matching song-editor style */
+.tuner-controls .form-control-modern {
+  background: rgba(255, 255, 255, 0.05);
+  border: 2px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  color: var(--text-light-primary);
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  transition: var(--transition-fast);
+  width: 100%;
+}
+
+.tuner-controls .form-control-modern:focus {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 0.2rem var(--color-primary-light);
+  color: var(--text-light-primary);
+  outline: none;
+}
+
+.tuner-controls .form-control-modern option {
+  background: var(--bg-dark-secondary);
+  color: var(--text-light-primary);
+}
+
+/* Controls labels and hints */
+.tuner-controls-label {
+  color: var(--text-light-secondary);
+}
+
+.tuner-controls-range-labels {
+  color: var(--text-light-muted);
+  font-size: 0.85rem;
+}
+
+.tuner-controls-hint {
+  color: var(--text-light-muted);
+  font-size: 0.85rem;
+}
+
+/* Switch styling */
+.tuner-switch-label {
+  color: var(--text-light-primary);
+}
+
+/* Help Text - Matching song-editor style */
+.tuner-help-text {
+  color: var(--text-light-muted);
+  font-size: 0.85rem;
+  padding: 0.75rem 1rem;
+  background: var(--color-primary-light);
+  border-left: 3px solid var(--color-primary);
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+}
+
+.tuner-help-text .bi {
+  color: var(--color-primary);
 }
 
 .tuner-controls .form-range {
@@ -175,6 +251,14 @@
 }
 
 /* Reference Tone Generator */
+.reference-tone-generator .form-label-modern {
+  color: var(--text-light-secondary);
+  font-size: 0.9rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+}
+
 .reference-tone-generator .form-label {
   color: var(--text-light-primary);
 }
@@ -310,7 +394,7 @@
   margin-top: 0.25rem;
 }
 
-/* Alert/Tip Box Styling */
+/* Alert/Tip Box Styling - Legacy support */
 .tuner-container .alert-info {
   background: var(--color-primary-light);
   border: 1px solid var(--border-light);
@@ -319,6 +403,32 @@
 
 .tuner-container .alert-info .bi {
   color: var(--color-primary);
+}
+
+/* Help text icon - covered in tuner-help-text */
+
+/* ===== Theme-specific styles for form controls ===== */
+
+/* Light themes - form controls */
+[data-bs-theme="light"] .tuner-controls .form-control-modern,
+[data-bs-theme="rainforest-light"] .tuner-controls .form-control-modern,
+[data-bs-theme="newspaper-light"] .tuner-controls .form-control-modern {
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--text-light-primary);
+}
+
+[data-bs-theme="light"] .tuner-controls .form-control-modern option,
+[data-bs-theme="rainforest-light"] .tuner-controls .form-control-modern option,
+[data-bs-theme="newspaper-light"] .tuner-controls .form-control-modern option {
+  background: var(--bg-dark-primary);
+  color: var(--text-light-primary);
+}
+
+/* Light themes - header */
+[data-bs-theme="light"] .tuner-header,
+[data-bs-theme="rainforest-light"] .tuner-header,
+[data-bs-theme="newspaper-light"] .tuner-header {
+  background: rgba(255, 255, 255, 0.9);
 }
 
 /* Responsive */

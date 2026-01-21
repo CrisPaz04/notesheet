@@ -4,27 +4,36 @@
 .metronome-container {
   background: var(--bg-dark-primary);
   min-height: 100vh;
-  padding-top: var(--spacing-xl);
-  padding-bottom: var(--spacing-xl);
+  padding: 2rem 0;
 }
 
-/* Ensure full width background (no white strips) */
-.metronome-container.container {
-  max-width: 100%;
-  padding-left: var(--spacing-xl);
-  padding-right: var(--spacing-xl);
+/* Compact mode for modal */
+.metronome-compact {
+  background: transparent;
 }
 
-/* Header */
-.metronome-header h1 {
-  font-size: 2.5rem;
-  font-weight: 700;
+/* Header - Matching song-editor and playlists style */
+.metronome-header {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-xl);
+  padding: 2rem;
+  margin-bottom: 2rem;
+  backdrop-filter: blur(10px);
+}
+
+.metronome-title {
   color: var(--text-light-primary);
-  margin: 0 0 var(--spacing-sm) 0;
+  font-size: 1.75rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
 }
 
-.metronome-header p {
-  color: var(--text-light-secondary);
+.metronome-subtitle {
+  color: var(--text-light-muted);
   margin: 0;
 }
 
@@ -131,9 +140,90 @@
 }
 
 /* Controls */
+.metronome-controls .form-label-modern {
+  color: var(--text-light-secondary);
+  font-size: 0.9rem;
+  font-weight: 500;
+  margin-bottom: var(--spacing-sm);
+  display: block;
+}
+
 .metronome-controls .form-label {
   color: var(--text-light-primary);
   margin-bottom: var(--spacing-sm);
+}
+
+/* Form controls - matching song-editor style */
+.metronome-controls .form-control-modern {
+  background: rgba(255, 255, 255, 0.05);
+  border: 2px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  color: var(--text-light-primary);
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  transition: var(--transition-fast);
+  width: 100%;
+}
+
+.metronome-controls .form-control-modern:focus {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 0.2rem var(--color-primary-light);
+  color: var(--text-light-primary);
+  outline: none;
+}
+
+.metronome-controls .form-control-modern option {
+  background: var(--bg-dark-secondary);
+  color: var(--text-light-primary);
+}
+
+/* Range labels */
+.metronome-controls-range-labels {
+  color: var(--text-light-muted);
+  font-size: 0.85rem;
+}
+
+/* Hint text */
+.metronome-controls-hint {
+  color: var(--text-light-muted);
+  font-size: 0.85rem;
+}
+
+/* Tap Tempo Button - Theme consistent */
+.btn-tap-tempo {
+  background: transparent;
+  border: 2px solid var(--border-light);
+  border-radius: var(--radius-md);
+  color: var(--text-light-primary);
+  padding: 0.75rem 1.5rem;
+  font-weight: 500;
+  transition: var(--transition-fast);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-tap-tempo:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.btn-tap-tempo:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Help Text - Matching song-editor style */
+.metronome-help-text {
+  color: var(--text-light-muted);
+  font-size: 0.85rem;
+  padding: 0.75rem 1rem;
+  background: var(--color-primary-light);
+  border-left: 3px solid var(--color-primary);
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
 }
 
 /* Subdivision button styling */
@@ -261,6 +351,13 @@
 }
 
 /* Tempo Presets */
+.tempo-presets .form-label-modern {
+  color: var(--text-light-secondary);
+  font-size: 0.9rem;
+  font-weight: 500;
+  display: block;
+}
+
 .tempo-presets .form-label {
   color: var(--text-light-primary);
 }
@@ -318,7 +415,7 @@
   opacity: 1;
 }
 
-/* Alert/Tip Box Styling */
+/* Alert/Tip Box Styling - Legacy support */
 .metronome-container .alert-info {
   background: var(--color-primary-light);
   border: 1px solid var(--border-light);
@@ -326,6 +423,52 @@
 }
 
 .metronome-container .alert-info .bi {
+  color: var(--color-primary);
+}
+
+/* Help text icon */
+.metronome-help-text .bi {
+  color: var(--color-primary);
+}
+
+/* ===== Theme-specific styles for form controls ===== */
+
+/* Light themes - form controls */
+[data-bs-theme="light"] .metronome-controls .form-control-modern,
+[data-bs-theme="rainforest-light"] .metronome-controls .form-control-modern,
+[data-bs-theme="newspaper-light"] .metronome-controls .form-control-modern {
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--text-light-primary);
+}
+
+[data-bs-theme="light"] .metronome-controls .form-control-modern option,
+[data-bs-theme="rainforest-light"] .metronome-controls .form-control-modern option,
+[data-bs-theme="newspaper-light"] .metronome-controls .form-control-modern option {
+  background: var(--bg-dark-primary);
+  color: var(--text-light-primary);
+}
+
+/* Light themes - header */
+[data-bs-theme="light"] .metronome-header,
+[data-bs-theme="rainforest-light"] .metronome-header,
+[data-bs-theme="newspaper-light"] .metronome-header {
+  background: rgba(255, 255, 255, 0.9);
+}
+
+/* Light themes - tap tempo button */
+[data-bs-theme="light"] .btn-tap-tempo,
+[data-bs-theme="rainforest-light"] .btn-tap-tempo,
+[data-bs-theme="newspaper-light"] .btn-tap-tempo {
+  background: transparent;
+  border-color: var(--border-light);
+  color: var(--text-light-primary);
+}
+
+[data-bs-theme="light"] .btn-tap-tempo:hover:not(:disabled),
+[data-bs-theme="rainforest-light"] .btn-tap-tempo:hover:not(:disabled),
+[data-bs-theme="newspaper-light"] .btn-tap-tempo:hover:not(:disabled) {
+  background: rgba(0, 0, 0, 0.05);
+  border-color: var(--color-primary);
   color: var(--color-primary);
 }
 

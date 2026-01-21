@@ -21,14 +21,14 @@ function TunerControls({
     <div className="tuner-controls">
       {/* Reference Frequency (A4) */}
       <div className="mb-4">
-        <label className="form-label fw-bold">
+        <label className="form-label-modern">
           Frecuencia de Referencia (A4)
         </label>
 
         <div className="d-flex align-items-center gap-2 mb-2">
           <input
             type="number"
-            className="form-control text-center"
+            className="form-control-modern text-center"
             value={referenceFrequency}
             onChange={(e) => onReferenceFrequencyChange(e.target.value)}
             min="430"
@@ -36,7 +36,7 @@ function TunerControls({
             disabled={isRunning}
             style={{ maxWidth: '80px' }}
           />
-          <span className="text-secondary">Hz</span>
+          <span className="tuner-controls-label">Hz</span>
         </div>
 
         <input
@@ -50,13 +50,13 @@ function TunerControls({
           disabled={isRunning}
         />
 
-        <div className="d-flex justify-content-between text-secondary small">
+        <div className="d-flex justify-content-between tuner-controls-range-labels">
           <span>430</span>
           <span>440</span>
           <span>450</span>
         </div>
 
-        <div className="text-secondary small mt-2">
+        <div className="tuner-controls-hint mt-2">
           <i className="bi bi-info-circle me-1"></i>
           Estándar: 440 Hz
         </div>
@@ -64,9 +64,9 @@ function TunerControls({
 
       {/* Instrument Selector */}
       <div className="mb-4">
-        <label className="form-label fw-bold">Instrumento</label>
+        <label className="form-label-modern">Instrumento</label>
         <select
-          className="form-select"
+          className="form-control-modern"
           value={currentInstrument}
           onChange={(e) => onInstrumentChange(e.target.value)}
           disabled={isRunning}
@@ -77,14 +77,14 @@ function TunerControls({
             </option>
           ))}
         </select>
-        <div className="text-secondary small mt-2">
+        <div className="tuner-controls-hint mt-2">
           {TRANSPOSING_INSTRUMENTS[currentInstrument]?.description || ''}
         </div>
       </div>
 
       {/* Notation System Toggle */}
       <div className="mb-4">
-        <label className="form-label fw-bold">Sistema de Notación</label>
+        <label className="form-label-modern">Sistema de Notación</label>
         <div className="btn-group w-100" role="group">
           <button
             type="button"
@@ -111,7 +111,7 @@ function TunerControls({
 
       {/* Concert Pitch Toggle */}
       <div className="mb-3">
-        <div className="form-check form-switch">
+        <div className="form-check form-switch tuner-switch">
           <input
             className="form-check-input"
             type="checkbox"
@@ -120,11 +120,11 @@ function TunerControls({
             onChange={onToggleConcertPitch}
             disabled={isRunning}
           />
-          <label className="form-check-label" htmlFor="concertPitchToggle">
+          <label className="form-check-label tuner-switch-label" htmlFor="concertPitchToggle">
             Mostrar tono de concierto
           </label>
         </div>
-        <div className="text-secondary small mt-1">
+        <div className="tuner-controls-hint mt-1">
           {showConcertPitch
             ? 'Muestra la nota real (concierto)'
             : `Muestra la nota para ${TRANSPOSING_INSTRUMENTS[currentInstrument]?.name}`}

@@ -78,10 +78,12 @@ function Tuner({ compact = false }) {
 
   if (!preferencesLoaded) {
     return (
-      <div className={compact ? '' : 'tuner-container container py-4'}>
-        <div className="text-center py-5">
-          <div className="spinner-border text-primary" role="status">
-            <span className="visually-hidden">Cargando...</span>
+      <div className={compact ? 'tuner-compact' : 'tuner-container'}>
+        <div className={compact ? '' : 'container'}>
+          <div className="text-center py-5">
+            <div className="spinner-border" role="status" style={{ color: 'var(--color-primary)' }}>
+              <span className="visually-hidden">Cargando...</span>
+            </div>
           </div>
         </div>
       </div>
@@ -89,16 +91,19 @@ function Tuner({ compact = false }) {
   }
 
   return (
-    <div className={compact ? '' : 'tuner-container container py-4'}>
+    <div className={compact ? 'tuner-compact' : 'tuner-container'}>
+      <div className={compact ? '' : 'container'}>
       {!compact && (
-        <div className="tuner-header mb-4">
-          <h1>
-            <i className="bi bi-soundwave me-2"></i>
-            Afinador
-          </h1>
-          <p className="text-secondary mb-0">
-            Afina tu instrumento con detección cromática precisa
-          </p>
+        <div className="tuner-header fade-in">
+          <div>
+            <h1 className="tuner-title">
+              <i className="bi bi-soundwave"></i>
+              Afinador
+            </h1>
+            <p className="tuner-subtitle">
+              Afina tu instrumento con detección cromática precisa
+            </p>
+          </div>
         </div>
       )}
 
@@ -185,13 +190,14 @@ function Tuner({ compact = false }) {
 
       {/* Help Text */}
       {!compact && (
-        <div className="alert alert-info mt-4" role="alert">
+        <div className="tuner-help-text mt-4">
           <i className="bi bi-info-circle me-2"></i>
           <strong>Tip:</strong> Para mejores resultados, toca notas largas y
           sostenidas. El afinador funciona mejor en ambientes silenciosos.
           Los tonos de referencia te ayudan a comparar el tono de tu instrumento.
         </div>
       )}
+      </div>
     </div>
   );
 }
