@@ -8,6 +8,13 @@
   padding-bottom: var(--spacing-xl);
 }
 
+/* Ensure full width background (no white strips) */
+.metronome-container.container {
+  max-width: 100%;
+  padding-left: var(--spacing-xl);
+  padding-right: var(--spacing-xl);
+}
+
 /* Header */
 .metronome-header h1 {
   font-size: 2.5rem;
@@ -28,6 +35,16 @@
   border: 1px solid var(--border-light);
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-medium);
+}
+
+/* Override Bootstrap card styles for metronome */
+.metronome-container .card {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-medium);
+  color: var(--text-light-primary);
 }
 
 /* BPM Display */
@@ -130,6 +147,43 @@
 
 .metronome-controls .btn-group .btn span {
   display: block;
+}
+
+/* Override Bootstrap button colors */
+.metronome-container .btn-primary {
+  background: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+  color: var(--bg-dark-primary) !important;
+}
+
+.metronome-container .btn-primary:hover {
+  background: var(--color-primary-dark) !important;
+  border-color: var(--color-primary-dark) !important;
+}
+
+.metronome-container .btn-outline-secondary {
+  background: transparent !important;
+  border-color: var(--border-light) !important;
+  color: var(--text-light-secondary) !important;
+}
+
+.metronome-container .btn-outline-secondary:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+  border-color: var(--border-light-hover) !important;
+  color: var(--text-light-primary) !important;
+}
+
+.metronome-container .btn-outline-secondary.active,
+.metronome-container .btn-outline-secondary:active {
+  background: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+  color: var(--bg-dark-primary) !important;
+}
+
+/* Fix button text color for light themes */
+[data-bs-theme="rainforest-light"] .metronome-container .btn-primary,
+[data-bs-theme="newspaper-light"] .metronome-container .btn-primary {
+  color: #ffffff !important;
 }
 
 .bpm-control-section .btn {

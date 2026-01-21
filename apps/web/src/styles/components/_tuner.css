@@ -8,6 +8,13 @@
   padding-bottom: var(--spacing-xl);
 }
 
+/* Ensure full width background (no white strips) */
+.tuner-container.container {
+  max-width: 100%;
+  padding-left: var(--spacing-xl);
+  padding-right: var(--spacing-xl);
+}
+
 /* Header */
 .tuner-header h1 {
   font-size: 2.5rem;
@@ -28,6 +35,16 @@
   border: 1px solid var(--border-light);
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-medium);
+}
+
+/* Override Bootstrap card styles for tuner */
+.tuner-container .card {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-medium);
+  color: var(--text-light-primary);
 }
 
 /* Visualizer */
@@ -160,6 +177,59 @@
 /* Reference Tone Generator */
 .reference-tone-generator .form-label {
   color: var(--text-light-primary);
+}
+
+/* Override Bootstrap button colors */
+.tuner-container .btn-primary {
+  background: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+  color: var(--bg-dark-primary) !important;
+}
+
+.tuner-container .btn-primary:hover {
+  background: var(--color-primary-dark) !important;
+  border-color: var(--color-primary-dark) !important;
+}
+
+.tuner-container .btn-outline-secondary {
+  background: transparent !important;
+  border-color: var(--border-light) !important;
+  color: var(--text-light-secondary) !important;
+}
+
+.tuner-container .btn-outline-secondary:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+  border-color: var(--border-light-hover) !important;
+  color: var(--text-light-primary) !important;
+}
+
+.tuner-container .btn-outline-secondary.active,
+.tuner-container .btn-outline-secondary:active {
+  background: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+  color: var(--bg-dark-primary) !important;
+}
+
+/* Fix button text color for light themes */
+[data-bs-theme="rainforest-light"] .tuner-container .btn-primary,
+[data-bs-theme="newspaper-light"] .tuner-container .btn-primary {
+  color: #ffffff !important;
+}
+
+/* Override form switch colors */
+.tuner-container .form-check-input {
+  background-color: var(--bg-dark-tertiary);
+  border-color: var(--border-light);
+}
+
+.tuner-container .form-check-input:checked {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.tuner-container .form-check-input:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 0.25rem var(--color-primary-light);
 }
 
 .reference-notes-grid {
