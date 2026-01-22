@@ -57,3 +57,19 @@ img {
 input, textarea, select {
   font-family: inherit;
 }
+
+/* Global select dropdown styling */
+select {
+  accent-color: var(--color-primary);
+}
+
+select option {
+  background-color: var(--bg-dark-secondary, #1a1a2e);
+  color: var(--text-light-primary, #ffffff);
+}
+
+select option:checked,
+select option:hover {
+  background-color: var(--color-primary, #f0c674) !important;
+  color: var(--bg-dark-primary, #0f0f1a) !important;
+}

@@ -296,10 +296,18 @@
   color: var(--text-light-muted);
 }
 
+/* Select dropdown - accent color for native controls */
+.metronome-container .form-select,
+.metronome-container .form-control-modern,
+.metronome-container select {
+  accent-color: var(--color-primary);
+}
+
 /* Select dropdown options */
 .metronome-container .form-select option,
-.metronome-container .form-control-modern option {
-  background: var(--bg-dark-secondary);
+.metronome-container .form-control-modern option,
+.metronome-container select option {
+  background-color: var(--bg-dark-secondary);
   color: var(--text-light-primary);
 }
 
@@ -308,9 +316,22 @@
 .metronome-container .form-select option:checked,
 .metronome-container .form-control-modern option:hover,
 .metronome-container .form-control-modern option:focus,
-.metronome-container .form-control-modern option:checked {
-  background: var(--color-primary) !important;
+.metronome-container .form-control-modern option:checked,
+.metronome-container select option:hover,
+.metronome-container select option:focus,
+.metronome-container select option:checked {
+  background-color: var(--color-primary) !important;
   color: var(--bg-dark-primary) !important;
+}
+
+/* Firefox-specific option styling */
+@-moz-document url-prefix() {
+  .metronome-container .form-select option,
+  .metronome-container .form-control-modern option,
+  .metronome-container select option {
+    background-color: var(--bg-dark-secondary);
+    color: var(--text-light-primary);
+  }
 }
 
 .bpm-control-section .btn {

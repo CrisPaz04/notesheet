@@ -373,10 +373,18 @@
   color: var(--text-light-muted);
 }
 
+/* Select dropdown - accent color for native controls */
+.tuner-container .form-select,
+.tuner-container .form-control-modern,
+.tuner-container select {
+  accent-color: var(--color-primary);
+}
+
 /* Select dropdown options */
 .tuner-container .form-select option,
-.tuner-container .form-control-modern option {
-  background: var(--bg-dark-secondary);
+.tuner-container .form-control-modern option,
+.tuner-container select option {
+  background-color: var(--bg-dark-secondary);
   color: var(--text-light-primary);
 }
 
@@ -385,9 +393,22 @@
 .tuner-container .form-select option:checked,
 .tuner-container .form-control-modern option:hover,
 .tuner-container .form-control-modern option:focus,
-.tuner-container .form-control-modern option:checked {
-  background: var(--color-primary) !important;
+.tuner-container .form-control-modern option:checked,
+.tuner-container select option:hover,
+.tuner-container select option:focus,
+.tuner-container select option:checked {
+  background-color: var(--color-primary) !important;
   color: var(--bg-dark-primary) !important;
+}
+
+/* Firefox-specific option styling */
+@-moz-document url-prefix() {
+  .tuner-container .form-select option,
+  .tuner-container .form-control-modern option,
+  .tuner-container select option {
+    background-color: var(--bg-dark-secondary);
+    color: var(--text-light-primary);
+  }
 }
 
 .reference-notes-grid {
