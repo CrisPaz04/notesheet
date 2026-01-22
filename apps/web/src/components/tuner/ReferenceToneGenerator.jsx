@@ -4,6 +4,7 @@
  * Allows users to play reference tones for common notes
  */
 
+import { useState } from 'react';
 import { midiToFrequency } from '@notesheet/core/src/audio/pitchDetection';
 
 // Common reference notes for brass and woodwind instruments
@@ -33,13 +34,27 @@ function ReferenceToneGenerator({
   isPlaying,
   isRunning
 }) {
+  const [playingNote, setPlayingNote] = useState(null);
+
   const handleToneClick = (midiNote) => {
-    if (isPlaying) {
+    if (isPlaying && playingNote === midiNote) {
+      // Stop if clicking the same note that's playing
       onStopTone();
+      setPlayingNote(null);
     } else {
+      // Stop any current tone and play the new one
+      if (isPlaying) {
+        onStopTone();
+      }
       const frequency = midiToFrequency(midiNote, referenceFrequency);
       onPlayTone(frequency);
+      setPlayingNote(midiNote);
     }
+  };
+
+  const handleStop = () => {
+    onStopTone();
+    setPlayingNote(null);
   };
 
   return (
@@ -53,17 +68,19 @@ function ReferenceToneGenerator({
         {REFERENCE_NOTES.map((note) => {
           const displayName = notationSystem === 'latin' ? note.nameLatin : note.name;
           const isA4 = note.midi === 69; // Highlight A4
+          const isCurrentlyPlaying = isPlaying && playingNote === note.midi;
 
           return (
             <button
               key={note.midi}
-              className={`reference-note-btn ${isA4 ? 'reference-note-btn-primary' : ''}`}
+              className={`reference-note-btn ${isA4 ? 'reference-note-btn-primary' : ''} ${isCurrentlyPlaying ? 'reference-note-btn-playing' : ''}`}
               onClick={() => handleToneClick(note.midi)}
               disabled={isRunning}
               title={`${displayName} - ${midiToFrequency(note.midi, referenceFrequency).toFixed(1)} Hz`}
             >
               {displayName}
               {isA4 && <div className="reference-note-label">A4</div>}
+              {isCurrentlyPlaying && <i className="bi bi-volume-up-fill reference-note-playing-icon"></i>}
             </button>
           );
         })}
@@ -73,7 +90,7 @@ function ReferenceToneGenerator({
         <div className="text-center mt-3">
           <button
             className="btn btn-sm btn-danger"
-            onClick={onStopTone}
+            onClick={handleStop}
           >
             <i className="bi bi-stop-fill me-1"></i>
             Detener Tono
@@ -83,8 +100,8 @@ function ReferenceToneGenerator({
 
       <div className="tuner-controls-hint mt-3">
         <i className="bi bi-info-circle me-2"></i>
-        Los tonos de referencia te ayudan a afinar tu instrumento.
-        LA4 (A4) es la nota de referencia estándar a {referenceFrequency} Hz.
+        Toca una nota para escuchar su tono de referencia.
+        LA4 (A4) es la nota estándar a {referenceFrequency} Hz.
       </div>
     </div>
   );

@@ -223,6 +223,7 @@
   border-radius: 50%;
   cursor: pointer;
   transition: var(--transition-fast);
+  margin-top: -8px; /* Center thumb on 8px track */
 }
 
 .tuner-controls .form-range::-webkit-slider-thumb:hover {
@@ -304,16 +305,23 @@
 .tuner-container .form-check-input {
   background-color: var(--bg-dark-tertiary);
   border-color: var(--border-light);
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='rgba(255,255,255,0.5)'/%3e%3c/svg%3e");
 }
 
 .tuner-container .form-check-input:checked {
   background-color: var(--color-primary);
   border-color: var(--color-primary);
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23fff'/%3e%3c/svg%3e");
 }
 
 .tuner-container .form-check-input:focus {
   border-color: var(--color-primary);
   box-shadow: 0 0 0 0.25rem var(--color-primary-light);
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='rgba(255,255,255,0.5)'/%3e%3c/svg%3e");
+}
+
+.tuner-container .form-check-input:focus:checked {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23fff'/%3e%3c/svg%3e");
 }
 
 /* Override form controls (inputs and selects) */
@@ -337,9 +345,20 @@
 }
 
 /* Select dropdown options */
-.tuner-container .form-select option {
+.tuner-container .form-select option,
+.tuner-container .form-control-modern option {
   background: var(--bg-dark-secondary);
   color: var(--text-light-primary);
+}
+
+.tuner-container .form-select option:hover,
+.tuner-container .form-select option:focus,
+.tuner-container .form-select option:checked,
+.tuner-container .form-control-modern option:hover,
+.tuner-container .form-control-modern option:focus,
+.tuner-container .form-control-modern option:checked {
+  background: var(--color-primary) !important;
+  color: var(--bg-dark-primary) !important;
 }
 
 .reference-notes-grid {
@@ -392,6 +411,35 @@
   font-size: 0.7rem;
   opacity: 0.8;
   margin-top: 0.25rem;
+}
+
+.reference-note-btn-playing {
+  background: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+  color: var(--bg-dark-primary) !important;
+  animation: playingPulse 1s ease-in-out infinite;
+}
+
+.reference-note-playing-icon {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  font-size: 0.8rem;
+}
+
+@keyframes playingPulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 var(--color-primary);
+  }
+  50% {
+    box-shadow: 0 0 10px 3px var(--color-primary);
+  }
+}
+
+/* Pitch History Graph - Main display container */
+.pitch-history-main {
+  max-width: 500px;
+  margin: 0 auto;
 }
 
 /* Pitch History Graph */

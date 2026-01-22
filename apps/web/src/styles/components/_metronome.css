@@ -297,9 +297,20 @@
 }
 
 /* Select dropdown options */
-.metronome-container .form-select option {
+.metronome-container .form-select option,
+.metronome-container .form-control-modern option {
   background: var(--bg-dark-secondary);
   color: var(--text-light-primary);
+}
+
+.metronome-container .form-select option:hover,
+.metronome-container .form-select option:focus,
+.metronome-container .form-select option:checked,
+.metronome-container .form-control-modern option:hover,
+.metronome-container .form-control-modern option:focus,
+.metronome-container .form-control-modern option:checked {
+  background: var(--color-primary) !important;
+  color: var(--bg-dark-primary) !important;
 }
 
 .bpm-control-section .btn {
@@ -323,6 +334,7 @@
   border-radius: 50%;
   cursor: pointer;
   transition: var(--transition-fast);
+  margin-top: -8px; /* Center thumb on 8px track */
 }
 
 .metronome-controls .form-range::-webkit-slider-thumb:hover {

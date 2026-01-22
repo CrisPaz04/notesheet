@@ -160,6 +160,17 @@ function Tuner({ compact = false }) {
               isRunning={isRunning}
             />
 
+            {/* Pitch History Graph - in main display */}
+            <div className="pitch-history-main mt-4">
+              <PitchHistoryGraph
+                history={pitchHistory.history}
+                trend={pitchHistory.trend}
+                stabilityRating={pitchHistory.stabilityRating}
+                averageCents={pitchHistory.averageCents}
+                isRunning={isRunning}
+              />
+            </div>
+
             {/* Main Control Button */}
             <div className="d-flex gap-3 justify-content-center mt-4">
               <button
@@ -223,23 +234,13 @@ function Tuner({ compact = false }) {
             />
           </div>
 
-          <div className="card p-4 mb-4">
+          <div className="card p-4">
             <ReferenceToneGenerator
               referenceFrequency={referenceFrequency}
               notationSystem={notationSystem}
               onPlayTone={playReferenceTone}
               onStopTone={stopReferenceTone}
               isPlaying={isPlayingTone}
-              isRunning={isRunning}
-            />
-          </div>
-
-          <div className="card p-4">
-            <PitchHistoryGraph
-              history={pitchHistory.history}
-              trend={pitchHistory.trend}
-              stabilityRating={pitchHistory.stabilityRating}
-              averageCents={pitchHistory.averageCents}
               isRunning={isRunning}
             />
           </div>

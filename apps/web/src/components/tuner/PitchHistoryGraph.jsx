@@ -30,8 +30,38 @@ function PitchHistoryGraph({
     return padding.top + graphHeight - (normalized * graphHeight);
   };
 
-  // Build path data from history
+  // Build smooth path data from history using cubic bezier curves
   const buildPath = () => {
+    if (history.length < 2) return '';
+
+    const points = history.map((sample, index) => {
+      const x = padding.left + (index / (history.length - 1 || 1)) * graphWidth;
+      const y = centsToY(sample.cents);
+      return { x, y };
+    });
+
+    // Start with move to first point
+    let path = `M ${points[0].x},${points[0].y}`;
+
+    // Use smooth curve through points
+    for (let i = 1; i < points.length; i++) {
+      const prev = points[i - 1];
+      const curr = points[i];
+
+      // Control point for smooth curve (midpoint with slight smoothing)
+      const cpX = (prev.x + curr.x) / 2;
+
+      path += ` Q ${cpX},${prev.y} ${cpX},${(prev.y + curr.y) / 2}`;
+      if (i === points.length - 1) {
+        path += ` Q ${cpX},${curr.y} ${curr.x},${curr.y}`;
+      }
+    }
+
+    return path;
+  };
+
+  // Build simple line path for fill (smooth curves can cause fill issues)
+  const buildLinePath = () => {
     if (history.length < 2) return '';
 
     const points = history.map((sample, index) => {
@@ -47,7 +77,7 @@ function PitchHistoryGraph({
   const buildFillPath = () => {
     if (history.length < 2) return '';
 
-    const linePath = buildPath();
+    const linePath = buildLinePath();
     const firstX = padding.left;
     const lastX = padding.left + graphWidth;
     const baseY = centsToY(0);
