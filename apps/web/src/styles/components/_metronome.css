@@ -415,6 +415,332 @@
   opacity: 1;
 }
 
+/* Sound Presets */
+.sound-presets .form-label-modern {
+  color: var(--text-light-secondary);
+  font-size: 0.9rem;
+  font-weight: 500;
+  display: block;
+}
+
+.sound-presets-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--spacing-sm);
+}
+
+.sound-preset-btn {
+  padding: var(--spacing-md);
+  background: var(--bg-dark-tertiary);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  color: var(--text-light-primary);
+  cursor: pointer;
+  transition: var(--transition-fast);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.sound-preset-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: var(--border-light-hover);
+  transform: translateY(-2px);
+}
+
+.sound-preset-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.sound-preset-btn.active {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: var(--bg-dark-primary);
+}
+
+.sound-preset-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.sound-preset-btn .preset-icon {
+  font-size: 1.5rem;
+}
+
+.sound-preset-btn .preset-name {
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.btn-test-sound {
+  width: 100%;
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: transparent;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  color: var(--text-light-primary);
+  cursor: pointer;
+  transition: var(--transition-fast);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-test-sound:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.btn-test-sound:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Tempo Trainer */
+.tempo-trainer .form-label-modern {
+  color: var(--text-light-secondary);
+  font-size: 0.9rem;
+  font-weight: 500;
+  display: block;
+}
+
+/* Configuration Mode */
+.trainer-config {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.trainer-input-row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.trainer-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.trainer-input-label {
+  font-size: 0.75rem;
+  color: var(--text-light-muted);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.trainer-input {
+  width: 70px;
+  padding: var(--spacing-sm);
+  background: var(--bg-dark-tertiary);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  color: var(--text-light-primary);
+  font-size: 1rem;
+  text-align: center;
+}
+
+.trainer-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.trainer-input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.trainer-input-small {
+  width: 50px;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  background: var(--bg-dark-tertiary);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  color: var(--text-light-primary);
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.trainer-input-small:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.trainer-input-small:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.trainer-input-unit {
+  font-size: 0.8rem;
+  color: var(--text-light-muted);
+}
+
+.trainer-input-prefix {
+  font-size: 1rem;
+  color: var(--text-light-secondary);
+  font-weight: 600;
+}
+
+.trainer-arrow {
+  color: var(--text-light-muted);
+  font-size: 1.25rem;
+  padding: 0 var(--spacing-sm);
+}
+
+.trainer-warning {
+  display: flex;
+  align-items: center;
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: rgba(255, 193, 7, 0.15);
+  border: 1px solid rgba(255, 193, 7, 0.3);
+  border-radius: var(--radius-md);
+  color: #ffc107;
+  font-size: 0.85rem;
+}
+
+.btn-trainer-start {
+  width: 100%;
+  padding: var(--spacing-md);
+  background: var(--color-primary);
+  border: none;
+  border-radius: var(--radius-md);
+  color: var(--bg-dark-primary);
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition-fast);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-trainer-start:hover:not(:disabled) {
+  background: var(--color-primary-dark);
+  transform: translateY(-2px);
+}
+
+.btn-trainer-start:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Active Training Mode */
+.trainer-active {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.trainer-progress-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.trainer-progress-header {
+  display: flex;
+  align-items: baseline;
+  gap: var(--spacing-xs);
+}
+
+.trainer-current-bpm {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+.trainer-target-bpm {
+  font-size: 1rem;
+  color: var(--text-light-muted);
+}
+
+.trainer-progress-bar {
+  height: 8px;
+  background: var(--bg-dark-tertiary);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.trainer-progress-fill {
+  height: 100%;
+  background: var(--color-primary);
+  border-radius: var(--radius-full);
+  transition: width 0.3s ease;
+}
+
+.trainer-progress-fill.completed {
+  background: linear-gradient(90deg, var(--color-primary), #4ade80);
+}
+
+.trainer-progress-label {
+  font-size: 0.85rem;
+  color: var(--text-light-muted);
+}
+
+.trainer-success {
+  color: #4ade80;
+  font-weight: 500;
+}
+
+.trainer-paused {
+  color: #fbbf24;
+  font-weight: 500;
+}
+
+/* Training Controls */
+.trainer-controls {
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
+.btn-trainer-control {
+  flex: 1;
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: transparent;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  color: var(--text-light-primary);
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition-fast);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-trainer-control:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: var(--border-light-hover);
+}
+
+.btn-trainer-control:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-trainer-control.pause:hover:not(:disabled) {
+  border-color: #fbbf24;
+  color: #fbbf24;
+}
+
+.btn-trainer-control.resume:hover:not(:disabled) {
+  border-color: #4ade80;
+  color: #4ade80;
+}
+
+.btn-trainer-control.stop:hover:not(:disabled) {
+  border-color: #f87171;
+  color: #f87171;
+}
+
 /* Alert/Tip Box Styling - Legacy support */
 .metronome-container .alert-info {
   background: var(--color-primary-light);
@@ -470,6 +796,39 @@
   background: rgba(0, 0, 0, 0.05);
   border-color: var(--color-primary);
   color: var(--color-primary);
+}
+
+/* Light themes - tempo trainer inputs */
+[data-bs-theme="light"] .trainer-input,
+[data-bs-theme="rainforest-light"] .trainer-input,
+[data-bs-theme="newspaper-light"] .trainer-input,
+[data-bs-theme="light"] .trainer-input-small,
+[data-bs-theme="rainforest-light"] .trainer-input-small,
+[data-bs-theme="newspaper-light"] .trainer-input-small {
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--text-light-primary);
+}
+
+[data-bs-theme="light"] .trainer-input:focus,
+[data-bs-theme="rainforest-light"] .trainer-input:focus,
+[data-bs-theme="newspaper-light"] .trainer-input:focus,
+[data-bs-theme="light"] .trainer-input-small:focus,
+[data-bs-theme="rainforest-light"] .trainer-input-small:focus,
+[data-bs-theme="newspaper-light"] .trainer-input-small:focus {
+  background: rgba(255, 255, 255, 1);
+}
+
+/* Light themes - trainer buttons */
+[data-bs-theme="light"] .btn-trainer-start,
+[data-bs-theme="rainforest-light"] .btn-trainer-start,
+[data-bs-theme="newspaper-light"] .btn-trainer-start {
+  color: #ffffff;
+}
+
+[data-bs-theme="light"] .btn-trainer-control:hover:not(:disabled),
+[data-bs-theme="rainforest-light"] .btn-trainer-control:hover:not(:disabled),
+[data-bs-theme="newspaper-light"] .btn-trainer-control:hover:not(:disabled) {
+  background: rgba(0, 0, 0, 0.05);
 }
 
 /* Responsive */

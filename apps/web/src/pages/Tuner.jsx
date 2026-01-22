@@ -5,13 +5,16 @@
  * Features: Chromatic pitch detection, transposing instruments, reference tones
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { getTunerPreferences } from '@notesheet/api';
 import useTuner from '../hooks/useTuner';
+import usePitchHistory from '../hooks/usePitchHistory';
 import TunerVisualizer from '../components/tuner/TunerVisualizer';
 import TunerControls from '../components/tuner/TunerControls';
 import ReferenceToneGenerator from '../components/tuner/ReferenceToneGenerator';
+import PitchHistoryGraph from '../components/tuner/PitchHistoryGraph';
+import StringModeSelector from '../components/tuner/StringModeSelector';
 
 function Tuner({ compact = false }) {
   const { currentUser } = useAuth();
@@ -60,6 +63,7 @@ function Tuner({ compact = false }) {
     error,
     detectedNote,
     detectedFrequency,
+    detectedMidi,
     centsDeviation,
     tuningStatus,
     referenceFrequency,
@@ -67,14 +71,42 @@ function Tuner({ compact = false }) {
     showConcertPitch,
     notationSystem,
     isPlayingTone,
+    stringModeEnabled,
+    selectedTuning,
+    selectedString,
     toggle,
     updateReferenceFrequency,
     updateInstrument,
     toggleConcertPitch,
     toggleNotationSystem,
     playReferenceTone,
-    stopReferenceTone
+    stopReferenceTone,
+    toggleStringMode,
+    updateSelectedTuning,
+    updateSelectedString
   } = useTuner(initialPreferences);
+
+  // Pitch history tracking
+  const pitchHistory = usePitchHistory();
+  const lastSampleTimeRef = useRef(0);
+
+  // Feed cents data to pitch history (throttled to ~30fps)
+  useEffect(() => {
+    if (isRunning && detectedFrequency !== null) {
+      const now = Date.now();
+      if (now - lastSampleTimeRef.current >= 33) { // ~30fps
+        pitchHistory.addSample(centsDeviation);
+        lastSampleTimeRef.current = now;
+      }
+    }
+  }, [isRunning, detectedFrequency, centsDeviation, pitchHistory]);
+
+  // Clear history when tuner stops
+  useEffect(() => {
+    if (!isRunning) {
+      pitchHistory.clearHistory();
+    }
+  }, [isRunning, pitchHistory.clearHistory]);
 
   if (!preferencesLoaded) {
     return (
@@ -175,13 +207,39 @@ function Tuner({ compact = false }) {
             />
           </div>
 
-          <div className="card p-4">
+          <div className="card p-4 mb-4">
+            <StringModeSelector
+              stringModeEnabled={stringModeEnabled}
+              selectedTuning={selectedTuning}
+              selectedString={selectedString}
+              notationSystem={notationSystem}
+              referenceFrequency={referenceFrequency}
+              detectedMidi={detectedMidi}
+              centsDeviation={centsDeviation}
+              isRunning={isRunning}
+              onToggleStringMode={toggleStringMode}
+              onTuningChange={updateSelectedTuning}
+              onStringSelect={updateSelectedString}
+            />
+          </div>
+
+          <div className="card p-4 mb-4">
             <ReferenceToneGenerator
               referenceFrequency={referenceFrequency}
               notationSystem={notationSystem}
               onPlayTone={playReferenceTone}
               onStopTone={stopReferenceTone}
               isPlaying={isPlayingTone}
+              isRunning={isRunning}
+            />
+          </div>
+
+          <div className="card p-4">
+            <PitchHistoryGraph
+              history={pitchHistory.history}
+              trend={pitchHistory.trend}
+              stabilityRating={pitchHistory.stabilityRating}
+              averageCents={pitchHistory.averageCents}
               isRunning={isRunning}
             />
           </div>

@@ -9,9 +9,12 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { getMetronomePreferences } from '@notesheet/api';
 import useMetronome from '../hooks/useMetronome';
+import useTempoTrainer from '../hooks/useTempoTrainer';
 import MetronomeControls from '../components/metronome/MetronomeControls';
 import MetronomeVisualizer from '../components/metronome/MetronomeVisualizer';
 import TempoPresets from '../components/metronome/TempoPresets';
+import SoundPresetSelector from '../components/metronome/SoundPresetSelector';
+import TempoTrainer from '../components/metronome/TempoTrainer';
 
 function Metronome({ compact = false }) {
   const { currentUser } = useAuth();
@@ -59,6 +62,7 @@ function Metronome({ compact = false }) {
     bpm,
     timeSignature,
     subdivision,
+    soundPreset,
     currentBeat,
     loading,
     error,
@@ -66,13 +70,23 @@ function Metronome({ compact = false }) {
     updateBpm,
     updateTimeSignature,
     updateSubdivision,
+    updateSoundPreset,
+    testSound,
     tapTempo,
     incrementBpm,
     decrementBpm,
     setPreset,
     timeSignatureBeats,
-    subdivisionName
+    subdivisionName,
+    engineRef
   } = useMetronome(initialPreferences);
+
+  // Tempo Trainer
+  const tempoTrainer = useTempoTrainer(
+    engineRef.current,
+    updateBpm,
+    isPlaying
+  );
 
   if (!preferencesLoaded) {
     return (
@@ -192,11 +206,36 @@ function Metronome({ compact = false }) {
             />
           </div>
 
-          <div className="card p-4">
+          <div className="card p-4 mb-4">
             <TempoPresets
               currentBpm={bpm}
               onPresetSelect={setPreset}
               isPlaying={isPlaying}
+            />
+          </div>
+
+          <div className="card p-4 mb-4">
+            <SoundPresetSelector
+              currentPreset={soundPreset}
+              onPresetSelect={updateSoundPreset}
+              onTestSound={testSound}
+              isPlaying={isPlaying}
+            />
+          </div>
+
+          <div className="card p-4">
+            <TempoTrainer
+              config={tempoTrainer.config}
+              onConfigChange={tempoTrainer.updateConfig}
+              isActive={tempoTrainer.isActive}
+              isPaused={tempoTrainer.isPaused}
+              currentBpm={tempoTrainer.currentTrainingBpm}
+              progress={tempoTrainer.progress}
+              hasReachedTarget={tempoTrainer.hasReachedTarget}
+              onStart={tempoTrainer.startTraining}
+              onTogglePause={tempoTrainer.togglePause}
+              onStop={tempoTrainer.stopTraining}
+              isMetronomePlaying={isPlaying}
             />
           </div>
         </div>

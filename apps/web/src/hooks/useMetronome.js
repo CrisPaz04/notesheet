@@ -5,7 +5,7 @@
  */
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import MetronomeEngine, { TIME_SIGNATURES, SUBDIVISIONS } from '@notesheet/core/src/audio/metronomeEngine';
+import MetronomeEngine, { TIME_SIGNATURES, SUBDIVISIONS, SOUND_PRESETS } from '@notesheet/core/src/audio/metronomeEngine';
 import { useAuth } from '../context/AuthContext';
 import { saveMetronomePreferences } from '@notesheet/api';
 
@@ -19,6 +19,7 @@ function useMetronome(initialPreferences = {}) {
   const [bpm, setBpm] = useState(initialPreferences.bpm || 120);
   const [timeSignature, setTimeSignature] = useState(initialPreferences.timeSignature || '4/4');
   const [subdivision, setSubdivision] = useState(initialPreferences.subdivision || 'quarter');
+  const [soundPreset, setSoundPreset] = useState(initialPreferences.soundPreset || 'classic');
   const [currentBeat, setCurrentBeat] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -59,6 +60,12 @@ function useMetronome(initialPreferences = {}) {
       engineRef.current.setSubdivision(subdivision);
     }
   }, [subdivision]);
+
+  useEffect(() => {
+    if (engineRef.current) {
+      engineRef.current.setSoundPreset(soundPreset);
+    }
+  }, [soundPreset]);
 
   // Beat callback for visual sync
   const handleBeat = useCallback((beat, totalBeats) => {
@@ -204,12 +211,35 @@ function useMetronome(initialPreferences = {}) {
     updateBpm(presetBpm);
   }, [updateBpm]);
 
+  /**
+   * Update sound preset
+   */
+  const updateSoundPreset = useCallback((newPreset) => {
+    if (SOUND_PRESETS[newPreset]) {
+      setSoundPreset(newPreset);
+    }
+  }, []);
+
+  /**
+   * Play a test sound with current preset
+   */
+  const testSound = useCallback(async () => {
+    if (engineRef.current && !isPlaying) {
+      try {
+        await engineRef.current.playTestSound();
+      } catch (err) {
+        console.error('Error playing test sound:', err);
+      }
+    }
+  }, [isPlaying]);
+
   // Save preferences to Firebase (with localStorage fallback) - debounced
   useEffect(() => {
     const preferences = {
       bpm,
       timeSignature,
-      subdivision
+      subdivision,
+      soundPreset
     };
 
     // Save to localStorage immediately (optimistic update)
@@ -228,7 +258,7 @@ function useMetronome(initialPreferences = {}) {
     }, SAVE_DEBOUNCE_MS);
 
     return () => clearTimeout(timeoutId);
-  }, [bpm, timeSignature, subdivision, currentUser]);
+  }, [bpm, timeSignature, subdivision, soundPreset, currentUser]);
 
   return {
     // State
@@ -236,6 +266,7 @@ function useMetronome(initialPreferences = {}) {
     bpm,
     timeSignature,
     subdivision,
+    soundPreset,
     currentBeat,
     loading,
     error,
@@ -247,6 +278,8 @@ function useMetronome(initialPreferences = {}) {
     updateBpm,
     updateTimeSignature,
     updateSubdivision,
+    updateSoundPreset,
+    testSound,
     tapTempo,
     incrementBpm,
     decrementBpm,
@@ -254,7 +287,11 @@ function useMetronome(initialPreferences = {}) {
 
     // Helpers
     timeSignatureBeats: TIME_SIGNATURES[timeSignature]?.beats || 4,
-    subdivisionName: SUBDIVISIONS[subdivision]?.name || 'Negras'
+    subdivisionName: SUBDIVISIONS[subdivision]?.name || 'Negras',
+    soundPresetName: SOUND_PRESETS[soundPreset]?.name || 'Clásico',
+
+    // Engine reference (for tempo trainer)
+    engineRef
   };
 }
 

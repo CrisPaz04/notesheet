@@ -27,6 +27,65 @@ export const SUBDIVISIONS = {
   sixteenth: { name: 'Semicorcheas', icon: '♬', clicksPerBeat: 4 }
 };
 
+// Sound presets with different oscillator types and frequencies
+export const SOUND_PRESETS = {
+  classic: {
+    name: 'Clásico',
+    description: 'Sonido limpio y claro',
+    accentFrequency: 1000,
+    regularFrequency: 800,
+    accentDuration: 0.05,
+    regularDuration: 0.03,
+    accentGain: 0.3,
+    regularGain: 0.15,
+    oscillatorType: 'sine'
+  },
+  woodBlock: {
+    name: 'Bloque de Madera',
+    description: 'Sonido percusivo y cálido',
+    accentFrequency: 1200,
+    regularFrequency: 900,
+    accentDuration: 0.02,
+    regularDuration: 0.015,
+    accentGain: 0.35,
+    regularGain: 0.18,
+    oscillatorType: 'triangle'
+  },
+  hiHat: {
+    name: 'Hi-Hat',
+    description: 'Sonido brillante y agudo',
+    accentFrequency: 3000,
+    regularFrequency: 2500,
+    accentDuration: 0.03,
+    regularDuration: 0.02,
+    accentGain: 0.25,
+    regularGain: 0.12,
+    oscillatorType: 'square'
+  },
+  rimshot: {
+    name: 'Rimshot',
+    description: 'Sonido cortante y definido',
+    accentFrequency: 1500,
+    regularFrequency: 1100,
+    accentDuration: 0.025,
+    regularDuration: 0.018,
+    accentGain: 0.28,
+    regularGain: 0.14,
+    oscillatorType: 'sawtooth'
+  },
+  softClick: {
+    name: 'Click Suave',
+    description: 'Sonido suave para práctica tranquila',
+    accentFrequency: 600,
+    regularFrequency: 500,
+    accentDuration: 0.04,
+    regularDuration: 0.025,
+    accentGain: 0.2,
+    regularGain: 0.1,
+    oscillatorType: 'sine'
+  }
+};
+
 class MetronomeEngine {
   constructor() {
     this.audioContext = null;
@@ -40,14 +99,22 @@ class MetronomeEngine {
     this.schedulerInterval = 25; // Check every 25ms
     this.schedulerTimer = null;
     this.onBeatCallback = null;
+    this.onMeasureCompleteCallback = null;
 
-    // Sound parameters
-    this.accentFrequency = 1000; // Hz for accent beat
-    this.regularFrequency = 800; // Hz for regular beat
-    this.accentDuration = 0.05; // 50ms
-    this.regularDuration = 0.03; // 30ms
-    this.accentGain = 0.3;
-    this.regularGain = 0.15;
+    // Sound preset
+    this.soundPreset = 'classic';
+    this.oscillatorType = SOUND_PRESETS.classic.oscillatorType;
+
+    // Sound parameters (initialized from classic preset)
+    this.accentFrequency = SOUND_PRESETS.classic.accentFrequency;
+    this.regularFrequency = SOUND_PRESETS.classic.regularFrequency;
+    this.accentDuration = SOUND_PRESETS.classic.accentDuration;
+    this.regularDuration = SOUND_PRESETS.classic.regularDuration;
+    this.accentGain = SOUND_PRESETS.classic.accentGain;
+    this.regularGain = SOUND_PRESETS.classic.regularGain;
+
+    // Measure tracking (for tempo trainer)
+    this.measureCount = 0;
   }
 
   /**
@@ -88,6 +155,39 @@ class MetronomeEngine {
   }
 
   /**
+   * Set sound preset
+   */
+  setSoundPreset(presetId) {
+    if (SOUND_PRESETS[presetId]) {
+      const preset = SOUND_PRESETS[presetId];
+      this.soundPreset = presetId;
+      this.oscillatorType = preset.oscillatorType;
+      this.accentFrequency = preset.accentFrequency;
+      this.regularFrequency = preset.regularFrequency;
+      this.accentDuration = preset.accentDuration;
+      this.regularDuration = preset.regularDuration;
+      this.accentGain = preset.accentGain;
+      this.regularGain = preset.regularGain;
+    }
+  }
+
+  /**
+   * Get current sound preset
+   */
+  getSoundPreset() {
+    return this.soundPreset;
+  }
+
+  /**
+   * Play a test sound with current preset
+   */
+  async playTestSound() {
+    this.init();
+    await resumeAudioContext();
+    this.scheduleNote(this.audioContext.currentTime + 0.05, true, false);
+  }
+
+  /**
    * Calculate the time between beats in seconds
    */
   getSecondPerBeat() {
@@ -120,6 +220,9 @@ class MetronomeEngine {
     // Create oscillator for the click
     const osc = ctx.createOscillator();
     const gainNode = ctx.createGain();
+
+    // Set oscillator type from preset
+    osc.type = this.oscillatorType;
 
     // Set frequency and gain based on accent
     osc.frequency.value = isAccent ? this.accentFrequency : this.regularFrequency;
@@ -157,7 +260,39 @@ class MetronomeEngine {
     const totalClicks = this.timeSignature.beats * subdivisionClicks;
     if (this.currentBeat >= totalClicks) {
       this.currentBeat = 0;
+      this.measureCount++;
+
+      // Notify measure complete callback (for tempo trainer)
+      if (this.onMeasureCompleteCallback) {
+        const delay = (this.nextNoteTime - this.audioContext.currentTime) * 1000;
+        setTimeout(() => {
+          if (this.onMeasureCompleteCallback) {
+            this.onMeasureCompleteCallback(this.measureCount);
+          }
+        }, Math.max(0, delay));
+      }
     }
+  }
+
+  /**
+   * Set callback for measure completion (used by tempo trainer)
+   */
+  setOnMeasureComplete(callback) {
+    this.onMeasureCompleteCallback = callback;
+  }
+
+  /**
+   * Get current measure count
+   */
+  getMeasureCount() {
+    return this.measureCount;
+  }
+
+  /**
+   * Reset measure count
+   */
+  resetMeasureCount() {
+    this.measureCount = 0;
   }
 
   /**
@@ -260,6 +395,7 @@ class MetronomeEngine {
     }
 
     this.currentBeat = 0;
+    this.measureCount = 0;
 
     if (this.onBeatCallback) {
       this.onBeatCallback(0, this.timeSignature.beats);

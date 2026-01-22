@@ -13,7 +13,8 @@ export const getMetronomePreferences = async (userId) => {
     return {
       bpm: preferences.metronomeLastBPM || 120,
       timeSignature: preferences.metronomeLastTimeSignature || '4/4',
-      subdivision: preferences.metronomeLastSubdivision || 'quarter'
+      subdivision: preferences.metronomeLastSubdivision || 'quarter',
+      soundPreset: preferences.metronomeSoundPreset || 'classic'
     };
   } catch (error) {
     console.error("Error getting metronome preferences:", error);
@@ -21,7 +22,8 @@ export const getMetronomePreferences = async (userId) => {
     return {
       bpm: 120,
       timeSignature: '4/4',
-      subdivision: 'quarter'
+      subdivision: 'quarter',
+      soundPreset: 'classic'
     };
   }
 };
@@ -51,6 +53,10 @@ export const saveMetronomePreferences = async (userId, metronomePrefs) => {
       preferencesToUpdate.metronomeLastSubdivision = metronomePrefs.subdivision;
     }
 
+    if (metronomePrefs.soundPreset !== undefined) {
+      preferencesToUpdate.metronomeSoundPreset = metronomePrefs.soundPreset;
+    }
+
     return await updateUserPreferences(userId, preferencesToUpdate);
   } catch (error) {
     console.error("Error saving metronome preferences:", error);
@@ -72,7 +78,9 @@ export const getTunerPreferences = async (userId) => {
       lastInstrument: preferences.tunerLastInstrument || 'bb_trumpet',
       showConcertPitch: preferences.tunerShowConcertPitch !== undefined
         ? preferences.tunerShowConcertPitch
-        : true
+        : true,
+      stringModeEnabled: preferences.tunerStringModeEnabled || false,
+      selectedTuning: preferences.tunerSelectedTuning || 'guitar_standard'
     };
   } catch (error) {
     console.error("Error getting tuner preferences:", error);
@@ -80,7 +88,9 @@ export const getTunerPreferences = async (userId) => {
     return {
       referenceFrequency: 440,
       lastInstrument: 'bb_trumpet',
-      showConcertPitch: true
+      showConcertPitch: true,
+      stringModeEnabled: false,
+      selectedTuning: 'guitar_standard'
     };
   }
 };
@@ -108,6 +118,14 @@ export const saveTunerPreferences = async (userId, tunerPrefs) => {
 
     if (tunerPrefs.showConcertPitch !== undefined) {
       preferencesToUpdate.tunerShowConcertPitch = tunerPrefs.showConcertPitch;
+    }
+
+    if (tunerPrefs.stringModeEnabled !== undefined) {
+      preferencesToUpdate.tunerStringModeEnabled = tunerPrefs.stringModeEnabled;
+    }
+
+    if (tunerPrefs.selectedTuning !== undefined) {
+      preferencesToUpdate.tunerSelectedTuning = tunerPrefs.selectedTuning;
     }
 
     return await updateUserPreferences(userId, preferencesToUpdate);

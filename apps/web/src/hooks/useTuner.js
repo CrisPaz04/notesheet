@@ -15,7 +15,7 @@ import {
 } from '@notesheet/core/src/audio/pitchDetection';
 import { useAuth } from '../context/AuthContext';
 import { saveTunerPreferences } from '@notesheet/api';
-import { TRANSPOSING_INSTRUMENTS } from '@notesheet/core';
+import { TRANSPOSING_INSTRUMENTS, STRING_TUNINGS } from '@notesheet/core';
 
 const SAVE_DEBOUNCE_MS = 500; // Debounce Firebase saves
 
@@ -51,6 +51,16 @@ function useTuner(initialPreferences = {}) {
 
   // Reference tone state
   const [isPlayingTone, setIsPlayingTone] = useState(false);
+
+  // String mode state
+  const [stringModeEnabled, setStringModeEnabled] = useState(
+    initialPreferences.stringModeEnabled || false
+  );
+  const [selectedTuning, setSelectedTuning] = useState(
+    initialPreferences.selectedTuning || 'guitar_standard'
+  );
+  const [selectedString, setSelectedString] = useState(null);
+  const [detectedMidi, setDetectedMidi] = useState(null);
 
   const engineRef = useRef(null);
 
@@ -99,6 +109,7 @@ function useTuner(initialPreferences = {}) {
         setDetectedNoteLatin(null);
         setCentsDeviation(0);
         setTuningStatus('detecting');
+        setDetectedMidi(null);
         return;
       }
 
@@ -106,6 +117,7 @@ function useTuner(initialPreferences = {}) {
 
       // Convert to MIDI note
       const midiNote = frequencyToMidi(frequency);
+      setDetectedMidi(midiNote);
       const targetFrequency = midiToFrequency(midiNote, referenceFrequency);
 
       // Calculate cents deviation
@@ -249,12 +261,41 @@ function useTuner(initialPreferences = {}) {
     }
   }, [isPlayingTone, detectedNote, detectedFrequency, referenceFrequency, playReferenceTone, stopReferenceTone]);
 
+  /**
+   * Toggle string mode
+   */
+  const toggleStringMode = useCallback((enabled) => {
+    setStringModeEnabled(enabled);
+    if (!enabled) {
+      setSelectedString(null);
+    }
+  }, []);
+
+  /**
+   * Update selected tuning
+   */
+  const updateSelectedTuning = useCallback((tuningId) => {
+    if (STRING_TUNINGS[tuningId]) {
+      setSelectedTuning(tuningId);
+      setSelectedString(null); // Reset selected string when tuning changes
+    }
+  }, []);
+
+  /**
+   * Update selected string
+   */
+  const updateSelectedString = useCallback((stringIndex) => {
+    setSelectedString(stringIndex);
+  }, []);
+
   // Save preferences to Firebase (with localStorage fallback) - debounced
   useEffect(() => {
     const preferences = {
       referenceFrequency,
       lastInstrument: currentInstrument,
-      showConcertPitch
+      showConcertPitch,
+      stringModeEnabled,
+      selectedTuning
     };
 
     // Save to localStorage immediately (optimistic update)
@@ -272,7 +313,7 @@ function useTuner(initialPreferences = {}) {
     }, SAVE_DEBOUNCE_MS);
 
     return () => clearTimeout(timeoutId);
-  }, [referenceFrequency, currentInstrument, showConcertPitch, currentUser]);
+  }, [referenceFrequency, currentInstrument, showConcertPitch, stringModeEnabled, selectedTuning, currentUser]);
 
   // Calculate displayed note (considering instrument transposition)
   const displayedNote = detectedNote
@@ -291,6 +332,7 @@ function useTuner(initialPreferences = {}) {
     // Detection results
     detectedFrequency,
     detectedNote: displayedNote,
+    detectedMidi,
     centsDeviation,
     tuningStatus,
 
@@ -302,6 +344,11 @@ function useTuner(initialPreferences = {}) {
 
     // Reference tone
     isPlayingTone,
+
+    // String mode
+    stringModeEnabled,
+    selectedTuning,
+    selectedString,
 
     // Controls
     initialize,
@@ -315,6 +362,9 @@ function useTuner(initialPreferences = {}) {
     playReferenceTone,
     stopReferenceTone,
     toggleReferenceTone,
+    toggleStringMode,
+    updateSelectedTuning,
+    updateSelectedString,
 
     // Helpers
     instrumentName: TRANSPOSING_INSTRUMENTS[currentInstrument]?.name || 'Trompeta en Sib'
