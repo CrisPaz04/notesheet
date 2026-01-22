@@ -207,12 +207,10 @@ function Tuner({ compact = false }) {
           <div className="card p-4 mb-4">
             <TunerControls
               referenceFrequency={referenceFrequency}
-              currentInstrument={currentInstrument}
               showConcertPitch={showConcertPitch}
               notationSystem={notationSystem}
               isRunning={isRunning}
               onReferenceFrequencyChange={updateReferenceFrequency}
-              onInstrumentChange={updateInstrument}
               onToggleConcertPitch={toggleConcertPitch}
               onToggleNotationSystem={toggleNotationSystem}
             />

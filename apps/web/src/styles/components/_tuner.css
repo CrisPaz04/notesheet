@@ -438,8 +438,8 @@
 
 /* Pitch History Graph - Main display container */
 .pitch-history-main {
-  max-width: 500px;
-  margin: 0 auto;
+  width: 100%;
+  margin: 0;
 }
 
 /* Pitch History Graph */
@@ -449,30 +449,12 @@
   gap: var(--spacing-sm);
 }
 
-.graph-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.graph-title {
-  color: var(--text-light-secondary);
-  font-size: 0.9rem;
-  font-weight: 500;
-  display: flex;
-  align-items: center;
-}
-
-.graph-avg {
-  font-size: 0.9rem;
-  font-weight: 600;
-}
 
 .history-svg {
   border-radius: var(--radius-md);
   background: var(--bg-dark-tertiary);
   width: 100%;
-  height: auto;
+  height: 80px;
 }
 
 .graph-label {
@@ -526,6 +508,58 @@
 .string-mode-selector {
   display: flex;
   flex-direction: column;
+}
+
+.string-mode-selector .form-label-modern {
+  color: var(--text-light-secondary);
+  font-size: 0.9rem;
+  font-weight: 500;
+  margin-bottom: var(--spacing-sm);
+  display: flex;
+  align-items: center;
+}
+
+.string-mode-selector .form-control-modern {
+  background: rgba(255, 255, 255, 0.05);
+  border: 2px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  color: var(--text-light-primary);
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  transition: var(--transition-fast);
+  width: 100%;
+}
+
+.string-mode-selector .form-control-modern:focus {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 0.2rem var(--color-primary-light);
+  color: var(--text-light-primary);
+  outline: none;
+}
+
+.string-mode-selector .form-control-modern option,
+.string-mode-selector .form-control-modern optgroup {
+  background: var(--bg-dark-secondary);
+  color: var(--text-light-primary);
+}
+
+/* Light themes - string mode selector dropdown */
+[data-bs-theme="light"] .string-mode-selector .form-control-modern,
+[data-bs-theme="rainforest-light"] .string-mode-selector .form-control-modern,
+[data-bs-theme="newspaper-light"] .string-mode-selector .form-control-modern {
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--text-light-primary);
+}
+
+[data-bs-theme="light"] .string-mode-selector .form-control-modern option,
+[data-bs-theme="light"] .string-mode-selector .form-control-modern optgroup,
+[data-bs-theme="rainforest-light"] .string-mode-selector .form-control-modern option,
+[data-bs-theme="rainforest-light"] .string-mode-selector .form-control-modern optgroup,
+[data-bs-theme="newspaper-light"] .string-mode-selector .form-control-modern option,
+[data-bs-theme="newspaper-light"] .string-mode-selector .form-control-modern optgroup {
+  background: var(--bg-dark-primary);
+  color: var(--text-light-primary);
 }
 
 .string-mode-toggle {

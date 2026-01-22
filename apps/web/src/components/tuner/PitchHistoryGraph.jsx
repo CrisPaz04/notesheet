@@ -12,10 +12,10 @@ function PitchHistoryGraph({
   averageCents,
   isRunning
 }) {
-  // Graph dimensions
-  const width = 300;
-  const height = 120;
-  const padding = { top: 10, right: 10, bottom: 20, left: 35 };
+  // Graph dimensions - full width, compact height
+  const width = 500;
+  const height = 100;
+  const padding = { top: 10, right: 15, bottom: 15, left: 30 };
   const graphWidth = width - padding.left - padding.right;
   const graphHeight = height - padding.top - padding.bottom;
 
@@ -119,19 +119,7 @@ function PitchHistoryGraph({
 
   return (
     <div className="pitch-history-graph">
-      <div className="graph-header">
-        <span className="graph-title">
-          <i className="bi bi-graph-up me-2"></i>
-          Historial
-        </span>
-        {averageCents !== null && (
-          <span className="graph-avg" style={{ color: Math.abs(averageCents) <= 5 ? '#10b981' : '#f59e0b' }}>
-            {averageCents > 0 ? '+' : ''}{averageCents}¢
-          </span>
-        )}
-      </div>
-
-      <svg width={width} height={height} className="history-svg">
+      <svg viewBox={`0 0 ${width} ${height}`} className="history-svg" preserveAspectRatio="none">
         {/* Background zones */}
         <defs>
           <linearGradient id="lineGradient" x1="0%" y1="0%" x2="0%" y2="100%">

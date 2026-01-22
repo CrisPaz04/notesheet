@@ -4,16 +4,12 @@
  * Provides UI controls for tuner settings
  */
 
-import { TRANSPOSING_INSTRUMENTS } from '@notesheet/core';
-
 function TunerControls({
   referenceFrequency,
-  currentInstrument,
   showConcertPitch,
   notationSystem,
   isRunning,
   onReferenceFrequencyChange,
-  onInstrumentChange,
   onToggleConcertPitch,
   onToggleNotationSystem
 }) {
@@ -62,26 +58,6 @@ function TunerControls({
         </div>
       </div>
 
-      {/* Instrument Selector */}
-      <div className="mb-4">
-        <label className="form-label-modern">Instrumento</label>
-        <select
-          className="form-control-modern"
-          value={currentInstrument}
-          onChange={(e) => onInstrumentChange(e.target.value)}
-          disabled={isRunning}
-        >
-          {Object.entries(TRANSPOSING_INSTRUMENTS).map(([id, instrument]) => (
-            <option key={id} value={id}>
-              {instrument.name}
-            </option>
-          ))}
-        </select>
-        <div className="tuner-controls-hint mt-2">
-          {TRANSPOSING_INSTRUMENTS[currentInstrument]?.description || ''}
-        </div>
-      </div>
-
       {/* Notation System Toggle */}
       <div className="mb-4">
         <label className="form-label-modern">Sistema de Notación</label>
@@ -127,7 +103,7 @@ function TunerControls({
         <div className="tuner-controls-hint mt-1">
           {showConcertPitch
             ? 'Muestra la nota real (concierto)'
-            : `Muestra la nota para ${TRANSPOSING_INSTRUMENTS[currentInstrument]?.name}`}
+            : 'Muestra la nota transpuesta'}
         </div>
       </div>
     </div>

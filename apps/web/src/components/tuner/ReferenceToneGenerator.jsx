@@ -52,11 +52,6 @@ function ReferenceToneGenerator({
     }
   };
 
-  const handleStop = () => {
-    onStopTone();
-    setPlayingNote(null);
-  };
-
   return (
     <div className="reference-tone-generator">
       <label className="form-label-modern mb-3">
@@ -67,41 +62,31 @@ function ReferenceToneGenerator({
       <div className="reference-notes-grid">
         {REFERENCE_NOTES.map((note) => {
           const displayName = notationSystem === 'latin' ? note.nameLatin : note.name;
-          const isA4 = note.midi === 69; // Highlight A4
+          const isA4 = note.midi === 69;
           const isCurrentlyPlaying = isPlaying && playingNote === note.midi;
+          // Only highlight A4 when no tone is playing
+          const showA4Highlight = isA4 && !isPlaying;
 
           return (
             <button
               key={note.midi}
-              className={`reference-note-btn ${isA4 ? 'reference-note-btn-primary' : ''} ${isCurrentlyPlaying ? 'reference-note-btn-playing' : ''}`}
+              className={`reference-note-btn ${showA4Highlight ? 'reference-note-btn-primary' : ''} ${isCurrentlyPlaying ? 'reference-note-btn-playing' : ''}`}
               onClick={() => handleToneClick(note.midi)}
               disabled={isRunning}
               title={`${displayName} - ${midiToFrequency(note.midi, referenceFrequency).toFixed(1)} Hz`}
             >
               {displayName}
-              {isA4 && <div className="reference-note-label">A4</div>}
+              {isA4 && !isCurrentlyPlaying && <div className="reference-note-label">A4</div>}
               {isCurrentlyPlaying && <i className="bi bi-volume-up-fill reference-note-playing-icon"></i>}
             </button>
           );
         })}
       </div>
 
-      {isPlaying && (
-        <div className="text-center mt-3">
-          <button
-            className="btn btn-sm btn-danger"
-            onClick={handleStop}
-          >
-            <i className="bi bi-stop-fill me-1"></i>
-            Detener Tono
-          </button>
-        </div>
-      )}
-
       <div className="tuner-controls-hint mt-3">
         <i className="bi bi-info-circle me-2"></i>
-        Toca una nota para escuchar su tono de referencia.
-        LA4 (A4) es la nota estándar a {referenceFrequency} Hz.
+        Toca una nota para escuchar su tono.
+        {isPlaying ? ' Toca de nuevo para detener.' : ''}
       </div>
     </div>
   );
