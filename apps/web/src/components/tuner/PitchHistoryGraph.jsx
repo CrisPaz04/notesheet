@@ -119,7 +119,7 @@ function PitchHistoryGraph({
 
   return (
     <div className="pitch-history-graph">
-      <svg viewBox={`0 0 ${width} ${height}`} className="history-svg" preserveAspectRatio="none">
+      <svg viewBox={`0 0 ${width} ${height}`} className="history-svg" preserveAspectRatio="xMidYMid meet">
         {/* Background zones */}
         <defs>
           <linearGradient id="lineGradient" x1="0%" y1="0%" x2="0%" y2="100%">

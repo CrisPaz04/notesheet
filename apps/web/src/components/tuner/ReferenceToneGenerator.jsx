@@ -7,23 +7,23 @@
 import { useState } from 'react';
 import { midiToFrequency } from '@notesheet/core/src/audio/pitchDetection';
 
-// Common reference notes for brass and woodwind instruments
+// Common reference notes for instruments
 const REFERENCE_NOTES = [
-  { name: 'DO3', nameLatin: 'DO3', midi: 48 },   // C3
-  { name: 'RE3', nameLatin: 'RE3', midi: 50 },   // D3
-  { name: 'MI3', nameLatin: 'MI3', midi: 52 },   // E3
-  { name: 'FA3', nameLatin: 'FA3', midi: 53 },   // F3
-  { name: 'SOL3', nameLatin: 'SOL3', midi: 55 }, // G3
-  { name: 'LA3', nameLatin: 'LA3', midi: 57 },   // A3
-  { name: 'SI3', nameLatin: 'SI3', midi: 59 },   // B3
-  { name: 'DO4', nameLatin: 'DO4', midi: 60 },   // C4 (Middle C)
-  { name: 'RE4', nameLatin: 'RE4', midi: 62 },   // D4
-  { name: 'MI4', nameLatin: 'MI4', midi: 64 },   // E4
-  { name: 'FA4', nameLatin: 'FA4', midi: 65 },   // F4
-  { name: 'SOL4', nameLatin: 'SOL4', midi: 67 }, // G4
-  { name: 'LA4', nameLatin: 'LA4', midi: 69 },   // A4 (440 Hz)
-  { name: 'SI4', nameLatin: 'SI4', midi: 71 },   // B4
-  { name: 'DO5', nameLatin: 'DO5', midi: 72 }    // C5
+  { nameEnglish: 'C3', nameLatin: 'DO3', midi: 48 },
+  { nameEnglish: 'D3', nameLatin: 'RE3', midi: 50 },
+  { nameEnglish: 'E3', nameLatin: 'MI3', midi: 52 },
+  { nameEnglish: 'F3', nameLatin: 'FA3', midi: 53 },
+  { nameEnglish: 'G3', nameLatin: 'SOL3', midi: 55 },
+  { nameEnglish: 'A3', nameLatin: 'LA3', midi: 57 },
+  { nameEnglish: 'B3', nameLatin: 'SI3', midi: 59 },
+  { nameEnglish: 'C4', nameLatin: 'DO4', midi: 60 },
+  { nameEnglish: 'D4', nameLatin: 'RE4', midi: 62 },
+  { nameEnglish: 'E4', nameLatin: 'MI4', midi: 64 },
+  { nameEnglish: 'F4', nameLatin: 'FA4', midi: 65 },
+  { nameEnglish: 'G4', nameLatin: 'SOL4', midi: 67 },
+  { nameEnglish: 'A4', nameLatin: 'LA4', midi: 69 },
+  { nameEnglish: 'B4', nameLatin: 'SI4', midi: 71 },
+  { nameEnglish: 'C5', nameLatin: 'DO5', midi: 72 }
 ];
 
 function ReferenceToneGenerator({
@@ -61,7 +61,7 @@ function ReferenceToneGenerator({
 
       <div className="reference-notes-grid">
         {REFERENCE_NOTES.map((note) => {
-          const displayName = notationSystem === 'latin' ? note.nameLatin : note.name;
+          const displayName = notationSystem === 'latin' ? note.nameLatin : note.nameEnglish;
           const isA4 = note.midi === 69;
           const isCurrentlyPlaying = isPlaying && playingNote === note.midi;
           // Only highlight A4 when no tone is playing
@@ -76,7 +76,6 @@ function ReferenceToneGenerator({
               title={`${displayName} - ${midiToFrequency(note.midi, referenceFrequency).toFixed(1)} Hz`}
             >
               {displayName}
-              {isA4 && !isCurrentlyPlaying && <div className="reference-note-label">A4</div>}
               {isCurrentlyPlaying && <i className="bi bi-volume-up-fill reference-note-playing-icon"></i>}
             </button>
           );
