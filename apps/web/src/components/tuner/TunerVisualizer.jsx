@@ -4,12 +4,19 @@
  * Displays tuning gauge, detected note, and frequency
  */
 
+import { getStringFrequency } from '@notesheet/core';
+
 function TunerVisualizer({
   detectedNote,
   detectedFrequency,
   centsDeviation,
   tuningStatus,
-  isRunning
+  isRunning,
+  // String mode props
+  stringModeEnabled,
+  targetString,
+  notationSystem,
+  referenceFrequency
 }) {
   // Calculate needle position (-50 to +50 cents maps to -45deg to +45deg)
   const needleRotation = Math.max(-45, Math.min(45, (centsDeviation / 50) * 45));
@@ -41,18 +48,36 @@ function TunerVisualizer({
     }
   };
 
+  // Get target note display name
+  const getTargetNoteName = () => {
+    if (!targetString) return null;
+    return notationSystem === 'latin' ? targetString.noteLatin : targetString.note;
+  };
+
+  const targetNoteName = getTargetNoteName();
+  const targetFreq = targetString ? getStringFrequency(targetString.midi, referenceFrequency) : null;
+
   return (
     <div className="tuner-visualizer">
+      {/* Target Note Display (String Mode) */}
+      {stringModeEnabled && targetString && (
+        <div className="tuner-target-display">
+          <span className="tuner-target-label">Afinando cuerda:</span>
+          <span className="tuner-target-note">{targetNoteName}</span>
+          <span className="tuner-target-freq">{targetFreq?.toFixed(1)} Hz</span>
+        </div>
+      )}
+
       {/* Note Display */}
       <div className="tuner-note-display">
         <div
           className={`tuner-note-name ${!detectedNote ? 'tuner-note-waiting' : ''}`}
           style={{ color: detectedNote ? getStatusColor() : 'var(--text-light-secondary)' }}
         >
-          {detectedNote || (isRunning ? '♪' : '--')}
+          {detectedNote || (stringModeEnabled && targetString ? targetNoteName : (isRunning ? '♪' : '--'))}
         </div>
         <div className="tuner-frequency">
-          {detectedFrequency ? `${detectedFrequency.toFixed(1)} Hz` : '--- Hz'}
+          {detectedFrequency ? `${detectedFrequency.toFixed(1)} Hz` : (targetFreq ? `Objetivo: ${targetFreq.toFixed(1)} Hz` : '--- Hz')}
         </div>
       </div>
 

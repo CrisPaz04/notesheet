@@ -61,6 +61,35 @@
   padding: var(--spacing-lg) 0;
 }
 
+/* Target Note Display (String Mode) */
+.tuner-target-display {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md);
+  background: var(--color-primary-light);
+  border-radius: var(--radius-lg);
+  margin-bottom: var(--spacing-lg);
+  border: 1px solid var(--color-primary);
+}
+
+.tuner-target-label {
+  font-size: 0.85rem;
+  color: var(--text-light-muted);
+}
+
+.tuner-target-note {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+.tuner-target-freq {
+  font-size: 0.9rem;
+  color: var(--text-light-secondary);
+}
+
 .tuner-note-display {
   text-align: center;
   margin-bottom: var(--spacing-xl);

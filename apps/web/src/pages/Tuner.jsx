@@ -8,6 +8,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { getTunerPreferences } from '@notesheet/api';
+import { STRING_TUNINGS } from '@notesheet/core';
 import useTuner from '../hooks/useTuner';
 import usePitchHistory from '../hooks/usePitchHistory';
 import TunerVisualizer from '../components/tuner/TunerVisualizer';
@@ -158,6 +159,10 @@ function Tuner({ compact = false }) {
               centsDeviation={centsDeviation}
               tuningStatus={tuningStatus}
               isRunning={isRunning}
+              stringModeEnabled={stringModeEnabled}
+              targetString={stringModeEnabled && selectedString !== null ? STRING_TUNINGS[selectedTuning]?.strings[selectedString] : null}
+              notationSystem={notationSystem}
+              referenceFrequency={referenceFrequency}
             />
 
             {/* Pitch History Graph - in main display */}
