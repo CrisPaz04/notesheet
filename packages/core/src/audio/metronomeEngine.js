@@ -89,6 +89,7 @@ export const SOUND_PRESETS = {
 class MetronomeEngine {
   constructor() {
     this.audioContext = null;
+    this.masterGainNode = null;
     this.isPlaying = false;
     this.tempo = 120; // BPM
     this.timeSignature = TIME_SIGNATURES['4/4'];
@@ -100,6 +101,9 @@ class MetronomeEngine {
     this.schedulerTimer = null;
     this.onBeatCallback = null;
     this.onMeasureCompleteCallback = null;
+
+    // Volume (0-1)
+    this.volume = 0.7;
 
     // Sound preset
     this.soundPreset = 'classic';
@@ -124,7 +128,30 @@ class MetronomeEngine {
     if (!this.audioContext) {
       this.audioContext = getAudioContext();
     }
+    // Create master gain node if not exists
+    if (!this.masterGainNode && this.audioContext) {
+      this.masterGainNode = this.audioContext.createGain();
+      this.masterGainNode.gain.value = this.volume;
+      this.masterGainNode.connect(this.audioContext.destination);
+    }
     return this.audioContext;
+  }
+
+  /**
+   * Set master volume (0-1)
+   */
+  setVolume(volume) {
+    this.volume = Math.max(0, Math.min(1, volume));
+    if (this.masterGainNode) {
+      this.masterGainNode.gain.setValueAtTime(this.volume, this.audioContext.currentTime);
+    }
+  }
+
+  /**
+   * Get current volume
+   */
+  getVolume() {
+    return this.volume;
   }
 
   /**
@@ -234,9 +261,9 @@ class MetronomeEngine {
     gainNode.gain.linearRampToValueAtTime(peakGain, time + 0.001); // Quick attack
     gainNode.gain.exponentialRampToValueAtTime(0.01, time + duration); // Exponential decay
 
-    // Connect nodes
+    // Connect nodes through master gain
     osc.connect(gainNode);
-    gainNode.connect(ctx.destination);
+    gainNode.connect(this.masterGainNode || ctx.destination);
 
     // Start and stop
     osc.start(time);

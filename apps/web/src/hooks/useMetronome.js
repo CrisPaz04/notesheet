@@ -20,6 +20,7 @@ function useMetronome(initialPreferences = {}) {
   const [timeSignature, setTimeSignature] = useState(initialPreferences.timeSignature || '4/4');
   const [subdivision, setSubdivision] = useState(initialPreferences.subdivision || 'quarter');
   const [soundPreset, setSoundPreset] = useState(initialPreferences.soundPreset || 'classic');
+  const [volume, setVolume] = useState(initialPreferences.volume !== undefined ? initialPreferences.volume : 0.7);
   const [currentBeat, setCurrentBeat] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -66,6 +67,12 @@ function useMetronome(initialPreferences = {}) {
       engineRef.current.setSoundPreset(soundPreset);
     }
   }, [soundPreset]);
+
+  useEffect(() => {
+    if (engineRef.current) {
+      engineRef.current.setVolume(volume);
+    }
+  }, [volume]);
 
   // Beat callback for visual sync
   const handleBeat = useCallback((beat, totalBeats) => {
@@ -221,6 +228,14 @@ function useMetronome(initialPreferences = {}) {
   }, []);
 
   /**
+   * Update volume (0-1)
+   */
+  const updateVolume = useCallback((newVolume) => {
+    const clampedVolume = Math.max(0, Math.min(1, parseFloat(newVolume) || 0.7));
+    setVolume(clampedVolume);
+  }, []);
+
+  /**
    * Play a test sound with current preset
    */
   const testSound = useCallback(async () => {
@@ -239,7 +254,8 @@ function useMetronome(initialPreferences = {}) {
       bpm,
       timeSignature,
       subdivision,
-      soundPreset
+      soundPreset,
+      volume
     };
 
     // Save to localStorage immediately (optimistic update)
@@ -258,7 +274,7 @@ function useMetronome(initialPreferences = {}) {
     }, SAVE_DEBOUNCE_MS);
 
     return () => clearTimeout(timeoutId);
-  }, [bpm, timeSignature, subdivision, soundPreset, currentUser]);
+  }, [bpm, timeSignature, subdivision, soundPreset, volume, currentUser]);
 
   return {
     // State
@@ -267,6 +283,7 @@ function useMetronome(initialPreferences = {}) {
     timeSignature,
     subdivision,
     soundPreset,
+    volume,
     currentBeat,
     loading,
     error,
@@ -279,6 +296,7 @@ function useMetronome(initialPreferences = {}) {
     updateTimeSignature,
     updateSubdivision,
     updateSoundPreset,
+    updateVolume,
     testSound,
     tapTempo,
     incrementBpm,

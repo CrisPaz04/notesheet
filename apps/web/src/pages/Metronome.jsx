@@ -63,6 +63,7 @@ function Metronome({ compact = false }) {
     timeSignature,
     subdivision,
     soundPreset,
+    volume,
     currentBeat,
     loading,
     error,
@@ -71,6 +72,7 @@ function Metronome({ compact = false }) {
     updateTimeSignature,
     updateSubdivision,
     updateSoundPreset,
+    updateVolume,
     testSound,
     tapTempo,
     incrementBpm,
@@ -196,10 +198,12 @@ function Metronome({ compact = false }) {
               bpm={bpm}
               timeSignature={timeSignature}
               subdivision={subdivision}
+              volume={volume}
               isPlaying={isPlaying}
               onBpmChange={updateBpm}
               onTimeSignatureChange={updateTimeSignature}
               onSubdivisionChange={updateSubdivision}
+              onVolumeChange={updateVolume}
               onIncrement={incrementBpm}
               onDecrement={decrementBpm}
               onTapTempo={tapTempo}
@@ -245,9 +249,8 @@ function Metronome({ compact = false }) {
       {!compact && (
         <div className="metronome-help-text mt-4">
           <i className="bi bi-info-circle me-2"></i>
-          <strong>Tip:</strong> No puedes cambiar la configuración mientras el
-          metrónomo está activo. Detén el metrónomo primero para ajustar el
-          tempo, compás o subdivisión.
+          <strong>Tip:</strong> Puedes ajustar el tempo, volumen y subdivisión mientras el
+          metrónomo está activo. Solo el compás requiere pausar primero.
         </div>
       )}
       </div>

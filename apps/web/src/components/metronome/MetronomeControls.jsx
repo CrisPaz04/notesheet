@@ -1,7 +1,7 @@
 /**
  * Metronome Controls Component
  *
- * Provides UI controls for BPM, time signature, and subdivisions
+ * Provides UI controls for BPM, time signature, subdivisions, and volume
  */
 
 import { TIME_SIGNATURES, SUBDIVISIONS } from '@notesheet/core/src/audio/metronomeEngine';
@@ -10,10 +10,12 @@ function MetronomeControls({
   bpm,
   timeSignature,
   subdivision,
+  volume,
   isPlaying,
   onBpmChange,
   onTimeSignatureChange,
   onSubdivisionChange,
+  onVolumeChange,
   onIncrement,
   onDecrement,
   onTapTempo
@@ -28,7 +30,6 @@ function MetronomeControls({
           <button
             className="btn btn-sm btn-secondary"
             onClick={() => onDecrement(5)}
-            disabled={isPlaying}
             title="Disminuir 5 BPM"
           >
             <i className="bi bi-dash-lg"></i>
@@ -41,14 +42,12 @@ function MetronomeControls({
             onChange={(e) => onBpmChange(e.target.value)}
             min="40"
             max="240"
-            disabled={isPlaying}
             style={{ maxWidth: '80px' }}
           />
 
           <button
             className="btn btn-sm btn-secondary"
             onClick={() => onIncrement(5)}
-            disabled={isPlaying}
             title="Aumentar 5 BPM"
           >
             <i className="bi bi-plus-lg"></i>
@@ -62,13 +61,37 @@ function MetronomeControls({
           onChange={(e) => onBpmChange(e.target.value)}
           min="40"
           max="240"
-          disabled={isPlaying}
         />
 
         <div className="d-flex justify-content-between metronome-controls-range-labels">
           <span>40</span>
           <span>120</span>
           <span>240</span>
+        </div>
+      </div>
+
+      {/* Volume Control */}
+      <div className="mb-4">
+        <label className="form-label-modern">
+          <i className="bi bi-volume-up me-2"></i>
+          Volumen
+        </label>
+
+        <div className="d-flex align-items-center gap-3">
+          <i className="bi bi-volume-mute text-secondary"></i>
+          <input
+            type="range"
+            className="form-range flex-grow-1"
+            value={volume}
+            onChange={(e) => onVolumeChange(e.target.value)}
+            min="0"
+            max="1"
+            step="0.05"
+          />
+          <i className="bi bi-volume-up text-secondary"></i>
+        </div>
+        <div className="text-center metronome-controls-hint">
+          {Math.round(volume * 100)}%
         </div>
       </div>
 
@@ -87,6 +110,12 @@ function MetronomeControls({
             </option>
           ))}
         </select>
+        {isPlaying && (
+          <div className="metronome-controls-hint mt-1">
+            <i className="bi bi-info-circle me-1"></i>
+            Pausa para cambiar el compás
+          </div>
+        )}
       </div>
 
       {/* Subdivision */}
@@ -101,7 +130,6 @@ function MetronomeControls({
                 subdivision === key ? 'btn-primary' : 'btn-outline-secondary'
               }`}
               onClick={() => onSubdivisionChange(key)}
-              disabled={isPlaying}
               title={name}
             >
               <span style={{ fontSize: '1.5rem', lineHeight: '1' }}>
@@ -117,7 +145,6 @@ function MetronomeControls({
         <button
           className="btn-tap-tempo w-100"
           onClick={onTapTempo}
-          disabled={isPlaying}
         >
           <i className="bi bi-hand-index-thumb me-2"></i>
           Tap Tempo
