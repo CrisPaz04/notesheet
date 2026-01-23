@@ -56,6 +56,7 @@ function SongView() {
   const [notationSystem, setNotationSystem] = useState("latin");
   const [currentInstrument, setCurrentInstrument] = useState("bb_trumpet");
   const [selectedVoice, setSelectedVoice] = useState(null);
+  // eslint-disable-next-line no-unused-vars
   const [availableVoices, setAvailableVoices] = useState({});
   
   // Estado para la vista dual
@@ -138,15 +139,26 @@ function SongView() {
         
         // Guardar lista de voces disponibles
         setAvailableVoices(loadedSong.voices || {});
-        
+
         // Determinar qué contenido mostrar
         let contentToLoad;
-        
-        if (selectedVoice && 
-            loadedSong.voices && 
-            loadedSong.voices[currentInstrument] && 
+
+        // First, check if there's a voice for the current instrument
+        if (selectedVoice &&
+            loadedSong.voices &&
+            loadedSong.voices[currentInstrument] &&
             loadedSong.voices[currentInstrument][selectedVoice]) {
           contentToLoad = loadedSong.voices[currentInstrument][selectedVoice];
+        } else if (loadedSong.voices && Object.keys(loadedSong.voices).length > 0) {
+          // Use the primary voice or first available voice
+          const primaryInst = loadedSong.primaryInstrument || Object.keys(loadedSong.voices)[0];
+          const primaryVoice = loadedSong.primaryVoiceNumber || Object.keys(loadedSong.voices[primaryInst])[0];
+          if (loadedSong.voices[primaryInst] && loadedSong.voices[primaryInst][primaryVoice]) {
+            contentToLoad = loadedSong.voices[primaryInst][primaryVoice];
+            if (!selectedVoice) setSelectedVoice(primaryVoice);
+          } else {
+            contentToLoad = loadedSong.content || "";
+          }
         } else {
           contentToLoad = loadedSong.content || "";
           if (selectedVoice) setSelectedVoice(null);

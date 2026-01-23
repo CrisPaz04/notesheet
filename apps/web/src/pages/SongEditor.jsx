@@ -25,15 +25,15 @@ function SongEditor() {
   const [initialLoading, setInitialLoading] = useState(true);
   const [error, setError] = useState("");
   const [isNewSong, setIsNewSong] = useState(true);
-  const [contentUpdatePending, setContentUpdatePending] = useState(false);
-  const [disableMetadataExtraction, setDisableMetadataExtraction] = useState(false);
   
   // Estado para voces adicionales
-  const [voices, setVoices] = useState({});
-  const [currentTab, setCurrentTab] = useState("main");
+  const [voices, setVoices] = useState({ bb_trumpet: { "1": "" } });
+  const [currentTab, setCurrentTab] = useState("bb_trumpet-1");
   const [showVoicesManager, setShowVoicesManager] = useState(false);
   const [newVoiceInstrument, setNewVoiceInstrument] = useState("bb_trumpet");
   const [newVoiceNumber, setNewVoiceNumber] = useState("1");
+  const [primaryInstrument, setPrimaryInstrument] = useState("bb_trumpet");
+  const [primaryVoiceNumber, setPrimaryVoiceNumber] = useState("1");
   
   const { currentUser } = useAuth();
   const navigate = useNavigate();
@@ -46,42 +46,21 @@ function SongEditor() {
       setIsNewSong(false);
       loadSong(id);
     } else {
-      // Plantilla para una nueva canción
-      setContent(`# Título: Nueva Canción
-# Tonalidad: DO Mayor
-# Tipo: Adoración
-# Versión de: 
+      // Plantilla para una nueva canción - inicializa con Trompeta 1
+      const initialVoiceContent = `## Intro
 
-## Intro
-DO SOL | LA- FA | DO SOL | DO--
 
 ## Verso 1
-DO        SOL       LA-      FA
-Escribe aquí la letra y los acordes
+
 
 ## Coro
-FA       SOL       DO      LA-
-Escribe aquí la letra y los acordes
-`);
-// Generar versión solo letra
-generateLyricsOnly(`# Título: Nueva Canción
-# Tonalidad: DO Mayor
-# Tipo: Adoración
-# Versión de: 
 
-## Intro
-
-## Verso 1
-Escribe aquí la letra y los acordes
-
-## Coro
-Escribe aquí la letra y los acordes
-`);
-      // Extraer metadatos iniciales
-      setTimeout(() => {
-        extractMetadata();
-        setInitialLoading(false);
-      }, 500);
+`;
+      setVoices({ bb_trumpet: { "1": initialVoiceContent } });
+      setCurrentTab("bb_trumpet-1");
+      setPrimaryInstrument("bb_trumpet");
+      setPrimaryVoiceNumber("1");
+      setInitialLoading(false);
     }
   }, [id]);
 
@@ -95,15 +74,28 @@ Escribe aquí la letra y los acordes
       setType(song.type || "Adoración");
       setVersion(song.version || "");
       setContent(song.content || "");
-      
+
       if (song.lyricsOnly) {
         setLyricsOnly(song.lyricsOnly);
       } else {
         generateLyricsOnly(song.content || "");
       }
-      
-      if (song.voices) {
+
+      if (song.voices && Object.keys(song.voices).length > 0) {
         setVoices(song.voices);
+        // Use saved primary instrument/voice or default to first voice
+        const savedPrimaryInstrument = song.primaryInstrument || Object.keys(song.voices)[0];
+        const savedPrimaryVoiceNumber = song.primaryVoiceNumber || Object.keys(song.voices[savedPrimaryInstrument])[0];
+        setCurrentTab(`${savedPrimaryInstrument}-${savedPrimaryVoiceNumber}`);
+        setPrimaryInstrument(savedPrimaryInstrument);
+        setPrimaryVoiceNumber(savedPrimaryVoiceNumber);
+      } else {
+        // Legacy song without voices - create trumpet 1 with the content
+        const legacyVoices = { bb_trumpet: { "1": song.content || "" } };
+        setVoices(legacyVoices);
+        setCurrentTab("bb_trumpet-1");
+        setPrimaryInstrument("bb_trumpet");
+        setPrimaryVoiceNumber("1");
       }
     } catch (error) {
       setError("Error al cargar la canción: " + error.message);
@@ -144,167 +136,49 @@ Escribe aquí la letra y los acordes
     setLyricsOnly(result.trim());
   };
 
-  // Extraer metadatos del contenido
-  const extractMetadata = () => {
-    if (!content || disableMetadataExtraction) return;
-    
-    const titleMatch = content.match(/^#\s*(?:Canción|Título|Title):\s*(.+)$/m);
-    if (titleMatch && titleMatch[1]) {
-      setTitle(titleMatch[1].trim());
-    }
-
-    const keyMatch = content.match(/^#\s*(?:Tonalidad|Key):\s*(.+)$/m);
-    if (keyMatch && keyMatch[1]) {
-      const keyValue = keyMatch[1].trim().split(" ")[0];
-      setKey(keyValue);
-    }
-
-    const typeMatch = content.match(/^#\s*(?:Tipo|Type):\s*(.+)$/m);
-    if (typeMatch && typeMatch[1]) {
-      const typeValue = typeMatch[1].trim();
-      if (SONG_TYPES.includes(typeValue)) {
-        setType(typeValue);
-      }
-    }
-    
-    const versionMatch = content.match(/^#\s*(?:Versión de|Versión|Version|Autor|Author):\s*(.+)$/m);
-    if (versionMatch && versionMatch[1]) {
-      setVersion(versionMatch[1].trim());
-    }
-  };
-
-  // Actualizar el contenido cuando los campos de metadata cambien
-  useEffect(() => {
-    if (contentUpdatePending) {
-      updateContentMetadata();
-      setContentUpdatePending(false);
-    }
-  }, [contentUpdatePending]);
-
-  const updateContentMetadata = () => {
-    if (!content) return;
-    
-    setDisableMetadataExtraction(true);
-    
-    let updatedContent = content;
-    
-    updatedContent = updatedContent.replace(
-      /^#\s*(?:Canción|Título|Title):\s*.+$/m,
-      `# Título: ${title}`
-    );
-    
-    const isMajor = !key.includes('m');
-    const keyType = isMajor ? 'Mayor' : 'Menor';
-    
-    updatedContent = updatedContent.replace(
-      /^#\s*(?:Tonalidad|Key):\s*.+$/m,
-      `# Tonalidad: ${key} ${keyType}`
-    );
-    
-    updatedContent = updatedContent.replace(
-      /^#\s*(?:Tipo|Type):\s*.+$/m,
-      `# Tipo: ${type}`
-    );
-    
-    const versionRegex = /^#\s*(?:Versión de|Versión|Version|Autor|Author):\s*.+$/m;
-    if (updatedContent.match(versionRegex)) {
-      updatedContent = updatedContent.replace(
-        versionRegex,
-        `# Versión de: ${version}`
-      );
-    } else {
-      updatedContent = updatedContent.replace(
-        /^#\s*(?:Tipo|Type):\s*.+$/m,
-        `# Tipo: ${type}\n# Versión de: ${version}`
-      );
-    }
-    
-    if (updatedContent !== content) {
-      setContent(updatedContent);
-    }
-    
-    // También actualizar la versión de letras
-    let updatedLyrics = lyricsOnly;
-    
-    updatedLyrics = updatedLyrics.replace(
-      /^#\s*(?:Canción|Título|Title):\s*.+$/m,
-      `# Título: ${title}`
-    );
-    
-    updatedLyrics = updatedLyrics.replace(
-      /^#\s*(?:Tonalidad|Key):\s*.+$/m,
-      `# Tonalidad: ${key} ${keyType}`
-    );
-    
-    updatedLyrics = updatedLyrics.replace(
-      /^#\s*(?:Tipo|Type):\s*.+$/m,
-      `# Tipo: ${type}`
-    );
-    
-    if (updatedLyrics.match(versionRegex)) {
-      updatedLyrics = updatedLyrics.replace(
-        versionRegex,
-        `# Versión de: ${version}`
-      );
-    } else {
-      updatedLyrics = updatedLyrics.replace(
-        /^#\s*(?:Tipo|Type):\s*.+$/m,
-        `# Tipo: ${type}\n# Versión de: ${version}`
-      );
-    }
-    
-    if (updatedLyrics !== lyricsOnly) {
-      setLyricsOnly(updatedLyrics);
-    }
-    
-    setTimeout(() => {
-      setDisableMetadataExtraction(false);
-    }, 500);
-  };
 
   // Handlers para cambios de campos
   const handleTitleChange = (e) => {
     setTitle(e.target.value);
-    setContentUpdatePending(true);
   };
 
   const handleKeyChange = (newKey) => {
     setKey(newKey);
-    setContentUpdatePending(true);
   };
 
   const handleTypeChange = (newType) => {
     setType(newType);
-    setContentUpdatePending(true);
   };
-  
+
   const handleVersionChange = (e) => {
     setVersion(e.target.value);
-    setContentUpdatePending(true);
   };
 
   // Guardar la canción
   const handleSave = async (e) => {
     e.preventDefault();
-    
-    if (!content.trim()) {
+
+    // Get the primary voice content
+    const primaryContent = voices[primaryInstrument]?.[primaryVoiceNumber] || "";
+
+    if (!primaryContent.trim()) {
       setError("El contenido de la canción no puede estar vacío");
       return;
     }
 
-    updateContentMetadata();
-
     try {
       setLoading(true);
-      
+
       const songData = {
         title,
         key,
         type,
         version,
-        content,
+        content: primaryContent, // Store primary voice in content for backward compatibility
         lyricsOnly,
         voices,
+        primaryInstrument,
+        primaryVoiceNumber,
         userId: currentUser.uid
       };
 
@@ -359,21 +233,27 @@ Escribe aquí la letra y los acordes
   };
   
   const handleRemoveVoice = async (instrumentId, voiceNumber) => {
+    // Don't allow removing the primary voice
+    if (instrumentId === primaryInstrument && voiceNumber === primaryVoiceNumber) {
+      setError("No puedes eliminar la voz principal");
+      return;
+    }
+
     if (!confirm(`¿Estás seguro de eliminar la voz ${voiceNumber} de ${TRANSPOSING_INSTRUMENTS[instrumentId]?.name}?`)) {
       return;
     }
-    
+
     const updatedVoices = { ...voices };
-    
+
     if (updatedVoices[instrumentId] && updatedVoices[instrumentId][voiceNumber]) {
       delete updatedVoices[instrumentId][voiceNumber];
-      
+
       if (Object.keys(updatedVoices[instrumentId]).length === 0) {
         delete updatedVoices[instrumentId];
       }
-      
+
       setVoices(updatedVoices);
-      
+
       if (!isNewSong && id) {
         try {
           await removeVoiceFromSong(id, instrumentId, voiceNumber);
@@ -382,9 +262,10 @@ Escribe aquí la letra y los acordes
           setError("Error al eliminar la voz: " + error.message);
         }
       }
-      
+
+      // Switch to primary voice tab if current tab was removed
       if (currentTab === `${instrumentId}-${voiceNumber}`) {
-        setCurrentTab("main");
+        setCurrentTab(`${primaryInstrument}-${primaryVoiceNumber}`);
       }
     }
   };
@@ -397,50 +278,34 @@ Escribe aquí la letra y los acordes
   };
 
   const handleTabChange = (tabId) => {
-    if (currentTab === "main" && tabId !== "main") {
-      updateContentMetadata();
-      
-      if (tabId === "lyrics") {
-        // Sincronizar secciones si es necesario
-      }
-    }
-    
     setCurrentTab(tabId);
   };
 
   // Función para obtener el contenido de la pestaña actual
   const getCurrentTabContent = () => {
-    if (currentTab === "main") {
-      return content;
-    }
-    
     if (currentTab === "lyrics") {
       return lyricsOnly;
     }
-    
+
     const [instrumentId, voiceNumber] = currentTab.split('-');
-    return voices[instrumentId]?.[voiceNumber] || content;
+    return voices[instrumentId]?.[voiceNumber] || "";
   };
   
   // Función para actualizar el contenido de la pestaña actual
   const updateCurrentTabContent = (newContent) => {
-    if (currentTab === "main") {
-      setContent(newContent);
-      return;
-    }
-    
     if (currentTab === "lyrics") {
       setLyricsOnly(newContent);
       return;
     }
-    
+
     const [instrumentId, voiceNumber] = currentTab.split('-');
-    
+
     const updatedVoices = { ...voices };
-    if (updatedVoices[instrumentId] && updatedVoices[instrumentId][voiceNumber]) {
-      updatedVoices[instrumentId][voiceNumber] = newContent;
-      setVoices(updatedVoices);
+    if (!updatedVoices[instrumentId]) {
+      updatedVoices[instrumentId] = {};
     }
+    updatedVoices[instrumentId][voiceNumber] = newContent;
+    setVoices(updatedVoices);
   };
 
   // Opciones para el editor SimpleMDE
@@ -475,34 +340,63 @@ Escribe aquí la letra y los acordes
 
   // Handler para cuando el editor pierde el foco
   const handleEditorBlur = () => {
-    if (currentTab === "main") {
-      extractMetadata();
+    // No longer needed for metadata extraction since we removed the main tab
+  };
+
+  // Función para cambiar el instrumento principal
+  const handlePrimaryInstrumentChange = (newInstrument) => {
+    const newTabKey = `${newInstrument}-${primaryVoiceNumber}`;
+
+    // Get the current content
+    const currentContent = voices[primaryInstrument]?.[primaryVoiceNumber] || "";
+
+    // Create updated voices object
+    const updatedVoices = { ...voices };
+
+    // Remove old instrument if it only has this voice
+    if (updatedVoices[primaryInstrument]) {
+      delete updatedVoices[primaryInstrument][primaryVoiceNumber];
+      if (Object.keys(updatedVoices[primaryInstrument]).length === 0) {
+        delete updatedVoices[primaryInstrument];
+      }
     }
+
+    // Add new instrument with the content
+    if (!updatedVoices[newInstrument]) {
+      updatedVoices[newInstrument] = {};
+    }
+    updatedVoices[newInstrument][primaryVoiceNumber] = currentContent;
+
+    setVoices(updatedVoices);
+    setPrimaryInstrument(newInstrument);
+    setCurrentTab(newTabKey);
   };
 
   // Función para generar las pestañas
   const renderTabs = () => {
-    const tabs = [
-      { id: "main", label: "Acordes y Letra", icon: "bi-music-note-list" },
-      { id: "lyrics", label: "Solo Letra", icon: "bi-card-text" }
-    ];
-    
+    const tabs = [];
+
+    // Add instrument voice tabs
     Object.entries(voices).forEach(([instrumentId, instrumentVoices]) => {
       Object.keys(instrumentVoices).sort().forEach(voiceNumber => {
         const instrumentName = TRANSPOSING_INSTRUMENTS[instrumentId]?.name || instrumentId;
+        const isPrimary = instrumentId === primaryInstrument && voiceNumber === primaryVoiceNumber;
         tabs.push({
           id: `${instrumentId}-${voiceNumber}`,
           label: `${instrumentName} ${voiceNumber}`,
           icon: "bi-music-note-beamed",
-          removable: true
+          removable: !isPrimary // Don't allow removing the primary voice
         });
       });
     });
-    
+
+    // Add lyrics tab at the end
+    tabs.push({ id: "lyrics", label: "Solo Letra", icon: "bi-card-text" });
+
     return (
       <div className="editor-tabs">
         {tabs.map(tab => (
-          <button 
+          <button
             key={tab.id}
             className={`editor-tab ${currentTab === tab.id ? 'active' : ''}`}
             onClick={() => handleTabChange(tab.id)}
@@ -510,7 +404,7 @@ Escribe aquí la letra y los acordes
             <i className={tab.icon}></i>
             <span className="ms-1">{tab.label}</span>
             {tab.removable && (
-              <button 
+              <button
                 className="tab-close"
                 onClick={(e) => {
                   e.stopPropagation();
@@ -523,7 +417,7 @@ Escribe aquí la letra y los acordes
             )}
           </button>
         ))}
-        <button 
+        <button
           className="editor-tab"
           onClick={() => setShowVoicesManager(!showVoicesManager)}
         >
@@ -645,7 +539,7 @@ Escribe aquí la letra y los acordes
             <i className="bi bi-tags"></i>
             Información de la Canción
           </h3>
-          
+
           <div className="metadata-grid">
             <div className="form-group-modern">
               <label className="form-label-modern">
@@ -660,7 +554,7 @@ Escribe aquí la letra y los acordes
                 placeholder="Nombre de la canción"
               />
             </div>
-            
+
             <div className="form-group-modern">
               <label className="form-label-modern">
                 <i className="bi bi-person"></i>
@@ -674,12 +568,28 @@ Escribe aquí la letra y los acordes
                 placeholder="Autor original o versión"
               />
             </div>
-            
+
+            <div className="form-group-modern">
+              <label className="form-label-modern">
+                <i className="bi bi-music-note-beamed"></i>
+                Instrumento Principal
+              </label>
+              <select
+                className="form-control-modern"
+                value={primaryInstrument}
+                onChange={(e) => handlePrimaryInstrumentChange(e.target.value)}
+              >
+                {VOICE_INSTRUMENTS.map(inst => (
+                  <option key={inst.id} value={inst.id}>{inst.name}</option>
+                ))}
+              </select>
+            </div>
+
             <KeySelector
               value={key}
               onChange={handleKeyChange}
             />
-            
+
             <TypeSelector
               value={type}
               onChange={handleTypeChange}
@@ -763,18 +673,15 @@ Escribe aquí la letra y los acordes
           
           {/* Texto de ayuda */}
           <div className="editor-help-text">
-            {currentTab === "main" && (
-              <>
-                <i className="bi bi-info-circle me-2"></i>
-                Usa el formato de notación: <code>DO SOL LA- FA</code> para los acordes.
-                Usa <code>## Título</code> para crear secciones.
-              </>
-            )}
-            
-            {currentTab === "lyrics" && (
+            {currentTab === "lyrics" ? (
               <>
                 <i className="bi bi-info-circle me-2"></i>
                 Escribe solo la letra, sin acordes. Mantén los títulos de sección con <code>## Título</code>.
+              </>
+            ) : (
+              <>
+                <i className="bi bi-info-circle me-2"></i>
+                Escribe las notas para tu instrumento. Usa <code>## Título</code> para crear secciones (Intro, Verso, Coro).
               </>
             )}
           </div>
