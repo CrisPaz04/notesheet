@@ -141,6 +141,7 @@ function Login() {
                 placeholder="Contraseña"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                autoComplete="current-password"
                 required
               />
               <label htmlFor="password">

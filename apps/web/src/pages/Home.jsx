@@ -31,19 +31,19 @@ function Home() {
           <div className="row text-center mt-4">
             <div className="col-4">
               <div className="text-white">
-                <h3 className="mb-0" style={{color: '#64ffda'}}>12+</h3>
+                <p className="mb-0 h3" style={{color: '#64ffda'}}>12+</p>
                 <small className="text-muted">Instrumentos</small>
               </div>
             </div>
             <div className="col-4">
               <div className="text-white">
-                <h3 className="mb-0" style={{color: '#64ffda'}}>∞</h3>
+                <p className="mb-0 h3" style={{color: '#64ffda'}}>∞</p>
                 <small className="text-muted">Tonalidades</small>
               </div>
             </div>
             <div className="col-4">
               <div className="text-white">
-                <h3 className="mb-0" style={{color: '#64ffda'}}>100%</h3>
+                <p className="mb-0 h3" style={{color: '#64ffda'}}>100%</p>
                 <small className="text-muted">Gratis</small>
               </div>
             </div>
@@ -90,7 +90,7 @@ function Home() {
                 <div className="feature-icon">
                   <i className="bi bi-music-note-list"></i>
                 </div>
-                <h5 className="feature-title">Notación Simple</h5>
+                <h3 className="feature-title">Notación Simple</h3>
                 <p className="feature-description">
                   Escribe tus canciones usando nuestra notación sencilla. 
                   Compatible con DO-RE-MI y C-D-E.
@@ -103,7 +103,7 @@ function Home() {
                 <div className="feature-icon">
                   <i className="bi bi-arrow-repeat"></i>
                 </div>
-                <h5 className="feature-title">Transposición Automática</h5>
+                <h3 className="feature-title">Transposición Automática</h3>
                 <p className="feature-description">
                   Cambia la tonalidad de cualquier canción con un click. 
                   Perfecto para diferentes voces e instrumentos.
@@ -116,7 +116,7 @@ function Home() {
                 <div className="feature-icon">
                   <i className="bi bi-collection-play"></i>
                 </div>
-                <h5 className="feature-title">Listas Organizadas</h5>
+                <h3 className="feature-title">Listas Organizadas</h3>
                 <p className="feature-description">
                   Crea listas para tus servicios. Organiza por fecha, 
                   evento o cualquier criterio que necesites.
@@ -129,7 +129,7 @@ function Home() {
                 <div className="feature-icon">
                   <i className="bi bi-phone"></i>
                 </div>
-                <h5 className="feature-title">Multiplataforma</h5>
+                <h3 className="feature-title">Multiplataforma</h3>
                 <p className="feature-description">
                   Accede desde cualquier dispositivo. Web, móvil, 
                   tablet - tus canciones siempre contigo.
@@ -142,7 +142,7 @@ function Home() {
                 <div className="feature-icon">
                   <i className="bi bi-people"></i>
                 </div>
-                <h5 className="feature-title">Colaboración</h5>
+                <h3 className="feature-title">Colaboración</h3>
                 <p className="feature-description">
                   Comparte listas con tu equipo de música. 
                   Todos sincronizados para el servicio.
@@ -155,7 +155,7 @@ function Home() {
                 <div className="feature-icon">
                   <i className="bi bi-tools"></i>
                 </div>
-                <h5 className="feature-title">12+ Instrumentos</h5>
+                <h3 className="feature-title">12+ Instrumentos</h3>
                 <p className="feature-description">
                   Soporte para trompeta, saxofón, flauta, trombón, 
                   y muchos instrumentos transpositores más.

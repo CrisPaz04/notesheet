@@ -148,6 +148,7 @@ function Register() {
                 placeholder="Contraseña"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                autoComplete="new-password"
                 required
               />
               <label htmlFor="password">
@@ -164,6 +165,7 @@ function Register() {
                 placeholder="Confirmar Contraseña"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
+                autoComplete="new-password"
                 required
               />
               <label htmlFor="confirmPassword">

@@ -1,9 +1,8 @@
 // packages/api/src/services/user.js
-import { 
-  doc, 
-  setDoc, 
-  getDoc, 
-  updateDoc 
+import {
+  doc,
+  setDoc,
+  getDoc
 } from 'firebase/firestore';
 import { db } from '../firebase/config';
 
@@ -34,29 +33,17 @@ export const getUserPreferences = async (userId) => {
 export const updateUserPreferences = async (userId, preferences) => {
   try {
     const userRef = doc(db, 'users', userId);
-    const userDoc = await getDoc(userRef);
-    
-    if (userDoc.exists()) {
-      // El usuario ya existe, actualizar sus preferencias
-      const currentPrefs = userDoc.data().preferences || {};
-      const updatedPrefs = { ...currentPrefs, ...preferences };
-      
-      await updateDoc(userRef, {
-        preferences: updatedPrefs
-      });
-      
-      return updatedPrefs;
-    } else {
-      // El usuario no existe, crear un nuevo documento
-      const newUserData = {
-        id: userId,
-        preferences: preferences,
-        createdAt: new Date()
-      };
-      
-      await setDoc(userRef, newUserData);
-      return preferences;
-    }
+
+    // Use setDoc with merge to avoid race conditions and handle both
+    // existing and non-existing documents in a single operation
+    await setDoc(userRef, {
+      id: userId,
+      preferences: preferences,
+      updatedAt: new Date()
+    }, { merge: true });
+
+    // Return the preferences that were set
+    return preferences;
   } catch (error) {
     console.error("Error updating user preferences:", error);
     throw error;

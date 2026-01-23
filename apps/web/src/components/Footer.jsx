@@ -13,10 +13,10 @@
           </p>
           
           <div className="footer-links">
-            <a 
-              href="https://github.com" 
-              className="footer-link" 
-              target="_blank" 
+            <a
+              href="https://github.com/CrisPaz04/notesheet"
+              className="footer-link"
+              target="_blank"
               rel="noopener noreferrer"
               title="GitHub"
             >
