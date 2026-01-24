@@ -12,7 +12,6 @@ import {
   getVisualKeyForInstrument
 } from "@notesheet/core";
 import { useAuth } from "../context/AuthContext";
-import { InstrumentSelector } from "../components/InstrumentSelector";
 import { getUserPreferences, updateUserPreferences } from "@notesheet/api";
 import LoadingSpinner from "../components/LoadingSpinner";
 import Modal from "../components/Modal";
@@ -55,9 +54,9 @@ function SongView() {
   const [fontSize, setFontSize] = useState(18);
   const [notationSystem, setNotationSystem] = useState("latin");
   const [currentInstrument, setCurrentInstrument] = useState("bb_trumpet");
-  const [selectedVoice, setSelectedVoice] = useState(null);
-  // eslint-disable-next-line no-unused-vars
-  const [availableVoices, setAvailableVoices] = useState({});
+  const [selectedVoiceKey, setSelectedVoiceKey] = useState(null); // e.g., "bb_trumpet-1"
+  const [availableVoicesList, setAvailableVoicesList] = useState([]); // Flat list of available voices
+  const [showVoiceDropdown, setShowVoiceDropdown] = useState(false);
   
   // Estado para la vista dual
   const [activeView, setActiveView] = useState(0); // 0 = Acordes, 1 = Letra
@@ -137,31 +136,53 @@ function SongView() {
         setBaseKey(songKey);
         setTargetKey(songKey);
         
-        // Guardar lista de voces disponibles
-        setAvailableVoices(loadedSong.voices || {});
+        // Build flat list of available voices from song.voices
+        const voicesList = [];
+        if (loadedSong.voices && Object.keys(loadedSong.voices).length > 0) {
+          Object.entries(loadedSong.voices).forEach(([instrumentId, instrumentVoices]) => {
+            Object.keys(instrumentVoices).sort().forEach(voiceNumber => {
+              const instrumentName = TRANSPOSING_INSTRUMENTS[instrumentId]?.name || instrumentId;
+              voicesList.push({
+                id: `${instrumentId}-${voiceNumber}`,
+                instrumentId,
+                voiceNumber,
+                label: `${instrumentName} ${voiceNumber}`
+              });
+            });
+          });
+        }
+        setAvailableVoicesList(voicesList);
 
         // Determinar qué contenido mostrar
         let contentToLoad;
+        let voiceKeyToSelect = selectedVoiceKey;
 
-        // First, check if there's a voice for the current instrument
-        if (selectedVoice &&
-            loadedSong.voices &&
-            loadedSong.voices[currentInstrument] &&
-            loadedSong.voices[currentInstrument][selectedVoice]) {
-          contentToLoad = loadedSong.voices[currentInstrument][selectedVoice];
-        } else if (loadedSong.voices && Object.keys(loadedSong.voices).length > 0) {
-          // Use the primary voice or first available voice
+        // If we have a selected voice key, use it
+        if (selectedVoiceKey && loadedSong.voices) {
+          const [instId, voiceNum] = selectedVoiceKey.split('-');
+          if (loadedSong.voices[instId] && loadedSong.voices[instId][voiceNum]) {
+            contentToLoad = loadedSong.voices[instId][voiceNum];
+          }
+        }
+
+        // If no content yet, use primary voice or first available
+        if (!contentToLoad && loadedSong.voices && Object.keys(loadedSong.voices).length > 0) {
           const primaryInst = loadedSong.primaryInstrument || Object.keys(loadedSong.voices)[0];
           const primaryVoice = loadedSong.primaryVoiceNumber || Object.keys(loadedSong.voices[primaryInst])[0];
           if (loadedSong.voices[primaryInst] && loadedSong.voices[primaryInst][primaryVoice]) {
             contentToLoad = loadedSong.voices[primaryInst][primaryVoice];
-            if (!selectedVoice) setSelectedVoice(primaryVoice);
+            voiceKeyToSelect = `${primaryInst}-${primaryVoice}`;
           } else {
             contentToLoad = loadedSong.content || "";
+            voiceKeyToSelect = null;
           }
-        } else {
+        } else if (!contentToLoad) {
           contentToLoad = loadedSong.content || "";
-          if (selectedVoice) setSelectedVoice(null);
+          voiceKeyToSelect = null;
+        }
+
+        if (voiceKeyToSelect !== selectedVoiceKey) {
+          setSelectedVoiceKey(voiceKeyToSelect);
         }
         
         // Guardar el contenido original
@@ -210,7 +231,7 @@ function SongView() {
     if (id) {
       loadSong();
     }
-  }, [id, currentUser, currentInstrument, selectedVoice]);
+  }, [id, currentUser, currentInstrument, selectedVoiceKey]);
 
   // Eventos táctiles para el swipe
   const handleTouchStart = (e) => {
@@ -348,15 +369,62 @@ function SongView() {
     }
   };
   
-  // Función para cambiar de instrumento
+  // Función para cambiar de voz (seleccionar qué parte leer)
+  const handleVoiceChange = (voiceKey) => {
+    if (voiceKey === selectedVoiceKey) return;
+
+    try {
+      const [instrumentId, voiceNumber] = voiceKey.split('-');
+
+      if (!song.voices || !song.voices[instrumentId] || !song.voices[instrumentId][voiceNumber]) {
+        setError("Voz no encontrada");
+        return;
+      }
+
+      setSelectedVoiceKey(voiceKey);
+      setShowVoiceDropdown(false);
+
+      // Load the voice content
+      let contentToProcess = song.voices[instrumentId][voiceNumber];
+      setOriginalContent(contentToProcess);
+
+      // Apply transposition if needed
+      if (targetKey !== baseKey) {
+        contentToProcess = transposeContent(contentToProcess, baseKey, targetKey);
+      }
+
+      // Apply instrument transposition for display
+      if (currentInstrument !== "bb_trumpet") {
+        contentToProcess = transposeForInstrument(
+          contentToProcess,
+          "bb_trumpet",
+          currentInstrument
+        );
+      }
+
+      if (notationSystem === "english") {
+        contentToProcess = convertNotationSystem(contentToProcess, "english");
+      }
+
+      const formatted = formatSong(contentToProcess);
+      setFormattedSong(formatted);
+
+      const lyricsOnly = extractLyricsOnly(formatted);
+      setFormattedLyricsOnly(lyricsOnly);
+    } catch (error) {
+      setError("Error al cambiar de voz: " + error.message);
+      console.error("Error completo:", error);
+    }
+  };
+
+  // Función para cambiar de instrumento (transponer a otro instrumento)
   const handleInstrumentChange = async (instrumentId) => {
-    if (instrumentId === currentInstrument && !selectedVoice) return;
-    
+    if (instrumentId === currentInstrument) return;
+
     try {
       setCurrentInstrument(instrumentId);
-      setSelectedVoice(null);
       setShowInstrumentDropdown(false);
-      
+
       if (currentUser) {
         try {
           await updateUserPreferences(currentUser.uid, {
@@ -366,32 +434,32 @@ function SongView() {
           console.error("Error saving instrument preference:", error);
         }
       }
-      
-      let contentToProcess = song.content;
-      setOriginalContent(contentToProcess);
-      
+
+      // Use the current voice content, not song.content
+      let contentToProcess = originalContent;
+
       if (targetKey !== baseKey) {
         contentToProcess = transposeContent(contentToProcess, baseKey, targetKey);
       }
-      
+
       if (instrumentId !== "bb_trumpet") {
         contentToProcess = transposeForInstrument(
           contentToProcess,
-          "bb_trumpet", 
+          "bb_trumpet",
           instrumentId
         );
       }
-      
+
       if (notationSystem === "english") {
         contentToProcess = convertNotationSystem(contentToProcess, "english");
       }
-      
+
       const visualKey = getVisualKeyForInstrument(targetKey, instrumentId);
       setDisplayKey(visualKey);
-      
+
       const formatted = formatSong(contentToProcess);
       setFormattedSong(formatted);
-      
+
       const lyricsOnly = extractLyricsOnly(formatted);
       setFormattedLyricsOnly(lyricsOnly);
     } catch (error) {
@@ -507,11 +575,22 @@ function SongView() {
             <div className="song-meta-item">
               <div className="song-meta-label">
                 <i className="bi bi-music-note me-1"></i>
-                Instrumento
+                Voz
+              </div>
+              <div className="song-meta-value">
+                {selectedVoiceKey
+                  ? availableVoicesList.find(v => v.id === selectedVoiceKey)?.label || "—"
+                  : "—"}
+              </div>
+            </div>
+
+            <div className="song-meta-item">
+              <div className="song-meta-label">
+                <i className="bi bi-arrow-left-right me-1"></i>
+                Transpuesto a
               </div>
               <div className="song-meta-value">
                 {TRANSPOSING_INSTRUMENTS[currentInstrument]?.name || "Trompeta en Sib"}
-                {selectedVoice && ` ${selectedVoice}`}
               </div>
             </div>
             
@@ -547,21 +626,59 @@ function SongView() {
         <div className="controls-toolbar fade-in-delay no-print">
           <div className="controls-row">
             <div className="controls-group">
-              {/* Selector de Instrumento */}
+              {/* Selector de Voz (partes disponibles en la canción) */}
+              {availableVoicesList.length > 0 && (
+                <div className="control-dropdown">
+                  <button
+                    className={`dropdown-button ${showVoiceDropdown ? 'active' : ''}`}
+                    onClick={() => {
+                      setShowVoiceDropdown(!showVoiceDropdown);
+                      setShowInstrumentDropdown(false);
+                      setShowKeyDropdown(false);
+                      setShowNotationDropdown(false);
+                    }}
+                  >
+                    <i className="bi bi-music-note-list"></i>
+                    <span>
+                      {selectedVoiceKey
+                        ? availableVoicesList.find(v => v.id === selectedVoiceKey)?.label || "Voz"
+                        : "Seleccionar Voz"}
+                    </span>
+                    <i className={`bi bi-chevron-${showVoiceDropdown ? 'up' : 'down'}`}></i>
+                  </button>
+
+                  {showVoiceDropdown && (
+                    <div className="dropdown-menu-custom">
+                      {availableVoicesList.map((voice) => (
+                        <div
+                          key={voice.id}
+                          className={`dropdown-item-custom ${selectedVoiceKey === voice.id ? 'active' : ''}`}
+                          onClick={() => handleVoiceChange(voice.id)}
+                        >
+                          {voice.label}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Selector de Instrumento (Transponer a) */}
               <div className="control-dropdown">
                 <button
                   className={`dropdown-button ${showInstrumentDropdown ? 'active' : ''}`}
                   onClick={() => {
                     setShowInstrumentDropdown(!showInstrumentDropdown);
+                    setShowVoiceDropdown(false);
                     setShowKeyDropdown(false);
                     setShowNotationDropdown(false);
                   }}
                 >
                   <i className="bi bi-music-note-beamed"></i>
-                  <span>{TRANSPOSING_INSTRUMENTS[currentInstrument]?.name || "Trompeta"}</span>
+                  <span>Transponer: {TRANSPOSING_INSTRUMENTS[currentInstrument]?.name || "Trompeta"}</span>
                   <i className={`bi bi-chevron-${showInstrumentDropdown ? 'up' : 'down'}`}></i>
                 </button>
-                
+
                 {showInstrumentDropdown && (
                   <div className="dropdown-menu-custom">
                     {Object.entries(TRANSPOSING_INSTRUMENTS).map(([id, instrument]) => (
@@ -586,6 +703,7 @@ function SongView() {
                   className={`dropdown-button ${showKeyDropdown ? 'active' : ''}`}
                   onClick={() => {
                     setShowKeyDropdown(!showKeyDropdown);
+                    setShowVoiceDropdown(false);
                     setShowInstrumentDropdown(false);
                     setShowNotationDropdown(false);
                   }}
@@ -641,6 +759,7 @@ function SongView() {
                   className={`dropdown-button ${showNotationDropdown ? 'active' : ''}`}
                   onClick={() => {
                     setShowNotationDropdown(!showNotationDropdown);
+                    setShowVoiceDropdown(false);
                     setShowInstrumentDropdown(false);
                     setShowKeyDropdown(false);
                   }}
