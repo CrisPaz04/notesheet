@@ -392,30 +392,63 @@
     white-space: nowrap;
   }
   
+  /* Delete button for songs */
+  .song-delete-btn {
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.4);
+    padding: 0.5rem;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: var(--transition-fast);
+    opacity: 0;
+    margin-left: auto;
+  }
+
+  .recent-item:hover .song-delete-btn,
+  .list-item:hover .song-delete-btn {
+    opacity: 1;
+  }
+
+  .song-delete-btn:hover {
+    background: rgba(220, 53, 69, 0.2);
+    color: #dc3545;
+  }
+
+  .list-delete-btn {
+    margin-left: 1rem;
+    flex-shrink: 0;
+  }
+
   @media (max-width: 768px) {
     .action-grid {
       grid-template-columns: repeat(2, 1fr);
     }
-    
+
     .recent-grid {
       grid-template-columns: 1fr;
     }
-    
+
     .welcome-title {
       font-size: 1.5rem;
     }
-    
+
     .content-header {
       flex-direction: column;
       align-items: stretch;
     }
-    
+
     .content-header-left,
     .content-header-right {
       justify-content: center;
     }
-    
+
     .filter-tabs {
       justify-content: center;
+    }
+
+    /* Show delete button on mobile (no hover) */
+    .song-delete-btn {
+      opacity: 1;
     }
   }

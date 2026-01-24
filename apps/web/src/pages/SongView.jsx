@@ -79,7 +79,7 @@ function SongView() {
   const lyricsViewRef = useRef(null);
   
   const { id } = useParams();
-  const { currentUser } = useAuth();
+  const { currentUser, canEditSongs } = useAuth();
 
   // Función para extraer solo la letra de una canción
   const extractLyricsOnly = (formattedSongData) => {
@@ -868,9 +868,9 @@ function SongView() {
                   Imprimir
                 </button>
 
-                {currentUser && currentUser.uid === song.userId && (
-                  <Link 
-                    to={`/songs/${id}/edit`} 
+                {canEditSongs() && (
+                  <Link
+                    to={`/songs/${id}/edit`}
                     className="btn-song-action btn-song-primary"
                   >
                     <i className="bi bi-pencil"></i>

@@ -49,3 +49,41 @@ export const updateUserPreferences = async (userId, preferences) => {
     throw error;
   }
 };
+
+/**
+ * Obtiene el rol del usuario
+ * @param {string} userId - ID del usuario
+ * @returns {string} Rol del usuario ('editor' o 'viewer'), defaults to 'viewer'
+ */
+export const getUserRole = async (userId) => {
+  try {
+    const userDoc = await getDoc(doc(db, 'users', userId));
+    if (userDoc.exists()) {
+      return userDoc.data().role || 'viewer';
+    }
+    return 'viewer';
+  } catch (error) {
+    console.error("Error getting user role:", error);
+    return 'viewer';
+  }
+};
+
+/**
+ * Establece el rol del usuario (para uso administrativo)
+ * @param {string} userId - ID del usuario
+ * @param {string} role - Rol a establecer ('editor' o 'viewer')
+ */
+export const setUserRole = async (userId, role) => {
+  try {
+    const userRef = doc(db, 'users', userId);
+    await setDoc(userRef, {
+      id: userId,
+      role: role,
+      updatedAt: new Date()
+    }, { merge: true });
+    return role;
+  } catch (error) {
+    console.error("Error setting user role:", error);
+    throw error;
+  }
+};

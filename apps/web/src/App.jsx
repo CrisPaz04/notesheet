@@ -22,7 +22,7 @@ import Tuner from "./pages/Tuner";
 // Componentes
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
-import ProtectedRoute from "./components/ProtectedRoute";
+import ProtectedRoute, { EditorRoute } from "./components/ProtectedRoute";
 
 // Componente para manejar la redirección de la ruta raíz
 function RootRedirect() {
@@ -96,15 +96,15 @@ function AppLayout() {
             </ProtectedRoute>
           } />
           <Route path="/songs/new" element={
-            <ProtectedRoute>
+            <EditorRoute>
               <SongEditor />
-            </ProtectedRoute>
+            </EditorRoute>
           } />
           <Route path="/songs/:id" element={<SongView />} />
           <Route path="/songs/:id/edit" element={
-            <ProtectedRoute>
+            <EditorRoute>
               <SongEditor />
-            </ProtectedRoute>
+            </EditorRoute>
           } />
           <Route path="/preferences" element={
             <ProtectedRoute>

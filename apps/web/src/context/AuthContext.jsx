@@ -1,5 +1,5 @@
 ﻿import { createContext, useState, useEffect, useContext } from 'react';
-import { auth, signIn, signOut, registerUser, authStateListener, signInWithGoogle } from '@notesheet/api';
+import { auth, signIn, signOut, registerUser, authStateListener, signInWithGoogle, getUserRole } from '@notesheet/api';
 
 // Crear el contexto
 const AuthContext = createContext(null);
@@ -7,12 +7,20 @@ const AuthContext = createContext(null);
 // Proveedor del contexto
 export function AuthProvider({ children }) {
   const [currentUser, setCurrentUser] = useState(null);
+  const [userRole, setUserRole] = useState('viewer');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     // Escuchar cambios en el estado de autenticación
-    const unsubscribe = authStateListener((user) => {
+    const unsubscribe = authStateListener(async (user) => {
       setCurrentUser(user);
+      if (user) {
+        // Cargar el rol del usuario
+        const role = await getUserRole(user.uid);
+        setUserRole(role);
+      } else {
+        setUserRole('viewer');
+      }
       setLoading(false);
     });
 
@@ -54,12 +62,19 @@ export function AuthProvider({ children }) {
     }
   };
 
+  // Función para verificar si el usuario puede editar canciones
+  const canEditSongs = () => {
+    return userRole === 'editor';
+  };
+
   const value = {
     currentUser,
+    userRole,
+    canEditSongs,
     login,
     logout,
     register,
-    loginWithGoogle, 
+    loginWithGoogle,
     loading
   };
 

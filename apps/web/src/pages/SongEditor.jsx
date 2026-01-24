@@ -35,7 +35,7 @@ function SongEditor() {
   const [primaryInstrument, setPrimaryInstrument] = useState("bb_trumpet");
   const [primaryVoiceNumber, setPrimaryVoiceNumber] = useState("1");
   
-  const { currentUser } = useAuth();
+  const { currentUser, canEditSongs } = useAuth();
   const navigate = useNavigate();
   const { id } = useParams();
   const editorRef = useRef(null);
@@ -403,7 +403,7 @@ function SongEditor() {
           >
             <i className={tab.icon}></i>
             <span className="ms-1">{tab.label}</span>
-            {tab.removable && (
+            {tab.removable && canEditSongs() && (
               <button
                 className="tab-close"
                 onClick={(e) => {
@@ -417,13 +417,15 @@ function SongEditor() {
             )}
           </button>
         ))}
-        <button
-          className="editor-tab"
-          onClick={() => setShowVoicesManager(!showVoicesManager)}
-        >
-          <i className="bi-plus-circle"></i>
-          <span className="ms-1">{showVoicesManager ? 'Cancelar' : 'Añadir Voz'}</span>
-        </button>
+        {canEditSongs() && (
+          <button
+            className="editor-tab"
+            onClick={() => setShowVoicesManager(!showVoicesManager)}
+          >
+            <i className="bi-plus-circle"></i>
+            <span className="ms-1">{showVoicesManager ? 'Cancelar' : 'Añadir Voz'}</span>
+          </button>
+        )}
       </div>
     );
   };

@@ -14,7 +14,7 @@ function Dashboard() {
   const [searchTerm, setSearchTerm] = useState("");
   const [activeFilter, setActiveFilter] = useState("all");
   const [viewMode, setViewMode] = useState("cards");
-  const { currentUser } = useAuth();
+  const { currentUser, canEditSongs } = useAuth();
 
   // Cargar canciones al montar el componente
   useEffect(() => {
@@ -83,8 +83,27 @@ function Dashboard() {
     const hour = new Date().getHours();
     const day = new Date().getDay();
     const index = (hour + day) % greetings.length;
-    
+
     return greetings[index];
+  };
+
+  // Eliminar una canción
+  const handleDeleteSong = async (e, songId, songTitle) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!confirm(`¿Estás seguro de que deseas eliminar "${songTitle}"? Esta acción no se puede deshacer.`)) {
+      return;
+    }
+
+    try {
+      await deleteSong(songId);
+      setSongs(songs.filter(song => song.id !== songId));
+      setFilteredSongs(filteredSongs.filter(song => song.id !== songId));
+    } catch (error) {
+      setError("Error al eliminar la canción: " + error.message);
+      console.error("Error deleting song:", error);
+    }
   };
 
   if (loading) {
@@ -146,15 +165,17 @@ function Dashboard() {
             <i className="bi bi-lightning-charge"></i>
             Acciones Rápidas
           </h2>
-          
+
           <div className="action-grid stagger-animation">
-            <Link to="/songs/new" className="action-card card-hover">
-              <div className="action-icon">
-                <i className="bi bi-file-music"></i>
-              </div>
-              <h3 className="action-title">Nueva Canción</h3>
-              <p className="action-description">Crear una canción desde cero</p>
-            </Link>
+            {canEditSongs() && (
+              <Link to="/songs/new" className="action-card card-hover">
+                <div className="action-icon">
+                  <i className="bi bi-file-music"></i>
+                </div>
+                <h3 className="action-title">Nueva Canción</h3>
+                <p className="action-description">Crear una canción desde cero</p>
+              </Link>
+            )}
 
             <Link to="/playlists/new" className="action-card card-hover">
               <div className="action-icon">
@@ -256,14 +277,21 @@ function Dashboard() {
               <div className="empty-state-icon pulse">
                 <i className="bi bi-music-note-list"></i>
               </div>
-              <h3 className="empty-state-title">¡Comienza tu colección musical!</h3>
+              <h3 className="empty-state-title">
+                {canEditSongs() ? "¡Comienza tu colección musical!" : "No hay canciones disponibles"}
+              </h3>
               <p className="empty-state-description">
-                Aún no tienes canciones. Crea tu primera canción y comienza a organizar tu repertorio.
+                {canEditSongs()
+                  ? "Aún no tienes canciones. Crea tu primera canción y comienza a organizar tu repertorio."
+                  : "Aún no hay canciones en la biblioteca. Contacta a un editor para agregar canciones."
+                }
               </p>
-              <Link to="/songs/new" className="btn-primary-dashboard btn-animated">
-                <i className="bi bi-plus-circle me-2"></i>
-                Crear Mi Primera Canción
-              </Link>
+              {canEditSongs() && (
+                <Link to="/songs/new" className="btn-primary-dashboard btn-animated">
+                  <i className="bi bi-plus-circle me-2"></i>
+                  Crear Mi Primera Canción
+                </Link>
+              )}
             </div>
           ) : filteredSongs.length === 0 ? (
             <div className="empty-state fade-in">
@@ -289,9 +317,9 @@ function Dashboard() {
               {viewMode === 'cards' ? (
                 <div className="recent-grid stagger-animation">
                   {filteredSongs.map((song) => (
-                    <Link 
-                      to={`/songs/${song.id}`} 
-                      key={song.id} 
+                    <Link
+                      to={`/songs/${song.id}`}
+                      key={song.id}
                       className="recent-item card-hover"
                     >
                       <div className="recent-item-header">
@@ -301,19 +329,28 @@ function Dashboard() {
                         <h4 className="recent-item-title">
                           {song.title || "Sin título"}
                         </h4>
+                        {canEditSongs() && (
+                          <button
+                            className="song-delete-btn"
+                            onClick={(e) => handleDeleteSong(e, song.id, song.title)}
+                            title="Eliminar canción"
+                          >
+                            <i className="bi bi-trash"></i>
+                          </button>
+                        )}
                       </div>
-                      
+
                       <div className="recent-item-meta">
                         {song.key || "Sin tonalidad"} • {song.type || "Sin tipo"}
                       </div>
-                      
+
                       <div className="recent-item-meta">
-                        {song.updatedAt ? 
-                          `Actualizado: ${new Date(song.updatedAt.toDate()).toLocaleDateString()}` : 
+                        {song.updatedAt ?
+                          `Actualizado: ${new Date(song.updatedAt.toDate()).toLocaleDateString()}` :
                           "Fecha desconocida"
                         }
                       </div>
-                      
+
                       <div className="recent-item-preview">
                         {song.version ? `Versión de: ${song.version}` : "Click para ver la canción"}
                       </div>
@@ -323,9 +360,9 @@ function Dashboard() {
               ) : (
                 <div className="songs-list-view fade-in">
                   {filteredSongs.map((song, index) => (
-                    <Link 
-                      to={`/songs/${song.id}`} 
-                      key={song.id} 
+                    <Link
+                      to={`/songs/${song.id}`}
+                      key={song.id}
                       className="list-item"
                       style={{ animationDelay: `${index * 0.1}s` }}
                     >
@@ -342,11 +379,20 @@ function Dashboard() {
                         </p>
                       </div>
                       <div className="list-item-date">
-                        {song.updatedAt ? 
-                          new Date(song.updatedAt.toDate()).toLocaleDateString() : 
+                        {song.updatedAt ?
+                          new Date(song.updatedAt.toDate()).toLocaleDateString() :
                           "Sin fecha"
                         }
                       </div>
+                      {canEditSongs() && (
+                        <button
+                          className="song-delete-btn list-delete-btn"
+                          onClick={(e) => handleDeleteSong(e, song.id, song.title)}
+                          title="Eliminar canción"
+                        >
+                          <i className="bi bi-trash"></i>
+                        </button>
+                      )}
                     </Link>
                   ))}
                 </div>
