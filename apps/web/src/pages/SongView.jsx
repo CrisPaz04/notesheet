@@ -159,7 +159,9 @@ function SongView() {
 
         // If we have a selected voice key, use it
         if (selectedVoiceKey && loadedSong.voices) {
-          const [instId, voiceNum] = selectedVoiceKey.split('-');
+          const lastDash = selectedVoiceKey.lastIndexOf('-');
+          const instId = selectedVoiceKey.substring(0, lastDash);
+          const voiceNum = selectedVoiceKey.substring(lastDash + 1);
           if (loadedSong.voices[instId] && loadedSong.voices[instId][voiceNum]) {
             contentToLoad = loadedSong.voices[instId][voiceNum];
           }
@@ -181,9 +183,8 @@ function SongView() {
           voiceKeyToSelect = null;
         }
 
-        if (voiceKeyToSelect !== selectedVoiceKey) {
-          setSelectedVoiceKey(voiceKeyToSelect);
-        }
+        // Always set selectedVoiceKey to ensure header displays correctly on initial load
+        setSelectedVoiceKey(voiceKeyToSelect);
         
         // Guardar el contenido original
         setOriginalContent(contentToLoad);
@@ -231,7 +232,7 @@ function SongView() {
     if (id) {
       loadSong();
     }
-  }, [id, currentUser, currentInstrument, selectedVoiceKey]);
+  }, [id, currentUser, currentInstrument]); // Don't include selectedVoiceKey - it's managed by handleVoiceChange
 
   // Eventos táctiles para el swipe
   const handleTouchStart = (e) => {
@@ -371,10 +372,17 @@ function SongView() {
   
   // Función para cambiar de voz (seleccionar qué parte leer)
   const handleVoiceChange = (voiceKey) => {
+    // Close dropdown immediately
+    setShowVoiceDropdown(false);
+
+    // If clicking the same voice, just close dropdown without doing anything else
     if (voiceKey === selectedVoiceKey) return;
 
     try {
-      const [instrumentId, voiceNumber] = voiceKey.split('-');
+      // Use lastIndexOf for safer parsing (handles instrument IDs with dashes)
+      const lastDash = voiceKey.lastIndexOf('-');
+      const instrumentId = voiceKey.substring(0, lastDash);
+      const voiceNumber = voiceKey.substring(lastDash + 1);
 
       if (!song.voices || !song.voices[instrumentId] || !song.voices[instrumentId][voiceNumber]) {
         setError("Voz no encontrada");
@@ -382,7 +390,6 @@ function SongView() {
       }
 
       setSelectedVoiceKey(voiceKey);
-      setShowVoiceDropdown(false);
 
       // Load the voice content
       let contentToProcess = song.voices[instrumentId][voiceNumber];
