@@ -217,8 +217,10 @@ export const getKeyDistance = (sourceKey, targetKey) => {
  */
 export const transposeLine = (line, semitones, targetSystem = null, keySignature = 'natural') => {
   // Expresión regular para detectar notas musicales (incluyendo menores)
-  const noteRegex = /\b(DO|RE|MI|FA|SOL|LA|SI|C|D|E|F|G|A|B)(?:#|b)?(?:m)?\b/g;
-  
+  // Usamos lookahead negativo al final para evitar coincidencias parciales
+  // sin usar \b (que no funciona bien con # y b)
+  const noteRegex = /\b(DO|RE|MI|FA|SOL|LA|SI|C|D|E|F|G|A|B)(#|b)?(m)?(?![#b\w])/g;
+
   return line.replace(noteRegex, (match) => {
     return transposeNote(match, semitones, targetSystem, keySignature);
   });
@@ -298,12 +300,13 @@ export const transposeContent = (content, sourceKey, targetKey, targetSystem = n
  * @returns {string} 'latin' o 'english'
  */
 export const detectNotationSystem = (content) => {
-  const latinRegex = /\b(DO|RE|MI|FA|SOL|LA|SI)(?:#|b)?\b/g;
-  const englishRegex = /\b([A-G])(?:#|b)?\b/g;
-  
+  // Usamos lookahead negativo para evitar problemas con \b y accidentales
+  const latinRegex = /\b(DO|RE|MI|FA|SOL|LA|SI)(#|b)?(?![#b\w])/g;
+  const englishRegex = /\b([A-G])(#|b)?(?![#b\w])/g;
+
   const latinMatches = content.match(latinRegex) || [];
   const englishMatches = content.match(englishRegex) || [];
-  
+
   // Si hay más coincidencias latinas que inglesas, es latino
   return latinMatches.length >= englishMatches.length ? 'latin' : 'english';
 };

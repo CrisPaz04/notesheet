@@ -1,7 +1,7 @@
-﻿{
+{
   "name": "notesheet",
   "version": "0.1.0",
-  "description": "Aplicación Multiplataforma para Músicos de Iglesia",
+  "description": "Aplicacion Multiplataforma para Musicos de Iglesia",
   "private": true,
   "workspaces": [
     "apps/*",
@@ -11,7 +11,9 @@
     "web": "cd apps/web && npm run dev",
     "mobile": "cd apps/mobile && npm run start",
     "android": "cd apps/mobile && npm run android",
-    "ios": "cd apps/mobile && npm run ios"
+    "ios": "cd apps/mobile && npm run ios",
+    "test": "cd apps/web && npm run test",
+    "test:run": "cd apps/web && npm run test:run"
   },
   "keywords": [
     "music",
