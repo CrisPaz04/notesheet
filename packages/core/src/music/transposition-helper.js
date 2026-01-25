@@ -25,7 +25,8 @@ export function transposeForInstrument(content, fromInstrument, toInstrument) {
   if (transpositionInterval === 0) return content;
   
   // Expresión regular para detectar notas musicales (incluyendo menores)
-  const noteRegex = /\b(DO|RE|MI|FA|SOL|LA|SI|C|D|E|F|G|A|B)(?:#|b)?(?:m)?\b/g;
+  // Usamos lookahead negativo para evitar problemas con \b y accidentales
+  const noteRegex = /\b(DO|RE|MI|FA|SOL|LA|SI|C|D|E|F|G|A|B)(#|b)?(m)?(?![#b\w])/g;
   
   // Definimos las escalas completas
   const LATIN_NOTES = ['DO', 'DO#', 'RE', 'RE#', 'MI', 'FA', 'FA#', 'SOL', 'SOL#', 'LA', 'LA#', 'SI'];
@@ -35,19 +36,19 @@ export function transposeForInstrument(content, fromInstrument, toInstrument) {
   
   // Mapa de notas para una búsqueda más sencilla
   const noteToIndexMap = {
-    // Notas latinas
-    'DO': 0, 'DO#': 1, 'REb': 1, 'RE': 2, 'RE#': 3, 'MIb': 3, 'MI': 4, 
-    'FA': 5, 'FA#': 6, 'SOLb': 6, 'SOL': 7, 'SOL#': 8, 'LAb': 8, 
-    'LA': 9, 'LA#': 10, 'SIb': 10, 'SI': 11,
-    // Notas inglesas
-    'C': 0, 'C#': 1, 'Db': 1, 'D': 2, 'D#': 3, 'Eb': 3, 'E': 4, 
-    'F': 5, 'F#': 6, 'Gb': 6, 'G': 7, 'G#': 8, 'Ab': 8, 
-    'A': 9, 'A#': 10, 'Bb': 10, 'B': 11
+    // Notas latinas (incluyendo enarmónicas poco comunes)
+    'DO': 0, 'DO#': 1, 'REb': 1, 'RE': 2, 'RE#': 3, 'MIb': 3, 'MI': 4, 'MI#': 5,
+    'FAb': 4, 'FA': 5, 'FA#': 6, 'SOLb': 6, 'SOL': 7, 'SOL#': 8, 'LAb': 8,
+    'LA': 9, 'LA#': 10, 'SIb': 10, 'SI': 11, 'SI#': 0, 'DOb': 11,
+    // Notas inglesas (incluyendo enarmónicas poco comunes)
+    'C': 0, 'C#': 1, 'Db': 1, 'D': 2, 'D#': 3, 'Eb': 3, 'E': 4, 'E#': 5,
+    'Fb': 4, 'F': 5, 'F#': 6, 'Gb': 6, 'G': 7, 'G#': 8, 'Ab': 8,
+    'A': 9, 'A#': 10, 'Bb': 10, 'B': 11, 'B#': 0, 'Cb': 11
   };
   
   // Detectar el sistema de notación predominante (latino o anglosajón)
-  const latinNoteRegex = /\b(DO|RE|MI|FA|SOL|LA|SI)(?:#|b)?\b/g;
-  const englishNoteRegex = /\b(C|D|E|F|G|A|B)(?:#|b)?\b/g;
+  const latinNoteRegex = /\b(DO|RE|MI|FA|SOL|LA|SI)(#|b)?(?![#b\w])/g;
+  const englishNoteRegex = /\b(C|D|E|F|G|A|B)(#|b)?(?![#b\w])/g;
   
   const latinMatches = content.match(latinNoteRegex) || [];
   const englishMatches = content.match(englishNoteRegex) || [];

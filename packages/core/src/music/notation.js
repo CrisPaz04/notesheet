@@ -28,7 +28,8 @@ export const convertNotationSystem = (content, targetSystem) => {
   const conversionMap = targetSystem === 'latin' ? englishToLatin : latinToEnglish;
   
   // Expresión regular para detectar notas musicales en ambos sistemas
-  const noteRegex = /\b(DO|RE|MI|FA|SOL|LA|SI|C|D|E|F|G|A|B)(?:#|b)?\b/g;
+  // Usamos lookahead negativo para evitar problemas con \b y accidentales
+  const noteRegex = /\b(DO|RE|MI|FA|SOL|LA|SI|C|D|E|F|G|A|B)(#|b)?(?![#b\w])/g;
   
   return content.replace(noteRegex, (match) => {
     return conversionMap[match] || match;
@@ -163,7 +164,7 @@ export const extractLyricsOnly = (content) => {
     }
     
     // Eliminar acordes (palabras que coinciden con patrones de acordes)
-    return line.replace(/\b(DO|RE|MI|FA|SOL|LA|SI|C|D|E|F|G|A|B)(?:#|b)?(?:m)?\b/g, '')
+    return line.replace(/\b(DO|RE|MI|FA|SOL|LA|SI|C|D|E|F|G|A|B)(#|b)?(m)?(?![#b\w])/g, '')
                .replace(/\|\s*\|/g, '') // Eliminar barras dobles vacías
                .replace(/\s{2,}/g, ' ') // Reemplazar múltiples espacios por uno solo
                .trim();

@@ -113,7 +113,7 @@ function SongEditor() {
         return line;
       }
       
-      return line.replace(/\b(DO|RE|MI|FA|SOL|LA|SI|C|D|E|F|G|A|B)(?:#|b)?(?:m)?\b/g, '')
+      return line.replace(/\b(DO|RE|MI|FA|SOL|LA|SI|C|D|E|F|G|A|B)(#|b)?(m)?(?![#b\w])/g, '')
                  .replace(/\|\s*\|/g, '')
                  .replace(/\s{2,}/g, ' ')
                  .trim();
