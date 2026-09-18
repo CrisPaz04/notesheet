@@ -140,6 +140,16 @@ function useTuner(initialPreferences = {}) {
     [referenceFrequency]
   );
 
+  // El engine guarda el callback una sola vez, en start(). Sin esta ref se
+  // quedaría con la primera versión de handlePitchDetection y seguiría
+  // calculando los cents con el diapasón antiguo: cambiar el LA de 440 a 442
+  // con el afinador en marcha no movía la aguja hasta parar y volver a
+  // arrancar.
+  const handlePitchDetectionRef = useRef(handlePitchDetection);
+  useEffect(() => {
+    handlePitchDetectionRef.current = handlePitchDetection;
+  }, [handlePitchDetection]);
+
   /**
    * Start the tuner
    */
@@ -152,13 +162,14 @@ function useTuner(initialPreferences = {}) {
 
     try {
       setError(null);
-      engineRef.current.start(handlePitchDetection);
+      // Envoltorio estable: siempre delega en la versión vigente del callback
+      engineRef.current.start((frequency) => handlePitchDetectionRef.current(frequency));
       setIsRunning(true);
     } catch (err) {
       console.error('Error starting tuner:', err);
       setError('No se pudo iniciar el afinador. ' + err.message);
     }
-  }, [isInitialized, isRunning, initialize, handlePitchDetection]);
+  }, [isInitialized, isRunning, initialize]);
 
   /**
    * Stop the tuner
