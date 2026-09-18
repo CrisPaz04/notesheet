@@ -53,3 +53,7 @@ ios/xcuserdata/
 
 # Local Netlify folder
 .netlify
+
+# Firebase auth exports (contienen PII y hashes de contrasena)
+users.json
+*-users-export.json

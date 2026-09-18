@@ -1,0 +1,80 @@
+rules_version = '2';
+
+// Reglas de seguridad de Firestore para NoteSheet.
+//
+// Modelo de permisos:
+//   - users/{uid}   : cada usuario lee y escribe SOLO su propio documento,
+//                     pero NO puede modificar su propio campo `role`.
+//                     El rol se asigna desde la consola de Firebase o con
+//                     el Admin SDK, nunca desde el cliente.
+//   - songs/{id}    : lectura para cualquier usuario autenticado (las listas
+//                     publicas referencian canciones de otros usuarios).
+//                     Escritura solo para usuarios con rol `editor` que
+//                     ademas sean dueños de la cancion.
+//   - playlists/{id}: lectura para el creador o si la lista es publica.
+//                     Escritura solo para el creador.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isSelf(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // Lee el rol desde el documento del usuario. Devuelve 'viewer' si el
+    // documento no existe todavia.
+    function userRole() {
+      return isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        ? get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('role', 'viewer')
+        : 'viewer';
+    }
+
+    function isEditor() {
+      return userRole() == 'editor';
+    }
+
+    // El campo `role` no puede cambiar en una escritura del propio usuario.
+    // Solo se usa en `update`, donde `resource` siempre existe.
+    function roleUnchanged() {
+      return !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role']);
+    }
+
+    match /users/{userId} {
+      allow read: if isSelf(userId);
+      allow create: if isSelf(userId) && !('role' in request.resource.data);
+      allow update: if isSelf(userId) && roleUnchanged();
+      allow delete: if false;
+    }
+
+    match /songs/{songId} {
+      allow read: if isSignedIn();
+      allow create: if isEditor()
+                    && request.resource.data.userId == request.auth.uid;
+      allow update: if isEditor()
+                    && resource.data.userId == request.auth.uid
+                    && request.resource.data.userId == resource.data.userId;
+      allow delete: if isEditor() && resource.data.userId == request.auth.uid;
+    }
+
+    match /playlists/{playlistId} {
+      allow read: if isSignedIn()
+                  && (resource.data.creatorId == request.auth.uid
+                      || resource.data.get('public', false) == true);
+      allow create: if isSignedIn()
+                    && request.resource.data.creatorId == request.auth.uid;
+      allow update: if isSignedIn()
+                    && resource.data.creatorId == request.auth.uid
+                    && request.resource.data.creatorId == resource.data.creatorId;
+      allow delete: if isSignedIn() && resource.data.creatorId == request.auth.uid;
+    }
+
+    // Todo lo demas queda denegado por defecto.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
