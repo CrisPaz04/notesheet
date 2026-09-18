@@ -2,13 +2,14 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { createSong, getSongById, updateSong, addVoiceToSong, removeVoiceFromSong } from "@notesheet/api";
+import { createSong, getSongById, updateSong } from "@notesheet/api";
 import { TRANSPOSING_INSTRUMENTS } from "@notesheet/core";
 import KeySelector from "../components/KeySelector";
 import LoadingSpinner from "../components/LoadingSpinner";
 import SimpleMDE from "react-simplemde-editor";
 import "easymde/dist/easymde.min.css";
 import TypeSelector from "../components/TypeSelector";
+import useSongVoices from "../hooks/useSongVoices";
 
 // Instrumentos soportados para voces adicionales
 const VOICE_INSTRUMENTS = Object.entries(TRANSPOSING_INSTRUMENTS)
@@ -26,19 +27,36 @@ function SongEditor() {
   const [error, setError] = useState("");
   const [isNewSong, setIsNewSong] = useState(true);
   
-  // Estado para voces adicionales
-  const [voices, setVoices] = useState({ bb_trumpet: { "1": "" } });
-  const [currentTab, setCurrentTab] = useState("bb_trumpet-1");
+  // Estado del gestor de voces (UI)
   const [showVoicesManager, setShowVoicesManager] = useState(false);
   const [newVoiceInstrument, setNewVoiceInstrument] = useState("bb_trumpet");
   const [newVoiceNumber, setNewVoiceNumber] = useState("1");
-  const [primaryInstrument, setPrimaryInstrument] = useState("bb_trumpet");
-  const [primaryVoiceNumber, setPrimaryVoiceNumber] = useState("1");
-  
+
   const { currentUser, canEditSongs } = useAuth();
   const navigate = useNavigate();
   const { id } = useParams();
   const editorRef = useRef(null);
+
+  // Alta/baja de voces, pestaña activa y contenido de cada una
+  const {
+    voices,
+    setVoices,
+    currentTab,
+    setCurrentTab,
+    primaryInstrument,
+    setPrimaryInstrument,
+    primaryVoiceNumber,
+    setPrimaryVoiceNumber,
+    addVoice,
+    removeVoice,
+    getCurrentTabContent,
+    updateCurrentTabContent
+  } = useSongVoices({
+    songId: id,
+    isNewSong,
+    onError: setError,
+    lyrics: { value: lyricsOnly, onChange: setLyricsOnly }
+  });
 
   // Al cargar, verifica si es una canción nueva o existente
   useEffect(() => {
@@ -199,75 +217,25 @@ function SongEditor() {
 
   // Funciones para manejar voces
   const handleAddVoice = async () => {
-    if (!newVoiceInstrument || !newVoiceNumber) return;
-    
-    if (voices[newVoiceInstrument] && voices[newVoiceInstrument][newVoiceNumber]) {
-      setError("Esta voz ya existe");
-      return;
-    }
-    
-    const updatedVoices = { ...voices };
-    
-    if (!updatedVoices[newVoiceInstrument]) {
-      updatedVoices[newVoiceInstrument] = {};
-    }
-    
-    const voiceContent = content;
-    updatedVoices[newVoiceInstrument][newVoiceNumber] = voiceContent;
-    
-    setVoices(updatedVoices);
-    
-    if (!isNewSong && id) {
-      try {
-        await addVoiceToSong(id, newVoiceInstrument, newVoiceNumber, voiceContent);
-      } catch (error) {
-        console.error("Error adding voice:", error);
-        setError("Error al añadir la voz: " + error.message);
-      }
-    }
-    
-    setCurrentTab(`${newVoiceInstrument}-${newVoiceNumber}`);
+    const added = await addVoice(newVoiceInstrument, newVoiceNumber, content);
+    if (!added) return;
+
     setNewVoiceInstrument("bb_trumpet");
     setNewVoiceNumber("1");
     setShowVoicesManager(false);
   };
-  
+
   const handleRemoveVoice = async (instrumentId, voiceNumber) => {
-    // Don't allow removing the primary voice
-    if (instrumentId === primaryInstrument && voiceNumber === primaryVoiceNumber) {
-      setError("No puedes eliminar la voz principal");
+    const isPrimary = instrumentId === primaryInstrument
+      && voiceNumber === primaryVoiceNumber;
+    const nombre = TRANSPOSING_INSTRUMENTS[instrumentId]?.name || instrumentId;
+
+    // La confirmación se queda aquí: el hook no toca el DOM
+    if (!isPrimary && !confirm(`¿Estás seguro de eliminar la voz ${voiceNumber} de ${nombre}?`)) {
       return;
     }
 
-    if (!confirm(`¿Estás seguro de eliminar la voz ${voiceNumber} de ${TRANSPOSING_INSTRUMENTS[instrumentId]?.name}?`)) {
-      return;
-    }
-
-    const updatedVoices = { ...voices };
-
-    if (updatedVoices[instrumentId] && updatedVoices[instrumentId][voiceNumber]) {
-      delete updatedVoices[instrumentId][voiceNumber];
-
-      if (Object.keys(updatedVoices[instrumentId]).length === 0) {
-        delete updatedVoices[instrumentId];
-      }
-
-      setVoices(updatedVoices);
-
-      if (!isNewSong && id) {
-        try {
-          await removeVoiceFromSong(id, instrumentId, voiceNumber);
-        } catch (error) {
-          console.error("Error removing voice:", error);
-          setError("Error al eliminar la voz: " + error.message);
-        }
-      }
-
-      // Switch to primary voice tab if current tab was removed
-      if (currentTab === `${instrumentId}-${voiceNumber}`) {
-        setCurrentTab(`${primaryInstrument}-${primaryVoiceNumber}`);
-      }
-    }
+    await removeVoice(instrumentId, voiceNumber);
   };
 
   // Función para generar automáticamente la letra
@@ -279,33 +247,6 @@ function SongEditor() {
 
   const handleTabChange = (tabId) => {
     setCurrentTab(tabId);
-  };
-
-  // Función para obtener el contenido de la pestaña actual
-  const getCurrentTabContent = () => {
-    if (currentTab === "lyrics") {
-      return lyricsOnly;
-    }
-
-    const [instrumentId, voiceNumber] = currentTab.split('-');
-    return voices[instrumentId]?.[voiceNumber] || "";
-  };
-  
-  // Función para actualizar el contenido de la pestaña actual
-  const updateCurrentTabContent = (newContent) => {
-    if (currentTab === "lyrics") {
-      setLyricsOnly(newContent);
-      return;
-    }
-
-    const [instrumentId, voiceNumber] = currentTab.split('-');
-
-    const updatedVoices = { ...voices };
-    if (!updatedVoices[instrumentId]) {
-      updatedVoices[instrumentId] = {};
-    }
-    updatedVoices[instrumentId][voiceNumber] = newContent;
-    setVoices(updatedVoices);
   };
 
   // Opciones para el editor SimpleMDE

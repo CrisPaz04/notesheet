@@ -1,23 +1,25 @@
 // apps/web/src/pages/SongView.jsx
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
-import { getSongById } from "@notesheet/api";
+import { getSongById, getUserPreferences, updateUserPreferences } from "@notesheet/api";
 import {
-  formatSong,
-  transposeContent,
-  convertNotationSystem,
   detectNotationSystem,
-  TRANSPOSING_INSTRUMENTS,
-  transposeForInstrument,
-  getVisualKeyForInstrument
+  getVisualKeyForInstrument,
+  renderSongContent,
+  buildVoicesList,
+  parseVoiceKey,
+  resolveInitialVoice,
+  SOURCE_INSTRUMENT,
+  TRANSPOSING_INSTRUMENTS
 } from "@notesheet/core";
 import { useAuth } from "../context/AuthContext";
-import { getUserPreferences, updateUserPreferences } from "@notesheet/api";
 import LoadingSpinner from "../components/LoadingSpinner";
 import Modal from "../components/Modal";
 import Metronome from "./Metronome";
 import Tuner from "./Tuner";
 import useModal from "../hooks/useModal";
+import useSwipeViews from "../hooks/useSwipeViews";
+import useFontSizePreference from "../hooks/useFontSizePreference";
 
 // Arrays de pares de tonalidades relativas
 const RELATIVE_KEYS = [
@@ -39,393 +41,210 @@ const RELATIVE_KEYS = [
 ];
 
 function SongView() {
+  // --- Canción y estado de carga ---
   const [song, setSong] = useState(null);
   const [formattedSong, setFormattedSong] = useState(null);
   const [formattedLyricsOnly, setFormattedLyricsOnly] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  
-  // Referencias a tonalidades
-  const [baseKey, setBaseKey] = useState("");
-  const [displayKey, setDisplayKey] = useState("");
-  const [targetKey, setTargetKey] = useState("");
-  
-  const [originalContent, setOriginalContent] = useState("");
-  const [fontSize, setFontSize] = useState(18);
-  const [notationSystem, setNotationSystem] = useState("latin");
-  const [currentInstrument, setCurrentInstrument] = useState("bb_trumpet");
-  const [selectedVoiceKey, setSelectedVoiceKey] = useState(null); // e.g., "bb_trumpet-1"
-  const [availableVoicesList, setAvailableVoicesList] = useState([]); // Flat list of available voices
-  const [showVoiceDropdown, setShowVoiceDropdown] = useState(false);
-  
-  // Estado para la vista dual
-  const [activeView, setActiveView] = useState(0); // 0 = Acordes, 1 = Letra
-  const [touchStart, setTouchStart] = useState(null);
-  const [touchEnd, setTouchEnd] = useState(null);
 
-  // Estados para dropdowns
+  // --- Tonalidades ---
+  const [baseKey, setBaseKey] = useState("");       // tonalidad escrita
+  const [displayKey, setDisplayKey] = useState(""); // la que ve el instrumentista
+  const [targetKey, setTargetKey] = useState("");   // a la que se transpone
+
+  // --- Contenido y presentación ---
+  const [originalContent, setOriginalContent] = useState("");
+  const [notationSystem, setNotationSystem] = useState("latin");
+  const [currentInstrument, setCurrentInstrument] = useState(SOURCE_INSTRUMENT);
+  const [selectedVoiceKey, setSelectedVoiceKey] = useState(null); // ej. "bb_trumpet-1"
+  const [availableVoicesList, setAvailableVoicesList] = useState([]);
+
+  // --- Dropdowns ---
+  const [showVoiceDropdown, setShowVoiceDropdown] = useState(false);
   const [showKeyDropdown, setShowKeyDropdown] = useState(false);
   const [showInstrumentDropdown, setShowInstrumentDropdown] = useState(false);
   const [showNotationDropdown, setShowNotationDropdown] = useState(false);
 
-  // Modal de herramientas
   const metronomeModal = useModal();
   const tunerModal = useModal();
 
-  // Referencias para posiciones de scroll
-  const chordsScrollPosition = useRef(0);
-  const lyricsScrollPosition = useRef(0);
-  const chordsViewRef = useRef(null);
-  const lyricsViewRef = useRef(null);
-  
   const { id } = useParams();
   const { currentUser, canEditSongs } = useAuth();
 
-  // Función para extraer solo la letra de una canción
-  const extractLyricsOnly = (formattedSongData) => {
-    if (!formattedSongData || !formattedSongData.sections) return null;
-    
-    const lyricsOnlySections = formattedSongData.sections.map(section => {
-      const newSection = { ...section };
-      
-      newSection.content = section.content
-        .replace(/\b(DO|RE|MI|FA|SOL|LA|SI|C|D|E|F|G|A|B)(#|b)?(m)?(?![#b\w])/g, '')
-        .replace(/\|\s*\|/g, '')
-        .replace(/\s{2,}/g, ' ')
-        .trim();
-      
-      return newSection;
+  const {
+    fontSize,
+    setFontSize,
+    increaseFontSize,
+    decreaseFontSize,
+    resetFontSize
+  } = useFontSizePreference(currentUser);
+
+  const {
+    activeView,
+    goToView: setActiveView,
+    viewRefs,
+    handleTouchStart,
+    handleTouchMove,
+    handleTouchEnd
+  } = useSwipeViews(2);
+  const [chordsViewRef, lyricsViewRef] = viewRefs;
+
+  /**
+   * Ejecuta el pipeline de renderizado y vuelca el resultado en el estado.
+   * Los `overrides` hacen falta porque setState es asincrono: cuando un
+   * handler acaba de cambiar la tonalidad o el instrumento, el valor nuevo
+   * todavia no esta en el estado de este render.
+   */
+  const applyRender = (content, overrides = {}) => {
+    const rendered = renderSongContent(content, {
+      baseKey,
+      targetKey,
+      instrument: currentInstrument,
+      notationSystem,
+      ...overrides
     });
-    
-    return {
-      ...formattedSongData,
-      sections: lyricsOnlySections
-    };
+
+    setFormattedSong(rendered.formatted);
+    setFormattedLyricsOnly(rendered.lyricsOnly);
+    setDisplayKey(rendered.displayKey);
   };
 
-  // Cargar canción y preferencias de usuario
+  // Cargar canción y preferencias de usuario.
   useEffect(() => {
+    if (!id) return;
+
     const loadSong = async () => {
       try {
         setLoading(true);
-        
-        // Cargar preferencias del usuario si está autenticado
+
+        // Las preferencias mandan sobre los valores por defecto, pero el
+        // estado todavía no las refleja en este render: las arrastramos en
+        // variables locales para pasárselas al pipeline.
+        let instrument = currentInstrument;
+        let notation = notationSystem;
+
         if (currentUser) {
           try {
             const prefs = await getUserPreferences(currentUser.uid);
             if (prefs.defaultInstrument) {
-              setCurrentInstrument(prefs.defaultInstrument);
+              instrument = prefs.defaultInstrument;
+              setCurrentInstrument(instrument);
             }
             if (prefs.defaultNotationSystem) {
-              setNotationSystem(prefs.defaultNotationSystem);
+              notation = prefs.defaultNotationSystem;
+              setNotationSystem(notation);
             }
             if (prefs.defaultFontSize) {
               setFontSize(prefs.defaultFontSize);
             }
-          } catch (error) {
-            console.error("Error loading user preferences:", error);
+          } catch (prefsError) {
+            console.error("Error loading user preferences:", prefsError);
           }
         }
-        
-        // Cargar la canción
+
         const loadedSong = await getSongById(id);
         setSong(loadedSong);
-        
-        // Establecer tonalidad base
+
         const songKey = loadedSong.key || "DO";
         setBaseKey(songKey);
         setTargetKey(songKey);
-        
-        // Build flat list of available voices from song.voices
-        const voicesList = [];
-        if (loadedSong.voices && Object.keys(loadedSong.voices).length > 0) {
-          Object.entries(loadedSong.voices).forEach(([instrumentId, instrumentVoices]) => {
-            Object.keys(instrumentVoices).sort().forEach(voiceNumber => {
-              const instrumentName = TRANSPOSING_INSTRUMENTS[instrumentId]?.name || instrumentId;
-              voicesList.push({
-                id: `${instrumentId}-${voiceNumber}`,
-                instrumentId,
-                voiceNumber,
-                label: `${instrumentName} ${voiceNumber}`
-              });
-            });
-          });
-        }
-        setAvailableVoicesList(voicesList);
 
-        // Determinar qué contenido mostrar
-        let contentToLoad;
-        let voiceKeyToSelect = selectedVoiceKey;
+        setAvailableVoicesList(buildVoicesList(loadedSong.voices, TRANSPOSING_INSTRUMENTS));
 
-        // If we have a selected voice key, use it
-        if (selectedVoiceKey && loadedSong.voices) {
-          const lastDash = selectedVoiceKey.lastIndexOf('-');
-          const instId = selectedVoiceKey.substring(0, lastDash);
-          const voiceNum = selectedVoiceKey.substring(lastDash + 1);
-          if (loadedSong.voices[instId] && loadedSong.voices[instId][voiceNum]) {
-            contentToLoad = loadedSong.voices[instId][voiceNum];
-          }
+        const { content, voiceKey } = resolveInitialVoice(loadedSong, selectedVoiceKey);
+        setSelectedVoiceKey(voiceKey);
+        setOriginalContent(content);
+
+        // Sin usuario no hay preferencia guardada: deducir el sistema
+        if (!currentUser) {
+          notation = detectNotationSystem(content);
+          setNotationSystem(notation);
         }
 
-        // If no content yet, use primary voice or first available
-        if (!contentToLoad && loadedSong.voices && Object.keys(loadedSong.voices).length > 0) {
-          const primaryInst = loadedSong.primaryInstrument || Object.keys(loadedSong.voices)[0];
-          const primaryVoice = loadedSong.primaryVoiceNumber || Object.keys(loadedSong.voices[primaryInst])[0];
-          if (loadedSong.voices[primaryInst] && loadedSong.voices[primaryInst][primaryVoice]) {
-            contentToLoad = loadedSong.voices[primaryInst][primaryVoice];
-            voiceKeyToSelect = `${primaryInst}-${primaryVoice}`;
-          } else {
-            contentToLoad = loadedSong.content || "";
-            voiceKeyToSelect = null;
-          }
-        } else if (!contentToLoad) {
-          contentToLoad = loadedSong.content || "";
-          voiceKeyToSelect = null;
-        }
-
-        // Always set selectedVoiceKey to ensure header displays correctly on initial load
-        setSelectedVoiceKey(voiceKeyToSelect);
-        
-        // Guardar el contenido original
-        setOriginalContent(contentToLoad);
-        
-        // Detectar sistema de notación si no se especifica
-        if (!currentUser || !notationSystem) {
-          const detectedSystem = detectNotationSystem(contentToLoad);
-          setNotationSystem(detectedSystem);
-        }
-        
-        // Establecer tonalidad visual según el instrumento
-        const visualKey = getVisualKeyForInstrument(songKey, currentInstrument);
-        setDisplayKey(visualKey);
-        
-        // Preparar contenido para mostrar
-        let contentToShow = contentToLoad;
-        
-        if (currentInstrument !== "bb_trumpet") {
-          contentToShow = transposeForInstrument(
-            contentToShow,
-            "bb_trumpet", 
-            currentInstrument
-          );
-        }
-        
-        if (notationSystem === "english") {
-          contentToShow = convertNotationSystem(contentToShow, "english");
-        }
-        
-        // Formatear para visualización
-        const formatted = formatSong(contentToShow);
-        setFormattedSong(formatted);
-        
-        // Crear versión de solo letras
-        const lyricsOnly = extractLyricsOnly(formatted);
-        setFormattedLyricsOnly(lyricsOnly);
-      } catch (error) {
-        setError("Error al cargar la canción: " + error.message);
-        console.error("Error loading song:", error);
+        applyRender(content, {
+          baseKey: songKey,
+          targetKey: songKey,
+          instrument,
+          notationSystem: notation
+        });
+      } catch (loadError) {
+        setError("Error al cargar la canción: " + loadError.message);
+        console.error("Error loading song:", loadError);
       } finally {
         setLoading(false);
       }
     };
 
-    if (id) {
-      loadSong();
-    }
-  }, [id, currentUser, currentInstrument]); // Don't include selectedVoiceKey - it's managed by handleVoiceChange
+    loadSong();
+    // applyRender y los setters se recrean en cada render, y selectedVoiceKey
+    // lo gestiona handleVoiceChange: incluirlos relanzaría la carga en bucle.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id, currentUser, currentInstrument]);
 
-  // Eventos táctiles para el swipe
-  const handleTouchStart = (e) => {
-    setTouchEnd(null);
-    setTouchStart(e.targetTouches[0].clientX);
-  };
-
-  const handleTouchMove = (e) => {
-    setTouchEnd(e.targetTouches[0].clientX);
-  };
-
-  const handleTouchEnd = () => {
-    if (!touchStart || !touchEnd) return;
-    
-    if (activeView === 0 && chordsViewRef.current) {
-      chordsScrollPosition.current = chordsViewRef.current.scrollTop;
-    } else if (activeView === 1 && lyricsViewRef.current) {
-      lyricsScrollPosition.current = lyricsViewRef.current.scrollTop;
-    }
-    
-    const distance = touchStart - touchEnd;
-    const isSwipeLeft = distance > 100;
-    const isSwipeRight = distance < -100;
-    
-    if (isSwipeLeft && activeView === 0) {
-      setActiveView(1);
-    } else if (isSwipeRight && activeView === 1) {
-      setActiveView(0);
-    }
-  };
-
-  // Restaurar posición de scroll después de cambiar vista
-  useEffect(() => {
-    if (activeView === 0 && chordsViewRef.current) {
-      setTimeout(() => {
-        if (chordsViewRef.current) {
-          chordsViewRef.current.scrollTop = chordsScrollPosition.current;
-        }
-      }, 10);
-    } else if (activeView === 1 && lyricsViewRef.current) {
-      setTimeout(() => {
-        if (lyricsViewRef.current) {
-          lyricsViewRef.current.scrollTop = lyricsScrollPosition.current;
-        }
-      }, 10);
-    }
-  }, [activeView]);
-
-  // Función para transposición
+  // Transponer a otra tonalidad
   const handleTranspose = (newKey) => {
     if (newKey === targetKey || !song || !originalContent) return;
-    
+
     try {
       setTargetKey(newKey);
-      
-      let transposedContent = transposeContent(originalContent, baseKey, newKey);
-      
-      if (currentInstrument !== "bb_trumpet") {
-        transposedContent = transposeForInstrument(
-          transposedContent,
-          "bb_trumpet", 
-          currentInstrument
-        );
-      }
-      
-      if (notationSystem === "english") {
-        transposedContent = convertNotationSystem(transposedContent, "english");
-      }
-      
-      const visualKey = getVisualKeyForInstrument(newKey, currentInstrument);
-      setDisplayKey(visualKey);
-      
-      const formatted = formatSong(transposedContent);
-      setFormattedSong(formatted);
-      
-      const lyricsOnly = extractLyricsOnly(formatted);
-      setFormattedLyricsOnly(lyricsOnly);
-      
       setShowKeyDropdown(false);
-    } catch (error) {
-      setError("Error al transponer: " + error.message);
-      console.error("Error completo:", error);
+      applyRender(originalContent, { targetKey: newKey });
+    } catch (transposeError) {
+      setError("Error al transponer: " + transposeError.message);
+      console.error("Error completo:", transposeError);
     }
   };
 
-  // Función para restaurar tonalidad original
   const resetTransposition = () => {
-    if (targetKey !== baseKey) {
-      handleTranspose(baseKey);
-    }
+    if (targetKey !== baseKey) handleTranspose(baseKey);
   };
 
-  // Función para cambiar sistema de notación
+  // Cambiar entre notación latina y anglosajona
   const handleChangeNotation = (system) => {
     if (system === notationSystem || !song) return;
-    
+
     try {
       setNotationSystem(system);
       setShowNotationDropdown(false);
-      
+
       if (currentUser) {
-        try {
-          updateUserPreferences(currentUser.uid, {
-            defaultNotationSystem: system
-          });
-        } catch (error) {
-          console.error("Error saving notation preference:", error);
-        }
+        updateUserPreferences(currentUser.uid, { defaultNotationSystem: system })
+          .catch((prefError) => console.error("Error saving notation preference:", prefError));
       }
-      
-      let contentToProcess = originalContent;
-      
-      if (targetKey !== baseKey) {
-        contentToProcess = transposeContent(contentToProcess, baseKey, targetKey);
-      }
-      
-      if (currentInstrument !== "bb_trumpet") {
-        contentToProcess = transposeForInstrument(
-          contentToProcess,
-          "bb_trumpet", 
-          currentInstrument
-        );
-      }
-      
-      contentToProcess = convertNotationSystem(contentToProcess, system);
-      
-      const formatted = formatSong(contentToProcess);
-      setFormattedSong(formatted);
-      
-      const lyricsOnly = extractLyricsOnly(formatted);
-      setFormattedLyricsOnly(lyricsOnly);
-    } catch (error) {
-      setError("Error al cambiar sistema de notación: " + error.message);
-      console.error("Error completo:", error);
+
+      applyRender(originalContent, { notationSystem: system });
+    } catch (notationError) {
+      setError("Error al cambiar sistema de notación: " + notationError.message);
+      console.error("Error completo:", notationError);
     }
   };
-  
-  // Función para cambiar de voz (seleccionar qué parte leer)
-  const handleVoiceChange = (voiceKey) => {
-    // Close dropdown immediately
-    setShowVoiceDropdown(false);
 
-    // If clicking the same voice, just close dropdown without doing anything else
+  // Cambiar de voz (qué parte se está leyendo)
+  const handleVoiceChange = (voiceKey) => {
+    setShowVoiceDropdown(false);
     if (voiceKey === selectedVoiceKey) return;
 
     try {
-      // Use lastIndexOf for safer parsing (handles instrument IDs with dashes)
-      const lastDash = voiceKey.lastIndexOf('-');
-      const instrumentId = voiceKey.substring(0, lastDash);
-      const voiceNumber = voiceKey.substring(lastDash + 1);
+      const parsed = parseVoiceKey(voiceKey);
+      const content = parsed && song.voices?.[parsed.instrumentId]?.[parsed.voiceNumber];
 
-      if (!song.voices || !song.voices[instrumentId] || !song.voices[instrumentId][voiceNumber]) {
+      if (!content) {
         setError("Voz no encontrada");
         return;
       }
 
       setSelectedVoiceKey(voiceKey);
-
-      // Load the voice content
-      let contentToProcess = song.voices[instrumentId][voiceNumber];
-      setOriginalContent(contentToProcess);
-
-      // Apply transposition if needed
-      if (targetKey !== baseKey) {
-        contentToProcess = transposeContent(contentToProcess, baseKey, targetKey);
-      }
-
-      // Apply instrument transposition for display
-      if (currentInstrument !== "bb_trumpet") {
-        contentToProcess = transposeForInstrument(
-          contentToProcess,
-          "bb_trumpet",
-          currentInstrument
-        );
-      }
-
-      if (notationSystem === "english") {
-        contentToProcess = convertNotationSystem(contentToProcess, "english");
-      }
-
-      const formatted = formatSong(contentToProcess);
-      setFormattedSong(formatted);
-
-      const lyricsOnly = extractLyricsOnly(formatted);
-      setFormattedLyricsOnly(lyricsOnly);
-    } catch (error) {
-      setError("Error al cambiar de voz: " + error.message);
-      console.error("Error completo:", error);
+      setOriginalContent(content);
+      applyRender(content);
+    } catch (voiceError) {
+      setError("Error al cambiar de voz: " + voiceError.message);
+      console.error("Error completo:", voiceError);
     }
   };
 
-  // Función para cambiar de instrumento (transponer a otro instrumento)
-  const handleInstrumentChange = async (instrumentId) => {
+  // Cambiar de instrumento (transposición de lectura)
+  const handleInstrumentChange = (instrumentId) => {
     if (instrumentId === currentInstrument) return;
 
     try {
@@ -433,95 +252,14 @@ function SongView() {
       setShowInstrumentDropdown(false);
 
       if (currentUser) {
-        try {
-          await updateUserPreferences(currentUser.uid, {
-            defaultInstrument: instrumentId
-          });
-        } catch (error) {
-          console.error("Error saving instrument preference:", error);
-        }
+        updateUserPreferences(currentUser.uid, { defaultInstrument: instrumentId })
+          .catch((prefError) => console.error("Error saving instrument preference:", prefError));
       }
 
-      // Use the current voice content, not song.content
-      let contentToProcess = originalContent;
-
-      if (targetKey !== baseKey) {
-        contentToProcess = transposeContent(contentToProcess, baseKey, targetKey);
-      }
-
-      if (instrumentId !== "bb_trumpet") {
-        contentToProcess = transposeForInstrument(
-          contentToProcess,
-          "bb_trumpet",
-          instrumentId
-        );
-      }
-
-      if (notationSystem === "english") {
-        contentToProcess = convertNotationSystem(contentToProcess, "english");
-      }
-
-      const visualKey = getVisualKeyForInstrument(targetKey, instrumentId);
-      setDisplayKey(visualKey);
-
-      const formatted = formatSong(contentToProcess);
-      setFormattedSong(formatted);
-
-      const lyricsOnly = extractLyricsOnly(formatted);
-      setFormattedLyricsOnly(lyricsOnly);
-    } catch (error) {
-      setError("Error al cambiar de instrumento: " + error.message);
-      console.error("Error completo:", error);
-    }
-  };
-
-  // Funciones para ajustar tamaño de texto
-  const increaseFontSize = () => {
-    if (fontSize < 24) {
-      const newSize = fontSize + 2;
-      setFontSize(newSize);
-      
-      if (currentUser) {
-        try {
-          updateUserPreferences(currentUser.uid, {
-            defaultFontSize: newSize
-          });
-        } catch (error) {
-          console.error("Error saving font size preference:", error);
-        }
-      }
-    }
-  };
-
-  const decreaseFontSize = () => {
-    if (fontSize > 14) {
-      const newSize = fontSize - 2;
-      setFontSize(newSize);
-      
-      if (currentUser) {
-        try {
-          updateUserPreferences(currentUser.uid, {
-            defaultFontSize: newSize
-          });
-        } catch (error) {
-          console.error("Error saving font size preference:", error);
-        }
-      }
-    }
-  };
-
-  const resetFontSize = () => {
-    const defaultSize = 18;
-    setFontSize(defaultSize);
-    
-    if (currentUser) {
-      try {
-        updateUserPreferences(currentUser.uid, {
-          defaultFontSize: defaultSize
-        });
-      } catch (error) {
-        console.error("Error saving font size preference:", error);
-      }
+      applyRender(originalContent, { instrument: instrumentId });
+    } catch (instrumentError) {
+      setError("Error al cambiar de instrumento: " + instrumentError.message);
+      console.error("Error completo:", instrumentError);
     }
   };
 
@@ -533,8 +271,8 @@ function SongView() {
     return (
       <div className="song-view-container">
         <div className="container">
-          <LoadingSpinner 
-            text="Cargando canción..." 
+          <LoadingSpinner
+            text="Cargando canción..."
             subtext="Preparando la vista musical"
           />
         </div>
