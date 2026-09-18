@@ -1,23 +1,25 @@
-﻿// apps/web/src/App.jsx
+// apps/web/src/App.jsx
+import { lazy, Suspense } from "react";
 import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import { useTheme } from "./hooks/useTheme";
 import { useAuth } from "./context/AuthContext";
+import LoadingSpinner from "./components/LoadingSpinner";
 
-// Páginas
-import Home from "./pages/Home";
-import Login from "./pages/Login";
-import Register from "./pages/Register";
-import Dashboard from "./pages/Dashboard";
-import SongEditor from "./pages/SongEditor";
-import SongView from "./pages/SongView";
-import NotFound from "./pages/NotFound";
-import UserPreferences from "./pages/UserPreferences";
-import PlaylistsList from "./pages/PlaylistsList";
-import PlaylistEditor from "./pages/PlaylistEditor";
-import PlaylistView from "./pages/PlaylistView";
-import Metronome from "./pages/Metronome";
-import Tuner from "./pages/Tuner";
+// Páginas (carga diferida: cada ruta viaja en su propio chunk)
+const Home = lazy(() => import("./pages/Home"));
+const Login = lazy(() => import("./pages/Login"));
+const Register = lazy(() => import("./pages/Register"));
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const SongEditor = lazy(() => import("./pages/SongEditor"));
+const SongView = lazy(() => import("./pages/SongView"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+const UserPreferences = lazy(() => import("./pages/UserPreferences"));
+const PlaylistsList = lazy(() => import("./pages/PlaylistsList"));
+const PlaylistEditor = lazy(() => import("./pages/PlaylistEditor"));
+const PlaylistView = lazy(() => import("./pages/PlaylistView"));
+const Metronome = lazy(() => import("./pages/Metronome"));
+const Tuner = lazy(() => import("./pages/Tuner"));
 
 // Componentes
 import Navbar from "./components/Navbar";
@@ -59,10 +61,10 @@ function AppLayout() {
   
   const isAuthPage = authPages.includes(location.pathname);
   const isFullScreenPage = fullScreenPages.includes(location.pathname) || 
-                       location.pathname.match(/^\/songs\/[^\/]+\/edit$/) ||
-                       location.pathname.match(/^\/songs\/[^\/]+$/) ||
-                       location.pathname.match(/^\/playlists\/[^\/]+$/) ||
-                       location.pathname.match(/^\/playlists\/[^\/]+\/edit$/) ||
+                       location.pathname.match(/^\/songs\/[^/]+\/edit$/) ||
+                       location.pathname.match(/^\/songs\/[^/]+$/) ||
+                       location.pathname.match(/^\/playlists\/[^/]+$/) ||
+                       location.pathname.match(/^\/playlists\/[^/]+\/edit$/) ||
                        // Detectar rutas 404 (rutas que no están definidas en nuestro sistema)
                        (location.pathname !== '/' && 
                         location.pathname !== '/home' && 
@@ -75,8 +77,8 @@ function AppLayout() {
                         location.pathname !== '/preferences' &&
                         location.pathname !== '/metronome' &&
                         location.pathname !== '/tuner' &&
-                        !location.pathname.match(/^\/songs\/[^\/]+/) &&
-                        !location.pathname.match(/^\/playlists\/[^\/]+/));                      
+                        !location.pathname.match(/^\/songs\/[^/]+/) &&
+                        !location.pathname.match(/^\/playlists\/[^/]+/));                      
   
   return (
     <div className={`d-flex flex-column min-vh-100 ${theme === 'dark' ? 'bg-dark text-light' : ''}`}>
@@ -84,6 +86,7 @@ function AppLayout() {
       {!isAuthPage && <Navbar />}
       
       <main className={`flex-grow-1 ${isFullScreenPage ? '' : 'container py-4'}`}>
+        <Suspense fallback={<LoadingSpinner />}>
         <Routes>
           {/* Todas tus rutas existentes */}
           <Route path="/" element={<RootRedirect />} />
@@ -139,6 +142,7 @@ function AppLayout() {
           } />
           <Route path="*" element={<NotFound />} />
         </Routes>
+        </Suspense>
       </main>
       
       {/* Solo mostrar footer si NO estamos en páginas de auth */}
