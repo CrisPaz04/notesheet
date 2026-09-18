@@ -6,12 +6,12 @@ import { createPlaylist, getPlaylistById, updatePlaylist, getAllSongs } from "@n
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import LoadingSpinner from "../components/LoadingSpinner";
 import PlaylistKeySelector from "../components/PlaylistKeySelector";
+import useSelectedSongs from "../hooks/useSelectedSongs";
 
 function PlaylistEditor() {
   const [name, setName] = useState("");
   const [date, setDate] = useState("");
   const [isPublic, setIsPublic] = useState(false);
-  const [selectedSongs, setSelectedSongs] = useState([]);
   const [availableSongs, setAvailableSongs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -20,6 +20,16 @@ function PlaylistEditor() {
   const { currentUser } = useAuth();
   const navigate = useNavigate();
   const { id } = useParams();
+
+  // Canciones de la lista: alta, baja, tonalidad propia y orden
+  const {
+    selectedSongs,
+    setSelectedSongs,
+    addSong,
+    removeSong,
+    changeKey,
+    handleDragEnd
+  } = useSelectedSongs();
 
   // Al cargar, verifica si es una playlist nueva o existente
   useEffect(() => {
@@ -52,6 +62,12 @@ function PlaylistEditor() {
     };
 
     initialize();
+    // loadPlaylist solo se usa aquí y su única dependencia inestable en
+    // apariencia es setSelectedSongs, que es el setter de useState que
+    // devuelve useSelectedSongs: es estable, pero ESLint no puede
+    // demostrarlo al cruzar la frontera del hook. Incluirlo relanzaría la
+    // carga en cada render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, currentUser]);
 
   // Cargar una playlist existente
@@ -115,56 +131,6 @@ function PlaylistEditor() {
     } finally {
       setLoading(false);
     }
-  };
-
-  // Añadir canción a la lista
-  const addSong = (song) => {
-    // Verificar si la canción ya está en la lista
-    const exists = selectedSongs.some(s => s.id === song.id);
-    if (exists) return;
-    
-    // Añadir la canción con su tonalidad original
-    setSelectedSongs([...selectedSongs, {
-      id: song.id,
-      title: song.title,
-      key: song.key,
-      originalKey: song.key
-    }]);
-  };
-
-  // Quitar canción de la lista
-  const removeSong = (songId) => {
-    setSelectedSongs(selectedSongs.filter(song => song.id !== songId));
-  };
-
-  // Cambiar tonalidad de una canción en la lista
-  const changeKey = (songId, newKey) => {
-    setSelectedSongs(selectedSongs.map(song => {
-      if (song.id === songId) {
-        return { ...song, key: newKey };
-      }
-      return song;
-    }));
-  };
-
-  // Handler para cuando se completa una acción de arrastrar y soltar
-  const handleDragEnd = (result) => {
-    // Si se suelta fuera de un área válida
-    if (!result.destination) {
-      return;
-    }
-
-    // Si se suelta en la misma posición
-    if (result.destination.index === result.source.index) {
-      return;
-    }
-
-    // Reordenar la lista
-    const reorderedSongs = Array.from(selectedSongs);
-    const [movedSong] = reorderedSongs.splice(result.source.index, 1);
-    reorderedSongs.splice(result.destination.index, 0, movedSong);
-
-    setSelectedSongs(reorderedSongs);
   };
 
   if (loading) {
