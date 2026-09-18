@@ -9,7 +9,8 @@ import {
   detectNotationSystem,
   TRANSPOSING_INSTRUMENTS,
   transposeForInstrument,
-  getVisualKeyForInstrument
+  getVisualKeyForInstrument,
+  splitChordSegment
 } from "@notesheet/core";
 import { useAuth } from "../context/AuthContext";
 import { getUserPreferences, updateUserPreferences } from "@notesheet/api";
@@ -88,10 +89,14 @@ function SongView() {
     const lyricsOnlySections = formattedSongData.sections.map(section => {
       const newSection = { ...section };
       
+      // Quitar las líneas de acordes completas y conservar solo la letra.
+      // splitChordSegment distingue acordes de letra, así "LAm" o "Cmaj7"
+      // desaparecen sin tocar palabras como "Amor" o "Dame".
       newSection.content = section.content
-        .replace(/\b(DO|RE|MI|FA|SOL|LA|SI|C|D|E|F|G|A|B)(#|b)?(m)?(?![#b\w])/g, '')
-        .replace(/\|\s*\|/g, '')
-        .replace(/\s{2,}/g, ' ')
+        .split("\n")
+        .map(line => (splitChordSegment(line) ? "" : line))
+        .join("\n")
+        .replace(/\n{3,}/g, "\n\n")
         .trim();
       
       return newSection;

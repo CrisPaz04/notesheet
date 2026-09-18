@@ -1,3 +1,5 @@
+import { mapChordLine, splitChordSegment } from './chords';
+
 /**
  * Convierte la notación de una canción entre sistemas latinos y anglosajones
  * @param {string} content - Contenido de la canción con notación musical
@@ -8,32 +10,31 @@ export const convertNotationSystem = (content, targetSystem) => {
   const latinToEnglish = {
     'DO': 'C', 'DO#': 'C#', 'DOb': 'Cb',
     'RE': 'D', 'RE#': 'D#', 'REb': 'Db',
-    'MI': 'E', 'MIb': 'Eb',
+    'MI': 'E', 'MIb': 'Eb', 'MI#': 'E#',
     'FA': 'F', 'FA#': 'F#', 'FAb': 'Fb',
     'SOL': 'G', 'SOL#': 'G#', 'SOLb': 'Gb',
     'LA': 'A', 'LA#': 'A#', 'LAb': 'Ab',
-    'SI': 'B', 'SIb': 'Bb'
+    'SI': 'B', 'SIb': 'Bb', 'SI#': 'B#'
   };
 
   const englishToLatin = {
     'C': 'DO', 'C#': 'DO#', 'Cb': 'DOb',
     'D': 'RE', 'D#': 'RE#', 'Db': 'REb',
-    'E': 'MI', 'Eb': 'MIb',
+    'E': 'MI', 'Eb': 'MIb', 'E#': 'MI#',
     'F': 'FA', 'F#': 'FA#', 'Fb': 'FAb',
     'G': 'SOL', 'G#': 'SOL#', 'Gb': 'SOLb',
     'A': 'LA', 'A#': 'LA#', 'Ab': 'LAb',
-    'B': 'SI', 'Bb': 'SIb'
+    'B': 'SI', 'Bb': 'SIb', 'B#': 'SI#'
   };
 
   const conversionMap = targetSystem === 'latin' ? englishToLatin : latinToEnglish;
   
-  // Expresión regular para detectar notas musicales en ambos sistemas
-  // Usamos lookahead negativo para evitar problemas con \b y accidentales
-  const noteRegex = /\b(DO|RE|MI|FA|SOL|LA|SI|C|D|E|F|G|A|B)(#|b)?(?![#b\w])/g;
-  
-  return content.replace(noteRegex, (match) => {
-    return conversionMap[match] || match;
-  });
+  // Convertimos línea por línea: solo se transforman las líneas de acordes, así
+  // que los sufijos ("LAm", "Cmaj7", "DO7") se conservan y la letra queda intacta.
+  return content
+    .split('\n')
+    .map(line => mapChordLine(line, root => conversionMap[root] || root))
+    .join('\n');
 };
 
 /**
@@ -163,11 +164,15 @@ export const extractLyricsOnly = (content) => {
       return line;
     }
     
-    // Eliminar acordes (palabras que coinciden con patrones de acordes)
-    return line.replace(/\b(DO|RE|MI|FA|SOL|LA|SI|C|D|E|F|G|A|B)(#|b)?(m)?(?![#b\w])/g, '')
-               .replace(/\|\s*\|/g, '') // Eliminar barras dobles vacías
-               .replace(/\s{2,}/g, ' ') // Reemplazar múltiples espacios por uno solo
-               .trim();
+    // Eliminar las líneas de acordes completas, conservando su etiqueta si la
+    // tienen ("Intro: C - G - Am" -> "Intro:"). La letra queda intacta.
+    const segment = splitChordSegment(line);
+    if (!segment) return line;
+
+    return segment.prefix
+      .replace(/\|\s*\|/g, '') // Eliminar barras dobles vacías
+      .replace(/\s{2,}/g, ' ') // Reemplazar múltiples espacios por uno solo
+      .trim();
   });
   
   // Eliminar líneas vacías consecutivas
