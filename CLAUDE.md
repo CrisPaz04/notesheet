@@ -58,9 +58,17 @@ packages/ui/          # Shared UI components (planned)
 
 **Audio:** Web Audio API via `packages/core/src/audio/` for metronome synthesis and pitch detection.
 
+## Security Rules
+
+Firestore rules live in `firestore.rules` (deploy with `npx firebase-tools deploy --only firestore`).
+The `role` field on `users/{uid}` is **not** writable by the user — assign roles from the Firebase
+console or the Admin SDK. Client-side `EditorRoute` / `canEditSongs` are UX only; the rules are the
+actual permission boundary.
+
 ## Environment Variables
 
-Vite requires `VITE_` prefix. Firebase credentials go in `.env` (see `.env.example`):
+Vite requires `VITE_` prefix. Firebase credentials go in the **repo-root** `.env` (see `.env.example`);
+`apps/web/vite.config.js` sets `envDir` to the monorepo root so Vite picks it up:
 
 ```
 VITE_FIREBASE_API_KEY
@@ -83,6 +91,10 @@ Netlify auto-deploys from `master` branch. Configuration in `netlify.toml`:
 ## Notes
 
 - No TypeScript - pure JavaScript
-- No test framework configured
+- Vitest configured; 206 tests in `apps/web/src/test/` (run with `pnpm test:run`)
+- The song rendering pipeline (transposición → instrumento → notación → formato)
+  lives in `packages/core/src/music/songRendering.js`. Úsalo en vez de encadenar
+  `transposeContent` / `transposeForInstrument` / `convertNotationSystem` a mano.
+- `packages/ui` sigue vacío a propósito (ver el comentario en su `index.js`)
 - Spanish comments appear in some files
 - Mobile app (React Native) is planned but not yet implemented
