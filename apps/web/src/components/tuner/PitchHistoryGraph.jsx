@@ -9,7 +9,6 @@ function PitchHistoryGraph({
   history,
   trend,
   stabilityRating,
-  averageCents,
   isRunning
 }) {
   // Graph dimensions - full width, compact height

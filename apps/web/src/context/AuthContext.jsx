@@ -1,5 +1,5 @@
 ﻿import { createContext, useState, useEffect, useContext } from 'react';
-import { auth, signIn, signOut, registerUser, authStateListener, signInWithGoogle, getUserRole } from '@notesheet/api';
+import { signIn, signOut, registerUser, authStateListener, signInWithGoogle, getUserRole } from '@notesheet/api';
 
 // Crear el contexto
 const AuthContext = createContext(null);
@@ -30,36 +30,20 @@ export function AuthProvider({ children }) {
 
   // Funciones de autenticación
   const login = async (email, password) => {
-    try {
-      return await signIn(email, password);
-    } catch (error) {
-      throw error;
-    }
+    return await signIn(email, password);
   };
 
   const logout = async () => {
-    try {
-      await signOut();
-      return true;
-    } catch (error) {
-      throw error;
-    }
+    await signOut();
+    return true;
   };
 
   const register = async (email, password) => {
-    try {
-      return await registerUser(email, password);
-    } catch (error) {
-      throw error;
-    }
+    return await registerUser(email, password);
   };
 
   const loginWithGoogle = async () => {
-    try {
-      return await signInWithGoogle();
-    } catch (error) {
-      throw error;
-    }
+    return await signInWithGoogle();
   };
 
   // Función para verificar si el usuario puede editar canciones

@@ -8,7 +8,7 @@ const useTheme = () => {
   });
   
   // No hay loading ya que cargamos desde localStorage directamente
-  const [loading, setLoading] = useState(false);
+  const [loading] = useState(false);
 
   const changeTheme = (newTheme) => {
     setTheme(newTheme);

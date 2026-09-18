@@ -3,7 +3,6 @@ import {
   midiToFrequency,
   frequencyToMidi,
   midiToNoteName,
-  frequencyToNoteName,
   getCentsDeviation,
   getNoteNameOnly,
   noteNameToMidi,

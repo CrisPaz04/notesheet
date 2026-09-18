@@ -13,7 +13,7 @@ describe('TRANSPOSING_INSTRUMENTS', () => {
   });
 
   it('each instrument has required fields', () => {
-    Object.entries(TRANSPOSING_INSTRUMENTS).forEach(([key, instrument]) => {
+    Object.values(TRANSPOSING_INSTRUMENTS).forEach((instrument) => {
       expect(instrument).toHaveProperty('name');
       expect(instrument).toHaveProperty('transposition');
       expect(instrument).toHaveProperty('description');
@@ -23,7 +23,7 @@ describe('TRANSPOSING_INSTRUMENTS', () => {
   });
 
   it('transposition values are within reasonable range', () => {
-    Object.entries(TRANSPOSING_INSTRUMENTS).forEach(([key, instrument]) => {
+    Object.values(TRANSPOSING_INSTRUMENTS).forEach((instrument) => {
       // Transpositions should be within -12 to +12 semitones (one octave)
       expect(instrument.transposition).toBeGreaterThanOrEqual(-12);
       expect(instrument.transposition).toBeLessThanOrEqual(12);

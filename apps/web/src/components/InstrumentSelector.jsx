@@ -20,8 +20,6 @@ export function InstrumentSelector({
     return `${baseName} 1`;
   };
 
-  // Determinar si tenemos voces disponibles para mostrar
-  const hasAnyVoices = Object.keys(availableVoices).length > 0;
   
   return (
     <div className="dropdown">

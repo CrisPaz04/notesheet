@@ -75,7 +75,7 @@ function useMetronome(initialPreferences = {}) {
   }, [volume]);
 
   // Beat callback for visual sync
-  const handleBeat = useCallback((beat, totalBeats) => {
+  const handleBeat = useCallback((beat) => {
     setCurrentBeat(beat);
   }, []);
 

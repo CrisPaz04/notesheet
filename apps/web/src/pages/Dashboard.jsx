@@ -54,10 +54,11 @@ function Dashboard() {
     if (activeFilter !== "all") {
       filtered = filtered.filter(song => {
         switch (activeFilter) {
-          case "recent":
+          case "recent": {
             const oneWeekAgo = new Date();
             oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
             return song.updatedAt && song.updatedAt.toDate() > oneWeekAgo;
+          }
           case "jubilo":
             return song.type === "Júbilo";
           case "adoracion":

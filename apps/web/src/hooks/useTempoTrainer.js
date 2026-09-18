@@ -61,7 +61,7 @@ function useTempoTrainer(metronomeEngine, updateBpm, isMetronomePlaying) {
   }, [config]);
 
   // Handle measure completion callback
-  const handleMeasureComplete = useCallback((measureCount) => {
+  const handleMeasureComplete = useCallback(() => {
     if (!isActiveRef.current || isPausedRef.current) return;
 
     const newBarsCompleted = barsCompletedRef.current + 1;
