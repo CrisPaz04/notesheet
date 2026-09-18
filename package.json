@@ -1,6 +1,9 @@
 {
   "name": "notesheet",
   "version": "0.1.0",
+  "engines": {
+    "node": ">=22"
+  },
   "description": "Aplicacion Multiplataforma para Musicos de Iglesia",
   "private": true,
   "workspaces": [

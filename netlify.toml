@@ -23,13 +23,23 @@
 # 3. Add each variable name and its corresponding value
 # 4. Click "Save" and trigger a new deploy
 
+# Build desde la RAIZ del monorepo, no desde apps/web.
+#
+# Con `base = "apps/web"` Netlify solo disparaba un build cuando cambiaba algo
+# bajo esa carpeta, asi que un cambio en el package-lock.json de la raiz (por
+# ejemplo, una actualizacion de seguridad) no llegaba nunca a produccion.
+# Peor aun: al instalar dentro de apps/web, que no tiene lockfile propio,
+# npm resolvia versiones frescas en cada build y el lockfile no gobernaba
+# nada. Los deploys no eran reproducibles.
+#
+# Ahora Netlify instala desde la raiz con `npm ci` contra package-lock.json
+# y construye el workspace `web`.
 [build]
-  base = "apps/web"
-  publish = "dist"
-  command = "npm run build"
+  publish = "apps/web/dist"
+  command = "npm run build --workspace=web"
 
 [build.environment]
-  NODE_VERSION = "18"
+  NODE_VERSION = "22"
 
 # SPA redirect - all routes go to index.html for client-side routing
 [[redirects]]
