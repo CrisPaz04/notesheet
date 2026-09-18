@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { getAllSongs, deleteSong } from "@notesheet/api";
 import { useAuth } from "../context/AuthContext";
@@ -8,7 +8,6 @@ import { SkeletonGrid } from "../components/SkeletonCard";
 
 function Dashboard() {
   const [songs, setSongs] = useState([]);
-  const [filteredSongs, setFilteredSongs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
@@ -21,9 +20,7 @@ function Dashboard() {
     const fetchSongs = async () => {
       try {
         if (currentUser) {
-          const fetchedSongs = await getAllSongs(currentUser.uid);
-          setSongs(fetchedSongs);
-          setFilteredSongs(fetchedSongs);
+          setSongs(await getAllSongs(currentUser.uid));
         }
       } catch (error) {
         setError("Error al cargar las canciones: " + error.message);
@@ -36,8 +33,11 @@ function Dashboard() {
     fetchSongs();
   }, [currentUser]);
 
-  // Filtrar canciones cuando cambie el término de búsqueda o filtro
-  useEffect(() => {
+  // `filteredSongs` es estado derivado: se calcula a partir de `songs`, el
+  // término de búsqueda y el filtro activo. Antes se guardaba en su propio
+  // useState y se sincronizaba a mano (también al borrar), lo que permitía
+  // que ambas listas se desincronizaran.
+  const filteredSongs = useMemo(() => {
     let filtered = songs;
 
     // Filtrar por término de búsqueda
@@ -71,7 +71,7 @@ function Dashboard() {
       });
     }
 
-    setFilteredSongs(filtered);
+    return filtered;
   }, [songs, searchTerm, activeFilter]);
 
   const getGreeting = () => {
@@ -100,7 +100,6 @@ function Dashboard() {
     try {
       await deleteSong(songId);
       setSongs(songs.filter(song => song.id !== songId));
-      setFilteredSongs(filteredSongs.filter(song => song.id !== songId));
     } catch (error) {
       setError("Error al eliminar la canción: " + error.message);
       console.error("Error deleting song:", error);
