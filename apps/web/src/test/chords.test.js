@@ -8,6 +8,7 @@ import {
   isChord,
   isChordLine,
   splitChordSegment,
+  mapChordLine,
 } from '@notesheet/core';
 
 /**
@@ -58,10 +59,29 @@ describe('isChord', () => {
   });
 
   it('rechaza palabras de la letra', () => {
-    ['Amor', 'Dame', 'Amazing', 'grace', 'Solo', 'Mi', 'Fe', 'Contigo']
+    ['Amor', 'Dame', 'Amazing', 'grace', 'Solo', 'Fe', 'Contigo']
       .forEach(word => {
         expect(isChord(word), word).toBe(false);
       });
+  });
+
+  // Muchas partituras escriben las notas capitalizadas ("Re Mi Fa"), así que
+  // se aceptan. El precio es que "Mi", "La", "Do" o "Si" —palabras corrientes
+  // en español— pasan a ser acordes válidos por sí solas. Lo que evita el
+  // desastre es isChordLine: exige que TODOS los tokens de la línea sean
+  // acordes, así que una frase de verdad nunca se confunde.
+  it('acepta notas capitalizadas', () => {
+    ['Do', 'Re', 'Mi', 'Fa', 'Sol', 'La', 'Si', 'Sib', 'Do#', 'Lam']
+      .forEach(nota => {
+        expect(isChord(nota), nota).toBe(true);
+      });
+  });
+
+  it('no acepta notas en minúsculas', () => {
+    // "la", "mi" y "si" son demasiado corrientes en español
+    ['do', 'mi', 'la', 'si', 'sol'].forEach(palabra => {
+      expect(isChord(palabra), palabra).toBe(false);
+    });
   });
 });
 
@@ -83,6 +103,35 @@ describe('isChordLine', () => {
     expect(isChordLine('')).toBe(false);
     expect(isChordLine('   ')).toBe(false);
     expect(isChordLine('| | |')).toBe(false);
+  });
+});
+
+describe('melodías nota a nota', () => {
+  // El repertorio de la iglesia son partes de primera trompeta escritas como
+  // una sucesión de notas, no como acordes sobre la letra. Transponerlas nota
+  // a nota es exactamente la misma operación, así que funciona igual.
+  it('reconoce una melodía capitalizada', () => {
+    expect(isChordLine('Re Mi Fa Mi Re Fa Sol La Sol')).toBe(true);
+    expect(isChordLine('La Sib La')).toBe(true);
+  });
+
+  it('tolera las marcas de repetición pegadas a la nota', () => {
+    expect(isChordLine('//Re Re Re Do La')).toBe(true);
+    expect(isChordLine('Do Do Do# Re//')).toBe(true);
+  });
+
+  it('transpone la melodía conservando las marcas', () => {
+    const origen = '//Re Re Re Do La';
+    const destino = mapChordLine(origen, (raiz) => ({ RE: 'MI', DO: 'RE', LA: 'SI' }[raiz] || raiz));
+    expect(destino).toBe('//MI MI MI RE SI');
+  });
+
+  // Protección: una frase de verdad no debe confundirse con notas aunque
+  // empiece por una palabra que también es nota.
+  it('no confunde una frase con una melodía', () => {
+    expect(isChordLine('Mi Dios es fiel')).toBe(false);
+    expect(isChordLine('La gloria de Dios')).toBe(false);
+    expect(isChordLine('Solo tu amor')).toBe(false);
   });
 });
 

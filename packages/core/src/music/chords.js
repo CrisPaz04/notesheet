@@ -15,7 +15,14 @@
 // --- Gramática de acordes ----------------------------------------------------
 
 // Las raíces latinas van primero para que "DO" gane sobre "D", "SOL" sobre "S".
-const ROOT = '(?:DO|RE|MI|FA|SOL|LA|SI|[A-G])';
+// Se aceptan MAYUSCULAS y Capitalizado ("DO" y "Do"), porque mucha gente
+// escribe asi los nombres de nota a mano. NO se acepta todo en minusculas:
+// "la", "mi", "si" o "sol" son palabras corrientes en espanol y una linea de
+// letra entera podria confundirse con notas.
+//
+// La insensibilidad se limita a la raiz a proposito: en el sufijo, "M" es
+// mayor y "m" es menor, asi que ahi la caja distingue.
+const ROOT = '(?:DO|Do|RE|Re|MI|Mi|FA|Fa|SOL|Sol|LA|La|SI|Si|[A-G])';
 const ACCIDENTAL = '(?:#|b)?';
 // "maj" antes que "M"/"m", "min" antes que "m", "dim" antes que "d".
 const QUALITY = '(?:maj|Maj|MAJ|min|Min|MIN|dim|Dim|DIM|aug|Aug|AUG|M|m|°|º|ø|[+])?';
@@ -43,8 +50,9 @@ const CHORD_PARTS = new RegExp(
 const FILLER = /^(?:[|:%*\-–—/()[\]]+|\(?[xX]\s?\d+\)?|\(?\d+\s?[xX]\)?|N\.?C\.?)$/;
 
 // Adornos que pueden envolver a un acorde: "(LAm)", "|DO", "C,".
-const LEADING_WRAP = /^[([{|:]+/;
-const TRAILING_WRAP = /[)\]}|:,.;!?]+$/;
+// `//` marca repetición y suele ir pegado a la nota: "//RE" o "RE//".
+const LEADING_WRAP = /^[([{|:/]+/;
+const TRAILING_WRAP = /[)\]}|:/,.;!?]+$/;
 
 // Metadato de tonalidad: la única línea que empieza con '#' cuyo valor es un acorde.
 const KEY_METADATA = /^(\s*#+\s*(?:Tonalidad|Key)\s*:\s*)(.+)$/i;
@@ -140,8 +148,11 @@ export const mapChordLine = (line, mapRoot) => {
     if (!parts) return token;
 
     const [, root, accidental, suffix, bassRoot, bassAccidental] = parts;
-    let chord = mapRoot(root + accidental) + suffix;
-    if (bassRoot) chord += '/' + mapRoot(bassRoot + bassAccidental);
+    // Los mapas de conversion y transposicion tienen las claves en mayusculas
+    const enMayusculas = (r) => (LATIN_ROOTS.has(r.toUpperCase()) ? r.toUpperCase() : r);
+
+    let chord = mapRoot(enMayusculas(root) + accidental) + suffix;
+    if (bassRoot) chord += '/' + mapRoot(enMayusculas(bassRoot) + bassAccidental);
 
     return lead + chord + trail;
   });
