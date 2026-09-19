@@ -139,6 +139,14 @@
     margin-bottom: 1.5rem;
   }
   
+  /* `text-white` daba por hecho un fondo oscuro, pero .features-section usa
+     --bg-dark-primary, que en tema claro es blanco: el titulo quedaba blanco
+     sobre blanco, invisible. --text-light-primary si se adapta al tema. */
+  .features-heading,
+  .stat-block {
+    color: var(--text-light-primary);
+  }
+  
   .feature-title {
     color: var(--text-light-primary);
     font-weight: 600;
@@ -171,8 +179,12 @@
     align-items: center;
   }
   
+  /* La tarjeta de demo tiene fondo oscuro fijo (rgba(30,30,30,.9)), no sigue
+     el tema. Por eso su texto no puede usar variables de tema: en tema claro
+     --color-primary pasa a azul oscuro y --text-light-secondary a gris
+     oscuro, y la demo quedaba ilegible sobre su propio fondo negro. */
   .demo-title {
-    color: var(--color-primary);
+    color: #6ea8fe;
     margin: 0;
     font-size: 1.1rem;
     font-weight: 600;
@@ -184,7 +196,7 @@
   
   .notation-demo {
     font-family: 'Courier New', monospace;
-    color: var(--color-primary);
+    color: #6ea8fe;
     background: rgba(0, 0, 0, 0.3);
     padding: 1rem;
     border-radius: var(--radius-md);
@@ -194,12 +206,12 @@
   }
   
   .chord-line {
-    color: var(--color-primary);
+    color: #6ea8fe;
     font-weight: bold;
   }
   
   .lyric-line {
-    color: var(--text-light-secondary);
+    color: #ced4da;
     margin-bottom: 0.5rem;
   }
   

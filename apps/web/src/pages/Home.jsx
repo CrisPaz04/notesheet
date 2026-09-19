@@ -1,4 +1,4 @@
-﻿import { Link } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 function Home() {
   return (
@@ -30,20 +30,20 @@ function Home() {
           {/* Stats */}
           <div className="row text-center mt-4">
             <div className="col-4">
-              <div className="text-white">
-                <p className="mb-0 h3" style={{color: '#64ffda'}}>12+</p>
+              <div className="stat-block">
+                <p className="mb-0 h3" style={{ color: 'var(--color-primary)' }}>12+</p>
                 <small className="text-muted">Instrumentos</small>
               </div>
             </div>
             <div className="col-4">
-              <div className="text-white">
-                <p className="mb-0 h3" style={{color: '#64ffda'}}>∞</p>
+              <div className="stat-block">
+                <p className="mb-0 h3" style={{ color: 'var(--color-primary)' }}>∞</p>
                 <small className="text-muted">Tonalidades</small>
               </div>
             </div>
             <div className="col-4">
-              <div className="text-white">
-                <p className="mb-0 h3" style={{color: '#64ffda'}}>100%</p>
+              <div className="stat-block">
+                <p className="mb-0 h3" style={{ color: 'var(--color-primary)' }}>100%</p>
                 <small className="text-muted">Gratis</small>
               </div>
             </div>
@@ -54,7 +54,7 @@ function Home() {
       <div className="col-lg-6">
         <div className="demo-card">
           <div className="demo-header">
-            <i className="bi bi-music-note-beamed me-2" style={{color: '#64ffda'}}></i>
+            <i className="bi bi-music-note-beamed me-2" style={{ color: 'var(--color-primary)' }}></i>
             <h4 className="demo-title">Amazing Grace</h4>
           </div>
           <div className="demo-content">
@@ -80,7 +80,7 @@ function Home() {
       <section className="features-section">
         <div className="container">
           <div className="text-center mb-5">
-            <h2 className="text-white mb-3">Funcionalidades Principales</h2>
+            <h2 className="features-heading mb-3">Funcionalidades Principales</h2>
             <p className="text-muted">Todo lo que necesitas para tu ministerio musical</p>
           </div>
           

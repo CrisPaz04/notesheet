@@ -129,8 +129,15 @@
     color: var(--text-light-muted) !important;
   }
   
+  /* No se usa --color-primary: en tema claro es #0d6efd y sobre la tarjeta
+     oscura da 3.7:1, por debajo del 4.5:1 que pide WCAG. */
   .login-footer a {
-    color: var(--color-primary) !important;
+    color: #6ea8fe !important;
+  }
+
+  .login-footer a:hover,
+  .login-footer a:focus {
+    color: #8bb9fe !important;
   }
   
   .alert-danger {
@@ -203,3 +210,35 @@
   .form-floating input:-webkit-autofill + label {
     color: rgba(255, 255, 255, 0.7) !important;
   }
+/* --- Contraste dentro de la tarjeta ---------------------------------------
+ *
+ * La tarjeta de login es oscura SIEMPRE: su fondo está fijado a mano
+ * (rgba(30,30,30,.95) y #2a2a2a), no sigue el tema de la aplicación. Por eso
+ * el texto de dentro no puede depender de las variables de tema.
+ *
+ * `--text-light-primary` vale #ffffff en tema oscuro pero #212529 en claro,
+ * así que con el tema claro el título "Bienvenido a NoteSheet", el subtítulo
+ * y el separador "o continúa con tu email" quedaban en texto negro sobre
+ * fondo negro, prácticamente ilegibles.
+ *
+ * Aquí se fija un color claro pase lo que pase con el tema.
+ */
+.login-card,
+.login-header {
+  color: #f1f3f5;
+}
+
+.login-card h1,
+.login-card h2,
+.login-card h3,
+.login-card .h3,
+.login-header h1,
+.login-header p {
+  color: #f1f3f5;
+}
+
+/* Bootstrap marca .text-muted con !important, así que hay que igualarlo */
+.login-card .text-muted,
+.login-header .text-muted {
+  color: rgba(241, 243, 245, 0.72) !important;
+}
