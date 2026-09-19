@@ -1,0 +1,110 @@
+# Importar canciones desde PDF escaneado
+
+Guía para meter en NoteSheet un repertorio que ya existe en papel.
+
+## El formato que necesita la app
+
+Cada canción es texto plano con esta estructura:
+
+```
+## Intro
+DO  SOL  LAm  FA
+
+## Verso 1
+DO        SOL
+Cristo vive hoy
+LAm       FA
+para siempre
+
+## Coro
+FA        DO
+Aleluya, aleluya
+```
+
+Tres reglas, y la primera es la que más duele si se olvida:
+
+1. **Toda línea tiene que ir debajo de una cabecera `## `.** El parser solo recoge
+   lo que viene después de un `## `. Una canción sin cabeceras se guarda bien pero
+   **se ve completamente en blanco**. Es el fallo más fácil de cometer y el más
+   difícil de notar hasta que abres la canción.
+
+2. **Los acordes van en su propia línea, encima de la letra.** Una línea es de
+   acordes cuando *todos* sus tokens son acordes; si mezclas acordes y letra en la
+   misma línea, ni se transpone ni se puede extraer la letra sola. La alineación por
+   columnas se conserva tal cual, así que respeta los espacios del original.
+
+3. **Nada de metadatos dentro del contenido.** El título, la tonalidad y el tipo van
+   en sus campos, no como líneas `# Tonalidad: DO`.
+
+Nombres de sección habituales: `Intro`, `Verso 1`, `Verso 2`, `Coro`, `Puente`,
+`Final`. No hay lista cerrada: se muestra lo que pongas.
+
+## El JSON de importación
+
+Un array. Cada canción:
+
+```json
+{
+  "title": "Cristo Vive",
+  "key": "DO",
+  "type": "Júbilo",
+  "version": "",
+  "album": "",
+  "content": "## Verso 1\nDO        SOL\nCristo vive hoy\n"
+}
+```
+
+- `key`: una de `DO RE MI FA SOL LA SI` con `#`/`b` opcional, y `m` si es menor
+  (`LAm`, `FA#m`, `SIb`). Es la tonalidad **en la que está escrita**, no en la que
+  la tocan.
+- `type`: `Júbilo`, `Adoración` o `Moderada` — son las que filtra el Dashboard.
+- `version` y `album` pueden ir vacíos.
+- El contenido se guarda como voz de trompeta 1, que es la referencia de la app.
+
+## Paso 1 — extraer el texto de los PDF
+
+Pásale los PDF a Claude por lotes (10–15 canciones) con una instrucción como esta:
+
+> Extrae cada canción de estas partituras escaneadas a JSON con esta forma:
+> `{title, key, type, version, album, content}`.
+>
+> En `content`: cada sección va precedida de una cabecera `## Nombre` (Intro,
+> Verso 1, Coro, Puente...). Los acordes van en su propia línea, encima de la
+> letra que les corresponde, conservando la alineación por columnas con espacios.
+> Usa notación latina (DO RE MI FA SOL LA SI). No metas el título ni la tonalidad
+> dentro de `content`.
+>
+> `key` es la tonalidad de la partitura. `type` es Júbilo, Adoración o Moderada
+> según el carácter de la canción; si no está claro, pon Moderada.
+>
+> Si algo no se lee bien, deja la línea y añade `[?]` al final para que se revise.
+
+Lotes pequeños: es más fácil revisar 12 canciones que 120, y si algo sale mal no
+pierdes todo el trabajo.
+
+## Paso 2 — validar antes de importar
+
+```bash
+node scripts/validate-songs.mjs canciones.json
+```
+
+Avisa de canciones sin cabeceras `## ` (las que saldrían en blanco), tonalidades
+que la app no entiende, títulos repetidos, contenido vacío y marcas `[?]` que
+dejaste para revisar. **Arregla lo que salga antes de importar.**
+
+## Paso 3 — importar
+
+1. Abre NoteSheet en el navegador y entra con tu cuenta.
+2. Abre la consola (F12).
+3. Pega `scripts/import-songs.js`.
+4. Se abre un selector de archivo: elige tu JSON.
+
+Importa de una en una y va informando. Si una falla, sigue con las demás y te dice
+cuáles quedaron fuera. Se puede volver a ejecutar: detecta las que ya existen por
+título y las salta, así que si se corta a mitad no se duplica nada.
+
+## Consejo
+
+Haz **una canción primero**, de principio a fin, y ábrela en la app. Comprueba que
+se ven las secciones, que la transposición funciona y que la pestaña de solo letra
+tiene sentido. Corregir el formato con 1 canción cuesta minutos; con 120, una tarde.
