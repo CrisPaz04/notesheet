@@ -2,8 +2,8 @@
 
 ## Prerequisites
 
-- Node.js 18 or higher
-- pnpm package manager (`npm install -g pnpm`)
+- Node.js 22 or higher (`engines` pins it, and Netlify builds on 22)
+- npm (comes with Node). The repo uses npm workspaces, not pnpm.
 - Firebase account with a project created
 
 ## Local Development Setup
@@ -18,7 +18,7 @@ cd notesheet
 ### 2. Install Dependencies
 
 ```bash
-pnpm install
+npm install
 ```
 
 ### 3. Configure Firebase Environment Variables
@@ -70,7 +70,7 @@ Make sure these Firebase services are enabled in your project:
 ### 5. Run Development Server
 
 ```bash
-pnpm dev
+npm run web
 ```
 
 The app should now be running at `http://localhost:5173` (or another port if 5173 is busy).
@@ -78,7 +78,7 @@ The app should now be running at `http://localhost:5173` (or another port if 517
 ### 6. Build for Production
 
 ```bash
-pnpm build
+npm run build --workspace=web
 ```
 
 ## Deploying to Netlify

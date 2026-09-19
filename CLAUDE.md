@@ -6,14 +6,20 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 NoteSheet is a multiplataform music application for church musicians built as a monorepo. It features song management, playlists, metronome, chromatic tuner, and music transposition tools.
 
-**Tech Stack:** React 19, Vite 6.2, Bootstrap 5.3, React Router 7, Firebase (Auth, Firestore, Storage), pnpm workspaces
+**Tech Stack:** React 19, Vite 6.2, Bootstrap 5.3, React Router 7, Firebase (Auth, Firestore, Storage), npm workspaces
 
 ## Commands
 
+Se usa **npm**, no pnpm: los scripts de la raíz llaman a npm por dentro y
+Netlify instala con `npm ci`. Aquí no hay pnpm instalado, así que `pnpm web`
+falla con "term not recognized".
+
 ```bash
 # Development
-pnpm install          # Install all dependencies
-pnpm web              # Start web dev server (localhost:5173)
+npm install                   # Install all dependencies (npm workspaces)
+npm run web                   # Start web dev server (localhost:5173)
+npm run test:run              # Run the test suite
+npm run lint --workspace=web  # ESLint check
 
 # From apps/web/
 npm run dev           # Start Vite dev server with HMR
@@ -22,9 +28,9 @@ npm run lint          # ESLint check
 npm run preview       # Preview production build
 
 # Mobile (planned)
-pnpm mobile           # Start React Native
-pnpm android          # Android build
-pnpm ios              # iOS build
+npm run mobile        # Start React Native
+npm run android       # Android build
+npm run ios           # iOS build
 ```
 
 ## Architecture
@@ -121,7 +127,7 @@ Netlify auto-deploys from `master` branch. Configuration in `netlify.toml`:
 ## Notes
 
 - No TypeScript - pure JavaScript
-- Vitest configured; 1032 tests in `apps/web/src/test/` (run with `pnpm test:run`)
+- Vitest configured; 1032 tests in `apps/web/src/test/` (run with `npm run test:run`)
 - Los tests se validan con **mutaciones**: se rompe el código a propósito y se comprueba
   que algún test falla. Ha destapado cuatro tests que pasaban por la razón equivocada.
   Merece la pena hacerlo con cualquier lógica no trivial que añadas.
