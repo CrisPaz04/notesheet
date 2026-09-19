@@ -1,35 +1,20 @@
 """
-Convierte a PNG una pagina de partitura, venga como venga.
+Convierte a PNG las paginas de una partitura, vengan como vengan.
 
 El repertorio es mixto: unos PDF son fotos escaneadas (un bitmap incrustado) y
 otros son tinta vectorial de una app de tableta (miles de trazos m/l/S). Este
-script detecta cual es cada uno y hace lo que toque.
+script detecta cual es cada uno y hace lo que toque, pagina por pagina.
 
 Uso:  python scripts/pdf-a-imagen.py entrada.pdf salida.png [ancho]
+
+Con varias paginas escribe `salida-p1.png`, `salida-p2.png`...; con una sola
+escribe `salida.png` tal cual.
 """
 
 import re
 import sys
 import zlib
 import struct
-
-
-def objetos_stream(data):
-    """Devuelve (diccionario, bytes) de cada stream, usando /Length del dict."""
-    for m in re.finditer(rb'stream\r?\n', data):
-        # El diccionario es lo que hay entre el `<<` mas cercano y `stream`
-        d0 = data.rfind(b'<<', max(0, m.start() - 2000), m.start())
-        if d0 < 0:
-            continue
-        dic = data[d0:m.start()]
-
-        largo = re.search(rb'/Length\s+(\d+)', dic)
-        ini = m.end()
-        if largo:
-            fin = ini + int(largo.group(1))
-        else:
-            fin = data.find(b'endstream', ini)
-        yield dic, data[ini:fin]
 
 
 def valor_entero(dic, clave):
@@ -74,82 +59,165 @@ def reducir(datos, ancho, alto, canales, factor):
     return bytes(salida), na, nl
 
 
-def como_imagen(data, salida, ancho_px):
-    """Si la pagina trae un bitmap incrustado, lo saca."""
-    mejor = None
-    for dic, crudo in objetos_stream(data):
-        if b'/Image' not in dic or b'/Subtype' not in dic:
-            continue
-        ancho, alto = valor_entero(dic, '/Width'), valor_entero(dic, '/Height')
-        if not ancho or not alto:
-            continue
-        if not mejor or ancho * alto > mejor[1] * mejor[2]:
-            mejor = (dic, ancho, alto, crudo)
+# --- Recorrer el PDF ---------------------------------------------------------
+#
+# Son todos PDF 1.4 con objetos planos (`N 0 obj`) y sin flujos de objetos, asi
+# que se pueden recorrer a base de expresiones regulares y no hace falta traer
+# una libreria. Hay que ir pagina por pagina porque 27 de las partituras tienen
+# mas de una, y antes se miraba solo el stream mas largo: es decir, una sola.
 
-    if not mejor:
-        return False
+def objetos(data):
+    """num -> (diccionario, stream crudo o None) de cada objeto indirecto."""
+    tabla = {}
+    for m in re.finditer(rb'(?:^|[\s>])(\d+)\s+\d+\s+obj\b', data):
+        num = int(m.group(1))
+        fin = data.find(b'endobj', m.end())
+        cuerpo = data[m.end():fin if fin > 0 else len(data)]
 
-    dic, ancho, alto, crudo = mejor
-    bits = valor_entero(dic, '/BitsPerComponent') or 8
-    canales = 3 if b'/DeviceRGB' in dic else (4 if b'/DeviceCMYK' in dic else 1)
+        s = re.search(rb'stream\r?\n', cuerpo)
+        if s:
+            dic = cuerpo[:s.start()]
+            largo = re.search(rb'/Length\s+(\d+)', dic)
+            ini = s.end()
+            crudo = (cuerpo[ini:ini + int(largo.group(1))] if largo
+                     else cuerpo[ini:cuerpo.find(b'endstream', ini)])
+        else:
+            dic, crudo = cuerpo, None
+        tabla[num] = (dic, crudo)
+    return tabla
 
-    if b'DCTDecode' in dic:          # JPEG: se guarda tal cual
-        open(salida.replace('.png', '.jpg'), 'wb').write(crudo)
-        print(f'{salida[:-4]}.jpg: JPEG {ancho}x{alto}')
-        return True
 
-    if b'FlateDecode' not in dic:
-        return False
+def referencias(dic, clave):
+    """Los numeros de objeto a los que apunta /Clave, sea uno o un array."""
+    m = re.search(clave.encode() + rb'\s*(\[[^\]]*\]|\d+\s+\d+\s+R)', dic)
+    if not m:
+        return []
+    return [int(n) for n in re.findall(rb'(\d+)\s+\d+\s+R', m.group(1))]
 
+
+def es_pagina(dic):
+    return (re.search(rb'/Type\s*/Page\b', dic) is not None
+            and re.search(rb'/Type\s*/Pages\b', dic) is None)
+
+
+def paginas(tabla):
+    """Numeros de objeto de las paginas, en el orden del arbol /Kids."""
+    raices = [n for n, (dic, _) in tabla.items()
+              if re.search(rb'/Type\s*/Pages\b', dic) and b'/Parent' not in dic]
+
+    orden, vistos = [], set()
+
+    def bajar(num):
+        if num in vistos or num not in tabla:
+            return
+        vistos.add(num)
+        dic = tabla[num][0]
+        if es_pagina(dic):
+            orden.append(num)
+            return
+        for hijo in referencias(dic, '/Kids'):
+            bajar(hijo)
+
+    for r in raices:
+        bajar(r)
+
+    if not orden:   # sin arbol reconocible: el orden en que aparecen
+        orden = [n for n, (dic, _) in sorted(tabla.items()) if es_pagina(dic)]
+    return orden
+
+
+def medidas(tabla, num, saltos=8):
+    """El /MediaBox de la pagina o, si no lo trae, el que hereda del padre."""
+    while num in tabla and saltos > 0:
+        dic = tabla[num][0]
+        m = re.search(rb'/MediaBox\s*\[\s*([\d.\-]+)\s+([\d.\-]+)\s+([\d.\-]+)\s+([\d.\-]+)', dic)
+        if m:
+            return (abs(float(m.group(3)) - float(m.group(1))),
+                    abs(float(m.group(4)) - float(m.group(2))))
+        padre = referencias(dic, '/Parent')
+        if not padre:
+            break
+        num, saltos = padre[0], saltos - 1
+    return (1752.0, 2800.0)
+
+
+def inflar(crudo):
     try:
-        pix = zlib.decompress(crudo)
+        return zlib.decompress(crudo)
     except zlib.error:
         try:
-            pix = zlib.decompressobj().decompress(crudo)
+            return zlib.decompressobj().decompress(crudo)
         except zlib.error:
-            return False
-
-    factor = max(1, ancho // ancho_px)
-    if factor > 1 and bits == 8:
-        pix, ancho, alto = reducir(pix, ancho, alto, canales, factor)
-
-    escribir_png(salida, ancho, alto, bits, canales, pix)
-    print(f'{salida}: bitmap {ancho}x{alto} {bits}bit {canales}ch')
-    return True
+            return crudo   # varios vienen sin comprimir
 
 
-# --- Tinta vectorial ---------------------------------------------------------
+def contenido_de(tabla, num):
+    """Los streams de /Contents de una pagina, descomprimidos y unidos."""
+    trozos = [inflar(tabla[r][1]) for r in referencias(tabla[num][0], '/Contents')
+              if r in tabla and tabla[r][1] is not None]
+    return b'\n'.join(trozos)
 
-def paginas_de_tinta(data):
-    """Streams de contenido, vengan comprimidos o no.
 
-    Algunos PDF guardan el contenido sin comprimir (`<< /Length N >>` a secas),
-    asi que no basta con quedarse con los que inflan.
-    """
-    paginas = []
-    for dic, crudo in objetos_stream(data):
-        if b'/Image' in dic:
+def imagenes_de(tabla, num):
+    """Los XObject de imagen que usa la pagina, de mayor a menor."""
+    candidatos = []
+    for rec in referencias(tabla[num][0], '/Resources'):
+        if rec in tabla:
+            candidatos += referencias(tabla[rec][0], '/XObject')
+
+    dic = tabla[num][0]
+    if not candidatos and b'/XObject' in dic:   # /Resources escrito en linea
+        candidatos = [int(n) for n in re.findall(rb'(\d+)\s+\d+\s+R', dic)]
+
+    utiles = []
+    for o in candidatos:
+        if o not in tabla:
             continue
-        try:
-            s = zlib.decompress(crudo)
-        except zlib.error:
-            # Sin comprimir: se reconoce porque son operadores en texto plano
-            s = crudo if re.match(rb'^[\sQq/\d.\-]', crudo[:1] or b'') else b''
-        if len(s) > 2000 and b' l' in s:
-            paginas.append(s)
-    return paginas
+        d, crudo = tabla[o]
+        if crudo is None or b'/Image' not in d:
+            continue
+        a, h = valor_entero(d, '/Width'), valor_entero(d, '/Height')
+        if a and h:
+            utiles.append((a * h, d, a, h, crudo, canales_de(tabla, d)))
+    utiles.sort(reverse=True, key=lambda t: t[0])
+    return [(d, a, h, c, n) for _, d, a, h, c, n in utiles]
 
 
-def como_tinta(data, salida, ancho_px):
-    paginas = paginas_de_tinta(data)
-    contenido = max(paginas, key=len) if paginas else b''
+def canales_de(tabla, dic):
+    """Cuantos bytes por pixel trae la imagen.
 
-    if not contenido:
+    No basta con buscar /DeviceRGB: varias partituras traen el espacio de color
+    como `/ICCBased N 0 R`, y ahi el numero de componentes esta en el /N de ese
+    objeto. Tomarlo por gris deja la imagen ilegible, con las filas corridas.
+    """
+    if b'/DeviceCMYK' in dic:
+        return 4
+    if b'/DeviceRGB' in dic:
+        return 3
+    if b'/DeviceGray' in dic:
+        return 1
+
+    m = re.search(rb'/ColorSpace\s*\[?\s*/ICCBased\s+(\d+)\s+\d+\s+R', dic)
+    if m:
+        ref = int(m.group(1))
+        if ref in tabla:
+            n = valor_entero(tabla[ref][0], '/N')
+            if n in (1, 3, 4):
+                return n
+        return 3   # lo normal en un ICC incrustado de un escaneo
+
+    m = re.search(rb'/ColorSpace\s+(\d+)\s+\d+\s+R', dic)
+    if m and int(m.group(1)) in tabla:
+        return canales_de(tabla, tabla[int(m.group(1))][0])
+
+    return 1
+
+
+# --- Dibujar -----------------------------------------------------------------
+
+def como_tinta(contenido, w, h, salida, ancho_px):
+    if len(contenido) < 2000 or b' l' not in contenido:
         return False
-
-    m = re.search(rb'/MediaBox\s*\[\s*([\d.\-]+)\s+([\d.\-]+)\s+([\d.\-]+)\s+([\d.\-]+)', data)
-    w, h = (abs(float(m.group(3)) - float(m.group(1))),
-            abs(float(m.group(4)) - float(m.group(2)))) if m else (1752.0, 2800.0)
 
     tokens = contenido.replace(b'\r', b' ').replace(b'\n', b' ').split()
     segs, pila, grosor = [], [], 1.0
@@ -197,11 +265,40 @@ def como_tinta(data, salida, ancho_px):
             if e2 <= dx:
                 err += dx; ay += sy
 
-    escribir_png(salida, lienzo, ancho_px, ah) if False else None
-    # escribir_png espera (ruta, ancho, alto, bits, canales, datos)
     escribir_png(salida, ancho_px, ah, 8, 1, bytes(lienzo))
     print(f'{salida}: tinta {len(segs)} trazos -> {ancho_px}x{ah}')
     return True
+
+
+def como_imagen(imagenes, salida, ancho_px):
+    """Si la pagina trae un bitmap incrustado, lo saca."""
+    for dic, ancho, alto, crudo, canales in imagenes:
+        bits = valor_entero(dic, '/BitsPerComponent') or 8
+
+        if b'DCTDecode' in dic:          # JPEG: se guarda tal cual
+            open(salida.replace('.png', '.jpg'), 'wb').write(crudo)
+            print(f'{salida[:-4]}.jpg: JPEG {ancho}x{alto}')
+            return True
+
+        if b'FlateDecode' not in dic:
+            continue
+
+        try:
+            pix = zlib.decompress(crudo)
+        except zlib.error:
+            try:
+                pix = zlib.decompressobj().decompress(crudo)
+            except zlib.error:
+                continue
+
+        factor = max(1, ancho // ancho_px)
+        if factor > 1 and bits == 8:
+            pix, ancho, alto = reducir(pix, ancho, alto, canales, factor)
+
+        escribir_png(salida, ancho, alto, bits, canales, pix)
+        print(f'{salida}: bitmap {ancho}x{alto} {bits}bit {canales}ch')
+        return True
+    return False
 
 
 if __name__ == '__main__':
@@ -209,7 +306,19 @@ if __name__ == '__main__':
     ancho_px = int(sys.argv[3]) if len(sys.argv) > 3 else 1100
     data = open(entrada, 'rb').read()
 
-    if not como_tinta(data, salida, ancho_px):
-        if not como_imagen(data, salida, ancho_px):
-            print(f'{salida}: NO SE PUDO EXTRAER')
-            sys.exit(1)
+    tabla = objetos(data)
+    pags = paginas(tabla)
+    if not pags:
+        print(f'{salida}: NO SE ENCONTRARON PAGINAS')
+        sys.exit(1)
+
+    fallos = 0
+    for i, p in enumerate(pags, 1):
+        destino = salida if len(pags) == 1 else salida[:-4] + f'-p{i}.png'
+        w, h = medidas(tabla, p)
+        if not como_tinta(contenido_de(tabla, p), w, h, destino, ancho_px):
+            if not como_imagen(imagenes_de(tabla, p), destino, ancho_px):
+                print(f'{destino}: NO SE PUDO EXTRAER')
+                fallos += 1
+
+    sys.exit(1 if fallos == len(pags) else 0)
