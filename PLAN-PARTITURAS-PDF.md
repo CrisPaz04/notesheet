@@ -149,33 +149,39 @@ los dispositivos. Nada de detectar el navegador y ramificar.
   un atril puede sobrar de largo. Merece medirse antes de asumir pdf.js en el
   lector.
 
-### El banco de pruebas
+### Cómo se comprobó, por si hay que repetirlo
 
-Sigue montado por si hay que repetirlo en otro dispositivo:
+El banco de pruebas **ya se borró**: estaba en `apps/web/public/prueba-pdf/`,
+fuera de git, y cumplió su función. Rehacerlo es media hora larga de nada:
+
+1. Una carpeta en `apps/web/public/` con un PDF de ejemplo de varias páginas
+   (vale cualquiera de `OneDrive/.../Canciones varias`) y una copia de
+   `pdf.min.js` y `pdf.worker.min.js` de
+   `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/`.
+2. Un `index.html` que pinte el mismo PDF por cuatro vías —`iframe`, `object`,
+   `embed` y pdf.js sobre `<canvas>`— y que muestre `navigator.userAgent`.
+3. Servirlo a la red local y abrirlo en el dispositivo:
 
 ```bash
 npm run dev --workspace=web -- --host 0.0.0.0 --port 5180
 ```
 
-y desde la tablet, en la misma wifi:
-
 ```
-http://<ip-del-pc>:5180/prueba-pdf/index.html
+http://<ip-del-pc>:5180/<carpeta>/index.html
 ```
 
-**Con `index.html` al final, no vale acabar en la barra.** `/prueba-pdf/` cae en
-el `navigateFallback` del SPA y lo que sale es la página de "no encontrado" de
-NoteSheet, que parece un 404 del servidor pero no lo es.
+Dos cosas que costaron tiempo la primera vez:
 
-La página enseña la misma partitura de 3 páginas por cuatro vías (`iframe`,
-`object`, `embed` y pdf.js) y el user agent del navegador. Se mira cuáles se ven
-y cuáles salen en blanco o proponen descargar. En escritorio están comprobadas:
-`iframe` y `object` muestran el visor nativo y pdf.js pinta las 3 páginas, así
-que si en la tablet sale en blanco es la tablet, no la página.
+- **La URL tiene que acabar en `index.html`**, no en la barra. Acabando en
+  barra cae en el `navigateFallback` del SPA y sale la página de "no
+  encontrado" de NoteSheet, que parece un 404 del servidor y no lo es.
+- **pdf.js, servido desde la propia carpeta, no desde el CDN.** Así la prueba
+  no depende de que el dispositivo tenga internet ni de que un bloqueador deje
+  pasar el CDN, y se parece a cómo iría empaquetado en la app.
 
-Los archivos están en `apps/web/public/prueba-pdf/` (fuera de git). pdf.js va
-servido desde ahí, no desde un CDN, para que la prueba no dependa de internet
-ni de un bloqueador. Se puede borrar la carpeta cuando ya no haga falta.
+Conviene comprobar la página **en escritorio primero**: allí `iframe` y
+`object` muestran el visor nativo y pdf.js pinta todas las páginas. Si luego en
+la tablet sale en blanco, ya se sabe que es la tablet y no la página.
 
 **Coste medido de pdf.js: 320 KB** el `pdf.min.js`, más 1 MB el worker (que se
 carga aparte y solo cuando hace falta). No es una estimación: son los archivos
