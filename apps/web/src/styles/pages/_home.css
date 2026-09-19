@@ -68,24 +68,34 @@
     text-decoration: none;
   }
   
+  /* Botón secundario junto al primario: es un "outline", así que el borde y
+     el texto van del color de la marca y se ven siempre.
+  
+     Antes el borde era blanco al 30%, invisible sobre el fondo claro, y el
+     texto usaba --text-light-primary, que en tema claro es negro. El botón
+     parecía apagado y el borde solo aparecía al pasar el ratón. */
   .btn-hero-secondary {
     background: transparent;
-    border: 2px solid rgba(255, 255, 255, 0.3);
+    border: 2px solid var(--color-primary);
     border-radius: var(--radius-lg);
     padding: 1rem 2rem;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
     transition: var(--transition-fast);
-    color: var(--text-light-primary);
+    color: var(--color-primary);
     text-decoration: none;
   }
   
+  /* Al pasar el ratón se rellena, como haría cualquier outline.
+     --bg-dark-primary es el color de contraste del tema: blanco sobre el azul
+     del tema claro, oscuro sobre el menta del tema oscuro. Es el mismo truco
+     que ya usa .btn-hero-primary. */
   .btn-hero-secondary:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--color-primary);
     border-color: var(--color-primary);
     transform: translateY(-3px);
-    color: var(--text-light-primary);
+    color: var(--bg-dark-primary);
     text-decoration: none;
   }
   
