@@ -119,20 +119,39 @@ Tres cosas que parecen estar y no están:
    descargas de Storage. Eso no choca con la nota de `CLAUDE.md` sobre no
    interceptar Firebase, que va por la autenticación y Firestore.
 
-## Cómo mostrarlo: se lee en una **tablet Samsung** (Android)
+## Cómo mostrarlo: **pdf.js**, decidido y probado
 
-Decidido: las partituras se leen en una tab Samsung, o sea Chrome o Samsung
-Internet, los dos Chromium.
+La sección de vientos usa **una mezcla de tabs Samsung, iPads y otras marcas**.
+Eso descarta cualquier solución que dependa del dispositivo: hace falta una sola
+vía que funcione en todas, porque el músico no va a saber por qué a su
+compañero se le ve y a él no.
 
-Y eso, al contrario de lo que parece, es el caso **más** incómodo, no el menos:
-Chrome de escritorio trae visor de PDF integrado y un `<iframe>` funciona, pero
-**Chrome en Android históricamente no renderiza PDF embebidos** — los descarga o
-se los pasa a otra app. Versiones recientes han ido añadiendo visor para
-navegación normal, pero dentro de un `<iframe>` es donde menos se puede dar por
-hecho.
+**Probado en una tab Samsung: de las cuatro vías, solo funciona pdf.js.**
+`iframe`, `object` y `embed` salen **en blanco**. Es lo que se sospechaba:
+Chrome de escritorio trae visor de PDF integrado y por eso ahí un `<iframe>`
+funciona, pero en Android no renderiza PDF embebidos.
 
-**Hay un banco de pruebas montado para salir de dudas**, porque esto no se
-decide de memoria:
+Así que no hay elección que tomar: **pdf.js**, 320 KB, un solo camino para todos
+los dispositivos. Nada de detectar el navegador y ramificar.
+
+### Tres cosas a tener en cuenta al implementarlo
+
+- **Renderizar página a página, no todas de golpe.** El banco de pruebas pinta
+  las 3 páginas al cargar, que para probar vale. Un popurrí largo en la tablet
+  más barata de la sección es otra cosa: cada página es un `<canvas>` a tamaño
+  completo y la memoria se va rápido. Pintar la que se ve y las vecinas.
+- **Probarlo en el dispositivo más viejo de la sección** antes de darlo por
+  bueno. Que funcione en la tab no dice nada de un iPad de hace siete años.
+- **Alternativa que no descarto**: convertir cada página a imagen al subirla
+  (en el navegador, con el propio pdf.js) y que quien lee reciba `<img>`. Se
+  ve en todas partes sin dependencia, carga antes y se cachea sin esfuerzo; a
+  cambio se pierde nitidez al ampliar y ocupa más en Storage. Para leer sobre
+  un atril puede sobrar de largo. Merece medirse antes de asumir pdf.js en el
+  lector.
+
+### El banco de pruebas
+
+Sigue montado por si hay que repetirlo en otro dispositivo:
 
 ```bash
 npm run dev --workspace=web -- --host 0.0.0.0 --port 5180
@@ -154,9 +173,9 @@ y cuáles salen en blanco o proponen descargar. En escritorio están comprobadas
 `iframe` y `object` muestran el visor nativo y pdf.js pinta las 3 páginas, así
 que si en la tablet sale en blanco es la tablet, no la página.
 
-Los archivos están en `apps/web/public/prueba-pdf/` (fuera de git) y se borran
-al decidir. pdf.js va servido desde ahí, no desde un CDN, para que la prueba no
-dependa de internet ni de un bloqueador.
+Los archivos están en `apps/web/public/prueba-pdf/` (fuera de git). pdf.js va
+servido desde ahí, no desde un CDN, para que la prueba no dependa de internet
+ni de un bloqueador. Se puede borrar la carpeta cuando ya no haga falta.
 
 **Coste medido de pdf.js: 320 KB** el `pdf.min.js`, más 1 MB el worker (que se
 carga aparte y solo cuando hace falta). No es una estimación: son los archivos
@@ -195,7 +214,6 @@ a propósito y comprobar que algún test falla. Lo que merece cubrirse:
 
 ## Lo que queda por decidir
 
-- **`<iframe>` o `pdf.js`** — depende de la prueba en la tablet Samsung (arriba).
 - **Cuántos PDF por canción.** Nueve instrumentos × voces × 2 variantes son
   muchos archivos. ¿Se suben todos de golpe con un nombre que los ordene solo,
   o uno a uno desde su pestaña?

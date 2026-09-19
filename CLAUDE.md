@@ -148,7 +148,9 @@ Netlify auto-deploys from `master` branch. Configuration in `netlify.toml`:
   variante, con y sin los nombres de las notas encima) y todavía no están en la
   app. El plan para meterlas está en `PLAN-PARTITURAS-PDF.md`: la decisión de
   fondo es que un PDF es **una canción con el cuerpo en otro formato**, no un
-  tipo nuevo de elemento en las listas.
+  tipo nuevo de elemento en las listas. Para mostrarlos hace falta **pdf.js**:
+  está probado que `iframe`, `object` y `embed` salen en blanco en Android, y
+  la sección de vientos mezcla tabs Samsung, iPads y otras marcas.
 - La lista que el director manda por WhatsApp se interpreta en
   `packages/core/src/music/setlist.js`. Las líneas sueltas tipo "Mi m" son la tonalidad
   del bloque, no canciones; y el director suele nombrar la canción por un fragmento de la
