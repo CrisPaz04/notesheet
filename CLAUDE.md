@@ -144,6 +144,11 @@ Netlify auto-deploys from `master` branch. Configuration in `netlify.toml`:
   `chords.js` o `transposition.js`, ese test es el que avisa. `KEY_TO_INDEX`
   necesita también las enarmónicas raras (`MI#`, `SI#`, `FAb`): si falta una,
   `transposeNote` devuelve la nota **sin transponer** y en silencio.
+- Parte del repertorio son partituras en PDF (una por instrumento, voz y
+  variante, con y sin los nombres de las notas encima) y todavía no están en la
+  app. El plan para meterlas está en `PLAN-PARTITURAS-PDF.md`: la decisión de
+  fondo es que un PDF es **una canción con el cuerpo en otro formato**, no un
+  tipo nuevo de elemento en las listas.
 - La lista que el director manda por WhatsApp se interpreta en
   `packages/core/src/music/setlist.js`. Las líneas sueltas tipo "Mi m" son la tonalidad
   del bloque, no canciones; y el director suele nombrar la canción por un fragmento de la
