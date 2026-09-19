@@ -17,6 +17,14 @@
  *
  * El contenido se guarda como voz de trompeta 1, que es la referencia desde la
  * que la app transpone al resto de instrumentos.
+ *
+ * Si una partitura trae segunda voz ("1 Trp" y "2 Trp" en la misma hoja), la
+ * canción puede traer además un mapa `voices`:
+ *
+ *   "content": "<la voz 1>",
+ *   "voices": { "bb_trumpet": { "1": "<la voz 1>", "2": "<la voz 2>" } }
+ *
+ * `content` sigue siendo la voz principal; `voices` solo añade las demás.
  */
 const APLICAR = false; // ponlo en true cuando el simulacro te cuadre
 
@@ -116,6 +124,23 @@ const APLICAR = false; // ponlo en true cuando el simulacro te cuadre
   let ok = 0;
   const fallidas = [];
 
+  // `voices` es `{ instrumento: { nº de voz: contenido } }`. Si la canción no
+  // lo trae, la única voz es la de trompeta 1 con el contenido principal.
+  const mapaDeVoces = (c) => {
+    const contenido = c.content || '';
+    const voces = c.voices || { bb_trumpet: { 1: contenido } };
+
+    const fields = {};
+    Object.entries(voces).forEach(([instrumento, porVoz]) => {
+      const numeros = {};
+      Object.entries(porVoz).forEach(([numero, texto]) => {
+        numeros[numero] = { stringValue: texto || '' };
+      });
+      fields[instrumento] = { mapValue: { fields: numeros } };
+    });
+    return { mapValue: { fields } };
+  };
+
   for (const c of nuevas) {
     const contenido = c.content || '';
 
@@ -132,13 +157,7 @@ const APLICAR = false; // ponlo en true cuando el simulacro te cuadre
       primaryInstrument: texto('bb_trumpet'),
       primaryVoiceNumber: texto('1'),
       // La app guarda el contenido por instrumento y número de voz
-      voices: {
-        mapValue: {
-          fields: {
-            bb_trumpet: { mapValue: { fields: { 1: texto(contenido) } } }
-          }
-        }
-      },
+      voices: mapaDeVoces(c),
       createdAt: { timestampValue: ahora },
       updatedAt: { timestampValue: ahora }
     };

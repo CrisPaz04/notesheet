@@ -106,6 +106,35 @@ canciones.forEach((c, i) => {
   if (/^#\s*(Tonalidad|Key|Canción|Título|Title|Tipo|Type):/im.test(contenido)) {
     avisos.push(`${donde}: hay metadatos dentro del contenido; van en sus campos`);
   }
+
+  // Voces extra: algunas partituras traen "1 Trp" y "2 Trp" en la misma hoja.
+  // La voz principal tiene que ser la misma que `content`, que es lo que la app
+  // muestra de entrada.
+  if (c.voices !== undefined) {
+    if (typeof c.voices !== 'object' || Array.isArray(c.voices) || c.voices === null) {
+      errores.push(`${donde}: "voices" debe ser un mapa instrumento → nº de voz → contenido`);
+    } else {
+      const principal = c.voices.bb_trumpet?.['1'];
+      if (principal === undefined) {
+        errores.push(`${donde}: "voices" no trae la voz de trompeta 1, que es la referencia`);
+      } else if (principal !== contenido) {
+        errores.push(`${donde}: la voz de trompeta 1 no coincide con "content"`);
+      }
+
+      Object.entries(c.voices).forEach(([instrumento, porVoz]) => {
+        Object.entries(porVoz || {}).forEach(([numero, texto]) => {
+          if (!String(texto || '').trim()) {
+            errores.push(`${donde}: la voz ${instrumento} ${numero} está vacía`);
+            return;
+          }
+          const sinAcordes = String(texto).split('\n').filter(esLineaDeAcordes).length === 0;
+          if (sinAcordes) {
+            avisos.push(`${donde}: la voz ${instrumento} ${numero} no tiene líneas de acordes`);
+          }
+        });
+      });
+    }
+  }
 });
 
 console.log(`Canciones en el archivo: ${canciones.length}\n`);
