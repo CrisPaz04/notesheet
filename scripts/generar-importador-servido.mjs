@@ -19,6 +19,7 @@ import { fileURLToPath } from 'node:url';
 
 const raiz = join(dirname(fileURLToPath(import.meta.url)), '..');
 const canciones = JSON.parse(readFileSync(join(raiz, 'scripts/repertorio/repertorio.json'), 'utf8'));
+const sesion = readFileSync(join(raiz, 'scripts/sesion-firebase.js'), 'utf8');
 const destino = join(raiz, 'apps/web/public/importar-repertorio.js');
 
 const script = `// Generado por scripts/generar-importador-servido.mjs. No lo edites ni lo subas.
@@ -27,24 +28,25 @@ const script = `// Generado por scripts/generar-importador-servido.mjs. No lo ed
 //   import('/importar-repertorio.js')             -> simulacro, no escribe nada
 //   import('/importar-repertorio.js?aplicar=1')   -> importa de verdad
 //
-// El segundo hay que escribirlo distinto cada vez (?aplicar=1&r=2, etc.) o el
-// navegador reutiliza el módulo que ya cargó y no vuelve a ejecutarse.
+// El navegador cachea los módulos por URL: para relanzar algo hay que cambiar
+// la URL (?aplicar=1&r=2, luego r=3...) o no se vuelve a ejecutar.
 
 const CANCIONES = ${JSON.stringify(canciones)};
 
+${sesion}
+
 const APLICAR = new URL(import.meta.url).searchParams.get('aplicar') === '1';
 
-const clave = Object.keys(localStorage).find((k) => k.includes('firebase:authUser'));
-if (!clave) {
-  console.error('No hay sesión iniciada. Entra en NoteSheet y vuelve a intentarlo.');
+const sesionActual = await leerSesionFirebase();
+
+if (!sesionActual) {
+  console.error('No se encontró la sesión. Entra en NoteSheet y vuelve a intentarlo.');
 } else {
-  const datos = JSON.parse(localStorage.getItem(clave));
-  const uid = datos.uid;
-  const token = datos.stsTokenManager.accessToken;
-  const projectId = clave.match(/\\[([^\\]]+)\\]/)?.[1];
+  const { uid, token, projectId } = sesionActual;
   const base = \`https://firestore.googleapis.com/v1/projects/\${projectId}/databases/(default)/documents\`;
   const headers = { Authorization: \`Bearer \${token}\`, 'Content-Type': 'application/json' };
 
+  console.log(\`Proyecto \${projectId}, usuario \${uid}\`);
   console.log(\`Canciones en el archivo: \${CANCIONES.length}\`);
 
   const res = await fetch(\`\${base}:runQuery\`, {
@@ -66,7 +68,7 @@ if (!clave) {
 
   if (!res.ok) {
     console.error('No se pudieron leer tus canciones:', await res.text());
-    console.error('Si pone ERR_BLOCKED_BY_CLIENT, es una extensión bloqueando Firestore.');
+    console.error('Si sale ERR_BLOCKED_BY_CLIENT, es una extensión bloqueando Firestore.');
   } else {
     const existentes = new Set(
       (await res.json())
@@ -85,7 +87,7 @@ if (!clave) {
       console.log('\\nSimulacro: no se ha escrito nada.');
       nuevas.slice(0, 10).forEach((c) => console.log(\`  → \${c.title}\`));
       if (nuevas.length > 10) console.log(\`  ... y \${nuevas.length - 10} más\`);
-      console.log("\\nPara importarlas de verdad, escribe:  import('/importar-repertorio.js?aplicar=1')");
+      console.log("\\nPara importarlas de verdad:  import('/importar-repertorio.js?aplicar=1')");
     } else {
       const ahora = new Date().toISOString();
       const texto = (v) => ({ stringValue: v || '' });
@@ -134,7 +136,8 @@ if (!clave) {
       console.log(\`\\nImportadas \${ok} de \${nuevas.length}.\`);
       if (fallidas.length) {
         console.log(\`Fallaron \${fallidas.length}:\`);
-        fallidas.forEach((f) => console.log(\`  ✗ \${f.title}: \${f.error.slice(0, 120)}\`));
+        fallidas.forEach((f) => console.log(\`  ✗ \${f.title}: \${f.error.slice(0, 200)}\`));
+        console.log('Arregla lo que haga falta y vuelve a lanzarlo: las que entraron se saltan.');
       }
       console.log('Recarga la página para verlas.');
     }
