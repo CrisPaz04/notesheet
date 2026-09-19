@@ -24,19 +24,20 @@ function UserPreferences() {
   const { currentUser } = useAuth();
   const { theme, changeTheme, getThemesByCategory } = useThemeWithAuth();
 
-  // Cargar preferencias al montar el componente
+  // Cargar preferencias al montar el componente.
+  //
+  // Solo depende del usuario, NO del tema. Antes también dependía del tema, y
+  // como cambiarlo relanzaba el efecto, este volvía a leer de Firestore y
+  // pisaba lo que el usuario acabase de tocar sin guardar: elegías notación
+  // anglosajona, cambiabas el tema y volvía sola a la latina.
   useEffect(() => {
     const loadPreferences = async () => {
       try {
         setLoading(true);
         if (currentUser) {
           const userPreferences = await getUserPreferences(currentUser.uid);
-          // Combinar con valores por defecto
-          setPreferences({
-            ...preferences,
-            ...userPreferences,
-            defaultTheme: theme // Usar el tema actual del hook
-          });
+          // Forma funcional: así no hace falta `preferences` como dependencia
+          setPreferences((prev) => ({ ...prev, ...userPreferences }));
         }
       } catch (error) {
         setError("Error al cargar preferencias: " + error.message);
@@ -47,7 +48,15 @@ function UserPreferences() {
     };
 
     loadPreferences();
-  }, [currentUser, theme]);
+  }, [currentUser]);
+
+  // El tema lo gobierna useThemeWithAuth; aquí solo se refleja para guardarlo
+  // junto al resto de preferencias.
+  useEffect(() => {
+    setPreferences((prev) => (prev.defaultTheme === theme
+      ? prev
+      : { ...prev, defaultTheme: theme }));
+  }, [theme]);
 
   // Manejar cambios en los campos
   const handleChange = (field, value) => {
