@@ -138,7 +138,15 @@ decide de memoria:
 npm run dev --workspace=web -- --host 0.0.0.0 --port 5180
 ```
 
-y desde la tablet, en la misma wifi: `http://<ip-del-pc>:5180/prueba-pdf/`
+y desde la tablet, en la misma wifi:
+
+```
+http://<ip-del-pc>:5180/prueba-pdf/index.html
+```
+
+**Con `index.html` al final, no vale acabar en la barra.** `/prueba-pdf/` cae en
+el `navigateFallback` del SPA y lo que sale es la página de "no encontrado" de
+NoteSheet, que parece un 404 del servidor pero no lo es.
 
 La página enseña la misma partitura de 3 páginas por cuatro vías (`iframe`,
 `object`, `embed` y pdf.js) y el user agent del navegador. Se mira cuáles se ven
