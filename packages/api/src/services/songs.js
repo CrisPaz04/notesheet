@@ -49,35 +49,64 @@ export const createSong = async (songData) => {
   }
 };
 
-// Obtener todas las canciones
-export const getAllSongs = async (userId) => {
-  try {
-    const q = query(
-      songsCollection, 
-      where("userId", "==", userId),
-      orderBy("createdAt", "desc")
-    );
-    const querySnapshot = await getDocs(q);
-    
-    return querySnapshot.docs.map(doc => {
-      const data = doc.data();
-      
-      // Manejar la migración de author a version para canciones existentes
-      const songData = { ...data };
-      if (songData.author !== undefined && songData.version === undefined) {
-        songData.version = songData.author;
-        delete songData.author;
-      }
-      
-      return {
-        id: doc.id,
-        ...songData
-      };
-    });
-  } catch (error) {
-    throw error;
+// Normaliza un documento de canción a la forma que espera la aplicación
+const mapSongDoc = (doc, userId) => {
+  const songData = { ...doc.data() };
+
+  // Manejar la migración de author a version para canciones existentes
+  if (songData.author !== undefined && songData.version === undefined) {
+    songData.version = songData.author;
+    delete songData.author;
   }
+
+  // Las canciones anteriores al repertorio compartido no tienen el campo:
+  // se tratan como privadas para no publicar nada sin querer.
+  songData.public = songData.public === true;
+
+  return {
+    id: doc.id,
+    ...songData,
+    isOwn: songData.userId === userId
+  };
 };
+
+/**
+ * Devuelve el repertorio visible para un usuario: sus propias canciones
+ * (públicas o no) más las que otros músicos hayan publicado.
+ *
+ * Son dos consultas porque Firestore no sabe hacer un OR entre campos
+ * distintos; se fusionan aquí quitando duplicados.
+ *
+ * @param {string} userId - ID del usuario
+ * @returns {Promise<Array>} Canciones, cada una con `isOwn`
+ */
+export const getAllSongs = async (userId) => {
+  const propias = query(
+    songsCollection,
+    where("userId", "==", userId),
+    orderBy("createdAt", "desc")
+  );
+  const compartidas = query(
+    songsCollection,
+    where("public", "==", true),
+    orderBy("createdAt", "desc")
+  );
+
+  const [snapPropias, snapCompartidas] = await Promise.all([
+    getDocs(propias),
+    getDocs(compartidas)
+  ]);
+
+  const porId = new Map();
+  // Las propias van primero para que ganen sobre su copia de la consulta pública
+  snapPropias.docs.forEach(doc => porId.set(doc.id, mapSongDoc(doc, userId)));
+  snapCompartidas.docs.forEach(doc => {
+    if (!porId.has(doc.id)) porId.set(doc.id, mapSongDoc(doc, userId));
+  });
+
+  return [...porId.values()];
+};
+
 
 // Obtener una canción por ID
 export const getSongById = async (songId) => {

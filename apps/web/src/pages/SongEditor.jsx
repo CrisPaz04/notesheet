@@ -26,6 +26,9 @@ function SongEditor() {
   const [initialLoading, setInitialLoading] = useState(true);
   const [error, setError] = useState("");
   const [isNewSong, setIsNewSong] = useState(true);
+  // Las canciones nuevas nacen en el repertorio compartido; las que ya
+  // existian, sin el campo `public`, se mantienen privadas.
+  const [isPublic, setIsPublic] = useState(true);
   
   // Estado del gestor de voces (UI)
   const [showVoicesManager, setShowVoicesManager] = useState(false);
@@ -91,6 +94,7 @@ function SongEditor() {
       setKey(song.key || "DO");
       setType(song.type || "Adoración");
       setVersion(song.version || "");
+      setIsPublic(song.public === true);
       setContent(song.content || "");
 
       if (song.lyricsOnly) {
@@ -197,6 +201,7 @@ function SongEditor() {
         voices,
         primaryInstrument,
         primaryVoiceNumber,
+        public: isPublic,
         userId: currentUser.uid
       };
 
@@ -537,6 +542,35 @@ function SongEditor() {
               value={type}
               onChange={handleTypeChange}
             />
+
+            <div className="form-group-modern">
+              <label className="form-label-modern">
+                <i className="bi bi-eye me-2"></i>
+                Visibilidad
+              </label>
+              <div className="visibility-toggle">
+                <button
+                  type="button"
+                  className={`visibility-option ${isPublic ? 'active' : ''}`}
+                  onClick={() => setIsPublic(true)}
+                >
+                  <i className="bi bi-people me-2"></i>
+                  Repertorio
+                </button>
+                <button
+                  type="button"
+                  className={`visibility-option ${!isPublic ? 'active' : ''}`}
+                  onClick={() => setIsPublic(false)}
+                >
+                  <i className="bi bi-lock me-2"></i>
+                  Privada
+                </button>
+              </div>
+              <div className="form-help-text">
+                Las canciones del repertorio las ven todos los músicos. Solo tú
+                puedes editarlas o borrarlas.
+              </div>
+            </div>
           </div>
         </div>
 

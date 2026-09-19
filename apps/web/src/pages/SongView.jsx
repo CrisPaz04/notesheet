@@ -606,7 +606,7 @@ function SongView() {
                   Imprimir
                 </button>
 
-                {canEditSongs() && (
+                {canEditSongs() && song.userId === currentUser?.uid && (
                   <Link
                     to={`/songs/${id}/edit`}
                     className="btn-song-action btn-song-primary"

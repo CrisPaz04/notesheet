@@ -9,6 +9,14 @@
       ]
     },
     {
+      "collectionGroup": "songs",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "public", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
       "collectionGroup": "playlists",
       "queryScope": "COLLECTION",
       "fields": [

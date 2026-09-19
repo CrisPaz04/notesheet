@@ -59,6 +59,8 @@ function Dashboard() {
             oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
             return song.updatedAt && song.updatedAt.toDate() > oneWeekAgo;
           }
+          case "mine":
+            return song.isOwn;
           case "jubilo":
             return song.type === "Júbilo";
           case "adoracion":
@@ -226,6 +228,12 @@ function Dashboard() {
                   Todas
                 </button>
                 <button
+                  className={`filter-tab ${activeFilter === 'mine' ? 'active' : ''}`}
+                  onClick={() => setActiveFilter('mine')}
+                >
+                  Mías
+                </button>
+                <button
                   className={`filter-tab ${activeFilter === 'recent' ? 'active' : ''}`}
                   onClick={() => setActiveFilter('recent')}
                 >
@@ -329,7 +337,7 @@ function Dashboard() {
                         <h4 className="recent-item-title">
                           {song.title || "Sin título"}
                         </h4>
-                        {canEditSongs() && (
+                        {canEditSongs() && song.isOwn && (
                           <button
                             className="song-delete-btn"
                             onClick={(e) => handleDeleteSong(e, song.id, song.title)}
@@ -384,7 +392,7 @@ function Dashboard() {
                           "Sin fecha"
                         }
                       </div>
-                      {canEditSongs() && (
+                      {canEditSongs() && song.isOwn && (
                         <button
                           className="song-delete-btn list-delete-btn"
                           onClick={(e) => handleDeleteSong(e, song.id, song.title)}

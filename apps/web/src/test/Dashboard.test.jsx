@@ -55,7 +55,19 @@ const SONGS = [
     version: 'v2',
     updatedAt: timestamp(hace(2))
   }
-];
+].map((s) => ({ ...s, isOwn: true, public: true }));
+
+// Canción publicada por otro músico: se ve en el repertorio pero no se toca
+const AJENA = {
+  id: '4',
+  title: 'Renuévame',
+  key: 'MI',
+  type: 'Adoración',
+  version: 'coro',
+  updatedAt: timestamp(hace(3)),
+  isOwn: false,
+  public: true
+};
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -233,6 +245,48 @@ describe('Dashboard', () => {
 
       // Sublime Gracia es de Adoración, así que no queda nada
       expect(await screen.findByText('No se encontraron canciones')).toBeInTheDocument();
+    });
+  });
+
+  describe('repertorio compartido', () => {
+    beforeEach(() => {
+      mockGetAllSongs.mockResolvedValue([...SONGS, AJENA]);
+    });
+
+    it('muestra las canciones publicadas por otros músicos', async () => {
+      await renderDashboard();
+      expect(screen.getByText('Renuévame')).toBeInTheDocument();
+    });
+
+    it('no ofrece borrar una canción ajena', async () => {
+      await renderDashboard();
+      // Solo las tres propias llevan botón de eliminar
+      expect(document.querySelectorAll('.song-delete-btn')).toHaveLength(3);
+    });
+
+    it('el filtro Mías deja fuera el repertorio ajeno', async () => {
+      const user = userEvent.setup();
+      await renderDashboard();
+
+      const tabs = document.querySelector('.filter-tabs');
+      await user.click(within(tabs).getByRole('button', { name: 'Mías' }));
+
+      await waitFor(() => {
+        expect(screen.queryByText('Renuévame')).not.toBeInTheDocument();
+      });
+      expect(tituloVisibles()).toHaveLength(3);
+    });
+
+    it('la búsqueda también encuentra canciones ajenas', async () => {
+      const user = userEvent.setup();
+      await renderDashboard();
+
+      await user.type(screen.getByPlaceholderText('Buscar canciones...'), 'renu');
+
+      await waitFor(() => {
+        expect(screen.getByText('Renuévame')).toBeInTheDocument();
+      });
+      expect(screen.queryByText('Cristo Vive')).not.toBeInTheDocument();
     });
   });
 
