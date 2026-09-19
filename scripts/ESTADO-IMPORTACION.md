@@ -1,70 +1,121 @@
 # Estado de la importación del repertorio
 
-Dónde se quedó el trabajo de meter las ~101 partituras de
-`OneDrive/Documents/IMCEH/Partituras/Canciones varias` en NoteSheet.
+Las 101 partituras de `OneDrive/Documents/IMCEH/Partituras/Canciones varias`
+ya están extraídas a `scripts/repertorio/repertorio.json`: **118 canciones**
+(salen más que archivos porque varias hojas llevan dos o cuatro canciones).
+
+## Lo que falta
+
+**Solo importarlas.** Abre NoteSheet, pega `scripts/import-songs.js` en la
+consola y elige `scripts/repertorio/repertorio.json`. Arranca en modo simulacro;
+cuando te cuadre, cambia `APLICAR` a `true`. Es seguro repetirlo: salta por
+título las que ya existan.
+
+Luego abre dos o tres en la app y comprueba que se ven, se transponen y suenan
+como en la hoja. El resto ya está verificado en automático (ver más abajo).
 
 ## Lo que ya está resuelto
 
-**Leer los PDF.** No son escaneos normales ni traen texto: no hay fuentes, no hay
-operadores de texto y `pdftoppm` no está instalado. Son de dos clases y
-`scripts/pdf-a-imagen.py` maneja las dos sin dependencias externas:
-
-- **Tinta vectorial** (notas manuscritas desde una app de tableta): miles de
-  trazos `m`/`l`/`S` que el script rasteriza. Ojo: unos PDF traen el contenido
-  comprimido con Flate y otros **sin comprimir**; hay que mirar los dos.
-- **Bitmap incrustado** (documento tipografiado o foto): se extrae y se reduce.
+**Leer los PDF.** `scripts/pdf-a-imagen.py` los rasteriza **página a página**
+sin dependencias externas. Maneja las dos clases de archivo del repertorio
+(tinta vectorial de una app de tableta, y bitmap incrustado de una foto) y saca
+`salida-p1.png`, `salida-p2.png`... cuando hay varias páginas.
 
 ```bash
 python scripts/pdf-a-imagen.py "ruta/cancion.pdf" salida.png 1000
 ```
 
-Probado con `Cómo podremos callar` (manuscrita), `Amo al Señor` (tipografiada),
-`Bueno es alabar` y `Agnus Dei`. Las cuatro salen legibles.
+Ojo con una trampa que ya costó una página ilegible: el espacio de color puede
+venir como `/ICCBased`, y ahí el número de componentes está en el `/N` del
+objeto al que apunta. Darlo por gris deja la imagen con las filas corridas.
 
-**La app ya entiende esta notación.** Hizo falta arreglarla, porque ninguna línea
-se reconocía y por tanto nada se transponía (commits `9f48548` y `4de9889`).
+**Que la app entienda esta notación.** Hizo falta arreglarla tres veces:
+los commits `9f48548` y `4de9889` (reconocer las líneas) y ahora las notas
+enarmónicas — ver más abajo.
 
 ## Qué son estas partituras
 
 **No son acordes sobre la letra.** Son partes de **primera trompeta** escritas
-como una melodía nota a nota, y **la mayoría no tiene letra ninguna**.
+como una melodía nota a nota, y la mayoría no tiene letra ninguna.
 
-| Símbolo | Significa | Qué hacer al extraer |
+| Símbolo | Significa | Qué se hizo al extraer |
 |---|---|---|
-| `_` o una raya larga | La nota se sostiene más | Conservar: `MI_` |
+| `_` o una raya larga | La nota se sostiene más | Conservar: `MI_`, `MI__` |
 | `//` | Esa sección se repite | Conservar |
 | `(4)` | La nota **se repite 4 veces** | **Expandir**: `SI (4)` → `SI SI SI SI` |
 | `#` `b` | Sostenido / bemol | Conservar |
-| `1 TRP` | Primera trompeta | Va a la voz de trompeta 1 |
+| `1 TRP` / `2 TRP` | Primera y segunda trompeta | Voces 1 y 2 |
 
-Confirmado por el propio autor del repertorio. Las notas van en MAYÚSCULAS o
-Capitalizadas; las dos se reconocen.
+### Lo que se aprendió por el camino
 
-**Las líneas en blanco no significan nada** — es solo cómo quedó al escribirlas.
-Se conservan porque ayudan a leer, pero no son secciones.
+- **Varias páginas no es lo mismo que una canción larga.** De los 27 PDF con
+  más de una página, unos son continuación y otros son **la misma melodía
+  escrita para otro instrumento**: "Agnus Dei" trae Trompeta, Sax Alto y
+  Flauta, y las tres son la misma parte transpuesta (+7 el sax, −2 la flauta).
+  Esas páginas **no se importan**: la app las saca sola desde la de trompeta.
+  Hay un test que lo comprueba.
+- **La tonalidad del subtítulo unas veces es la de concierto y otras la
+  escrita.** No es fiable: en cada canción el campo `key` se sacó de las notas,
+  que es lo único que tiene que cuadrar para que la transposición funcione.
+  Donde el subtítulo decía otra cosa, hay un comentario explicándolo.
+- **Dos nombres de archivo mienten.** `Los enemigos de Jehová.pdf` lleva
+  impreso "ÉL ES JEHOVÁ", y `Pues Tu glorioso, Cristo vive.pdf` lleva
+  "YO TE ADORO SEÑOR" y "CRISTO VIVE" (de "Pues Tú glorioso" no hay nada en la
+  hoja). Se usaron los títulos impresos.
+- **"Cristo vive" estaba en dos hojas distintas.** Van las dos en una sola
+  canción, cada una en su sección: si se importan como dos canciones con el
+  mismo título, el importador salta la segunda y se pierde.
+- Cuando dos hojas eran la misma canción en dos tonalidades y una estaba
+  incompleta, se importó **la completa** ("Jehová respondió", "Oh Señor en tu
+  presencia"). Desde la app se baja a la otra tonalidad en un clic.
 
-**Algunas sí traen etiqueta**, como `(Intro Flauta)` en "Bueno es alabar". Cuando
-la partitura la marque, se pone como cabecera `## Intro Flauta`; cuando no, no se
-inventa nada: la app ya muestra bien una canción sin cabeceras (commit `f50c143`).
+## Lo único que queda por mirar a ojo
 
-## Lo que falta
+`node scripts/validate-songs.mjs scripts/repertorio/repertorio.json` da **un
+aviso**, a propósito: en "Amigo fiel" hay dos conteos sin expandir,
+`Do# Do# Do# Do# (5)` y `Do# Do# Do# Do# (2)`. La regla del repertorio es que el
+número va pegado a **una** nota (`SI (4)` → `SI SI SI SI`), pero ahí va detrás de
+un grupo de cuatro, así que no está claro si son cinco Do# más o si el compás
+entero se repite cinco veces. Se dejó tal cual para que lo confirme quien la
+toca; la app aguanta el `(5)` como separador y la canción se transpone igual.
 
-1. **Extraer las ~101 canciones a JSON.** Por lotes de 10–15: renderizar con
-   `pdf-a-imagen.py`, leer las imágenes y volcar al formato de `IMPORTAR.md`.
-   Ojo con los PDF de varias páginas: `Agnus Dei` tiene tres.
-2. **Validar** cada lote con `node scripts/validate-songs.mjs lote.json`.
-3. **Importar** con `scripts/import-songs.js` desde la consola del navegador.
-4. **Probar una canción entera primero**, de punta a punta, antes del lote grande.
+## Un bug de la app que destapó este repertorio
+
+`MI#`, `SI#` y `FAb` no estaban en la tabla de índices de
+`packages/core/src/music/transposition.js`. `transposeNote` no las reconocía y
+**devolvía la nota sin tocar**, en silencio: el resto de la línea se movía y esa
+se quedaba quieta, así que la melodía se rompía sin que nadie lo viera. Aparecen
+escritas a mano en "Amigo fiel" y "Eres fiel". Arreglado, con test.
+
+## Cómo se comprueba que el repertorio sigue funcionando
+
+`apps/web/src/test/repertorio.test.js` pasa las 118 canciones por el pipeline
+**real** de la app (no por la copia de la gramática que hay en
+`validate-songs.mjs`, que corre suelta y puede separarse de la buena):
+
+- cuenta exacta de líneas que la app reconoce como acordes,
+- cada canción se transpone a once tonalidades **y vuelve igual**, con toda la
+  melodía movida el mismo intervalo,
+- se adapta a los cinco instrumentos de la banda sin dobles alteraciones,
+- no hay títulos repetidos.
+
+Está validado con mutaciones, como pide `CLAUDE.md`: poner una nota en
+minúscula, quitar `SOL` de la gramática de acordes, repetir un título o deshacer
+el arreglo de `MI#` hacen fallar el test. La primera versión del test **no**
+pillaba la nota en minúscula: comprobaba solo que cada canción tuviera "alguna"
+línea de acordes, y por eso ahora la cuenta es exacta.
 
 ## Consecuencia que conviene tener presente
 
-Como estas canciones **no tienen letra**, dos cosas que existen en la app no les
-van a servir:
+Como casi ninguna de estas canciones tiene letra completa, dos cosas de la app
+les sirven a medias:
 
 - La búsqueda por letra del Dashboard.
 - El emparejamiento por fragmento de letra al importar la lista del director
-  (`packages/core/src/music/setlist.js`), que era justo el caso más útil. Con
-  este repertorio solo podrá emparejar por título.
+  (`packages/core/src/music/setlist.js`), que era el caso más útil.
 
-Si el director nombra las canciones por la letra y las canciones no la tienen
-guardada, ahí hay un hueco real que habrá que decidir cómo cubrir.
+Se salvó lo que había: donde la partitura traía pistas de letra ("Toda lengua lo
+confesará", "Quiero más...") se conservaron como líneas de texto, así que el
+emparejador tiene 109 líneas de letra donde agarrarse además de los títulos.
+Sigue siendo poco: si el director nombra las canciones por la letra, ahí queda
+un hueco que habrá que decidir cómo cubrir.

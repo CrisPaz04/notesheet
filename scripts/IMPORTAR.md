@@ -77,10 +77,43 @@ Un array. Cada canción:
 
 - `key`: una de `DO RE MI FA SOL LA SI` con `#`/`b` opcional, y `m` si es menor
   (`LAm`, `FA#m`, `SIb`). Es la tonalidad **en la que está escrita**, no en la que
-  la tocan.
+  la tocan. Sácala de las notas, no del subtítulo de la hoja: en este repertorio
+  unas veces el subtítulo es la tonalidad de concierto y otras la escrita, y lo
+  único que tiene que cuadrar para que la transposición funcione son las notas.
 - `type`: `Júbilo`, `Adoración` o `Moderada` — son las que filtra el Dashboard.
 - `version` y `album` pueden ir vacíos.
 - El contenido se guarda como voz de trompeta 1, que es la referencia de la app.
+
+Si la partitura trae segunda voz ("1 Trp" y "2 Trp" en la misma hoja), añade
+además un mapa `voices`. `content` sigue siendo la voz principal y tiene que ser
+idéntico a la voz 1:
+
+```json
+{
+  "title": "Entonces la iglesia",
+  "key": "FA#m",
+  "content": "<la voz 1>",
+  "voices": { "bb_trumpet": { "1": "<la voz 1>", "2": "<la voz 2>" } }
+}
+```
+
+**Dos títulos iguales no caben.** El importador salta por título lo que ya
+existe, así que dos canciones con el mismo nombre se quedan en una y la segunda
+se pierde sin avisar. Si el repertorio trae la misma canción en dos hojas,
+júntalas en una sola con cada versión en su sección.
+
+## Ojo con las hojas de varias páginas
+
+Que un PDF tenga varias páginas no significa que la canción sea larga. Pueden
+ser tres cosas, y hay que mirar cada una:
+
+1. **Continuación** de la misma parte: se juntan.
+2. **La misma melodía para otro instrumento** (la hoja suele decir "Trompeta",
+   "Sax", "Flauta"). Se importa **solo la de trompeta**: la app saca las demás
+   transponiendo. Se reconoce porque toda la página está a un intervalo fijo de
+   la de trompeta: +7 el sax alto, −2 la flauta, +5 la trompa en Fa.
+3. **Varias canciones** en la misma hoja: se separan, salvo que sea un popurrí
+   (entonces va como una sola, con cada canción en su `## sección`).
 
 ## Paso 1 — extraer el texto de los PDF
 
@@ -113,6 +146,12 @@ node scripts/validate-songs.mjs canciones.json
 Avisa de tonalidades que la app no entiende, títulos repetidos, contenido vacío,
 líneas sin acordes detectables y marcas `[?]` que dejaste para revisar.
 **Arregla lo que salga antes de importar.**
+
+Este validador reimplementa el reconocimiento de acordes con su propia expresión
+regular, porque corre suelto y sin bundler. Vale para revisar un lote, pero la
+gramática buena es la de `packages/core/src/music/chords.js`. Cuando el lote
+entre en `scripts/repertorio/repertorio.json`, quien lo comprueba de verdad es
+`apps/web/src/test/repertorio.test.js`, que usa el pipeline real de la app.
 
 ## Paso 3 — importar
 

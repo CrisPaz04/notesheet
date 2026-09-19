@@ -121,7 +121,7 @@ Netlify auto-deploys from `master` branch. Configuration in `netlify.toml`:
 ## Notes
 
 - No TypeScript - pure JavaScript
-- Vitest configured; 483 tests in `apps/web/src/test/` (run with `pnpm test:run`)
+- Vitest configured; 1032 tests in `apps/web/src/test/` (run with `pnpm test:run`)
 - Los tests se validan con **mutaciones**: se rompe el código a propósito y se comprueba
   que algún test falla. Ha destapado cuatro tests que pasaban por la razón equivocada.
   Merece la pena hacerlo con cualquier lógica no trivial que añadas.
@@ -132,6 +132,12 @@ Netlify auto-deploys from `master` branch. Configuration in `netlify.toml`:
   (`packages/core/src/music/chords.js`). No amplíes los regex de notas para
   cubrir sufijos: la letra en español se destroza ("Amor" -> "LAmor"). Usa
   `isChordLine` / `splitChordSegment` / `mapChordLine`.
+- El repertorio de la banda (118 canciones sacadas de las partituras) vive en
+  `scripts/repertorio/repertorio.json` y lo comprueba
+  `apps/web/src/test/repertorio.test.js` contra el pipeline real. Si tocas
+  `chords.js` o `transposition.js`, ese test es el que avisa. `KEY_TO_INDEX`
+  necesita también las enarmónicas raras (`MI#`, `SI#`, `FAb`): si falta una,
+  `transposeNote` devuelve la nota **sin transponer** y en silencio.
 - La lista que el director manda por WhatsApp se interpreta en
   `packages/core/src/music/setlist.js`. Las líneas sueltas tipo "Mi m" son la tonalidad
   del bloque, no canciones; y el director suele nombrar la canción por un fragmento de la
