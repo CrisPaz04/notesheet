@@ -7,11 +7,13 @@ import userEvent from '@testing-library/user-event';
 // Aquí solo interesa la lógica de presentación de la canción.
 
 const mockGetSongById = vi.fn();
+const mockGetAllSongs = vi.fn();
 const mockGetUserPreferences = vi.fn();
 const mockUpdateUserPreferences = vi.fn();
 
 vi.mock('@notesheet/api', () => ({
   getSongById: (...args) => mockGetSongById(...args),
+  getAllSongs: (...args) => mockGetAllSongs(...args),
   getUserPreferences: (...args) => mockGetUserPreferences(...args),
   updateUserPreferences: (...args) => mockUpdateUserPreferences(...args)
 }));
@@ -65,6 +67,7 @@ beforeEach(() => {
   mockAuth.currentUser = null;
   mockAuth.canEditSongs = () => false;
   mockGetSongById.mockResolvedValue(SONG);
+  mockGetAllSongs.mockResolvedValue([]);
   mockGetUserPreferences.mockResolvedValue({});
   mockUpdateUserPreferences.mockResolvedValue({});
 });
@@ -168,5 +171,88 @@ describe('SongView', () => {
   it('no consulta preferencias si no hay usuario', async () => {
     await renderSongView();
     expect(mockGetUserPreferences).not.toHaveBeenCalled();
+  });
+
+  describe('álbum', () => {
+    const CON_ALBUM = { ...SONG, album: 'Tiempo de Gracia' };
+    const HERMANAS = [
+      { id: 'song-1', title: 'Cristo Vive', album: 'Tiempo de Gracia' },
+      { id: 'song-2', title: 'Renuévame', album: 'Tiempo de Gracia' },
+      { id: 'song-3', title: 'Sublime Gracia', album: 'Otro Álbum' },
+      { id: 'song-4', title: 'Suelta', album: '' }
+    ];
+
+    it('no muestra nada si la canción no tiene álbum', async () => {
+      await renderSongView();
+      expect(document.querySelector('.song-album-line')).toBeNull();
+    });
+
+    it('no consulta el repertorio si la canción no tiene álbum', async () => {
+      await renderSongView();
+      expect(mockGetAllSongs).not.toHaveBeenCalled();
+    });
+
+    it('muestra el nombre del álbum', async () => {
+      mockGetSongById.mockResolvedValue(CON_ALBUM);
+      await renderSongView();
+      expect(screen.getByText('Tiempo de Gracia')).toBeInTheDocument();
+    });
+
+    it('enlaza solo con las canciones del mismo álbum', async () => {
+      mockGetSongById.mockResolvedValue(CON_ALBUM);
+      mockGetAllSongs.mockResolvedValue(HERMANAS);
+      await renderSongView();
+
+      await waitFor(() => {
+        expect(screen.getByRole('link', { name: 'Renuévame' })).toBeInTheDocument();
+      });
+      expect(screen.queryByRole('link', { name: 'Sublime Gracia' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('link', { name: 'Suelta' })).not.toBeInTheDocument();
+    });
+
+    it('no se enlaza a sí misma', async () => {
+      mockGetSongById.mockResolvedValue(CON_ALBUM);
+      mockGetAllSongs.mockResolvedValue(HERMANAS);
+      await renderSongView();
+
+      await waitFor(() => {
+        expect(screen.getByRole('link', { name: 'Renuévame' })).toBeInTheDocument();
+      });
+      expect(screen.queryByRole('link', { name: 'Cristo Vive' })).not.toBeInTheDocument();
+    });
+
+    it('el enlace apunta a la otra canción', async () => {
+      mockGetSongById.mockResolvedValue(CON_ALBUM);
+      mockGetAllSongs.mockResolvedValue(HERMANAS);
+      await renderSongView();
+
+      await waitFor(() => {
+        expect(screen.getByRole('link', { name: 'Renuévame' }))
+          .toHaveAttribute('href', '/songs/song-2');
+      });
+    });
+
+    it('muestra el álbum aunque no haya hermanas', async () => {
+      mockGetSongById.mockResolvedValue(CON_ALBUM);
+      mockGetAllSongs.mockResolvedValue([HERMANAS[0]]);
+      await renderSongView();
+
+      expect(screen.getByText('Tiempo de Gracia')).toBeInTheDocument();
+      expect(document.querySelector('.song-album-siblings')).toBeNull();
+    });
+
+    // Que falle el repertorio no debe impedir leer la canción: el músico
+    // está sobre el escenario y lo que necesita es la partitura.
+    it('si falla la búsqueda de hermanas, la canción se sigue viendo', async () => {
+      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      mockGetSongById.mockResolvedValue(CON_ALBUM);
+      mockGetAllSongs.mockRejectedValue(new Error('sin permisos'));
+
+      await renderSongView();
+
+      expect(screen.getAllByText(/Cristo vive hoy/).length).toBe(2);
+      expect(screen.queryByText(/Error al cargar la canción/)).not.toBeInTheDocument();
+      errorSpy.mockRestore();
+    });
   });
 });

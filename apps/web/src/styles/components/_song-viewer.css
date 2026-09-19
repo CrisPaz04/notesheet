@@ -425,3 +425,31 @@
   color: #212529;
   border-left-color: #0d6efd;
 }
+/* Álbum de la canción y enlaces a sus hermanas */
+.song-album-line {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin-top: -0.5rem;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+  color: var(--text-light-secondary, #6c757d);
+}
+
+.song-album-name {
+  font-weight: 600;
+}
+
+.song-album-siblings {
+  opacity: 0.9;
+}
+
+.song-album-link {
+  color: var(--color-primary);
+  text-decoration: none;
+}
+
+.song-album-link:hover {
+  text-decoration: underline;
+}

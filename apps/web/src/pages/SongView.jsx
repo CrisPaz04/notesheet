@@ -1,7 +1,7 @@
 // apps/web/src/pages/SongView.jsx
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
-import { getSongById, getUserPreferences, updateUserPreferences } from "@notesheet/api";
+import { getSongById, getAllSongs, getUserPreferences, updateUserPreferences } from "@notesheet/api";
 import {
   detectNotationSystem,
   getVisualKeyForInstrument,
@@ -59,6 +59,7 @@ function SongView() {
   const [currentInstrument, setCurrentInstrument] = useState(SOURCE_INSTRUMENT);
   const [selectedVoiceKey, setSelectedVoiceKey] = useState(null); // ej. "bb_trumpet-1"
   const [availableVoicesList, setAvailableVoicesList] = useState([]);
+  const [hermanasDeAlbum, setHermanasDeAlbum] = useState([]);
 
   // --- Dropdowns ---
   const [showVoiceDropdown, setShowVoiceDropdown] = useState(false);
@@ -168,6 +169,21 @@ function SongView() {
           instrument,
           notationSystem: notation
         });
+        // Canciones del mismo álbum. Solo se consulta el repertorio si esta
+        // canción pertenece a uno, para no traerlo entero en cada visita.
+        if (loadedSong.album) {
+          try {
+            const repertorio = await getAllSongs(currentUser?.uid);
+            setHermanasDeAlbum(
+              repertorio.filter((c) => c.album === loadedSong.album && c.id !== loadedSong.id)
+            );
+          } catch (albumError) {
+            // Que falle esto no debe impedir leer la canción
+            console.error("Error loading album siblings:", albumError);
+          }
+        } else {
+          setHermanasDeAlbum([]);
+        }
       } catch (loadError) {
         setError("Error al cargar la canción: " + loadError.message);
         console.error("Error loading song:", loadError);
@@ -315,7 +331,27 @@ function SongView() {
         {/* Header de la canción */}
         <div className="song-header fade-in">
           <h1 className="song-title-main">{song.title || "Sin título"}</h1>
-          
+
+          {song.album && (
+            <div className="song-album-line no-print">
+              <i className="bi bi-disc me-2"></i>
+              <span className="song-album-name">{song.album}</span>
+              {hermanasDeAlbum.length > 0 && (
+                <span className="song-album-siblings">
+                  {" · "}
+                  {hermanasDeAlbum.map((hermana, i) => (
+                    <span key={hermana.id}>
+                      {i > 0 && ", "}
+                      <Link to={`/songs/${hermana.id}`} className="song-album-link">
+                        {hermana.title || "Sin título"}
+                      </Link>
+                    </span>
+                  ))}
+                </span>
+              )}
+            </div>
+          )}
+
           <div className="song-meta-grid">
             <div className="song-meta-item">
               <div className="song-meta-label">

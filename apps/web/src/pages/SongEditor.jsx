@@ -20,6 +20,7 @@ function SongEditor() {
   const [key, setKey] = useState("DO");
   const [type, setType] = useState("Adoración");
   const [version, setVersion] = useState("");
+  const [album, setAlbum] = useState("");
   const [content, setContent] = useState("");
   const [lyricsOnly, setLyricsOnly] = useState("");
   const [loading, setLoading] = useState(false);
@@ -94,6 +95,7 @@ function SongEditor() {
       setKey(song.key || "DO");
       setType(song.type || "Adoración");
       setVersion(song.version || "");
+      setAlbum(song.album || "");
       setIsPublic(song.public === true);
       setContent(song.content || "");
 
@@ -176,6 +178,10 @@ function SongEditor() {
     setVersion(e.target.value);
   };
 
+  const handleAlbumChange = (e) => {
+    setAlbum(e.target.value);
+  };
+
   // Guardar la canción
   const handleSave = async (e) => {
     e.preventDefault();
@@ -196,6 +202,7 @@ function SongEditor() {
         key,
         type,
         version,
+        album: album.trim(),
         content: primaryContent, // Store primary voice in content for backward compatibility
         lyricsOnly,
         voices,
@@ -515,6 +522,23 @@ function SongEditor() {
                 onChange={handleVersionChange}
                 placeholder="Autor original o versión"
               />
+            </div>
+
+            <div className="form-group-modern">
+              <label className="form-label-modern">
+                <i className="bi bi-disc me-2"></i>
+                Álbum
+              </label>
+              <input
+                type="text"
+                className="form-control-modern"
+                value={album}
+                onChange={handleAlbumChange}
+                placeholder="Álbum al que pertenece"
+              />
+              <div className="form-help-text">
+                Las canciones del mismo álbum se enlazan entre sí.
+              </div>
             </div>
 
             <div className="form-group-modern">

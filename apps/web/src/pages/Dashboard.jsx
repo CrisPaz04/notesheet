@@ -57,6 +57,7 @@ function Dashboard() {
         normalizarBusqueda(song.key).includes(termino) ||
         normalizarBusqueda(song.type).includes(termino) ||
         normalizarBusqueda(song.version).includes(termino) ||
+        normalizarBusqueda(song.album).includes(termino) ||
         // La letra ya se guarda en cada canción: buscar por un verso suelto
         // es como el músico recuerda una canción cuyo título no sabe.
         //
