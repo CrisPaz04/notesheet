@@ -42,7 +42,8 @@ packages/ui/          # Shared UI components (planned)
 
 - **pages/** - Route-level components (Dashboard, SongEditor, SongView, PlaylistEditor, Metronome, Tuner, etc.)
 - **components/** - Reusable components organized by feature (metronome/, tuner/, Navbar, Modal, ProtectedRoute)
-- **hooks/** - Custom hooks (useMetronome, useTuner, useTheme, useModal, usePitchHistory, useTempoTrainer)
+- **hooks/** - Custom hooks (useMetronome, useTuner, useTheme, useModal, usePitchHistory,
+  useTempoTrainer, useSwipeViews, useFontSizePreference, useSongVoices, useSelectedSongs)
 - **context/** - React Context (AuthContext for user state)
 - **styles/** - Modular CSS (base/, components/, pages/, utilities/)
 
@@ -58,12 +59,38 @@ packages/ui/          # Shared UI components (planned)
 
 **Audio:** Web Audio API via `packages/core/src/audio/` for metronome synthesis and pitch detection.
 
+## Modelo de datos
+
+**songs**: `userId` (dueño), `public` (repertorio compartido), `album`, `title`, `key`,
+`type`, `version`, `content`, `lyricsOnly`, `voices` (mapa instrumento → nº de voz →
+contenido), `primaryInstrument`, `primaryVoiceNumber`.
+
+- Una canción **sin** campo `public` cuenta como privada. Las nuevas nacen públicas.
+- `getAllSongs(userId)` devuelve las propias **más** las públicas de otros, y marca cada
+  una con `isOwn`. Son dos consultas porque Firestore no hace OR entre campos distintos.
+- La interfaz solo debe ofrecer editar o borrar cuando `isOwn`; las reglas lo imponen
+  igual, pero no conviene ofrecer lo que va a fallar.
+
+**playlists**: `creatorId`, `public`, `date`, `songs[]`. Cada entrada de `songs` lleva su
+propia `key` y `originalKey`: una canción dentro de una lista se puede transponer para esa
+ocasión sin tocar la del repertorio.
+
+Al guardar una lista como pública se publican sus canciones propias privadas
+(`publicarCancionesDeLaLista`). Sin eso, la lista le aparecería vacía al resto de la banda,
+porque la regla de lectura solo deja ver lo propio o lo publicado.
+
 ## Security Rules
 
 Firestore rules live in `firestore.rules` (deploy with `npx firebase-tools deploy --only firestore`).
 The `role` field on `users/{uid}` is **not** writable by the user — assign roles from the Firebase
 console or the Admin SDK. Client-side `EditorRoute` / `canEditSongs` are UX only; the rules are the
 actual permission boundary.
+
+Lectura de `songs`: solo las propias o las publicadas. Si cambias esto, revisa antes qué
+listas compartidas dependen de ello.
+
+Los índices compuestos viven en `firestore.indexes.json` y hay que desplegarlos **antes**
+de subir código que dependa de una consulta nueva, o la app falla al cargar.
 
 ## Environment Variables
 
@@ -94,7 +121,10 @@ Netlify auto-deploys from `master` branch. Configuration in `netlify.toml`:
 ## Notes
 
 - No TypeScript - pure JavaScript
-- Vitest configured; 422 tests in `apps/web/src/test/` (run with `pnpm test:run`)
+- Vitest configured; 483 tests in `apps/web/src/test/` (run with `pnpm test:run`)
+- Los tests se validan con **mutaciones**: se rompe el código a propósito y se comprueba
+  que algún test falla. Ha destapado cuatro tests que pasaban por la razón equivocada.
+  Merece la pena hacerlo con cualquier lógica no trivial que añadas.
 - The song rendering pipeline (transposición → instrumento → notación → formato)
   lives in `packages/core/src/music/songRendering.js`. Úsalo en vez de encadenar
   `transposeContent` / `transposeForInstrument` / `convertNotationSystem` a mano.
@@ -102,6 +132,13 @@ Netlify auto-deploys from `master` branch. Configuration in `netlify.toml`:
   (`packages/core/src/music/chords.js`). No amplíes los regex de notas para
   cubrir sufijos: la letra en español se destroza ("Amor" -> "LAmor"). Usa
   `isChordLine` / `splitChordSegment` / `mapChordLine`.
+- La lista que el director manda por WhatsApp se interpreta en
+  `packages/core/src/music/setlist.js`. Las líneas sueltas tipo "Mi m" son la tonalidad
+  del bloque, no canciones; y el director suele nombrar la canción por un fragmento de la
+  letra, no por el título. El emparejador puntúa varias señales y se queda con la mejor.
+- Offline: Firestore usa `persistentLocalCache` y la app es una PWA instalable
+  (`vite-plugin-pwa`). El service worker **no** debe interceptar Firebase: Firestore ya
+  tiene su caché y la autenticación necesita red.
 - `packages/ui` sigue vacío a propósito (ver el comentario en su `index.js`)
 - Spanish comments appear in some files
 - Mobile app (React Native) is planned but not yet implemented
