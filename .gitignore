@@ -60,3 +60,6 @@ users.json
 
 # Artefactos de las sesiones de Playwright MCP
 .playwright-mcp/
+
+# Python (scripts/)
+__pycache__/
