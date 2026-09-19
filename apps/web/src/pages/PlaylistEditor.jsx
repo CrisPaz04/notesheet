@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { createPlaylist, getPlaylistById, updatePlaylist, getAllSongs } from "@notesheet/api";
+import { createPlaylist, getPlaylistById, updatePlaylist, getAllSongs, updateSong } from "@notesheet/api";
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import LoadingSpinner from "../components/LoadingSpinner";
 import PlaylistKeySelector from "../components/PlaylistKeySelector";
@@ -99,9 +99,23 @@ function PlaylistEditor() {
   };
 
   // Guardar la playlist
+  /**
+   * Publica en el repertorio las canciones propias de la lista que todavía
+   * sean privadas. `availableSongs` ya trae `isOwn` y `public` del servicio.
+   */
+  const publicarCancionesDeLaLista = async () => {
+    const porPublicar = selectedSongs
+      .map((s) => availableSongs.find((a) => a.id === s.id))
+      .filter((cancion) => cancion && cancion.isOwn && !cancion.public);
+
+    await Promise.all(
+      porPublicar.map((cancion) => updateSong(cancion.id, { public: true }))
+    );
+  };
+
   const handleSave = async (e) => {
     e.preventDefault();
-    
+
     if (!name.trim()) {
       setError("El nombre de la lista no puede estar vacío");
       return;
@@ -117,6 +131,15 @@ function PlaylistEditor() {
         songs: selectedSongs,
         creatorId: currentUser.uid
       };
+
+      // Compartir la lista implica compartir lo que contiene: una canción
+      // privada no la puede leer nadie más, así que una lista pública con
+      // canciones privadas le aparecería vacía al resto de la banda.
+      // Solo se publican las propias; las ajenas ya estaban en el repertorio,
+      // porque es la única forma de haberlas podido añadir.
+      if (isPublic) {
+        await publicarCancionesDeLaLista();
+      }
 
       if (isNewPlaylist) {
         await createPlaylist(playlistData);
@@ -290,7 +313,8 @@ function PlaylistEditor() {
                     </button>
                   </div>
                   <div className="form-help-text">
-                    Las listas públicas pueden ser vistas por otros usuarios.
+                    Las listas públicas las ve toda la banda. Al guardarla, sus
+                    canciones pasan también al repertorio compartido.
                   </div>
                 </div>
               </div>

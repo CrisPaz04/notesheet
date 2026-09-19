@@ -7,13 +7,15 @@ const mockGetAllSongs = vi.fn();
 const mockGetPlaylistById = vi.fn();
 const mockCreatePlaylist = vi.fn();
 const mockUpdatePlaylist = vi.fn();
+const mockUpdateSong = vi.fn();
 const mockNavigate = vi.fn();
 
 vi.mock('@notesheet/api', () => ({
   getAllSongs: (...a) => mockGetAllSongs(...a),
   getPlaylistById: (...a) => mockGetPlaylistById(...a),
   createPlaylist: (...a) => mockCreatePlaylist(...a),
-  updatePlaylist: (...a) => mockUpdatePlaylist(...a)
+  updatePlaylist: (...a) => mockUpdatePlaylist(...a),
+  updateSong: (...a) => mockUpdateSong(...a)
 }));
 
 const routeParams = {};
@@ -46,9 +48,12 @@ vi.mock('@hello-pangea/dnd', () => ({
 const { default: PlaylistEditor } = await import('../pages/PlaylistEditor');
 
 const SONGS = [
-  { id: 's1', title: 'Cristo Vive', key: 'DO', type: 'Júbilo' },
-  { id: 's2', title: 'Sublime Gracia', key: 'SOL', type: 'Adoración' },
-  { id: 's3', title: 'Al Que Está Sentado', key: 'RE', type: 'Moderada' }
+  // Propia y todavía privada: al compartir la lista debe publicarse
+  { id: 's1', title: 'Cristo Vive', key: 'DO', type: 'Júbilo', isOwn: true, public: false },
+  // Propia y ya en el repertorio: no hay que volver a publicarla
+  { id: 's2', title: 'Sublime Gracia', key: 'SOL', type: 'Adoración', isOwn: true, public: true },
+  // De otro músico: ya era pública, es la única forma de haberla podido añadir
+  { id: 's3', title: 'Al Que Está Sentado', key: 'RE', type: 'Moderada', isOwn: false, public: true }
 ];
 
 beforeEach(() => {
@@ -59,6 +64,7 @@ beforeEach(() => {
   mockGetAllSongs.mockResolvedValue(SONGS);
   mockCreatePlaylist.mockResolvedValue({ id: 'p1' });
   mockUpdatePlaylist.mockResolvedValue({ id: 'p1' });
+  mockUpdateSong.mockResolvedValue({});
 });
 
 const renderNueva = async () => {
@@ -303,6 +309,50 @@ describe('PlaylistEditor', () => {
       expect(datos.songs).toHaveLength(1);
       expect(datos.songs[0]).toMatchObject({ id: 's1', key: 'DO', originalKey: 'DO' });
       expect(mockNavigate).toHaveBeenCalledWith('/playlists');
+    });
+
+    // Compartir la lista tiene que compartir lo que contiene: con la regla
+    // de Firestore endurecida, una canción privada no la lee nadie más y la
+    // lista le aparecería vacía al resto de la banda.
+    it('publica las canciones propias privadas al compartir la lista', async () => {
+      const user = userEvent.setup();
+      await renderNueva();
+
+      await user.type(screen.getByPlaceholderText('Nombre de la lista'), 'Domingo');
+      await user.click(botonDisponible('Cristo Vive'));     // propia, privada
+      await user.click(botonDisponible('Sublime Gracia'));  // propia, ya pública
+      await user.click(screen.getByRole('button', { name: /Pública/ }));
+      await user.click(screen.getByRole('button', { name: /Guardar/i }));
+
+      await waitFor(() => expect(mockCreatePlaylist).toHaveBeenCalled());
+
+      expect(mockUpdateSong).toHaveBeenCalledTimes(1);
+      expect(mockUpdateSong).toHaveBeenCalledWith('s1', { public: true });
+    });
+
+    it('no publica nada si la lista se guarda como privada', async () => {
+      const user = userEvent.setup();
+      await renderNueva();
+
+      await user.type(screen.getByPlaceholderText('Nombre de la lista'), 'Borrador');
+      await user.click(botonDisponible('Cristo Vive'));
+      await user.click(screen.getByRole('button', { name: /Guardar/i }));
+
+      await waitFor(() => expect(mockCreatePlaylist).toHaveBeenCalled());
+      expect(mockUpdateSong).not.toHaveBeenCalled();
+    });
+
+    it('no toca las canciones de otros músicos', async () => {
+      const user = userEvent.setup();
+      await renderNueva();
+
+      await user.type(screen.getByPlaceholderText('Nombre de la lista'), 'Domingo');
+      await user.click(botonDisponible('Al Que Está Sentado')); // ajena
+      await user.click(screen.getByRole('button', { name: /Pública/ }));
+      await user.click(screen.getByRole('button', { name: /Guardar/i }));
+
+      await waitFor(() => expect(mockCreatePlaylist).toHaveBeenCalled());
+      expect(mockUpdateSong).not.toHaveBeenCalled();
     });
 
     it('guarda la visibilidad pública', async () => {

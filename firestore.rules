@@ -51,7 +51,13 @@ service cloud.firestore {
     }
 
     match /songs/{songId} {
-      allow read: if isSignedIn();
+      // Solo las propias y las publicadas en el repertorio. Una cancion
+      // privada no la lee nadie mas, ni siquiera desde una lista compartida:
+      // por eso al hacer publica una lista se publican tambien sus canciones
+      // (ver handleSave en PlaylistEditor).
+      allow read: if isSignedIn()
+                  && (resource.data.userId == request.auth.uid
+                      || resource.data.get('public', false) == true);
       allow create: if isEditor()
                     && request.resource.data.userId == request.auth.uid;
       allow update: if isEditor()
