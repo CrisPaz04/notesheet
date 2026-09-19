@@ -6,6 +6,12 @@ import { getUserDisplayName } from "../utils/userHelpers";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { SkeletonGrid } from "../components/SkeletonCard";
 
+// Minúsculas y sin tildes, para que la búsqueda no dependa de cómo se escriba
+const normalizarBusqueda = (texto) => (texto || "")
+  .toLowerCase()
+  .normalize("NFD")
+  .replace(/[̀-ͯ]/g, "");
+
 function Dashboard() {
   const [songs, setSongs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -42,11 +48,23 @@ function Dashboard() {
 
     // Filtrar por término de búsqueda
     if (searchTerm) {
+      // Se normaliza para que "corazon" encuentre "corazón": nadie escribe
+      // tildes buscando, y la letra de las canciones va acentuada.
+      const termino = normalizarBusqueda(searchTerm);
+
       filtered = filtered.filter(song =>
-        song.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        song.key?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        song.type?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        song.version?.toLowerCase().includes(searchTerm.toLowerCase())
+        normalizarBusqueda(song.title).includes(termino) ||
+        normalizarBusqueda(song.key).includes(termino) ||
+        normalizarBusqueda(song.type).includes(termino) ||
+        normalizarBusqueda(song.version).includes(termino) ||
+        // La letra ya se guarda en cada canción: buscar por un verso suelto
+        // es como el músico recuerda una canción cuyo título no sabe.
+        //
+        // Solo a partir de 4 letras, porque los nombres de nota (DO, RE, MI,
+        // FA, SOL, LA, SI) aparecen dentro de cualquier palabra: buscar "RE"
+        // devolvía "siempRE" y "adoraRÉ". Con 4 o más, quien escribe busca
+        // una frase, no una tonalidad.
+        (termino.length >= 4 && normalizarBusqueda(song.lyricsOnly).includes(termino))
       );
     }
 

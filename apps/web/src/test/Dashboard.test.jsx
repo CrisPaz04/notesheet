@@ -37,6 +37,7 @@ const SONGS = [
     key: 'DO',
     type: 'Júbilo',
     version: 'v1',
+    lyricsOnly: 'Cristo vive hoy, para siempre',
     updatedAt: timestamp(hace(1))
   },
   {
@@ -45,6 +46,7 @@ const SONGS = [
     key: 'SOL',
     type: 'Adoración',
     version: 'clásico',
+    lyricsOnly: 'Sublime gracia cuán dulce el son que salvó a un pecador',
     updatedAt: timestamp(hace(30))
   },
   {
@@ -53,6 +55,7 @@ const SONGS = [
     key: 'RE',
     type: 'Moderada',
     version: 'v2',
+    lyricsOnly: 'Con todo mi corazón te adoraré',
     updatedAt: timestamp(hace(2))
   }
 ].map((s) => ({ ...s, isOwn: true, public: true }));
@@ -151,6 +154,54 @@ describe('Dashboard', () => {
 
       await waitFor(() => {
         expect(tituloVisibles()).toEqual(['Cristo Vive']);
+      });
+    });
+
+    it('encuentra una canción por un verso de su letra', async () => {
+      const user = userEvent.setup();
+      await renderDashboard();
+
+      await user.type(screen.getByPlaceholderText('Buscar canciones...'), 'sublime gracia cuan dulce');
+
+      await waitFor(() => {
+        expect(tituloVisibles()).toEqual(['Sublime Gracia']);
+      });
+    });
+
+    // Los nombres de nota aparecen dentro de muchas palabras, así que una
+    // búsqueda corta no debe arrastrar media letra: "RE" es una tonalidad.
+    it('una búsqueda corta no busca en la letra', async () => {
+      const user = userEvent.setup();
+      await renderDashboard();
+
+      await user.type(screen.getByPlaceholderText('Buscar canciones...'), 'RE');
+
+      await waitFor(() => {
+        // "siempRE" y "adoraRÉ" están en las letras, pero no cuentan
+        expect(tituloVisibles()).toEqual(['Al Que Está Sentado']);
+      });
+    });
+
+    it('ignora las tildes', async () => {
+      const user = userEvent.setup();
+      await renderDashboard();
+
+      // El músico escribe sin tilde, la letra la lleva
+      await user.type(screen.getByPlaceholderText('Buscar canciones...'), 'corazon');
+
+      await waitFor(() => {
+        expect(tituloVisibles()).toEqual(['Al Que Está Sentado']);
+      });
+    });
+
+    it('encuentra por título aunque lleve tilde', async () => {
+      const user = userEvent.setup();
+      await renderDashboard();
+
+      await user.type(screen.getByPlaceholderText('Buscar canciones...'), 'al que esta sentado');
+
+      await waitFor(() => {
+        expect(tituloVisibles()).toEqual(['Al Que Está Sentado']);
       });
     });
 
