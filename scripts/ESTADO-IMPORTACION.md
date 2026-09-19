@@ -4,15 +4,34 @@ Las 101 partituras de `OneDrive/Documents/IMCEH/Partituras/Canciones varias`
 ya están extraídas a `scripts/repertorio/repertorio.json`: **118 canciones**
 (salen más que archivos porque varias hojas llevan dos o cuatro canciones).
 
-## Lo que falta
+## Estado: importado
 
-**Solo importarlas.** Abre NoteSheet, pega `scripts/import-songs.js` en la
-consola y elige `scripts/repertorio/repertorio.json`. Arranca en modo simulacro;
-cuando te cuadre, cambia `APLICAR` a `true`. Es seguro repetirlo: salta por
-título las que ya existan.
+**116 de 118 importadas**, sin fallos. Las otras dos ("Agnus Dei" y "Al que
+hizo los cielos") ya estaban en la cuenta con ese título, así que se saltaron y
+se quedan como estaban.
 
-Luego abre dos o tres en la app y comprueba que se ven, se transponen y suenan
-como en la hoja. El resto ya está verificado en automático (ver más abajo).
+Queda una cosa, y es la única que ningún test puede hacer: **abrir unas
+cuantas en la app y compararlas con la partitura**. Los tests comprueban que
+los datos funcionan con la app; no que las notas que se leyeron de la foto
+sean las que hay en el papel.
+
+### Si hay que volver a importar
+
+```bash
+node scripts/generar-importador-servido.mjs
+```
+
+y en la consola del navegador, con sesión iniciada:
+
+```
+import('/importar-repertorio.js')             # simulacro, no escribe nada
+import('/importar-repertorio.js?aplicar=1')   # de verdad
+```
+
+El navegador cachea los módulos por URL: para relanzar hay que cambiarla
+(`?aplicar=1&r=2`, luego `r=3`...). Es seguro repetirlo, salta por título lo que
+ya exista. **Borra `apps/web/public/importar-repertorio.js` al terminar**, que
+lleva el repertorio entero dentro y no debe acabar en el deploy.
 
 ## Lo que ya está resuelto
 
