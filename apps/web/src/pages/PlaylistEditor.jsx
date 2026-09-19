@@ -7,6 +7,7 @@ import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import LoadingSpinner from "../components/LoadingSpinner";
 import PlaylistKeySelector from "../components/PlaylistKeySelector";
 import useSelectedSongs from "../hooks/useSelectedSongs";
+import { emparejarSetlist } from "@notesheet/core";
 
 function PlaylistEditor() {
   const [name, setName] = useState("");
@@ -16,6 +17,10 @@ function PlaylistEditor() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [isNewPlaylist, setIsNewPlaylist] = useState(true);
+
+  // Importar la lista que el director manda por WhatsApp
+  const [textoImport, setTextoImport] = useState("");
+  const [resultadoImport, setResultadoImport] = useState(null);
   
   const { currentUser } = useAuth();
   const navigate = useNavigate();
@@ -99,6 +104,39 @@ function PlaylistEditor() {
   };
 
   // Guardar la playlist
+  /**
+   * Interpreta el texto pegado y lo empareja con el repertorio. No añade nada
+   * todavía: primero se enseña qué encontró, porque el director escribe de
+   * memoria y alguna coincidencia va a estar mal.
+   */
+  const interpretarLista = () => {
+    setResultadoImport(emparejarSetlist(textoImport, availableSongs));
+  };
+
+  /** Corrige a mano la canción elegida para una de las entradas. */
+  const cambiarCoincidencia = (indice, songId) => {
+    setResultadoImport((prev) => prev.map((entrada, i) => {
+      if (i !== indice) return entrada;
+      const candidato = entrada.candidatos.find((c) => c.cancion.id === songId);
+      return { ...entrada, elegida: candidato ? candidato.cancion : null };
+    }));
+  };
+
+  /**
+   * Vuelca a la lista lo que se haya confirmado, respetando la tonalidad que
+   * el director indicó para cada bloque.
+   */
+  const aplicarImport = () => {
+    resultadoImport.forEach((entrada) => {
+      if (!entrada.elegida) return;
+      addSong(entrada.elegida);
+      if (entrada.key) changeKey(entrada.elegida.id, entrada.key);
+    });
+
+    setResultadoImport(null);
+    setTextoImport("");
+  };
+
   /**
    * Publica en el repertorio las canciones propias de la lista que todavía
    * sean privadas. `availableSongs` ya trae `isOwn` y `public` del servicio.
@@ -320,6 +358,92 @@ function PlaylistEditor() {
               </div>
             </div>
             
+            {/* Importar la lista que el director manda por WhatsApp */}
+            <div className="playlist-editor-card">
+              <div className="playlist-editor-card-header">
+                <i className="bi bi-chat-text me-2"></i>
+                Pegar lista del director
+              </div>
+              <div className="playlist-editor-card-body">
+                {!resultadoImport ? (
+                  <>
+                    <textarea
+                      className="form-control-modern"
+                      rows={6}
+                      value={textoImport}
+                      onChange={(e) => setTextoImport(e.target.value)}
+                      placeholder={"Mi m\nTe alabare\nEn mi corazon\n\nLa m\nVoy a perder la compostura"}
+                      aria-label="Lista del director"
+                    />
+                    <div className="form-help-text">
+                      Pega el mensaje tal cual. Entiende las tonalidades sueltas
+                      y busca cada canción por su título o por la letra.
+                    </div>
+                    <button
+                      type="button"
+                      className="btn-playlist-primary mt-2"
+                      disabled={!textoImport.trim()}
+                      onClick={interpretarLista}
+                    >
+                      <i className="bi bi-magic me-2"></i>
+                      Interpretar
+                    </button>
+                  </>
+                ) : (
+                  <div className="import-resultado">
+                    {resultadoImport.map((entrada, i) => (
+                      <div
+                        key={`${entrada.linea}-${i}`}
+                        className={`import-entrada ${entrada.elegida ? '' : 'sin-coincidencia'}`}
+                      >
+                        <div className="import-consulta">
+                          <i className={`bi ${entrada.elegida ? (entrada.seguro ? 'bi-check-circle' : 'bi-question-circle') : 'bi-x-circle'} me-2`}></i>
+                          “{entrada.consulta}”
+                          {entrada.key && <span className="import-key ms-2">{entrada.key}</span>}
+                        </div>
+
+                        {entrada.candidatos.length > 0 ? (
+                          <select
+                            className="form-control-modern form-control-sm"
+                            aria-label={`Coincidencia para ${entrada.consulta}`}
+                            value={entrada.elegida?.id || ''}
+                            onChange={(e) => cambiarCoincidencia(i, e.target.value)}
+                          >
+                            <option value="">— No añadir —</option>
+                            {entrada.candidatos.map((c) => (
+                              <option key={c.cancion.id} value={c.cancion.id}>
+                                {c.cancion.title} ({Math.round(c.score * 100)}%)
+                              </option>
+                            ))}
+                          </select>
+                        ) : (
+                          <div className="import-vacio">No se encontró ninguna canción parecida</div>
+                        )}
+                      </div>
+                    ))}
+
+                    <div className="import-acciones mt-3">
+                      <button
+                        type="button"
+                        className="btn-playlist-primary"
+                        onClick={aplicarImport}
+                      >
+                        <i className="bi bi-plus-circle me-2"></i>
+                        Añadir {resultadoImport.filter((e) => e.elegida).length} a la lista
+                      </button>
+                      <button
+                        type="button"
+                        className="btn-playlist-secondary ms-2"
+                        onClick={() => setResultadoImport(null)}
+                      >
+                        Cancelar
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
             {/* Canciones Disponibles */}
             <div className="playlist-editor-card">
               <div className="playlist-editor-card-header">

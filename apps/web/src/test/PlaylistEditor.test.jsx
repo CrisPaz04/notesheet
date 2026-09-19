@@ -270,6 +270,108 @@ describe('PlaylistEditor', () => {
     });
   });
 
+  describe('importar la lista del director', () => {
+    // El mensaje llega tal cual del grupo de WhatsApp: tonalidades sueltas y
+    // canciones nombradas de memoria, a veces por un verso.
+    const MENSAJE = `Mi m
+Cristo Vive
+voy a perder la compostura`;
+
+    const conLetras = SONGS.map((s, i) => ({
+      ...s,
+      lyricsOnly: i === 2 ? 'Voy a perder la compostura por ti' : `Letra de ${s.title}`
+    }));
+
+    const interpretar = async (user, texto) => {
+      await user.type(screen.getByLabelText('Lista del director'), texto);
+      await user.click(screen.getByRole('button', { name: /Interpretar/i }));
+    };
+
+    it('el botón está deshabilitado sin texto', async () => {
+      await renderNueva();
+      expect(screen.getByRole('button', { name: /Interpretar/i })).toBeDisabled();
+    });
+
+    it('encuentra por título y por verso de la letra', async () => {
+      mockGetAllSongs.mockResolvedValue(conLetras);
+      const user = userEvent.setup();
+      await renderNueva();
+
+      await interpretar(user, MENSAJE);
+
+      // Una entrada por cada línea que no era tonalidad
+      const entradas = await waitFor(() => {
+        const e = document.querySelectorAll('.import-entrada');
+        expect(e).toHaveLength(2);
+        return e;
+      });
+
+      // La primera se reconoce por el título
+      expect(entradas[0].querySelector('select').value).toBe('s1');
+      // La segunda solo por la letra: su título no se parece al verso
+      expect(entradas[1].querySelector('select').value).toBe('s3');
+      expect(entradas[1].textContent).toContain('voy a perder la compostura');
+    });
+
+    it('muestra la tonalidad del bloque', async () => {
+      mockGetAllSongs.mockResolvedValue(conLetras);
+      const user = userEvent.setup();
+      await renderNueva();
+
+      await interpretar(user, MENSAJE);
+
+      expect(await screen.findAllByText('MIm')).not.toHaveLength(0);
+    });
+
+    it('añade a la lista lo interpretado, con su tonalidad', async () => {
+      mockGetAllSongs.mockResolvedValue(conLetras);
+      const user = userEvent.setup();
+      await renderNueva();
+
+      await interpretar(user, 'Mi m\nCristo Vive');
+      await user.click(await screen.findByRole('button', { name: /Añadir 1 a la lista/i }));
+
+      await waitFor(() => {
+        expect(tituloEnLista()).toEqual(['Cristo Vive']);
+      });
+      expect(document.querySelector('.playlist-key-dropdown')).toHaveTextContent('MIm');
+    });
+
+    it('avisa de lo que no encontró sin descartar el resto', async () => {
+      mockGetAllSongs.mockResolvedValue(conLetras);
+      const user = userEvent.setup();
+      await renderNueva();
+
+      await interpretar(user, 'Cristo Vive\nzzzz que no existe');
+
+      expect(await screen.findByText(/No se encontró ninguna canción parecida/i))
+        .toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Añadir 1 a la lista/i })).toBeInTheDocument();
+    });
+
+    it('permite descartar una coincidencia a mano', async () => {
+      mockGetAllSongs.mockResolvedValue(conLetras);
+      const user = userEvent.setup();
+      await renderNueva();
+
+      await interpretar(user, 'Cristo Vive');
+      await user.selectOptions(await screen.findByRole('combobox'), '');
+
+      expect(screen.getByRole('button', { name: /Añadir 0 a la lista/i })).toBeInTheDocument();
+    });
+
+    it('cancelar vuelve al cuadro de texto', async () => {
+      mockGetAllSongs.mockResolvedValue(conLetras);
+      const user = userEvent.setup();
+      await renderNueva();
+
+      await interpretar(user, 'Cristo Vive');
+      await user.click(await screen.findByRole('button', { name: 'Cancelar' }));
+
+      expect(screen.getByLabelText('Lista del director')).toBeInTheDocument();
+    });
+  });
+
   describe('guardar', () => {
     it('exige un nombre', async () => {
       const user = userEvent.setup();

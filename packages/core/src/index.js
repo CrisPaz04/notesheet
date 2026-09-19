@@ -9,6 +9,7 @@ export * from './music/transposition-helper';
 export * from './music/frequencies';
 export * from './music/stringTunings';
 export * from './music/songRendering';
+export * from './music/setlist';
 
 // Audio utilities
 export * from './audio/audioContext';

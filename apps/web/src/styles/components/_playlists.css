@@ -600,3 +600,42 @@
       gap: 1.5rem;
     }
   }
+/* Importar la lista que manda el director por WhatsApp */
+.import-entrada {
+  padding: 0.6rem 0;
+  border-bottom: 1px solid rgba(128, 128, 128, 0.15);
+}
+
+.import-entrada:last-of-type {
+  border-bottom: none;
+}
+
+.import-consulta {
+  font-size: 0.9rem;
+  margin-bottom: 0.35rem;
+}
+
+.import-entrada.sin-coincidencia .import-consulta {
+  opacity: 0.65;
+}
+
+.import-key {
+  font-size: 0.75rem;
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+.import-vacio {
+  font-size: 0.82rem;
+  opacity: 0.7;
+  font-style: italic;
+}
+
+.import-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
