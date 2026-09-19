@@ -115,3 +115,29 @@ describe('detectNotationSystem', () => {
     expect(detectNotationSystem('DO SOL LA RE MI C')).toBe('latin');
   });
 });
+
+// Las partituras escritas a mano para la banda traen notas como "Mi#" (la misma
+// tecla que FA). Antes no estaban en la tabla de índices, y `transposeNote`
+// devolvía la nota **sin tocar** en vez de avisar: el resto de la línea se movía
+// y esa se quedaba quieta, así que la melodía se rompía sin que nadie lo viera.
+describe('notas enarmónicas de las partituras de la banda', () => {
+  const MISMA_TECLA = [
+    ['MI#', 'FA'], ['SI#', 'DO'], ['FAb', 'MI'],
+    ['E#', 'F'], ['B#', 'C'], ['Fb', 'E'],
+  ];
+
+  MISMA_TECLA.forEach(([rara, normal]) => {
+    it(`${rara} se transpone igual que ${normal}`, () => {
+      for (let semitonos = -12; semitonos <= 12; semitonos += 1) {
+        const sistema = rara.length > 2 || rara === 'MI#' || rara === 'SI#' ? 'latin' : 'english';
+        expect(transposeNote(rara, semitonos, sistema), `${rara} + ${semitonos}`)
+          .toBe(transposeNote(normal, semitonos, sistema));
+      }
+    });
+  });
+
+  it('una línea entera se mueve el mismo intervalo, también la nota rara', () => {
+    // "Amigo fiel", tal y como está escrita en la partitura.
+    expect(transposeLine('Sol# Mi# Fa# La#', 2, 'latin')).toBe('LA# SOL SOL# DO');
+  });
+});

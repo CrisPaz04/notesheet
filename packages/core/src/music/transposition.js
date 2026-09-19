@@ -41,25 +41,36 @@ const SHARP_KEYS = ['SOL', 'RE', 'LA', 'MI', 'SI', 'FA#', 'DO#', 'G', 'D', 'A', 
 const FLAT_KEYS = ['FA', 'SIb', 'MIb', 'LAb', 'REb', 'SOLb', 'DOb', 'F', 'Bb', 'Eb', 'Ab', 'Db', 'Gb', 'Cb'];
 
 // Mapeo de tonalidades a sus índices
+//
+// Están también MI#, SI# y FAb, que son la misma tecla que FA, DO y MI. Nadie
+// escribe una canción en MI#, pero en las partituras de la banda aparecen como
+// notas sueltas ("Sol# Mi# Fa# La#" en "Amigo fiel"), y si no están aquí
+// `transposeNote` no las reconoce y **devuelve la nota sin tocar**: el resto de
+// la línea se mueve y esa se queda donde estaba, así que la melodía se rompe
+// sin avisar.
 const KEY_TO_INDEX = {
   // Tonalidades mayores en notación latina
-  'DO': 0, 'DO#': 1, 'REb': 1, 'RE': 2, 'RE#': 3, 'MIb': 3, 'MI': 4, 
-  'FA': 5, 'FA#': 6, 'SOLb': 6, 'SOL': 7, 'SOL#': 8, 'LAb': 8, 
+  'DO': 0, 'DO#': 1, 'REb': 1, 'RE': 2, 'RE#': 3, 'MIb': 3, 'MI': 4,
+  'FA': 5, 'FA#': 6, 'SOLb': 6, 'SOL': 7, 'SOL#': 8, 'LAb': 8,
   'LA': 9, 'LA#': 10, 'SIb': 10, 'SI': 11, 'DOb': 11,
-  
+  'MI#': 5, 'SI#': 0, 'FAb': 4,
+
   // Tonalidades mayores en notación anglosajona
-  'C': 0, 'C#': 1, 'Db': 1, 'D': 2, 'D#': 3, 'Eb': 3, 'E': 4, 
-  'F': 5, 'F#': 6, 'Gb': 6, 'G': 7, 'G#': 8, 'Ab': 8, 
+  'C': 0, 'C#': 1, 'Db': 1, 'D': 2, 'D#': 3, 'Eb': 3, 'E': 4,
+  'F': 5, 'F#': 6, 'Gb': 6, 'G': 7, 'G#': 8, 'Ab': 8,
   'A': 9, 'A#': 10, 'Bb': 10, 'B': 11, 'Cb': 11,
-  
+  'E#': 5, 'B#': 0, 'Fb': 4,
+
   // Tonalidades menores
-  'DOm': 0, 'DO#m': 1, 'REbm': 1, 'REm': 2, 'RE#m': 3, 'MIbm': 3, 'MIm': 4, 
-  'FAm': 5, 'FA#m': 6, 'SOLbm': 6, 'SOLm': 7, 'SOL#m': 8, 'LAbm': 8, 
+  'DOm': 0, 'DO#m': 1, 'REbm': 1, 'REm': 2, 'RE#m': 3, 'MIbm': 3, 'MIm': 4,
+  'FAm': 5, 'FA#m': 6, 'SOLbm': 6, 'SOLm': 7, 'SOL#m': 8, 'LAbm': 8,
   'LAm': 9, 'LA#m': 10, 'SIbm': 10, 'SIm': 11, 'DObm': 11,
-  
-  'Cm': 0, 'C#m': 1, 'Dbm': 1, 'Dm': 2, 'D#m': 3, 'Ebm': 3, 'Em': 4, 
-  'Fm': 5, 'F#m': 6, 'Gbm': 6, 'Gm': 7, 'G#m': 8, 'Abm': 8, 
-  'Am': 9, 'A#m': 10, 'Bbm': 10, 'Bm': 11, 'Cbm': 11
+  'MI#m': 5, 'SI#m': 0, 'FAbm': 4,
+
+  'Cm': 0, 'C#m': 1, 'Dbm': 1, 'Dm': 2, 'D#m': 3, 'Ebm': 3, 'Em': 4,
+  'Fm': 5, 'F#m': 6, 'Gbm': 6, 'Gm': 7, 'G#m': 8, 'Abm': 8,
+  'Am': 9, 'A#m': 10, 'Bbm': 10, 'Bm': 11, 'Cbm': 11,
+  'E#m': 5, 'B#m': 0, 'Fbm': 4
 };
 
 /**
