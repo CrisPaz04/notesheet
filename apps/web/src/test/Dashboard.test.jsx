@@ -413,4 +413,106 @@ describe('Dashboard', () => {
       expect(screen.getByText('Cristo Vive')).toBeInTheDocument();
     });
   });
+
+  describe('orden alfabético', () => {
+    // El orden en que llegan de Firestore es `createdAt desc`, y el Dashboard
+    // lo respeta hasta que se pide otra cosa. `tituloVisibles` filtra sobre
+    // SONGS, así que aquí se lee el DOM directamente para ver el orden real.
+    const ordenEnPantalla = () =>
+      [...document.querySelectorAll('.recent-item-title, .list-item-title')].map((n) => n.textContent.trim());
+
+    it('de entrada respeta el orden en que llegan', async () => {
+      await renderDashboard();
+      expect(ordenEnPantalla()).toEqual(['Cristo Vive', 'Sublime Gracia', 'Al Que Está Sentado']);
+    });
+
+    it('ordena de la A a la Z', async () => {
+      const user = userEvent.setup();
+      await renderDashboard();
+
+      await user.click(screen.getByRole('button', { name: 'Ordenar de la A a la Z' }));
+
+      await waitFor(() => {
+        expect(ordenEnPantalla()).toEqual(['Al Que Está Sentado', 'Cristo Vive', 'Sublime Gracia']);
+      });
+    });
+
+    it('ordena de la Z a la A', async () => {
+      const user = userEvent.setup();
+      await renderDashboard();
+
+      await user.click(screen.getByRole('button', { name: 'Ordenar de la Z a la A' }));
+
+      await waitFor(() => {
+        expect(ordenEnPantalla()).toEqual(['Sublime Gracia', 'Cristo Vive', 'Al Que Está Sentado']);
+      });
+    });
+
+    it('se puede volver al orden de entrada', async () => {
+      const user = userEvent.setup();
+      await renderDashboard();
+
+      await user.click(screen.getByRole('button', { name: 'Ordenar de la Z a la A' }));
+      await waitFor(() => expect(ordenEnPantalla()[0]).toBe('Sublime Gracia'));
+
+      await user.click(screen.getByRole('button', { name: 'Nuevas primero' }));
+
+      await waitFor(() => {
+        expect(ordenEnPantalla()).toEqual(['Cristo Vive', 'Sublime Gracia', 'Al Que Está Sentado']);
+      });
+    });
+
+    it('las tildes no mandan la canción al final', async () => {
+      // "Álvaro" va entre "Alabaré" y "Amor", no detrás de "Zacarías": es lo
+      // que hace `Intl.Collator` en español y no una comparación de texto.
+      mockGetAllSongs.mockResolvedValue(
+        ['Zacarías', 'Álvaro', 'Amor eterno', 'Alabaré'].map((title, i) => ({
+          id: String(i), title, key: 'DO', type: 'Júbilo', version: '',
+          isOwn: true, public: true, updatedAt: timestamp(hace(1))
+        }))
+      );
+      const user = userEvent.setup();
+      render(<Dashboard />);
+      await screen.findByText('Zacarías');
+
+      await user.click(screen.getByRole('button', { name: 'Ordenar de la A a la Z' }));
+
+      await waitFor(() => {
+        expect(ordenEnPantalla()).toEqual(['Alabaré', 'Álvaro', 'Amor eterno', 'Zacarías']);
+      });
+    });
+
+    it('los números se ordenan como números', async () => {
+      // Comparando texto, "Salmo 21" iría antes que "Salmo 3".
+      mockGetAllSongs.mockResolvedValue(
+        ['Salmo 21', 'Salmo 3', 'Salmo 100'].map((title, i) => ({
+          id: String(i), title, key: 'DO', type: 'Júbilo', version: '',
+          isOwn: true, public: true, updatedAt: timestamp(hace(1))
+        }))
+      );
+      const user = userEvent.setup();
+      render(<Dashboard />);
+      await screen.findByText('Salmo 21');
+
+      await user.click(screen.getByRole('button', { name: 'Ordenar de la A a la Z' }));
+
+      await waitFor(() => {
+        expect(ordenEnPantalla()).toEqual(['Salmo 3', 'Salmo 21', 'Salmo 100']);
+      });
+    });
+
+    it('el orden convive con la búsqueda y con los filtros', async () => {
+      const user = userEvent.setup();
+      await renderDashboard();
+
+      await user.click(screen.getByRole('button', { name: 'Ordenar de la A a la Z' }));
+      await user.type(screen.getByPlaceholderText('Buscar canciones...'), 'a');
+
+      await waitFor(() => {
+        const visibles = ordenEnPantalla();
+        expect(visibles).toEqual([...visibles].sort((x, y) => x.localeCompare(y, 'es')));
+        expect(visibles.length).toBeGreaterThan(1);
+      });
+    });
+  });
 });

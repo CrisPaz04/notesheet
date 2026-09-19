@@ -12,6 +12,11 @@ const normalizarBusqueda = (texto) => (texto || "")
   .normalize("NFD")
   .replace(/[̀-ͯ]/g, "");
 
+// Ordenar por título con las reglas del español: "Alégrate" va entre "Alabaré"
+// y "Alístate", no al final por llevar tilde. `numeric` hace que "Salmo 3"
+// vaya antes que "Salmo 21" y no al revés, que es lo que da comparar texto.
+const porTitulo = new Intl.Collator("es", { sensitivity: "base", numeric: true });
+
 function Dashboard() {
   const [songs, setSongs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -19,6 +24,8 @@ function Dashboard() {
   const [searchTerm, setSearchTerm] = useState("");
   const [activeFilter, setActiveFilter] = useState("all");
   const [viewMode, setViewMode] = useState("cards");
+  // "nuevas" respeta el orden en que llegan de Firestore (createdAt desc).
+  const [sortOrder, setSortOrder] = useState("nuevas");
   const { currentUser, canEditSongs } = useAuth();
 
   // Cargar canciones al montar el componente
@@ -92,8 +99,18 @@ function Dashboard() {
       });
     }
 
+    // Ordenar alfabéticamente si toca. Se copia antes de ordenar porque
+    // `filtered` puede ser el propio array de estado cuando no hay ni búsqueda
+    // ni filtro: `sort` ordena en el sitio y estaría mutando el estado.
+    if (sortOrder !== "nuevas") {
+      const sentido = sortOrder === "za" ? -1 : 1;
+      filtered = [...filtered].sort(
+        (a, b) => sentido * porTitulo.compare(a.title || "", b.title || "")
+      );
+    }
+
     return filtered;
-  }, [songs, searchTerm, activeFilter]);
+  }, [songs, searchTerm, activeFilter, sortOrder]);
 
   const getGreeting = () => {
     const greetings = [
@@ -280,7 +297,37 @@ function Dashboard() {
             </div>
             
             <div className="content-header-right">
-              <div className="view-toggle">
+              <div className="view-toggle" role="group" aria-label="Ordenar canciones">
+                <button
+                  className={`view-toggle-btn ${sortOrder === 'nuevas' ? 'active' : ''}`}
+                  onClick={() => setSortOrder('nuevas')}
+                  title="Nuevas primero"
+                  aria-label="Nuevas primero"
+                  aria-pressed={sortOrder === 'nuevas'}
+                >
+                  <i className="bi bi-clock-history"></i>
+                </button>
+                <button
+                  className={`view-toggle-btn ${sortOrder === 'az' ? 'active' : ''}`}
+                  onClick={() => setSortOrder('az')}
+                  title="Ordenar de la A a la Z"
+                  aria-label="Ordenar de la A a la Z"
+                  aria-pressed={sortOrder === 'az'}
+                >
+                  <i className="bi bi-sort-alpha-down"></i>
+                </button>
+                <button
+                  className={`view-toggle-btn ${sortOrder === 'za' ? 'active' : ''}`}
+                  onClick={() => setSortOrder('za')}
+                  title="Ordenar de la Z a la A"
+                  aria-label="Ordenar de la Z a la A"
+                  aria-pressed={sortOrder === 'za'}
+                >
+                  <i className="bi bi-sort-alpha-down-alt"></i>
+                </button>
+              </div>
+
+              <div className="view-toggle" role="group" aria-label="Forma de ver las canciones">
                 <button
                   className={`view-toggle-btn ${viewMode === 'cards' ? 'active' : ''}`}
                   onClick={() => setViewMode('cards')}

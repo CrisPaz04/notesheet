@@ -264,10 +264,13 @@
     flex-wrap: wrap;
   }
   
+  /* Van dos grupos de botones (ordenar y forma de ver); en pantallas
+     estrechas pasan a la línea de abajo en vez de desbordar. */
   .content-header-right {
     display: flex;
     align-items: center;
     gap: var(--spacing-sm);
+    flex-wrap: wrap;
   }
   
   .filter-tabs {
