@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { getPlaylistById, getSongById } from "@notesheet/api";
 import { useAuth } from "../context/AuthContext";
-import { formatSong } from "@notesheet/core";
+import { renderSongContent } from "@notesheet/core";
 import LoadingSpinner from "../components/LoadingSpinner";
 
 function PlaylistView() {
@@ -31,9 +31,18 @@ function PlaylistView() {
             loadedPlaylist.songs.map(async (song) => {
               try {
                 const fullSong = await getSongById(song.id);
-                
-                // Formatear el contenido de la canción para visualización
-                const formattedContent = formatSong(fullSong.content);
+
+                // La lista puede transponer una canción solo para esta ocasión:
+                // hay que mostrarla en la tonalidad elegida, no en la original.
+                // Antes se formateaba sin transponer y la etiqueta decía una
+                // tonalidad mientras los acordes mostraban otra.
+                const { formatted: formattedContent } = renderSongContent(
+                  fullSong.content,
+                  {
+                    baseKey: fullSong.key,
+                    targetKey: song.key || fullSong.key
+                  }
+                );
                 
                 // Combinar los datos de la canción con los datos de la playlist
                 return {
