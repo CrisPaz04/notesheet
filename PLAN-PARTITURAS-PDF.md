@@ -119,17 +119,40 @@ Tres cosas que parecen estar y no están:
    descargas de Storage. Eso no choca con la nota de `CLAUDE.md` sobre no
    interceptar Firebase, que va por la autenticación y Firestore.
 
-## Cómo mostrarlo: se lee en **tablet**
+## Cómo mostrarlo: se lee en una **tablet Samsung** (Android)
 
-Decidido: las partituras se leen en tablet.
+Decidido: las partituras se leen en una tab Samsung, o sea Chrome o Samsung
+Internet, los dos Chromium.
 
-Eso descarta dar por bueno un `<iframe>` sin más. Safari en iPad es irregular
-mostrando PDF embebidos (suele quedarse en la primera página o proponer
-descarga). **Antes de elegir, probarlo en el iPad de verdad**: si el `<iframe>`
-se comporta, es gratis; si no, hay que meter `pdf.js` (vía `react-pdf` o
-`pdfjs-dist`), que resuelve el problema pero añade unos 300 KB al bundle.
+Y eso, al contrario de lo que parece, es el caso **más** incómodo, no el menos:
+Chrome de escritorio trae visor de PDF integrado y un `<iframe>` funciona, pero
+**Chrome en Android históricamente no renderiza PDF embebidos** — los descarga o
+se los pasa a otra app. Versiones recientes han ido añadiendo visor para
+navegación normal, pero dentro de un `<iframe>` es donde menos se puede dar por
+hecho.
 
-No decidirlo a ojo: son 20 minutos de prueba y cambian bastante el trabajo.
+**Hay un banco de pruebas montado para salir de dudas**, porque esto no se
+decide de memoria:
+
+```bash
+npm run dev --workspace=web -- --host 0.0.0.0 --port 5180
+```
+
+y desde la tablet, en la misma wifi: `http://<ip-del-pc>:5180/prueba-pdf/`
+
+La página enseña la misma partitura de 3 páginas por cuatro vías (`iframe`,
+`object`, `embed` y pdf.js) y el user agent del navegador. Se mira cuáles se ven
+y cuáles salen en blanco o proponen descargar. En escritorio están comprobadas:
+`iframe` y `object` muestran el visor nativo y pdf.js pinta las 3 páginas, así
+que si en la tablet sale en blanco es la tablet, no la página.
+
+Los archivos están en `apps/web/public/prueba-pdf/` (fuera de git) y se borran
+al decidir. pdf.js va servido desde ahí, no desde un CDN, para que la prueba no
+dependa de internet ni de un bloqueador.
+
+**Coste medido de pdf.js: 320 KB** el `pdf.min.js`, más 1 MB el worker (que se
+carga aparte y solo cuando hace falta). No es una estimación: son los archivos
+descargados en el banco de pruebas.
 
 ## Orden de trabajo sugerido
 
@@ -164,7 +187,7 @@ a propósito y comprobar que algún test falla. Lo que merece cubrirse:
 
 ## Lo que queda por decidir
 
-- **`<iframe>` o `pdf.js`** — depende de la prueba en el iPad (arriba).
+- **`<iframe>` o `pdf.js`** — depende de la prueba en la tablet Samsung (arriba).
 - **Cuántos PDF por canción.** Nueve instrumentos × voces × 2 variantes son
   muchos archivos. ¿Se suben todos de golpe con un nombre que los ordene solo,
   o uno a uno desde su pestaña?

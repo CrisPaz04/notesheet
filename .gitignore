@@ -68,3 +68,7 @@ __pycache__/
 # Importador generado con el repertorio dentro (scripts/generar-importador-servido.mjs).
 # Se genera cuando hace falta y se borra al terminar: no debe acabar en el deploy.
 apps/web/public/importar-repertorio.js
+
+# Banco de pruebas para ver si los PDF se ven en la tablet (PLAN-PARTITURAS-PDF.md).
+# Lleva un PDF de ejemplo y una copia de pdf.js; se borra al decidir.
+apps/web/public/prueba-pdf/
