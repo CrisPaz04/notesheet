@@ -126,6 +126,30 @@ describe('melodías nota a nota', () => {
     expect(destino).toBe('//MI MI MI RE SI');
   });
 
+  // Las partes escritas para la banda traen marcas propias: `_` alarga la
+  // nota, `//` repite y `(4)` cuenta compases. Nada de eso es una nota, pero
+  // acompaña a las notas y antes tumbaba la línea entera.
+  it('acepta las marcas de duración y conteo', () => {
+    expect(isChordLine('MI_ LA SOL# DO# MI_')).toBe(true);
+    expect(isChordLine('// SOL# FA# MI_')).toBe(true);
+    expect(isChordLine('FA# (4) MI (3) FA#')).toBe(true);
+    expect(isChordLine('SI (4) SI(2)')).toBe(true);
+    expect(isChordLine('LA SOL# MI LA SI_ SI //')).toBe(true);
+  });
+
+  it('conserva esas marcas al transponer', () => {
+    expect(transposeContent('MI_ LA SOL# DO# MI_', 'MI', 'FA'))
+      .toBe('FA_ SIb LA RE FA_');
+    expect(transposeContent('FA# (4) MI (3) FA#', 'MI', 'FA'))
+      .toBe('SOL (4) FA (3) SOL');
+    expect(transposeContent('SI (4) SI(2)', 'MI', 'FA'))
+      .toBe('DO (4) DO(2)');
+  });
+
+  it('una parte sin letra deja vacía la vista de solo letra', () => {
+    expect(extractLyricsOnly('MI_ LA SOL# DO# MI_\n// SOL# FA# MI_')).toBe('');
+  });
+
   // Protección: una frase de verdad no debe confundirse con notas aunque
   // empiece por una palabra que también es nota.
   it('no confunde una frase con una melodía', () => {

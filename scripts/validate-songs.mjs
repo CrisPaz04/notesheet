@@ -13,9 +13,10 @@ import { readFileSync } from 'node:fs';
 const TIPOS = ['Júbilo', 'Adoración', 'Moderada'];
 const TONALIDAD = /^(DO|RE|MI|FA|SOL|LA|SI)(#|b)?m?$/;
 
-// Un acorde: raíz + alteración + sufijo + bajo opcional. Permisivo a propósito.
-const ACORDE = /^(DO|RE|MI|FA|SOL|LA|SI|[A-G])(#|b)?(maj|min|dim|aug|M|m|°|\+)?(\d+)?((sus|add)\d*)?(\/(DO|RE|MI|FA|SOL|LA|SI|[A-G])(#|b)?)?$/;
-const RELLENO = /^[|:%\-–—()[\]]+$/;
+// Debe coincidir con la gramática de packages/core/src/music/chords.js:
+// notas en MAYÚSCULAS o Capitalizadas, con `_` de nota larga y `//` de repetición.
+const ACORDE = /^[([{|:/]*(DO|Do|RE|Re|MI|Mi|FA|Fa|SOL|Sol|LA|La|SI|Si|[A-G])(#|b)?(maj|min|dim|aug|M|m|°|\+)?(\d+)?((sus|add)\d*)?(\/(DO|Do|RE|Re|MI|Mi|FA|Fa|SOL|Sol|LA|La|SI|Si|[A-G])(#|b)?)?(\(\d+\)|[)\]}|:/,.;!?_])*$/;
+const RELLENO = /^(?:[|:%\-–—()[\]/_]+|\(\d+\))$/;
 
 const esLineaDeAcordes = (linea) => {
   const tokens = linea.trim().split(/\s+/).filter(Boolean);
@@ -89,6 +90,13 @@ canciones.forEach((c, i) => {
   const conAcordes = lineas.filter(esLineaDeAcordes).length;
   if (conAcordes === 0) {
     avisos.push(`${donde}: no se detectó ninguna línea de acordes; no se podrá transponer`);
+  }
+
+  // Los conteos hay que expandirlos al extraer, no dejarlos escritos:
+  // "SI (4)" se importa como "SI SI SI SI".
+  const conteos = contenido.match(/\(\s*\d+\s*\)/g);
+  if (conteos) {
+    avisos.push(`${donde}: ${conteos.length} conteo(s) sin expandir (${conteos.slice(0, 3).join(' ')}); cada nota debe repetirse esas veces`);
   }
 
   // Marcas que dejaste para revisar a mano

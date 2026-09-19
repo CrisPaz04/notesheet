@@ -38,6 +38,28 @@ Dos reglas que sí importan:
 Nombres de sección habituales: `Intro`, `Verso 1`, `Verso 2`, `Coro`, `Puente`,
 `Final`. No hay lista cerrada: se muestra lo que pongas.
 
+## La notación de las partes de la banda
+
+El repertorio son partes de **primera trompeta** escritas como una melodía nota a
+nota, no como acordes sobre la letra. La mayoría no tienen letra en absoluto.
+
+Símbolos que usan y qué hacer con cada uno:
+
+| Símbolo | Significa | Qué hacer al extraer |
+|---|---|---|
+| `_` | La nota se sostiene más tiempo | Conservarlo: `MI_` |
+| `//` | Esa sección se repite | Conservarlo tal cual |
+| `(4)` | La nota **se repite 4 veces** | **Expandirlo**: `SI (4)` → `SI SI SI SI` |
+| `#` / `b` | Sostenido / bemol | Conservarlo: `SOL#`, `SIb` |
+
+Lo del paréntesis es la regla que más se olvida: **no lo dejes escrito**. `SI (4)`
+no se importa como `SI (4)`, sino como `SI SI SI SI`. Igual si va pegado:
+`SI(2)` → `SI SI`.
+
+Las notas pueden ir en MAYÚSCULAS o Capitalizadas (`MI` o `Mi`); las dos se
+reconocen. En minúsculas no, porque "la", "mi" y "si" son palabras corrientes y
+se confundirían con la letra de una canción.
+
 ## El JSON de importación
 
 Un array. Cada canción:

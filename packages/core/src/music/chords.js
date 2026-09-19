@@ -47,12 +47,17 @@ const CHORD_PARTS = new RegExp(
  * Tokens que pueden acompañar a los acordes en una línea de acordes sin serlo:
  * barras de compás, repeticiones, guiones, "N.C.", etc.
  */
-const FILLER = /^(?:[|:%*\-–—/()[\]]+|\(?[xX]\s?\d+\)?|\(?\d+\s?[xX]\)?|N\.?C\.?)$/;
+// `(4)` y `(2)` son conteos de compas o de repeticiones en las partes escritas
+// a mano para la banda; acompañan a las notas sin ser una de ellas.
+const FILLER = /^(?:[|:%*\-–—/()[\]_]+|\(?[xX]\s?\d+\)?|\(?\d+\s?[xX]\)?|\(\d+\)|N\.?C\.?)$/;
 
 // Adornos que pueden envolver a un acorde: "(LAm)", "|DO", "C,".
 // `//` marca repetición y suele ir pegado a la nota: "//RE" o "RE//".
 const LEADING_WRAP = /^[([{|:/]+/;
-const TRAILING_WRAP = /[)\]}|:/,.;!?]+$/;
+// El guion bajo marca nota larga en estas partituras: "MI_", "SOL#_". Y el
+// conteo puede ir pegado a la nota sin espacio: "SI(2)". Todo eso se conserva
+// tal cual en la salida, pero no estorba al reconocer la nota.
+const TRAILING_WRAP = /(?:\(\d+\)|[)\]}|:/,.;!?_])+$/;
 
 // Metadato de tonalidad: la única línea que empieza con '#' cuyo valor es un acorde.
 const KEY_METADATA = /^(\s*#+\s*(?:Tonalidad|Key)\s*:\s*)(.+)$/i;
