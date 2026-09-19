@@ -83,18 +83,25 @@ VITE_FIREBASE_MEASUREMENT_ID
 ## Deployment
 
 Netlify auto-deploys from `master` branch. Configuration in `netlify.toml`:
-- Base directory: `apps/web`
-- Build command: `npm run build`
-- Publish directory: `dist`
+- Builds from the **monorepo root**, no base directory: Netlify instala con
+  `npm ci` contra el `package-lock.json` de la raíz, así los deploys son
+  reproducibles y un cambio solo en el lockfile también dispara build.
+- Build command: `npm run build --workspace=web`
+- Publish directory: `apps/web/dist`
+- Node 22 (`NODE_VERSION`, y `engines` en ambos package.json)
 - SPA redirect rule configured
 
 ## Notes
 
 - No TypeScript - pure JavaScript
-- Vitest configured; 206 tests in `apps/web/src/test/` (run with `pnpm test:run`)
+- Vitest configured; 422 tests in `apps/web/src/test/` (run with `pnpm test:run`)
 - The song rendering pipeline (transposición → instrumento → notación → formato)
   lives in `packages/core/src/music/songRendering.js`. Úsalo en vez de encadenar
   `transposeContent` / `transposeForInstrument` / `convertNotationSystem` a mano.
+- Un acorde solo se reconoce dentro de una **línea de acordes**
+  (`packages/core/src/music/chords.js`). No amplíes los regex de notas para
+  cubrir sufijos: la letra en español se destroza ("Amor" -> "LAmor"). Usa
+  `isChordLine` / `splitChordSegment` / `mapChordLine`.
 - `packages/ui` sigue vacío a propósito (ver el comentario en su `index.js`)
 - Spanish comments appear in some files
 - Mobile app (React Native) is planned but not yet implemented
