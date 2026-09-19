@@ -5,6 +5,9 @@ import { useAuth } from "../context/AuthContext";
 import { getUserDisplayName } from "../utils/userHelpers";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { SkeletonGrid } from "../components/SkeletonCard";
+import usePreferenciaLocal from "../hooks/usePreferenciaLocal";
+
+const ORDENES = ["nuevas", "az", "za"];
 
 // Minúsculas y sin tildes, para que la búsqueda no dependa de cómo se escriba
 const normalizarBusqueda = (texto) => (texto || "")
@@ -25,7 +28,11 @@ function Dashboard() {
   const [activeFilter, setActiveFilter] = useState("all");
   const [viewMode, setViewMode] = useState("cards");
   // "nuevas" respeta el orden en que llegan de Firestore (createdAt desc).
-  const [sortOrder, setSortOrder] = useState("nuevas");
+  // Se recuerda en este dispositivo: quien ordena alfabéticamente lo quiere
+  // así siempre, y volver a pulsarlo cada vez que se abre el Dashboard sobra.
+  const [sortOrder, setSortOrder] = usePreferenciaLocal(
+    "dashboardOrden", "nuevas", ORDENES
+  );
   const { currentUser, canEditSongs } = useAuth();
 
   // Cargar canciones al montar el componente
@@ -305,7 +312,9 @@ function Dashboard() {
                   aria-label="Nuevas primero"
                   aria-pressed={sortOrder === 'nuevas'}
                 >
-                  <i className="bi bi-clock-history"></i>
+                  {/* Un icono de ordenar, no un reloj: el reloj se confundía
+                      con la pestaña "Recientes", que filtra en vez de ordenar. */}
+                  <i className="bi bi-sort-down"></i>
                 </button>
                 <button
                   className={`view-toggle-btn ${sortOrder === 'az' ? 'active' : ''}`}

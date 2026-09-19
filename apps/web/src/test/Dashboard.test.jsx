@@ -74,6 +74,9 @@ const AJENA = {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  // El orden elegido se recuerda en localStorage: sin esto, un test dejaría
+  // el Dashboard ordenado para el siguiente.
+  localStorage.clear();
   mockAuth.currentUser = { uid: 'user-1', email: 'lucia@iglesia.org' };
   mockAuth.canEditSongs = () => true;
   mockGetAllSongs.mockResolvedValue(SONGS);
@@ -499,6 +502,50 @@ describe('Dashboard', () => {
       await waitFor(() => {
         expect(ordenEnPantalla()).toEqual(['Salmo 3', 'Salmo 21', 'Salmo 100']);
       });
+    });
+
+    it('recuerda el orden elegido entre visitas', async () => {
+      const user = userEvent.setup();
+      await renderDashboard();
+
+      await user.click(screen.getByRole('button', { name: 'Ordenar de la A a la Z' }));
+      await waitFor(() => expect(ordenEnPantalla()[0]).toBe('Al Que Está Sentado'));
+
+      // Segunda visita: se monta de cero, como al recargar la página
+      screen.unmount?.();
+      document.body.innerHTML = '';
+      render(<Dashboard />);
+      await screen.findByText('Cristo Vive');
+
+      expect(ordenEnPantalla()).toEqual(['Al Que Está Sentado', 'Cristo Vive', 'Sublime Gracia']);
+    });
+
+    it('ignora un orden guardado que no existe', async () => {
+      localStorage.setItem('dashboardOrden', 'por-tonalidad-inventada');
+      await renderDashboard();
+      expect(ordenEnPantalla()).toEqual(['Cristo Vive', 'Sublime Gracia', 'Al Que Está Sentado']);
+    });
+
+    it('funciona aunque localStorage falle (incógnito)', async () => {
+      const original = Object.getOwnPropertyDescriptor(window, 'localStorage');
+      Object.defineProperty(window, 'localStorage', {
+        configurable: true,
+        get() { throw new Error('bloqueado'); }
+      });
+
+      try {
+        const user = userEvent.setup();
+        render(<Dashboard />);
+        await screen.findByText('Cristo Vive');
+
+        await user.click(screen.getByRole('button', { name: 'Ordenar de la A a la Z' }));
+
+        await waitFor(() => {
+          expect(ordenEnPantalla()).toEqual(['Al Que Está Sentado', 'Cristo Vive', 'Sublime Gracia']);
+        });
+      } finally {
+        Object.defineProperty(window, 'localStorage', original);
+      }
     });
 
     it('el orden convive con la búsqueda y con los filtros', async () => {
