@@ -8,6 +8,31 @@ NoteSheet is a multiplataform music application for church musicians built as a 
 
 **Tech Stack:** React 19, Vite 6.2, Bootstrap 5.3, React Router 7, Firebase (Auth, Firestore, Storage), npm workspaces
 
+## Lo siguiente: las partituras en PDF
+
+Parte del repertorio no está en texto sino como **partituras de verdad en PDF**,
+y hay que poder meterlas en una lista en cualquier posición. **Está todo
+planificado y sin empezar: el plan es `PLAN-PARTITURAS-PDF.md`, y es lo primero
+que hay que leer para trabajar en ello.**
+
+Lo decidido en corto, para no tener que releerlo entero:
+
+- De cada canción **no hay un PDF, hay una matriz**: instrumento × nº de voz ×
+  variante (con o sin los nombres de las notas encima, para quien aún no lee
+  partitura).
+- **Un PDF es una canción con el cuerpo en otro formato**, no un tipo nuevo de
+  elemento en las listas. Así entra en cualquier posición sin tocar el modelo de
+  listas ni migrar nada, y `defaultInstrument` ya elige la voz del músico sola.
+- Para mostrarlos hace falta **pdf.js**. Probado en una tab Samsung: `iframe`,
+  `object` y `embed` salen **en blanco** en Android. Y la sección de vientos
+  mezcla tabs Samsung, iPads y otras marcas, así que no cabe ramificar por
+  dispositivo.
+- Storage está inicializado pero **sin usar**: no hay `storage.rules`, no
+  aparece en `firebase.json` y no existe ninguna subida de archivos en la app.
+
+Queda abierto qué hacer con una canción que tenga texto **y** PDF, y cómo subir
+tantos archivos por canción.
+
 ## Commands
 
 Se usa **npm**, no pnpm: los scripts de la raíz llaman a npm por dentro y
@@ -144,13 +169,6 @@ Netlify auto-deploys from `master` branch. Configuration in `netlify.toml`:
   `chords.js` o `transposition.js`, ese test es el que avisa. `KEY_TO_INDEX`
   necesita también las enarmónicas raras (`MI#`, `SI#`, `FAb`): si falta una,
   `transposeNote` devuelve la nota **sin transponer** y en silencio.
-- Parte del repertorio son partituras en PDF (una por instrumento, voz y
-  variante, con y sin los nombres de las notas encima) y todavía no están en la
-  app. El plan para meterlas está en `PLAN-PARTITURAS-PDF.md`: la decisión de
-  fondo es que un PDF es **una canción con el cuerpo en otro formato**, no un
-  tipo nuevo de elemento en las listas. Para mostrarlos hace falta **pdf.js**:
-  está probado que `iframe`, `object` y `embed` salen en blanco en Android, y
-  la sección de vientos mezcla tabs Samsung, iPads y otras marcas.
 - La lista que el director manda por WhatsApp se interpreta en
   `packages/core/src/music/setlist.js`. Las líneas sueltas tipo "Mi m" son la tonalidad
   del bloque, no canciones; y el director suele nombrar la canción por un fragmento de la
