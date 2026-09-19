@@ -1,5 +1,6 @@
 // packages/core/src/music/transposition-helper.js
 import { transposeContent } from './transposition';
+import { mapChordLine, countChordRoots } from './chords';
 import { TRANSPOSING_INSTRUMENTS } from './instruments';
 
 /**
@@ -24,10 +25,6 @@ export function transposeForInstrument(content, fromInstrument, toInstrument) {
   // Si no hay diferencia de transposición, retornamos el contenido original
   if (transpositionInterval === 0) return content;
   
-  // Expresión regular para detectar notas musicales (incluyendo menores)
-  // Usamos lookahead negativo para evitar problemas con \b y accidentales
-  const noteRegex = /\b(DO|RE|MI|FA|SOL|LA|SI|C|D|E|F|G|A|B)(#|b)?(m)?(?![#b\w])/g;
-  
   // Definimos las escalas completas
   const LATIN_NOTES = ['DO', 'DO#', 'RE', 'RE#', 'MI', 'FA', 'FA#', 'SOL', 'SOL#', 'LA', 'LA#', 'SI'];
   const LATIN_NOTES_FLAT = ['DO', 'REb', 'RE', 'MIb', 'MI', 'FA', 'SOLb', 'SOL', 'LAb', 'LA', 'SIb', 'SI'];
@@ -46,15 +43,10 @@ export function transposeForInstrument(content, fromInstrument, toInstrument) {
     'A': 9, 'A#': 10, 'Bb': 10, 'B': 11, 'B#': 0, 'Cb': 11
   };
   
-  // Detectar el sistema de notación predominante (latino o anglosajón)
-  const latinNoteRegex = /\b(DO|RE|MI|FA|SOL|LA|SI)(#|b)?(?![#b\w])/g;
-  const englishNoteRegex = /\b(C|D|E|F|G|A|B)(#|b)?(?![#b\w])/g;
-  
-  const latinMatches = content.match(latinNoteRegex) || [];
-  const englishMatches = content.match(englishNoteRegex) || [];
-  
-  // Determinar el sistema de notación predominante
-  const isLatinPredominant = latinMatches.length >= englishMatches.length;
+  // Determinar el sistema de notación predominante contando las raíces de
+  // acorde de las líneas de acordes (así "LAm" o "Cmaj7" también cuentan)
+  const rootCounts = countChordRoots(content);
+  const isLatinPredominant = rootCounts.latin >= rootCounts.english;
   
   // Procesar línea por línea
   const lines = content.split('\n');
@@ -64,62 +56,26 @@ export function transposeForInstrument(content, fromInstrument, toInstrument) {
       return line;
     }
     
-    // Reemplazar cada nota con su versión transpuesta
-    return line.replace(noteRegex, match => {
-      try {
-        // Verificar si es una nota menor
-        let isMinor = false;
-        let normalizedNote = match;
-        if (match.endsWith('m')) {
-          isMinor = true;
-          normalizedNote = match.slice(0, -1);
-        }
-        
-        // Determinar si es notación latina o anglosajona
-        const isLatinNote = normalizedNote.length > 1 && normalizedNote !== 'SI' && normalizedNote !== 'MI';
-        
-        // Obtener el índice de la nota usando el mapa
-        let noteIndex = noteToIndexMap[normalizedNote];
-        
-        // Si no encontramos la nota en el mapa, intento especial para SI y MI
-        if (noteIndex === undefined) {
-          // Tratamiento especial para 'SI' y 'MI'
-          if (normalizedNote === 'SI') {
-            noteIndex = 11;  // SI es la nota 11 en la escala cromática
-          } else if (normalizedNote === 'MI') {
-            noteIndex = 4;   // MI es la nota 4 en la escala cromática
-          } else {
-            console.warn(`Nota no reconocida: ${normalizedNote}`);
-            return match;  // Devolver la nota original si no la reconocemos
-          }
-        }
-        
-        // Calcular el nuevo índice después de transposición
-        const newIndex = (noteIndex + transpositionInterval + 12) % 12;
-        
-        // Usar el sistema de notación predominante para todas las notas
-        let targetArray;
-        if (isLatinPredominant) {
-          // Usar notación latina para todas las notas
-          targetArray = normalizedNote.includes('b') ? LATIN_NOTES_FLAT : LATIN_NOTES;
-        } else {
-          // Usar notación anglosajona para todas las notas
-          targetArray = normalizedNote.includes('b') ? ENGLISH_NOTES_FLAT : ENGLISH_NOTES;
-        }
-        
-        // Obtener la nueva nota
-        let transposedNote = targetArray[newIndex];
-        
-        // Añadir 'm' si era una nota menor
-        if (isMinor) {
-          transposedNote += 'm';
-        }
-        
-        return transposedNote;
-      } catch (error) {
-        console.error("Error transposing note:", match, error);
-        return match; // Devolver la nota original en caso de error
+    // Reemplazar la raíz de cada acorde por su versión transpuesta.
+    // mapChordLine conserva sufijos ("m", "7", "sus4") y bajos ("/SOL").
+    return mapChordLine(line, root => {
+      const noteIndex = noteToIndexMap[root];
+      if (noteIndex === undefined) {
+        console.warn(`Nota no reconocida: ${root}`);
+        return root;
       }
+
+      // Calcular el nuevo índice después de transposición
+      const newIndex = (noteIndex + transpositionInterval + 12) % 12;
+
+      // Usar el sistema de notación predominante para todas las notas,
+      // respetando la preferencia de bemoles de la nota original
+      const useFlats = root.includes('b');
+      const targetArray = isLatinPredominant
+        ? (useFlats ? LATIN_NOTES_FLAT : LATIN_NOTES)
+        : (useFlats ? ENGLISH_NOTES_FLAT : ENGLISH_NOTES);
+
+      return targetArray[newIndex];
     });
   });
   

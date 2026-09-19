@@ -1,5 +1,7 @@
 // packages/core/src/music/transposition.js
 
+import { mapChordLine, countChordRoots } from './chords';
+
 // Definición de notas en notación latina y anglosajona
 const LATIN_NOTES = ['DO', 'DO#', 'RE', 'RE#', 'MI', 'FA', 'FA#', 'SOL', 'SOL#', 'LA', 'LA#', 'SI'];
 const ENGLISH_NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
@@ -216,14 +218,9 @@ export const getKeyDistance = (sourceKey, targetKey) => {
  * @returns {string} Línea transpuesta
  */
 export const transposeLine = (line, semitones, targetSystem = null, keySignature = 'natural') => {
-  // Expresión regular para detectar notas musicales (incluyendo menores)
-  // Usamos lookahead negativo al final para evitar coincidencias parciales
-  // sin usar \b (que no funciona bien con # y b)
-  const noteRegex = /\b(DO|RE|MI|FA|SOL|LA|SI|C|D|E|F|G|A|B)(#|b)?(m)?(?![#b\w])/g;
-
-  return line.replace(noteRegex, (match) => {
-    return transposeNote(match, semitones, targetSystem, keySignature);
-  });
+  // Solo se transforman las líneas de acordes. Así los sufijos ("m", "7",
+  // "maj7", "sus4") y los bajos ("/SOL") se conservan y la letra no se toca.
+  return mapChordLine(line, root => transposeNote(root, semitones, targetSystem, keySignature));
 };
 
 /**
@@ -300,13 +297,19 @@ export const transposeContent = (content, sourceKey, targetKey, targetSystem = n
  * @returns {string} 'latin' o 'english'
  */
 export const detectNotationSystem = (content) => {
-  // Usamos lookahead negativo para evitar problemas con \b y accidentales
+  // Contamos las raíces de acorde de las líneas de acordes: así "LAm" o
+  // "Cmaj7" también cuentan, cosa que la regex suelta no conseguía.
+  const { latin, english } = countChordRoots(content);
+  if (latin + english > 0) {
+    return latin >= english ? 'latin' : 'english';
+  }
+
+  // Sin líneas de acordes reconocibles, caemos al conteo suelto de notas.
   const latinRegex = /\b(DO|RE|MI|FA|SOL|LA|SI)(#|b)?(?![#b\w])/g;
   const englishRegex = /\b([A-G])(#|b)?(?![#b\w])/g;
 
   const latinMatches = content.match(latinRegex) || [];
   const englishMatches = content.match(englishRegex) || [];
 
-  // Si hay más coincidencias latinas que inglesas, es latino
   return latinMatches.length >= englishMatches.length ? 'latin' : 'english';
 };

@@ -179,25 +179,25 @@ describe('renderSongContent', () => {
     expect(formatted.rawContent).toContain('C        G');
   });
 
-  // LIMITACIÓN CONOCIDA (preexistente, no introducida por este refactor):
-  // el regex de `convertNotationSystem` lleva un lookahead `(?![#b\w])` que
-  // impide convertir acordes con sufijo ("LAm", "Am", "DO7"). Está puesto
-  // para no destrozar letras en español ("Amor" -> "LAmor"), pero deja los
-  // acordes menores sin traducir en ambas direcciones.
-  it('NO convierte acordes menores (limitación conocida)', () => {
+  // Esta era una limitación conocida: el lookahead `(?![#b\w])` del regex
+  // impedía convertir cualquier acorde con sufijo. Se arregló detectando
+  // primero si una línea es de acordes (packages/core/src/music/chords.js),
+  // así que ahora sí se convierten en ambas direcciones.
+  it('convierte también los acordes menores', () => {
     const aIngles = renderSongContent(SONG, {
       baseKey: 'DO',
       targetKey: 'DO',
       notationSystem: 'english'
     });
-    expect(aIngles.formatted.rawContent).toContain('LAm');
+    expect(aIngles.formatted.rawContent).toContain('Am');
+    expect(aIngles.formatted.rawContent).not.toContain('LAm');
 
     const aLatin = renderSongContent('## Intro\nC G Am F\n', {
       baseKey: 'DO',
       targetKey: 'DO',
       notationSystem: 'latin'
     });
-    expect(aLatin.formatted.rawContent).toContain('Am');
+    expect(aLatin.formatted.rawContent).toContain('LAm');
   });
 
   it('es idempotente respecto al sistema de notación', () => {

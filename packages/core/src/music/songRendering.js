@@ -11,6 +11,7 @@
 import { transposeContent } from './transposition';
 import { convertNotationSystem, formatSong } from './notation';
 import { transposeForInstrument, getVisualKeyForInstrument } from './transposition-helper';
+import { splitChordSegment } from './chords';
 
 // Las voces se escriben siempre en la tonalidad de trompeta en Sib; el resto
 // de instrumentos se obtiene transponiendo desde esa referencia.
@@ -27,12 +28,16 @@ export const SOURCE_INSTRUMENT = 'bb_trumpet';
 export const extractLyricsSections = (formattedSong) => {
   if (!formattedSong || !formattedSong.sections) return null;
 
+  // Se quitan las líneas de acordes enteras en vez de borrar nota a nota:
+  // splitChordSegment distingue un acorde de una palabra, así que "LAm" o
+  // "Cmaj7" desaparecen sin tocar letra como "Amor" o "Dame".
   const sections = formattedSong.sections.map((section) => ({
     ...section,
     content: section.content
-      .replace(/\b(DO|RE|MI|FA|SOL|LA|SI|C|D|E|F|G|A|B)(#|b)?(m)?(?![#b\w])/g, '')
-      .replace(/\|\s*\|/g, '')
-      .replace(/\s{2,}/g, ' ')
+      .split('\n')
+      .map((line) => (splitChordSegment(line) ? '' : line))
+      .join('\n')
+      .replace(/\n{3,}/g, '\n\n')
       .trim()
   }));
 
