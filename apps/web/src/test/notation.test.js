@@ -80,6 +80,63 @@ describe('extractSongMetadata', () => {
   });
 });
 
+describe('parseSongSections sin cabeceras', () => {
+  // Muchas canciones que vienen de partituras escaneadas no están divididas
+  // en coro y versos. Antes ese contenido se descartaba en silencio: la
+  // canción se guardaba bien y luego se veía completamente en blanco.
+  const SIN_CABECERAS = `DO        SOL
+Cristo vive hoy
+LAm       FA
+para siempre`;
+
+  it('devuelve una sección con todo el contenido', () => {
+    const secciones = parseSongSections(SIN_CABECERAS);
+    expect(secciones).toHaveLength(1);
+    expect(secciones[0].content).toContain('Cristo vive hoy');
+    expect(secciones[0].content).toContain('para siempre');
+  });
+
+  it('esa sección no tiene título', () => {
+    expect(parseSongSections(SIN_CABECERAS)[0].title).toBe('');
+  });
+
+  it('conserva el contenido anterior a la primera cabecera', () => {
+    const secciones = parseSongSections(`DO SOL
+intro suelta
+## Coro
+FA DO
+letra`);
+    expect(secciones).toHaveLength(2);
+    expect(secciones[0].title).toBe('');
+    expect(secciones[0].content).toContain('intro suelta');
+    expect(secciones[1].title).toBe('Coro');
+  });
+
+  it('no inventa una sección vacía cuando sí hay cabeceras', () => {
+    const secciones = parseSongSections(`## Coro
+FA DO
+letra`);
+    expect(secciones).toHaveLength(1);
+    expect(secciones[0].title).toBe('Coro');
+  });
+
+  it('ignora el espacio en blanco antes de la primera cabecera', () => {
+    const secciones = parseSongSections(`
+
+## Coro
+FA DO`);
+    expect(secciones).toHaveLength(1);
+    expect(secciones[0].title).toBe('Coro');
+  });
+
+  it('no devuelve nada con contenido vacío', () => {
+    expect(parseSongSections('')).toEqual([]);
+    expect(parseSongSections(`
+  
+`)).toEqual([]);
+  });
+});
+
 describe('parseSongSections', () => {
   it('parses sections marked with ##', () => {
     const content = `## Intro
@@ -113,9 +170,14 @@ DO SOL`;
     expect(sections[0].content).not.toContain('Tonalidad');
   });
 
-  it('returns empty array for content without sections', () => {
+  // Este test afirmaba lo contrario: que el contenido sin cabeceras se
+  // descartaba. Eso era el bug —la canción se veía en blanco— y se corrigió
+  // devolviendo una sección implícita sin título.
+  it('wraps content without sections in an untitled one', () => {
     const sections = parseSongSections('Just plain text');
-    expect(sections).toHaveLength(0);
+    expect(sections).toHaveLength(1);
+    expect(sections[0].title).toBe('');
+    expect(sections[0].content).toBe('Just plain text');
   });
 });
 

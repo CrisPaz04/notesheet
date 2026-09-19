@@ -3,9 +3,9 @@
  *
  *   node scripts/validate-songs.mjs canciones.json
  *
- * Revisa lo que la app necesita de verdad, no lo que parece razonable. El aviso
- * que importa es el de las cabeceras `## `: una canción sin ellas se guarda sin
- * error y luego se ve en blanco.
+ * Revisa lo que la app necesita de verdad, no lo que parece razonable. Las
+ * cabeceras `## ` son opcionales: una canción sin ellas se muestra igual, como
+ * una sección sin título.
  */
 
 import { readFileSync } from 'node:fs';
@@ -82,21 +82,9 @@ canciones.forEach((c, i) => {
   }
 
   const lineas = contenido.split('\n');
-  const cabeceras = lineas.filter((l) => /^##\s+.+/.test(l));
 
-  // El fallo que se guarda sin quejarse y luego sale en blanco
-  if (cabeceras.length === 0) {
-    errores.push(`${donde}: sin cabeceras "## " — la canción se vería EN BLANCO`);
-  }
-
-  // Contenido antes de la primera cabecera: se descarta al renderizar
-  const primeraCabecera = lineas.findIndex((l) => /^##\s+.+/.test(l));
-  if (primeraCabecera > 0) {
-    const huerfanas = lineas.slice(0, primeraCabecera).filter((l) => l.trim());
-    if (huerfanas.length > 0) {
-      avisos.push(`${donde}: ${huerfanas.length} línea(s) antes de la primera "## " se perderán`);
-    }
-  }
+  // Las cabeceras `## ` son opcionales: una canción sin ellas se muestra igual,
+  // como una sección sin título. No hay nada que validar aquí.
 
   const conAcordes = lineas.filter(esLineaDeAcordes).length;
   if (conAcordes === 0) {

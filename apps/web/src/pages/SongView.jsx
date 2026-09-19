@@ -704,7 +704,7 @@ function SongView() {
               > 
                 {formattedSong && formattedSong.sections.map((section, index) => (
                   <div key={index} className="song-section-modern">
-                    <h3 className="song-section-title">{section.title}</h3>
+                    {section.title && <h3 className="song-section-title">{section.title}</h3>}
                     <div className="song-section-content" style={{ fontSize: `${fontSize}px` }}>
                       {section.content}
                     </div>
@@ -727,7 +727,7 @@ function SongView() {
               >
                 {formattedLyricsOnly && formattedLyricsOnly.sections.map((section, index) => (
                   <div key={index} className="song-section-modern">
-                    <h3 className="song-section-title">{section.title}</h3>
+                    {section.title && <h3 className="song-section-title">{section.title}</h3>}
                     <div className="song-section-content" style={{ fontSize: `${fontSize}px` }}>
                       {section.content}
                     </div>

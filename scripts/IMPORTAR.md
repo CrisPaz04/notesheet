@@ -21,19 +21,18 @@ FA        DO
 Aleluya, aleluya
 ```
 
-Tres reglas, y la primera es la que más duele si se olvida:
+Las cabeceras `## ` son **opcionales**. Muchas partituras escaneadas no vienen
+divididas en coro y versos, y eso está bien: el contenido sin cabecera se muestra
+igual, como una sección sin título. No hace falta inventarse etiquetas.
 
-1. **Toda línea tiene que ir debajo de una cabecera `## `.** El parser solo recoge
-   lo que viene después de un `## `. Una canción sin cabeceras se guarda bien pero
-   **se ve completamente en blanco**. Es el fallo más fácil de cometer y el más
-   difícil de notar hasta que abres la canción.
+Dos reglas que sí importan:
 
-2. **Los acordes van en su propia línea, encima de la letra.** Una línea es de
+1. **Los acordes van en su propia línea, encima de la letra.** Una línea es de
    acordes cuando *todos* sus tokens son acordes; si mezclas acordes y letra en la
    misma línea, ni se transpone ni se puede extraer la letra sola. La alineación por
    columnas se conserva tal cual, así que respeta los espacios del original.
 
-3. **Nada de metadatos dentro del contenido.** El título, la tonalidad y el tipo van
+2. **Nada de metadatos dentro del contenido.** El título, la tonalidad y el tipo van
    en sus campos, no como líneas `# Tonalidad: DO`.
 
 Nombres de sección habituales: `Intro`, `Verso 1`, `Verso 2`, `Coro`, `Puente`,
@@ -68,9 +67,10 @@ Pásale los PDF a Claude por lotes (10–15 canciones) con una instrucción como
 > Extrae cada canción de estas partituras escaneadas a JSON con esta forma:
 > `{title, key, type, version, album, content}`.
 >
-> En `content`: cada sección va precedida de una cabecera `## Nombre` (Intro,
-> Verso 1, Coro, Puente...). Los acordes van en su propia línea, encima de la
-> letra que les corresponde, conservando la alineación por columnas con espacios.
+> En `content`: los acordes van en su propia línea, encima de la letra que les
+> corresponde, conservando la alineación por columnas con espacios. Si la
+> partitura marca secciones (Intro, Verso 1, Coro, Puente...), ponlas como
+> cabecera `## Nombre`; si no las marca, no te las inventes.
 > Usa notación latina (DO RE MI FA SOL LA SI). No metas el título ni la tonalidad
 > dentro de `content`.
 >
@@ -88,9 +88,9 @@ pierdes todo el trabajo.
 node scripts/validate-songs.mjs canciones.json
 ```
 
-Avisa de canciones sin cabeceras `## ` (las que saldrían en blanco), tonalidades
-que la app no entiende, títulos repetidos, contenido vacío y marcas `[?]` que
-dejaste para revisar. **Arregla lo que salga antes de importar.**
+Avisa de tonalidades que la app no entiende, títulos repetidos, contenido vacío,
+líneas sin acordes detectables y marcas `[?]` que dejaste para revisar.
+**Arregla lo que salga antes de importar.**
 
 ## Paso 3 — importar
 

@@ -82,36 +82,41 @@ export const parseSongSections = (content) => {
   const contentLines = lines.filter(line => !line.match(/^#\s*(?:Canción|Título|Title|Tonalidad|Key|Tipo|Type|Autor|Author|Tempo|Velocidad):/i));
   
   const sections = [];
-  let currentSection = null;
-  
+
+  // Sección implícita, sin título, para el contenido que no va bajo ninguna
+  // cabecera `## `. Muchas canciones —sobre todo las que vienen de partituras
+  // escaneadas— no están divididas en coro y versos, y antes ese contenido se
+  // descartaba en silencio: la canción se guardaba bien y se veía en blanco.
+  let currentSection = { title: '', content: [] };
+
   contentLines.forEach(line => {
     // Detectar una nueva sección (## Título)
     const sectionMatch = line.match(/^##\s+(.+)$/);
     if (sectionMatch) {
-      // Si ya hay una sección activa, guardarla
-      if (currentSection) {
+      // Guardar la anterior, salvo que sea la implícita y esté vacía
+      if (currentSection.title || currentSection.content.some(l => l.trim())) {
         sections.push(currentSection);
       }
       currentSection = {
         title: sectionMatch[1].trim(),
         content: []
       };
-    } else if (currentSection) {
+    } else {
       // Agregar línea a la sección actual
       currentSection.content.push(line);
     }
   });
   
-  // Agregar la última sección si existe
-  if (currentSection) {
+  // Agregar la última, salvo que sea la implícita y esté vacía
+  if (currentSection.title || currentSection.content.some(l => l.trim())) {
     sections.push(currentSection);
   }
-  
+
   // Limpiar el contenido de cada sección
   sections.forEach(section => {
     section.content = section.content.join('\n').trim();
   });
-  
+
   return sections;
 };
 

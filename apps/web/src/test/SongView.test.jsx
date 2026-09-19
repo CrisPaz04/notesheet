@@ -173,6 +173,44 @@ describe('SongView', () => {
     expect(mockGetUserPreferences).not.toHaveBeenCalled();
   });
 
+  // Las partituras escaneadas rara vez vienen divididas en coro y versos
+  describe('canción sin secciones', () => {
+    const SIN_SECCIONES = {
+      ...SONG,
+      voices: {},
+      content: 'DO        SOL\nCristo vive hoy\nLAm       FA\npara siempre'
+    };
+
+    it('se ve igual aunque no tenga cabeceras', async () => {
+      mockGetSongById.mockResolvedValue(SIN_SECCIONES);
+      await renderSongView();
+
+      expect(screen.getAllByText(/Cristo vive hoy/).length).toBe(2);
+      expect(screen.getAllByText(/para siempre/).length).toBe(2);
+    });
+
+    it('no deja un título de sección vacío', async () => {
+      mockGetSongById.mockResolvedValue(SIN_SECCIONES);
+      await renderSongView();
+
+      const titulos = document.querySelectorAll('.song-section-title');
+      expect(titulos).toHaveLength(0);
+    });
+
+    it('sigue mostrando el título cuando la sección lo tiene', async () => {
+      mockGetSongById.mockResolvedValue({
+        ...SONG,
+        voices: {},
+        content: '## Coro\nDO SOL\nCristo vive hoy'
+      });
+      await renderSongView();
+
+      const titulos = [...document.querySelectorAll('.song-section-title')]
+        .map((el) => el.textContent);
+      expect(titulos).toContain('Coro');
+    });
+  });
+
   describe('álbum', () => {
     const CON_ALBUM = { ...SONG, album: 'Tiempo de Gracia' };
     const HERMANAS = [
