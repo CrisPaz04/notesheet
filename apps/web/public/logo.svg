@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- Icono de NoteSheet: una hoja de partitura con una nota musical.
+       El margen generoso deja sitio al recorte circular de Android
+       (safe zone del icono maskable). -->
+  <rect width="512" height="512" rx="112" fill="#0d6efd"/>
+
+  <!-- Pentagrama -->
+  <g stroke="#ffffff" stroke-opacity="0.35" stroke-width="10" stroke-linecap="round">
+    <line x1="132" y1="150" x2="380" y2="150"/>
+    <line x1="132" y1="192" x2="380" y2="192"/>
+    <line x1="132" y1="234" x2="380" y2="234"/>
+  </g>
+
+  <!-- Nota con plica y corchete -->
+  <g fill="#ffffff">
+    <ellipse cx="214" cy="356" rx="62" ry="47" transform="rotate(-20 214 356)"/>
+    <rect x="256" y="152" width="22" height="196" rx="11"/>
+    <path d="M278 152c46 18 74 44 74 84 0 20-8 38-22 52 4-40-16-64-52-80z"/>
+  </g>
+</svg>

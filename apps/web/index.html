@@ -1,10 +1,28 @@
 <!doctype html>
-<html lang="en">
+<html lang="es">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>NoteSheet</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+
+    <title>NoteSheet — Partituras para músicos de iglesia</title>
+    <meta name="description" content="Organiza, transpone y comparte tus canciones. Incluye metrónomo y afinador cromático." />
+
+    <!-- El color de la barra del navegador acompaña al tema de la app -->
+    <meta name="theme-color" content="#0d6efd" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#1a1a2e" media="(prefers-color-scheme: dark)" />
+
+    <link rel="icon" href="/favicon.ico" sizes="32x32" />
+    <link rel="icon" type="image/svg+xml" href="/logo.svg" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon-180x180.png" />
+
+    <!-- iOS no lee el manifest: necesita sus propias etiquetas para abrirse
+         a pantalla completa desde el icono de la pantalla de inicio.
+         La variante `apple-` está deprecada pero sigue haciendo falta para
+         iOS antiguos; la estándar va primero. -->
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="NoteSheet" />
   </head>
   <body>
     <div id="root"></div>

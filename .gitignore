@@ -57,3 +57,6 @@ ios/xcuserdata/
 # Firebase auth exports (contienen PII y hashes de contrasena)
 users.json
 *-users-export.json
+
+# Artefactos de las sesiones de Playwright MCP
+.playwright-mcp/
