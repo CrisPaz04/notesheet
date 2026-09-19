@@ -63,11 +63,8 @@ users.json
 
 # Python (scripts/)
 __pycache__/
+*.pyc
 
 # Importador generado con el repertorio dentro (scripts/generar-importador-servido.mjs).
 # Se genera cuando hace falta y se borra al terminar: no debe acabar en el deploy.
 apps/web/public/importar-repertorio.js
-
-# Cache de Python de los scripts de importacion
-__pycache__/
-*.pyc
