@@ -244,6 +244,14 @@ function SongEditor() {
       return;
     }
 
+    // Una canción en PDF recién guardada no tiene ni texto ni archivos
+    // todavía: sin título no habría absolutamente nada por lo que
+    // reconocerla en el repertorio.
+    if (esPdf && !title.trim()) {
+      setError("Ponle un título a la canción antes de guardarla");
+      return;
+    }
+
     try {
       setLoading(true);
 
@@ -868,7 +876,8 @@ function SongEditor() {
               <ScoreUploader
                 casilla={pdfsDeLaPestana}
                 disabled={isNewSong || !id}
-                disabledReason="Guarda la canción antes de subir partituras: el permiso de subida se comprueba contra la canción ya guardada."
+                disabledReason="Para subir partituras la canción tiene que existir antes: el permiso de subida se comprueba contra la canción ya guardada."
+                onGuardar={handleSave}
                 onUpload={handleUploadScore}
                 onRemove={handleRemoveScore}
                 subiendo={subiendo.startsWith(`${currentTab}:`)

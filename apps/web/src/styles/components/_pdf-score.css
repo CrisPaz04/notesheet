@@ -124,6 +124,29 @@
   border-color: var(--color-primary);
 }
 
+/* Mientras se arrastra un archivo encima */
+.score-slot--encima {
+  border-color: var(--color-primary);
+  background: var(--color-primary-light);
+}
+
+/* Todavía no se puede soltar nada aquí (la canción no está guardada) */
+.score-slot--bloqueado {
+  opacity: 0.55;
+}
+
+.score-uploader-aviso {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.score-uploader-aviso span {
+  flex: 1;
+  min-width: 14rem;
+}
+
 .score-slot-header {
   display: flex;
   align-items: center;

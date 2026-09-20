@@ -383,10 +383,19 @@
     cursor: pointer;
   }
   
-  .btn-editor-secondary:hover {
+  .btn-editor-secondary:hover:not(:disabled) {
     background: var(--color-primary-light);
     border-color: var(--color-primary);
     color: var(--color-primary);
+  }
+
+  /* Un botón bloqueado tiene que parecerlo. Sin esto conservaba el cursor de
+     mano y el efecto al pasar por encima: se pulsaba, no pasaba nada, y lo
+     que parecía era que la aplicación estaba rota. */
+  .btn-editor-secondary:disabled,
+  .btn-editor-primary:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
   }
   
   .editor-help-text {

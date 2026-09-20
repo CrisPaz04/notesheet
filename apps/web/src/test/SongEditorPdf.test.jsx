@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 // --- Mocks ---
@@ -113,7 +113,9 @@ describe('SongEditor con una canción en PDF', () => {
     await renderEditor();
 
     expect(screen.getByText('Subida')).toBeInTheDocument();
-    expect(screen.getByText('Sin archivo')).toBeInTheDocument();
+    // La vacía además dice que se puede soltar ahí: si no, la única pista de
+    // que el arrastre existe sería probarlo.
+    expect(screen.getByText(/Suelta el PDF aquí/)).toBeInTheDocument();
   });
 
   it('la pestaña dice cuántas de las dos variantes están subidas', async () => {
@@ -152,6 +154,60 @@ describe('SongEditor con una canción en PDF', () => {
           }
         }
       }));
+    });
+  });
+
+  describe('soltando el archivo encima', () => {
+    // La gente prueba las dos vías, y antes solo existía el botón: al
+    // arrastrar no pasaba nada y parecía que la aplicación estaba rota.
+    const soltarEn = (nodo, file) => {
+      const dataTransfer = { files: [file], items: [], types: ['Files'] };
+      fireEvent.dragOver(nodo, { dataTransfer });
+      fireEvent.drop(nodo, { dataTransfer });
+    };
+
+    const casillaDe = (container, indice) => (
+      container.querySelectorAll('.score-slot')[indice]
+    );
+
+    it('soltar un PDF en una casilla lo sube a esa variante', async () => {
+      const { container } = await renderEditor();
+
+      // La segunda casilla es la de "con nombres de notas"
+      soltarEn(casillaDe(container, 1), pdfFile());
+
+      await waitFor(() => {
+        expect(mockUploadScore).toHaveBeenCalledWith(expect.objectContaining({
+          variant: 'conNotas',
+          instrumentId: 'bb_trumpet',
+          voiceNumber: '1'
+        }));
+      });
+    });
+
+    it('cada casilla sube a su propia variante, no siempre a la misma', async () => {
+      const { container } = await renderEditor();
+
+      soltarEn(casillaDe(container, 0), pdfFile());
+
+      await waitFor(() => {
+        expect(mockUploadScore).toHaveBeenCalledWith(expect.objectContaining({
+          variant: 'partitura'
+        }));
+      });
+    });
+
+    it('no acepta nada mientras la canción no exista', async () => {
+      routeParams.id = undefined;
+      const user = userEvent.setup();
+
+      const { container } = render(<SongEditor />);
+      await screen.findByRole('heading', { level: 1, name: /Nueva Canción/ });
+      await user.click(screen.getByRole('button', { name: /Partituras PDF/ }));
+
+      soltarEn(casillaDe(container, 0), pdfFile());
+
+      expect(mockUploadScore).not.toHaveBeenCalled();
     });
   });
 
@@ -230,9 +286,9 @@ describe('SongEditor con una canción en PDF', () => {
 
     await user.click(screen.getByRole('button', { name: /Partituras PDF/ }));
 
-    expect(screen.getByRole('status')).toHaveTextContent(/Guarda la canción antes de subir/);
+    expect(screen.getByRole('status')).toHaveTextContent(/la canción tiene que existir antes/);
 
-    const botones = screen.getAllByRole('button', { name: /Subir PDF/ });
+    const botones = screen.getAllByRole('button', { name: /Buscar archivo/ });
     expect(botones).toHaveLength(2);
     botones.forEach((boton) => expect(boton).toBeDisabled());
   });
@@ -247,7 +303,8 @@ describe('SongEditor con una canción en PDF', () => {
     await screen.findByRole('heading', { level: 1, name: /Nueva Canción/ });
 
     await user.click(screen.getByRole('button', { name: /Partituras PDF/ }));
-    await user.click(screen.getByRole('button', { name: /Guardar/ }));
+    await user.type(screen.getByPlaceholderText('Nombre de la canción'), 'Popurrí');
+    await user.click(screen.getByRole('button', { name: /^Guardar$/ }));
 
     await waitFor(() => {
       expect(mockCreateSong).toHaveBeenCalledWith(expect.objectContaining({
@@ -256,6 +313,42 @@ describe('SongEditor con una canción en PDF', () => {
     });
     // Y lleva de vuelta a la edición, que es donde se suben los archivos
     expect(mockNavigate).toHaveBeenCalledWith('/songs/nueva-1/edit', { replace: true });
+  });
+
+  it('sin título no la deja guardar: no habría por dónde reconocerla', async () => {
+    // Recién creada no tiene ni texto ni archivos; sin título sería una fila
+    // en blanco en el repertorio.
+    routeParams.id = undefined;
+    const user = userEvent.setup();
+
+    render(<SongEditor />);
+    await screen.findByRole('heading', { level: 1, name: /Nueva Canción/ });
+
+    await user.click(screen.getByRole('button', { name: /Partituras PDF/ }));
+    await user.click(screen.getByRole('button', { name: /^Guardar$/ }));
+
+    await screen.findByText(/Ponle un título/);
+    expect(mockCreateSong).not.toHaveBeenCalled();
+  });
+
+  it('el atajo "Guardar ahora" del aviso desbloquea sin salir de ahí', async () => {
+    // El aviso decía qué hacer pero no dejaba hacerlo: había que adivinar que
+    // el botón bueno estaba arriba del todo.
+    routeParams.id = undefined;
+    const user = userEvent.setup();
+
+    render(<SongEditor />);
+    await screen.findByRole('heading', { level: 1, name: /Nueva Canción/ });
+
+    await user.click(screen.getByRole('button', { name: /Partituras PDF/ }));
+    await user.type(screen.getByPlaceholderText('Nombre de la canción'), 'Popurrí');
+    await user.click(screen.getByRole('button', { name: /Guardar ahora/ }));
+
+    await waitFor(() => {
+      expect(mockCreateSong).toHaveBeenCalledWith(expect.objectContaining({
+        format: 'pdf'
+      }));
+    });
   });
 
   it('una canción de acordes sin contenido sigue sin poder guardarse', async () => {
