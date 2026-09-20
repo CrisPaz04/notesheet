@@ -36,6 +36,22 @@ Está implementado de punta a punta; el plan que lo guió es
   barata de la sección. Por lo mismo, una lista **no abre ningún PDF**: enlaza a
   la canción.
 
+**CORS del bucket**: sin él, el visor no puede descargar el PDF. El archivo
+sube bien, el servidor responde 200, y el navegador tira la respuesta porque no
+trae `Access-Control-Allow-Origin`; en la consola solo se ve un
+`UnknownErrorException` que no explica nada. La configuración vive en
+`cors.json` (formato de `gcloud`, que envuelve la lista en `{"cors": [...]}`,
+**no** el de `gsutil`, que es la lista pelada). Se aplica con:
+
+```bash
+gcloud storage buckets update gs://notesheet-d63e8.firebasestorage.app --cors-file=cors.json
+```
+
+**Hay que añadir ahí cada origen nuevo** desde el que se sirva la app, o las
+partituras dejan de verse solo en ese dominio. Además, el visor pide el PDF
+entero (`disableRange`): a trozos, las cabeceras `Range` obligan a un
+*preflight* que Cloud Storage tampoco admite.
+
 **Dos órdenes que no se pueden invertir**, y cada uno tiene su test porque el
 código por sí solo no lo delata: al quitar una partitura y al borrar una
 canción, primero el **archivo** de Storage y después el documento de Firestore.
