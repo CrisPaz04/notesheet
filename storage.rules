@@ -12,13 +12,18 @@ rules_version = '2';
 // `firestore.rules` (lo propio o lo publicado). Si manana cambia alla, no hay
 // que acordarse de cambiarlo aqui tambien.
 //
-// Eso usa las reglas entre servicios (`firestore.get`), que tienen dos limites
-// que conviene tener presentes:
-//   - Como mucho DOS documentos de Firestore por evaluacion. Por eso la
-//     lectura consulta solo la cancion, y la escritura la cancion y el
-//     usuario: justo dos.
-//   - Hay que conceder el permiso entre servicios al desplegar. `firebase
-//     deploy --only storage` lo pide la primera vez; si se acepta, listo.
+// Eso usa las reglas entre servicios (`firestore.get`), con dos avisos que
+// costaron un rato la primera vez:
+//
+//   - Como mucho DOS documentos de Firestore por evaluacion. Estas reglas
+//     consultan UNO, la cancion, y les sobra margen. Antes consultaban
+//     tambien el usuario, para mirar el rol, y quedaban justo en el limite.
+//   - Hay que conceder el permiso entre servicios, y solo lo piden **al
+//     guardar por primera vez** unas reglas que usen `firestore.*`. Un
+//     `deploy --non-interactive` se come esa pregunta sin decir nada, y
+//     despues los despliegues siguientes ni la repiten porque el fichero no
+//     ha cambiado ("already up to date, skipping upload"). Si toda subida
+//     falla con 403 y `storage/unauthorized`, empieza mirando por ahi.
 //
 // Despliegue: `npx firebase-tools deploy --only storage`
 
@@ -56,27 +61,29 @@ service firebase.storage {
         return song().get('public', false) == true;
       }
 
-      // El rol tambien se lee de Firestore, igual que alla. Es el segundo (y
-      // ultimo) documento que se puede consultar en una evaluacion.
-      function isEditor() {
-        return isSignedIn()
-          && firestore.exists(/databases/(default)/documents/users/$(request.auth.uid))
-          && firestore.get(/databases/(default)/documents/users/$(request.auth.uid))
-               .data.get('role', 'viewer') == 'editor';
-      }
+      // Aqui NO se mira el rol de editor, a proposito. Seria un segundo
+      // documento de Firestore por evaluacion, y es redundante: para ser
+      // dueno de una cancion hay que haberla creado, y `firestore.rules` solo
+      // deja crearlas a los editores. Quien no es editor no tiene canciones
+      // propias, asi que no tiene donde subir.
+      //
+      // El unico hueco que deja: a quien le retiren el rol de editor podra
+      // seguir cambiando los PDF de las canciones que ya eran suyas, aunque
+      // no pueda tocar su texto. Se asume, a cambio de dejar sitio de sobra
+      // bajo el limite de dos documentos.
 
       allow read: if isSignedIn() && songExists() && (isOwner() || isPublished());
 
       // Solo PDF y con tope de tamano: una partitura escaneada a lo bestia
       // tumbaria la tablet mas barata de la seccion antes de llegar a verse.
-      allow create, update: if isEditor()
+      allow create, update: if isSignedIn()
                             && songExists()
                             && isOwner()
                             && request.resource.contentType == 'application/pdf'
                             && request.resource.size <= 20 * 1024 * 1024;
 
       // En un borrado no hay `request.resource`, por eso va aparte.
-      allow delete: if isEditor() && songExists() && isOwner();
+      allow delete: if isSignedIn() && songExists() && isOwner();
     }
 
     // Todo lo demas queda denegado por defecto.
