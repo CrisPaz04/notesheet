@@ -1,0 +1,87 @@
+rules_version = '2';
+
+// Reglas de seguridad de Cloud Storage para NoteSheet.
+//
+// Aqui solo viven las partituras en PDF. Cada archivo cuelga de la cancion a
+// la que pertenece:
+//
+//   partituras/{songId}/{instrumento}-{voz}-{variante}.pdf
+//
+// El permiso NO se deduce de la ruta: se lee de la propia cancion en
+// Firestore, para que sea exactamente el mismo criterio que en
+// `firestore.rules` (lo propio o lo publicado). Si manana cambia alla, no hay
+// que acordarse de cambiarlo aqui tambien.
+//
+// Eso usa las reglas entre servicios (`firestore.get`), que tienen dos limites
+// que conviene tener presentes:
+//   - Como mucho DOS documentos de Firestore por evaluacion. Por eso la
+//     lectura consulta solo la cancion, y la escritura la cancion y el
+//     usuario: justo dos.
+//   - Hay que conceder el permiso entre servicios al desplegar. `firebase
+//     deploy --only storage` lo pide la primera vez; si se acepta, listo.
+//
+// Despliegue: `npx firebase-tools deploy --only storage`
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    match /partituras/{songId}/{archivo} {
+
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      function songPath() {
+        return /databases/(default)/documents/songs/$(songId);
+      }
+
+      // Una partitura huerfana (sin cancion) no la lee ni la escribe nadie:
+      // asi un borrado de la cancion deja los archivos inaccesibles aunque
+      // quede alguno sin limpiar.
+      function songExists() {
+        return firestore.exists(songPath());
+      }
+
+      function song() {
+        return firestore.get(songPath()).data;
+      }
+
+      function isOwner() {
+        return song().userId == request.auth.uid;
+      }
+
+      // Mismo criterio que `firestore.rules`: una cancion sin el campo
+      // `public` cuenta como privada.
+      function isPublished() {
+        return song().get('public', false) == true;
+      }
+
+      // El rol tambien se lee de Firestore, igual que alla. Es el segundo (y
+      // ultimo) documento que se puede consultar en una evaluacion.
+      function isEditor() {
+        return isSignedIn()
+          && firestore.exists(/databases/(default)/documents/users/$(request.auth.uid))
+          && firestore.get(/databases/(default)/documents/users/$(request.auth.uid))
+               .data.get('role', 'viewer') == 'editor';
+      }
+
+      allow read: if isSignedIn() && songExists() && (isOwner() || isPublished());
+
+      // Solo PDF y con tope de tamano: una partitura escaneada a lo bestia
+      // tumbaria la tablet mas barata de la seccion antes de llegar a verse.
+      allow create, update: if isEditor()
+                            && songExists()
+                            && isOwner()
+                            && request.resource.contentType == 'application/pdf'
+                            && request.resource.size <= 20 * 1024 * 1024;
+
+      // En un borrado no hay `request.resource`, por eso va aparte.
+      allow delete: if isEditor() && songExists() && isOwner();
+    }
+
+    // Todo lo demas queda denegado por defecto.
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
