@@ -1,0 +1,436 @@
+/* src/styles/pages/_live-session.css
+ *
+ * Pantalla de sesión en vivo.
+ *
+ * Se usa sobre el escenario, de pie, con el instrumento en la mano: los
+ * controles son grandes (44px de alto mínimo, que es lo que se acierta con el
+ * pulgar sin mirar) y la barra de estado va pegada arriba para que el aviso de
+ * "sin conexión" no se pierda al hacer scroll por la canción.
+ */
+
+.live-container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: var(--spacing-md);
+  padding-bottom: var(--spacing-xxl);
+}
+
+/* --- Barra de estado --- */
+
+.live-bar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: var(--bg-dark-secondary);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-sm) var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+  box-shadow: var(--shadow-medium);
+}
+
+.live-bar-main {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-md);
+  flex-wrap: wrap;
+}
+
+.live-bar-identity {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  min-width: 0;
+}
+
+.live-bar-name {
+  font-weight: 600;
+  color: var(--text-light-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.live-bar-code {
+  font-family: ui-monospace, "SFMono-Regular", Menlo, monospace;
+  /* El código se dicta en voz alta y se teclea en pantallas pequeñas: se
+     separan las letras para que no se lea "0" donde hay "O". */
+  letter-spacing: 0.18em;
+  font-size: 0.95rem;
+  color: var(--color-primary);
+}
+
+.live-bar-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  flex-wrap: wrap;
+}
+
+.live-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: inline-block;
+}
+
+.live-dot.online { background: #22c55e; }
+.live-dot.offline { background: var(--text-light-muted); }
+
+/* --- Avisos --- */
+
+.live-warning {
+  margin-top: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-md);
+  background: rgba(234, 179, 8, 0.15);
+  border: 1px solid rgba(234, 179, 8, 0.4);
+  color: var(--text-light-primary);
+  font-size: 0.9rem;
+}
+
+.live-warning-error {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.4);
+}
+
+.live-last-change {
+  margin-top: var(--spacing-xs);
+  font-size: 0.8rem;
+  color: var(--text-light-muted);
+}
+
+/* --- Conectados --- */
+
+.live-people {
+  list-style: none;
+  margin: var(--spacing-sm) 0 0;
+  padding: var(--spacing-sm) 0 0;
+  border-top: 1px solid var(--border-light);
+}
+
+.live-person {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-xs) 0;
+  font-size: 0.9rem;
+  color: var(--text-light-secondary);
+}
+
+.live-person-name { font-weight: 500; }
+
+.live-person-instrument {
+  color: var(--text-light-muted);
+  font-size: 0.82rem;
+  margin-left: auto;
+  text-align: right;
+}
+
+/* --- Botones --- */
+
+.btn-live {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-xs);
+  min-height: 44px;
+  padding: 0 var(--spacing-md);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-light-hover);
+  background: var(--bg-dark-tertiary);
+  color: var(--text-light-primary);
+  font-size: 0.92rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background var(--transition-fast), border-color var(--transition-fast);
+}
+
+.btn-live:hover:not(:disabled) {
+  background: var(--color-primary-light);
+  border-color: var(--color-primary);
+}
+
+.btn-live:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.btn-live-primary {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: var(--bg-dark-primary);
+  font-weight: 600;
+}
+
+.btn-live-danger {
+  border-color: rgba(239, 68, 68, 0.5);
+  color: #f87171;
+}
+
+.btn-live-wide { flex: 1; }
+
+.live-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  min-height: 40px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-light);
+  background: transparent;
+  color: var(--text-light-secondary);
+  cursor: pointer;
+}
+
+.live-icon-btn:hover:not(:disabled) {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.live-icon-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+.live-icon-danger:hover:not(:disabled) { border-color: #ef4444; color: #f87171; }
+
+/* --- Controles propios --- */
+
+.live-controls {
+  display: flex;
+  gap: var(--spacing-md);
+  flex-wrap: wrap;
+  align-items: flex-end;
+  padding: var(--spacing-md);
+  background: var(--bg-dark-secondary);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  margin-bottom: var(--spacing-md);
+}
+
+.live-control-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  min-width: 0;
+  flex: 1 1 180px;
+}
+
+.live-control-label {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-light-muted);
+}
+
+.live-select,
+.live-input {
+  min-height: 44px;
+  padding: 0 var(--spacing-sm);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-light-hover);
+  background: var(--bg-dark-tertiary);
+  color: var(--text-light-primary);
+  font-size: 0.95rem;
+  width: 100%;
+}
+
+.live-font-controls {
+  flex: 0 0 auto;
+  flex-direction: row;
+  gap: var(--spacing-xs);
+}
+
+/* --- Navegación --- */
+
+.live-nav {
+  display: flex;
+  gap: var(--spacing-sm);
+  align-items: stretch;
+  margin-bottom: var(--spacing-md);
+}
+
+/* --- Lista compartida --- */
+
+.live-setlist {
+  list-style: none;
+  margin: 0 0 var(--spacing-md);
+  padding: 0;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.live-setlist-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm);
+  background: var(--bg-dark-secondary);
+  border-bottom: 1px solid var(--border-light);
+  flex-wrap: wrap;
+}
+
+.live-setlist-item:last-child { border-bottom: none; }
+
+.live-setlist-item.active {
+  background: var(--color-primary-light);
+  border-left: 3px solid var(--color-primary);
+}
+
+.live-setlist-go {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  flex: 1 1 200px;
+  min-height: 44px;
+  background: transparent;
+  border: none;
+  color: var(--text-light-primary);
+  text-align: left;
+  cursor: pointer;
+  min-width: 0;
+}
+
+.live-setlist-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--bg-dark-tertiary);
+  font-size: 0.8rem;
+  flex-shrink: 0;
+}
+
+.live-setlist-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.live-setlist-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.live-setlist-empty {
+  padding: var(--spacing-xl);
+  text-align: center;
+  color: var(--text-light-muted);
+}
+
+/* --- La canción --- */
+
+.live-song {
+  background: var(--bg-dark-secondary);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+}
+
+.live-song-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-md);
+  flex-wrap: wrap;
+  padding-bottom: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+  border-bottom: 1px solid var(--border-light);
+}
+
+.live-song-title {
+  font-size: 1.5rem;
+  margin: 0;
+  color: var(--text-light-primary);
+}
+
+.live-song-keys {
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
+/* Dos insignias porque son dos cosas distintas: la de concierto es la que
+ * comparte la banda, y la "mía" es lo que leo yo con mi instrumento. Cuando
+ * coinciden solo se pinta una. */
+.live-key-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-sm);
+  background: var(--bg-dark-tertiary);
+  border: 1px solid var(--border-light-hover);
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--text-light-primary);
+}
+
+.live-key-mine {
+  background: var(--color-primary-light);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+/* --- Mensajes de pantalla completa --- */
+
+.live-message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-md);
+  text-align: center;
+  padding: var(--spacing-xxl) var(--spacing-lg);
+  background: var(--bg-dark-secondary);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-xl);
+  color: var(--text-light-secondary);
+  margin-top: var(--spacing-xl);
+}
+
+.live-message h2 {
+  margin: 0;
+  color: var(--text-light-primary);
+}
+
+.live-message p { margin: 0; }
+
+.live-message-icon {
+  font-size: 3rem;
+  color: var(--color-primary);
+}
+
+.live-message-footnote {
+  font-size: 0.85rem;
+  color: var(--text-light-muted);
+}
+
+.live-message .live-input { max-width: 320px; }
+
+.live-input-code {
+  text-align: center;
+  font-family: ui-monospace, "SFMono-Regular", Menlo, monospace;
+  font-size: 1.6rem;
+  letter-spacing: 0.3em;
+  /* El espaciado deja el texto descentrado a la derecha: se compensa con el
+     mismo valor de sangría a la izquierda. */
+  text-indent: 0.3em;
+  min-height: 56px;
+}
+
+@media (max-width: 576px) {
+  .live-container { padding: var(--spacing-sm); }
+  .live-song { padding: var(--spacing-md); }
+  .live-song-title { font-size: 1.25rem; }
+  .live-control-group { flex-basis: 100%; }
+}
+
+@media print {
+  .live-bar,
+  .live-controls,
+  .live-nav,
+  .live-setlist { display: none !important; }
+
+  .live-song { border: none; padding: 0; }
+}

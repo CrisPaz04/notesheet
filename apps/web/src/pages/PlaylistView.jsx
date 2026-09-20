@@ -5,6 +5,7 @@ import { getPlaylistById, getSongById } from "@notesheet/api";
 import { useAuth } from "../context/AuthContext";
 import { renderSongContent } from "@notesheet/core";
 import LoadingSpinner from "../components/LoadingSpinner";
+import StartLiveButton from "../components/live/StartLiveButton";
 
 function PlaylistView() {
   const [playlist, setPlaylist] = useState(null);
@@ -243,6 +244,13 @@ function PlaylistView() {
               
               {/* Botones de acción */}
               <div className="action-buttons-song">
+                {/* La sesión copia la lista: lo que se cambie durante el
+                    servicio no toca la lista guardada. */}
+                <StartLiveButton
+                  playlist={{ id, name: playlist.name, songs: playlist.songs }}
+                  user={currentUser}
+                />
+
                 <button
                   className="btn-song-action"
                   onClick={handlePrint}
