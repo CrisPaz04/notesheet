@@ -13,6 +13,9 @@ rules_version = '2';
 //                     ademas sean dueños de la cancion.
 //   - playlists/{id}: lectura para el creador o si la lista es publica.
 //                     Escritura solo para el creador.
+//   - sessions/{code}: sesion en vivo. El codigo del documento es la llave:
+//                     se puede leer de uno en uno pero no listar, y escribir
+//                     solo quien entro y creo su documento en `participants`.
 
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -76,6 +79,85 @@ service cloud.firestore {
                     && resource.data.creatorId == request.auth.uid
                     && request.resource.data.creatorId == resource.data.creatorId;
       allow delete: if isSignedIn() && resource.data.creatorId == request.auth.uid;
+    }
+
+    // --- Sesiones en vivo -------------------------------------------------
+    //
+    // El codigo ES la llave. No hay lista de invitados: el id del documento es
+    // un codigo de 6 caracteres sacado de `crypto.getRandomValues` (32^6 =
+    // 1.073.741.824 combinaciones), y quien lo conoce puede entrar. Entrar
+    // crea tu documento en `participants`, y solo los participantes pueden
+    // tocar el estado compartido.
+    //
+    // De ahi que `get` este permitido y `list` no. Son permisos distintos: con
+    // `list` abierto cualquiera se descargaria la coleccion entera y el codigo
+    // dejaria de proteger nada.
+
+    function isParticipant(code) {
+      return isSignedIn()
+        && exists(/databases/$(database)/documents/sessions/$(code)/participants/$(request.auth.uid));
+    }
+
+    // La version sube de uno en uno y el cliente manda el numero exacto que
+    // espera. Este es el guardia contra la escritura encolada sin red: el
+    // movil que se quedo sin wifi reenvia su cambio al reconectar, con una
+    // version que ya quedo vieja, y aqui se rechaza en vez de pisar la
+    // tonalidad actual delante de toda la banda.
+    //
+    // Tiene que ser un numero calculado por el cliente y no `increment()`: con
+    // `increment()` el valor lo calcula el servidor y esta comparacion se
+    // cumpliria siempre.
+    function versionAvanzaUno() {
+      return request.resource.data.version == resource.data.version + 1;
+    }
+
+    // Una sesion no puede ser inmortal: caduca como mucho en 24 h, y la
+    // politica TTL sobre `expiresAt` la borra sola sin necesidad de cron.
+    function caducidadRazonable() {
+      return request.resource.data.expiresAt is timestamp
+        && request.resource.data.expiresAt > request.time
+        && request.resource.data.expiresAt < request.time + duration.value(24, 'h');
+    }
+
+    match /sessions/{code} {
+      allow get: if isSignedIn();
+      allow list: if false;
+
+      allow create: if isSignedIn()
+                    && request.resource.data.hostId == request.auth.uid
+                    && request.resource.data.version == 0
+                    && request.resource.data.status == 'live'
+                    && caducidadRazonable();
+
+      // Cualquier participante puede cambiar el estado compartido. En el
+      // servicio el director suele estar tocando, y no puede ser el unico que
+      // pueda mover la lista. Lo que no cambia nadie es de quien es la sesion
+      // ni cuando caduca.
+      //
+      // `isParticipant` cuesta una lectura extra por escritura (Firestore
+      // cobra los `exists()` de las reglas). Es el precio de no tener que
+      // mantener una lista de uids dentro del documento compartido, que
+      // ademas volveria a meter escrituras de presencia donde no deben estar.
+      allow update: if isParticipant(code)
+                    && versionAvanzaUno()
+                    && request.resource.data.hostId == resource.data.hostId
+                    && request.resource.data.expiresAt == resource.data.expiresAt;
+
+      allow delete: if isSignedIn() && resource.data.hostId == request.auth.uid;
+
+      match /participants/{uid} {
+        // Ver quien esta conectado solo lo pueden los que ya entraron.
+        allow get, list: if isParticipant(code);
+
+        // Solo creas tu propia presencia, y solo en una sesion que ya existe:
+        // asi nadie puede "reservarse" permiso de escritura en un codigo antes
+        // de que ese codigo llegue a usarse.
+        allow create: if isSelf(uid)
+                      && exists(/databases/$(database)/documents/sessions/$(code));
+        allow update: if isSelf(uid);
+        allow delete: if isSelf(uid)
+                      || get(/databases/$(database)/documents/sessions/$(code)).data.hostId == request.auth.uid;
+      }
     }
 
     // Todo lo demas queda denegado por defecto.
