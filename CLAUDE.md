@@ -244,7 +244,7 @@ SPA (el orden importa).
 ## Notes
 
 - No TypeScript - pure JavaScript
-- Vitest configured; 1135 tests in `apps/web/src/test/` (run with `npm run test:run`)
+- Vitest configured; 1320 tests in `apps/web/src/test/` (run with `npm run test:run`)
 - Los tests se validan con **mutaciones**: se rompe el código a propósito y se comprueba
   que algún test falla. Ha destapado cuatro tests que pasaban por la razón equivocada,
   y un bug de verdad en `scores.js` (las voces se ordenaban como texto, así que la 10
@@ -277,3 +277,67 @@ SPA (el orden importa).
 - `packages/ui` sigue vacío a propósito (ver el comentario en su `index.js`)
 - Spanish comments appear in some files
 - Mobile app (React Native) is planned but not yet implemented
+
+## Pendientes
+
+Trabajo acordado que **todavía no está hecho**. Cada punto se aborda por
+separado; lo que lleva una nota es porque ya se comprobó en el código y
+ahorra volver a buscarlo.
+
+### Modelo de datos
+
+- **Una canción con más de una tonalidad.** A media canción puede haber un
+  ascenso o un descenso, y hoy `key` es un solo valor.
+- **Más de un "versión de".** A veces hay que acreditar a una persona y a un
+  grupo, o a dos personas. Ejemplo: *Ebenezer San Francisco, Jorge Jaenz*.
+  Hoy `version` es un solo campo de texto.
+
+### Secciones
+
+- **Lo que va después de la intro y no es intro se queda dentro de la intro.**
+  Debería caer en una sección aparte.
+
+  Sobre la duda de si basta con poner `##` a secas: **no**. `parseSongSections`
+  (`packages/core/src/music/notation.js`) abre sección con `/^##\s+(.+)$/`, que
+  exige un espacio y un título no vacío, así que un `##` suelto se trata como
+  una línea más de la sección en curso. Con título sí funciona aunque no lleve
+  contenido debajo: al cerrar solo se descarta la sección que no tiene **ni**
+  título **ni** contenido.
+
+### Búsqueda
+
+- **Filtrar por tonalidad.** Hoy el Dashboard filtra por texto (título, álbum y,
+  a partir de cuatro caracteres, la letra).
+
+### Presentación
+
+- **Notación elegida en el perfil y aplicada en toda la app.** Hoy se elige
+  suelta en varias vistas. Se habló de tres opciones: latina, anglosajona, o
+  dejar elegir en cada vista.
+- **Revisar los seis temas.** Hay `light`, `dark`, `newspaper-light/dark` y
+  `rainforest-light/dark`, pero seis archivos CSS solo traen correcciones bajo
+  `[data-bs-theme="light"]`, y los otros dos temas claros no las heredan:
+  `_navbar.css` (24 reglas), `_notfound.css` (13), `_preferences.css` (11),
+  `_footer.css` (7), `_song-viewer.css` (6) y `_theme-toggle.css` (2).
+
+### Música
+
+- **Sugerir la tonalidad a partir de las alteraciones** de lo que el usuario
+  escribe, contando los accidentales.
+- **Algo parecido a chordify.net** para los instrumentos que no son de viento
+  (piano, guitarra…), para abrir la app a más músicos.
+- **Traer datos de las canciones** desde tunebat, songbpm, secuencias, lacuerda
+  o cifraclub: tonalidad original, tempo, duración, nombre real y de quién es
+  la versión.
+
+### Acordes: falta el contenido, no el motor
+
+Ya están en el catálogo la guitarra, el piano, el bajo y la voz
+(`readsChordChart`, `supportsCapo` en `instruments.js`), y el capo funciona.
+Pero **ninguna de las 118 canciones del repertorio tiene acordes**: su
+`content` son líneas de notas sueltas ("Re# Mi Fa# Sol# La# Si"), que es la
+melodía del viento. Ni una lleva sufijo de acorde (`m`, `7`, `sus4`, `maj7`).
+
+Así que un guitarrista que elige su instrumento ve esas mismas notas bajadas un
+tono, no una hoja de acordes. Falta decidir dónde vive la progresión y en qué
+tonalidad se guarda.
