@@ -3,26 +3,34 @@
 // La pantalla del servicio: todos viendo la misma lista, cada quien con su
 // instrumento.
 //
-// La división es la de siempre y conviene tenerla presente al tocar esto:
-// lo que sale de `useLiveSession` es compartido y lo que cambie aquí le cambia
-// a los doce; lo que sale de `usePreferenciaLocal` es de este dispositivo y no
-// viaja a ningún sitio.
-import { useEffect, useState } from "react";
+// Las canciones se muestran TODAS seguidas, no una cada vez. En los enlaces
+// rápidos hace falta ver el final de una y el principio de la siguiente, que
+// es justo el momento en que no se puede apartar la vista del papel. La
+// canción activa es un puntero compartido —marca dónde va la banda y lleva el
+// scroll— no un filtro que esconde lo demás.
+//
+// La otra división, la de siempre: lo que sale de `useLiveSession` es
+// compartido y lo que cambie aquí le cambia a los doce; lo que sale de
+// `usePreferenciaLocal` es de este dispositivo y no viaja a ningún sitio.
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { TRANSPOSING_INSTRUMENTS, INSTRUMENT_GROUPS, SOURCE_INSTRUMENT } from "@notesheet/core";
 import { getUserPreferences } from "@notesheet/api";
 import { useAuth } from "../context/AuthContext";
 import useLiveSession from "../hooks/useLiveSession";
-import useLiveSongContent from "../hooks/useLiveSongContent";
+import useLiveSetlistContent from "../hooks/useLiveSetlistContent";
 import usePreferenciaLocal from "../hooks/usePreferenciaLocal";
 import useFontSizePreference from "../hooks/useFontSizePreference";
 import LoadingSpinner from "../components/LoadingSpinner";
 import LiveBar from "../components/live/LiveBar";
 import LiveSetlist from "../components/live/LiveSetlist";
+import LiveSongCard from "../components/live/LiveSongCard";
+import AddSongToSession from "../components/live/AddSongToSession";
 import GuestGate from "../components/live/GuestGate";
 
 const INSTRUMENTOS = Object.keys(TRANSPOSING_INSTRUMENTS);
 const NOTACIONES = ["latin", "english"];
+const SEGUIR = ["si", "no"];
 
 function LiveSession() {
   const { code } = useParams();
@@ -36,28 +44,84 @@ function LiveSession() {
     INSTRUMENTOS
   );
   const [notacion, setNotacion] = usePreferenciaLocal("live:notacion", "latin", NOTACIONES);
-  const [voiceKey, setVoiceKey] = useState(null);
-  const [verLista, setVerLista] = useState(false);
+
+  /**
+   * Si el scroll sigue al director.
+   *
+   * Se recuerda en el dispositivo porque es una postura, no una decisión de
+   * un momento: el que toca teclado y va mirando dos canciones por delante lo
+   * apaga una vez y quiere que siga apagado la próxima vez.
+   */
+  const [seguir, setSeguir] = usePreferenciaLocal("live:seguir", "si", SEGUIR);
+
+  const [voiceKeys, setVoiceKeys] = useState({});
+  const [verIndice, setVerIndice] = useState(false);
 
   const { fontSize, setFontSize, increaseFontSize, decreaseFontSize } =
     useFontSizePreference(currentUser);
 
   // --- Lo compartido ---
-  const sesion = useLiveSession(code, { user: currentUser });
   const {
-    session, songs, activeSongId, activeIndex, activeSong,
+    session, songs, activeSongId, activeIndex,
     estado, error, sinRed, participants, isHost,
     irACancion, siguiente, anterior, cambiarTonalidad,
-    moverCancion, quitarCancion, cerrarSesion, salir,
+    moverCancion, agregarCancion, quitarCancion, cerrarSesion, salir,
     anunciarInstrumento
-  } = sesion;
+  } = useLiveSession(code, { user: currentUser });
 
-  const { rendered, voices, voiceKey: voiceKeyEfectiva, loading: cargandoCancion, error: errorCancion } =
-    useLiveSongContent({ song: activeSong, instrument: instrumento, notationSystem: notacion, voiceKey });
+  const { canciones } = useLiveSetlistContent({
+    songs,
+    instrument: instrumento,
+    notationSystem: notacion,
+    voiceKeys
+  });
+
+  // --- Scroll hacia la canción activa ---
+  const refsCanciones = useRef({});
+  const ultimaActiva = useRef(null);
+
+  /**
+   * Marca que el salto lo he pedido yo.
+   *
+   * "Seguir al director" solo debe gobernar los cambios de **otros**. Si lo
+   * apago porque voy mirando dos canciones por delante, pero luego pulso
+   * Siguiente yo mismo, tengo que ir a donde he pulsado: un botón que no te
+   * lleva a donde dice es peor que no tenerlo.
+   */
+  const saltoPropio = useRef(false);
+
+  const registrarRef = useCallback((songId) => (nodo) => {
+    if (nodo) refsCanciones.current[songId] = nodo;
+    else delete refsCanciones.current[songId];
+  }, []);
+
+  /** Envuelve una acción compartida para que además me lleve el scroll. */
+  const conScroll = useCallback((accion) => (...args) => {
+    saltoPropio.current = true;
+    return accion(...args);
+  }, []);
+
+  useEffect(() => {
+    if (!activeSongId) return;
+
+    // Solo cuando cambia de verdad: sin esto, cualquier re-render (un latido
+    // de presencia de otro) devolvería el scroll a la canción activa mientras
+    // el músico está mirando otra a propósito.
+    if (ultimaActiva.current === activeSongId) return;
+    ultimaActiva.current = activeSongId;
+
+    const meToca = seguir === "si" || saltoPropio.current;
+    saltoPropio.current = false;
+    if (!meToca) return;
+
+    refsCanciones.current[activeSongId]?.scrollIntoView({
+      behavior: "smooth",
+      block: "start"
+    });
+  }, [activeSongId, seguir]);
 
   // Las preferencias del usuario mandan sobre el valor por defecto, pero no
-  // sobre lo que ya eligió en este dispositivo: quien tocó el selector aquí
-  // arriba lo hizo por algo.
+  // sobre lo que ya eligió en este dispositivo.
   useEffect(() => {
     if (!currentUser || currentUser.isAnonymous) return;
 
@@ -73,20 +137,21 @@ function LiveSession() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentUser]);
 
-  // Que el resto vea qué toco. Se reintenta cuando cambia el instrumento o la
-  // voz resuelta, no en cada render.
+  // Que el resto vea qué toco.
   useEffect(() => {
-    if (estado !== "live" || !voiceKeyEfectiva) return;
-    const numero = voiceKeyEfectiva.split("-").pop();
-    anunciarInstrumento(instrumento, numero);
-  }, [estado, instrumento, voiceKeyEfectiva, anunciarInstrumento]);
+    if (estado !== "live") return;
+    anunciarInstrumento(instrumento, null);
+  }, [estado, instrumento, anunciarInstrumento]);
 
   const cambiarInstrumento = (id) => {
     setInstrumento(id);
-    // La voz elegida a mano era para el instrumento anterior; soltarla deja
-    // que `useLiveSongContent` elija la del instrumento nuevo si existe.
-    setVoiceKey(null);
+    // Las voces elegidas a mano eran para el instrumento anterior; soltarlas
+    // deja que cada canción elija la del instrumento nuevo si la tiene.
+    setVoiceKeys({});
   };
+
+  const elegirVoz = (songId, voiceKey) =>
+    setVoiceKeys((prev) => ({ ...prev, [songId]: voiceKey }));
 
   const terminar = async () => {
     if (!window.confirm("¿Terminar la sesión para todos?")) return;
@@ -100,14 +165,10 @@ function LiveSession() {
 
   // --- Estados de la pantalla ---
 
-  if (cargandoAuth) {
-    return <LoadingSpinner text="Cargando..." />;
-  }
+  if (cargandoAuth) return <LoadingSpinner text="Cargando..." />;
 
-  // Sin cuenta: el link llega por WhatsApp a gente que no la tiene.
-  if (!currentUser) {
-    return <GuestGate code={code} />;
-  }
+  // Sin cuenta: el enlace llega por WhatsApp a gente que no la tiene.
+  if (!currentUser) return <GuestGate code={code} />;
 
   if (estado === "loading") {
     return <LoadingSpinner text="Entrando en la sesión..." subtext={`Código ${code}`} />;
@@ -200,22 +261,6 @@ function LiveSession() {
           </select>
         </div>
 
-        {voices.length > 1 && (
-          <div className="live-control-group">
-            <label className="live-control-label" htmlFor="live-voz">Mi voz</label>
-            <select
-              id="live-voz"
-              className="live-select"
-              value={voiceKeyEfectiva || ""}
-              onChange={(e) => setVoiceKey(e.target.value)}
-            >
-              {voices.map((v) => (
-                <option key={v.id} value={v.id}>{v.label}</option>
-              ))}
-            </select>
-          </div>
-        )}
-
         <div className="live-control-group">
           <label className="live-control-label" htmlFor="live-notacion">Notación</label>
           <select
@@ -233,14 +278,25 @@ function LiveSession() {
           <button type="button" className="live-icon-btn" onClick={decreaseFontSize}>A-</button>
           <button type="button" className="live-icon-btn" onClick={increaseFontSize}>A+</button>
         </div>
+
+        <div className="live-control-group live-follow">
+          <label className="live-switch">
+            <input
+              type="checkbox"
+              checked={seguir === "si"}
+              onChange={(e) => setSeguir(e.target.checked ? "si" : "no")}
+            />
+            <span>Seguir al director</span>
+          </label>
+        </div>
       </div>
 
-      {/* Navegación por la lista: esto sí es compartido */}
+      {/* Navegación: esto sí es compartido */}
       <div className="live-nav no-print">
         <button
           type="button"
           className="btn-live"
-          onClick={anterior}
+          onClick={conScroll(anterior)}
           disabled={activeIndex <= 0}
         >
           <i className="bi bi-chevron-left" />
@@ -250,8 +306,8 @@ function LiveSession() {
         <button
           type="button"
           className="btn-live btn-live-wide"
-          onClick={() => setVerLista((v) => !v)}
-          aria-expanded={verLista}
+          onClick={() => setVerIndice((v) => !v)}
+          aria-expanded={verIndice}
         >
           <i className="bi bi-list-ol me-2" />
           {activeIndex >= 0 ? `${activeIndex + 1} de ${songs.length}` : `${songs.length} canciones`}
@@ -260,7 +316,7 @@ function LiveSession() {
         <button
           type="button"
           className="btn-live"
-          onClick={siguiente}
+          onClick={conScroll(siguiente)}
           disabled={activeIndex < 0 || activeIndex >= songs.length - 1}
         >
           Siguiente
@@ -268,63 +324,44 @@ function LiveSession() {
         </button>
       </div>
 
-      {verLista && (
+      {verIndice && (
         <LiveSetlist
           songs={songs}
           activeSongId={activeSongId}
-          onIr={(id) => { irACancion(id); setVerLista(false); }}
-          onCambiarTonalidad={cambiarTonalidad}
-          onQuitar={quitarCancion}
-          onMover={moverCancion}
+          onIr={(id) => { conScroll(irACancion)(id); setVerIndice(false); }}
         />
       )}
 
-      {/* La canción */}
-      <div className="live-song" id="playlist-content">
-        {!activeSong && (
+      {/* Todas las canciones, seguidas */}
+      <div className="live-songs" id="playlist-content">
+        {canciones.length === 0 && (
           <p className="live-setlist-empty">
-            No hay ninguna canción activa. Abre la lista y elige una.
+            La sesión está vacía. Añade una canción abajo.
           </p>
         )}
 
-        {activeSong && (
-          <>
-            <div className="live-song-header">
-              <h1 className="live-song-title">{activeSong.title || "Sin título"}</h1>
-              <div className="live-song-keys">
-                <span className="live-key-badge" title="Tonalidad de la sesión, igual para todos">
-                  <i className="bi bi-people-fill me-1" />
-                  {activeSong.key || "?"}
-                </span>
-                {rendered?.displayKey && rendered.displayKey !== activeSong.key && (
-                  <span className="live-key-badge live-key-mine" title="Lo que lees tú con tu instrumento">
-                    <i className="bi bi-person-fill me-1" />
-                    {rendered.displayKey}
-                  </span>
-                )}
-              </div>
-            </div>
-
-            {cargandoCancion && <LoadingSpinner text="Cargando la canción..." />}
-
-            {errorCancion && (
-              <div className="live-warning live-warning-error" role="alert">
-                <i className="bi bi-exclamation-circle me-2" />
-                {errorCancion}
-              </div>
-            )}
-
-            {rendered?.formatted?.sections?.map((section, i) => (
-              <div key={i} className="song-section-modern">
-                <h4 className="song-section-title">{section.title}</h4>
-                <div className="song-section-content" style={{ fontSize: `${fontSize}px` }}>
-                  {section.content}
-                </div>
-              </div>
-            ))}
-          </>
-        )}
+        {canciones.map((song, index) => (
+          <LiveSongCard
+            key={song.id}
+            ref={registrarRef(song.id)}
+            song={song}
+            index={index}
+            total={canciones.length}
+            activa={song.id === activeSongId}
+            fontSize={fontSize}
+            onCambiarTonalidad={cambiarTonalidad}
+            onQuitar={quitarCancion}
+            onMover={moverCancion}
+            onElegirVoz={elegirVoz}
+          />
+        ))}
       </div>
+
+      <AddSongToSession
+        user={currentUser}
+        yaEnLaSesion={songs.map((s) => s.id)}
+        onAgregar={agregarCancion}
+      />
     </div>
   );
 }

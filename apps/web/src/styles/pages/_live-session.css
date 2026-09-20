@@ -240,6 +240,82 @@
   gap: var(--spacing-xs);
 }
 
+.live-follow { flex: 0 0 auto; }
+
+.live-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  min-height: 44px;
+  font-size: 0.9rem;
+  color: var(--text-light-secondary);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.live-switch input {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--color-primary);
+  cursor: pointer;
+}
+
+/* --- Añadir una canción sobre la marcha --- */
+
+.live-add {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md);
+  background: var(--bg-dark-secondary);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+}
+
+.live-add-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--text-light-primary);
+}
+
+.live-add-results {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.live-add-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  width: 100%;
+  min-height: 44px;
+  padding: var(--spacing-sm);
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--border-light);
+  color: var(--text-light-primary);
+  text-align: left;
+  cursor: pointer;
+}
+
+.live-add-item:hover { background: var(--color-primary-light); }
+
+.live-add-title {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.live-add-meta {
+  color: var(--text-light-muted);
+  font-size: 0.85rem;
+}
+
 /* --- Navegación --- */
 
 .live-nav {
@@ -309,10 +385,11 @@
   white-space: nowrap;
 }
 
-.live-setlist-controls {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-xs);
+.live-setlist-key {
+  margin-left: auto;
+  font-weight: 600;
+  color: var(--color-primary);
+  flex-shrink: 0;
 }
 
 .live-setlist-empty {
@@ -321,16 +398,33 @@
   color: var(--text-light-muted);
 }
 
-/* --- La canción --- */
+/* --- Las canciones, todas seguidas --- */
 
-.live-song {
-  background: var(--bg-dark-secondary);
-  border: 1px solid var(--border-light);
-  border-radius: var(--radius-lg);
-  padding: var(--spacing-lg);
+.live-songs {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
 }
 
-.live-song-header {
+.live-card {
+  background: var(--bg-dark-secondary);
+  border: 1px solid var(--border-light);
+  border-left: 4px solid transparent;
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  /* Deja sitio bajo la barra pegajosa cuando el scroll salta hasta aquí. */
+  scroll-margin-top: 96px;
+}
+
+/* La activa se marca, no se aísla: lo de al lado tiene que seguir a la vista
+ * para los enlaces rápidos entre canciones. */
+.live-card.active {
+  border-left-color: var(--color-primary);
+  box-shadow: var(--shadow-medium);
+}
+
+.live-card-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -341,15 +435,73 @@
   border-bottom: 1px solid var(--border-light);
 }
 
-.live-song-title {
-  font-size: 1.5rem;
+.live-card-identity {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  min-width: 0;
+}
+
+.live-card-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--bg-dark-tertiary);
+  font-size: 0.85rem;
+  flex-shrink: 0;
+}
+
+.live-card-title {
+  font-size: 1.4rem;
   margin: 0;
   color: var(--text-light-primary);
 }
 
-.live-song-keys {
+.live-card-badge-now {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px var(--spacing-sm);
+  border-radius: var(--radius-sm);
+  background: var(--color-primary-light);
+  border: 1px solid var(--color-primary);
+  color: var(--color-primary);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+
+.live-card-controls {
   display: flex;
-  gap: var(--spacing-sm);
+  align-items: flex-end;
+  gap: var(--spacing-md);
+  flex-wrap: wrap;
+}
+
+.live-card-keys {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.live-card-order {
+  display: flex;
+  gap: var(--spacing-xs);
+}
+
+.live-card-loading {
+  color: var(--text-light-muted);
+  padding: var(--spacing-md) 0;
+  margin: 0;
+}
+
+.live-select-compact {
+  min-height: 38px;
+  font-size: 0.88rem;
+  width: auto;
 }
 
 /* Dos insignias porque son dos cosas distintas: la de concierto es la que
@@ -421,16 +573,27 @@
 
 @media (max-width: 576px) {
   .live-container { padding: var(--spacing-sm); }
-  .live-song { padding: var(--spacing-md); }
-  .live-song-title { font-size: 1.25rem; }
+  .live-card { padding: var(--spacing-md); }
+  .live-card-title { font-size: 1.15rem; }
   .live-control-group { flex-basis: 100%; }
+  /* Los controles de cada canción a lo ancho: en el móvil, apretados en una
+     fila acaban siendo botones de 20px que nadie acierta tocando. */
+  .live-card-controls { width: 100%; justify-content: space-between; }
 }
 
+/* Imprimir una sesión saca la lista entera, que es lo que se querría llevar
+   en papel; los controles y la barra no pintan nada ahí. */
 @media print {
   .live-bar,
   .live-controls,
   .live-nav,
-  .live-setlist { display: none !important; }
+  .live-setlist,
+  .live-add,
+  .live-card-controls { display: none !important; }
 
-  .live-song { border: none; padding: 0; }
+  .live-card {
+    border: none;
+    padding: 0;
+    break-inside: avoid;
+  }
 }
