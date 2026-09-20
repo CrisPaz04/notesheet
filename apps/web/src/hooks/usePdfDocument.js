@@ -50,7 +50,22 @@ export default function usePdfDocument(path) {
         const [pdfjs, url] = await Promise.all([loadPdfjs(), getScoreUrl(path)]);
         if (!vigente) return;
 
-        abierto = await pdfjs.getDocument({ url }).promise;
+        // El PDF se pide entero y de una vez, no a trozos.
+        //
+        // Por defecto pdf.js usa cabeceras `Range` para ir trayendo el
+        // documento por partes. Eso convierte la descarga en una petición con
+        // *preflight*, y Cloud Storage no la admite desde otro origen: el
+        // navegador la corta con un error de CORS y aquí solo llega un
+        // `UnknownErrorException` que no explica nada.
+        //
+        // Una partitura son unos cientos de KB, así que traerla de una vez no
+        // cuesta nada y evita el problema de raíz, sin tener que configurar
+        // CORS en el bucket ni mantener esa configuración a mano.
+        abierto = await pdfjs.getDocument({
+          url,
+          disableRange: true,
+          disableStream: true
+        }).promise;
         if (!vigente) {
           abierto.destroy();
           return;
