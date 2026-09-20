@@ -283,28 +283,64 @@ a propósito y comprobar que algún test falla. Lo que merece cubrirse:
   mismo selector. No hay ninguna canción así todavía, y decidirlo sin un caso
   real delante es inventarse el problema.
 
+## La puesta en marcha, y los cuatro muros con los que chocó
+
+Está **funcionando de punta a punta**: subir una partitura, guardarla en
+Storage y verla pintada en el navegador. Pero de la primera subida a la
+primera página pintada hubo cuatro obstáculos, ninguno visible en el código.
+Se dejan escritos porque el siguiente proyecto que use Storage se los va a
+encontrar igual:
+
+1. **Cloud Storage exige plan Blaze.** El proyecto estaba en Spark y la
+   consola mandaba a "Actualizar proyecto" en vez de enseñar el bucket. El
+   deploy de las reglas decía "Deploy complete" igualmente: publicar reglas
+   sobre un bucket sin acceso no sirve de nada, pero tampoco falla. Con los
+   números de la banda (~100 canciones, ~2 GB, una descarga por músico y
+   servicio) el coste cae de lleno en la franja gratuita.
+
+2. **El permiso entre servicios hay que concederlo a mano.** Solo se pide
+   **al guardar por primera vez** unas reglas que usen `firestore.*`, y un
+   `deploy --non-interactive` se come esa pregunta sin decir nada. Después
+   los despliegues siguientes ni la repiten, porque el fichero no ha
+   cambiado. Síntoma: **todas** las subidas fallan con 403 y
+   `storage/unauthorized`, incluso siendo el dueño de la canción. Se arregla
+   desde el aviso rojo de la pestaña de reglas de Storage en la consola.
+
+3. **El límite de dos documentos de Firestore por evaluación.** Las reglas
+   miraban el rol de editor además de la canción y quedaban justo en el
+   borde. Se quitó el rol: es redundante, porque para ser dueño de una
+   canción hay que haberla creado y eso ya lo restringe `firestore.rules`.
+
+4. **CORS del bucket.** Sin configurarlo, el archivo sube bien, el servidor
+   responde 200 y el navegador tira la respuesta por falta de
+   `Access-Control-Allow-Origin`; en la consola solo aparece un
+   `UnknownErrorException` que no explica nada. Además pdf.js pide el
+   documento a trozos con cabeceras `Range`, lo que obliga a un *preflight*
+   que Cloud Storage tampoco admite: por eso el visor usa `disableRange`.
+   La configuración está en `cors.json`, y **hay que añadir ahí cada origen
+   nuevo**. Ojo al formato: `gcloud --cors-file` quiere la lista pelada, no
+   el `{"cors": [...]}` que enseña la documentación (que es el de la API
+   REST); con el objeto falla con `'str' object has no attribute 'items'`.
+
 ## Lo que queda
 
-Nada de esto se puede hacer escribiendo código, y sin ello la función no está
-probada de verdad:
-
-1. **Desplegar las reglas de Storage.** `npx firebase-tools deploy --only
-   storage`. La primera vez pide conceder el permiso entre servicios, porque
-   `storage.rules` lee la canción en Firestore; hay que aceptarlo o toda
-   subida y toda descarga fallarán por permisos.
-2. **Subir una canción de verdad** y abrirla desde otra cuenta de la banda,
-   para comprobar que la regla deja leer lo publicado y no lo privado.
+1. **Abrir una partitura desde otra cuenta de la banda**, para comprobar en
+   real que la regla deja leer lo publicado y no lo privado. Es lo único de
+   la cadena de permisos que no se ha visto funcionar todavía.
+2. **Confirmar el dominio de producción en `cors.json`.** El que lleva ahora
+   es una suposición: si no es el bueno, las partituras se verán en local y
+   no en producción, y el fallo aparecerá justo cuando la banda las
+   necesite.
 3. **Probarlo en el dispositivo más viejo de la sección**, no solo en la tab
    Samsung. Lo que hay que mirar: que las páginas se pinten, y que un popurrí
    largo no se quede sin memoria al deslizar. Si ese dispositivo no soporta
    workers de módulo, pdf.js se cae solo a pintar en el hilo principal: irá
    más lento, pero tiene que verse.
 
-   Lo que **sí** está comprobado en un navegador de verdad es la cadena
-   entera: que `lib/pdfjs.js` carga la biblioteca y su worker, que el
-   documento abre, que las páginas se miden y que el canvas acaba con píxeles
-   de verdad encima. Lo que falta es el hardware viejo, que desde aquí no se
-   puede tocar.
+   Lo que **sí** está comprobado, con una partitura real subida por la app y
+   servida desde Storage, es la cadena entera: reglas, permiso entre
+   servicios, subida, CORS y pdf.js pintando en pantalla. Lo que falta es el
+   hardware viejo, que desde aquí no se puede tocar.
 4. **Medir si pdf.js sobra.** Sigue en pie la alternativa de convertir cada
    página a imagen al subirla. Con el visor ya hecho se puede comparar de
    verdad en la tablet en vez de suponer.

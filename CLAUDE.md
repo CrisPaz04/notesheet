@@ -40,8 +40,10 @@ Está implementado de punta a punta; el plan que lo guió es
 sube bien, el servidor responde 200, y el navegador tira la respuesta porque no
 trae `Access-Control-Allow-Origin`; en la consola solo se ve un
 `UnknownErrorException` que no explica nada. La configuración vive en
-`cors.json` (formato de `gcloud`, que envuelve la lista en `{"cors": [...]}`,
-**no** el de `gsutil`, que es la lista pelada). Se aplica con:
+`cors.json`, que es una **lista pelada** de configuraciones. La documentación de
+Google la enseña envuelta en `{"cors": [...]}`, pero eso es el formato de la API
+REST: a `gcloud --cors-file` hay que darle el array y con el objeto falla con un
+críptico `'str' object has no attribute 'items'`. Se aplica con:
 
 ```bash
 gcloud storage buckets update gs://notesheet-d63e8.firebasestorage.app --cors-file=cors.json

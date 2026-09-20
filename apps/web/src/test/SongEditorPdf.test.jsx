@@ -365,6 +365,48 @@ describe('SongEditor con una canción en PDF', () => {
     expect(mockCreateSong).not.toHaveBeenCalled();
   });
 
+  it('no arrastra la plantilla de acordes al cuerpo de un PDF', async () => {
+    // Antes guardaba ahí el texto de la voz principal, que en una canción
+    // recién creada es la plantilla ("## Intro", "## Verso 1"...), y luego
+    // reaparecía en el visor como una vista de letra fantasma.
+    routeParams.id = undefined;
+    const user = userEvent.setup();
+
+    render(<SongEditor />);
+    await screen.findByRole('heading', { level: 1, name: /Nueva Canción/ });
+
+    await user.click(screen.getByRole('button', { name: /Partituras PDF/ }));
+    await user.type(screen.getByPlaceholderText('Nombre de la canción'), 'Popurrí');
+    await user.click(screen.getByRole('button', { name: /^Guardar$/ }));
+
+    await waitFor(() => {
+      expect(mockCreateSong).toHaveBeenCalledWith(expect.objectContaining({
+        content: ''
+      }));
+    });
+  });
+
+  it('una canción de acordes sí guarda el contenido de su voz principal', async () => {
+    // El contrapunto: vaciar `content` siempre rompería las 118 importadas.
+    const user = userEvent.setup();
+    mockGetSongById.mockResolvedValue({
+      ...SONG_PDF,
+      format: undefined,
+      pdfs: undefined,
+      content: '## Intro\nDO SOL\n',
+      voices: { bb_trumpet: { 1: '## Intro\nDO SOL\n' } }
+    });
+
+    await renderEditor();
+    await user.click(screen.getByRole('button', { name: /^Guardar$/ }));
+
+    await waitFor(() => {
+      expect(mockUpdateSong).toHaveBeenCalledWith('song-pdf', expect.objectContaining({
+        content: '## Intro\nDO SOL\n'
+      }));
+    });
+  });
+
   it('guardar una canción en PDF conserva su matriz de archivos', async () => {
     const user = userEvent.setup();
     await renderEditor();

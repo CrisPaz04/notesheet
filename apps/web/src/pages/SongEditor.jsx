@@ -125,7 +125,11 @@ function SongEditor() {
 
       if (song.lyricsOnly) {
         setLyricsOnly(song.lyricsOnly);
-      } else {
+      } else if (getSongFormat(song) !== SONG_FORMAT_PDF) {
+        // En un PDF no hay acordes de los que sacar la letra. Generarla
+        // igualmente dejaba dentro la plantilla de secciones de la canción
+        // nueva ("## Intro", "## Verso 1"...), y el visor acababa mostrando
+        // una vista de letra vacía con esos títulos sueltos.
         generateLyricsOnly(song.content || "");
       }
 
@@ -261,7 +265,10 @@ function SongEditor() {
         type,
         version,
         album: album.trim(),
-        content: primaryContent, // Store primary voice in content for backward compatibility
+        // En un PDF el cuerpo son los archivos. Guardar aquí el texto de la
+        // voz principal metía la plantilla de la canción nueva, que luego
+        // reaparecía como una vista de letra fantasma.
+        content: esPdf ? "" : primaryContent,
         lyricsOnly,
         voices,
         format,
