@@ -95,6 +95,73 @@
   font-size: 0.9rem;
 }
 
+/* --- Subida de partituras en el editor ------------------------------- */
+
+.score-uploader {
+  padding: 2rem;
+}
+
+.score-slots {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1rem;
+}
+
+.score-slot {
+  border: 1px dashed var(--border-light-hover);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+/* Una casilla con archivo se distingue de una vacía de un vistazo: con nueve
+   instrumentos por delante, ir abriéndolas una a una para ver qué falta es
+   justo lo que hay que evitar. */
+.score-slot--lleno {
+  border-style: solid;
+  border-color: var(--color-primary);
+}
+
+.score-slot-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+}
+
+.score-slot-state {
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+}
+
+.score-slot-empty {
+  opacity: 0.6;
+}
+
+.score-slot-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-top: auto;
+}
+
+/* Contador "1/2" en la pestaña de cada voz */
+.tab-badge {
+  margin-left: 0.5rem;
+  padding: 0.1rem 0.4rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  background: var(--border-light);
+}
+
+.tab-badge--completa {
+  background: var(--color-primary);
+  color: var(--bg-dark-primary);
+}
+
 /* Imprimir un canvas recortado no sale bien, y además solo están pintadas las
    páginas cercanas a la vista. Para papel está el botón de abrir el PDF. */
 @media print {

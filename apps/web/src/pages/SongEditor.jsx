@@ -2,13 +2,28 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { createSong, getSongById, updateSong } from "@notesheet/api";
-import { TRANSPOSING_INSTRUMENTS } from "@notesheet/core";
+import {
+  createSong,
+  getSongById,
+  updateSong,
+  uploadScore,
+  deleteScore
+} from "@notesheet/api";
+import {
+  TRANSPOSING_INSTRUMENTS,
+  SONG_FORMAT_CHORDS,
+  SONG_FORMAT_PDF,
+  getSongFormat,
+  parseVoiceKey,
+  setScoreInMap,
+  removeScoreFromMap
+} from "@notesheet/core";
 import KeySelector from "../components/KeySelector";
 import LoadingSpinner from "../components/LoadingSpinner";
 import SimpleMDE from "react-simplemde-editor";
 import "easymde/dist/easymde.min.css";
 import TypeSelector from "../components/TypeSelector";
+import ScoreUploader from "../components/ScoreUploader";
 import useSongVoices from "../hooks/useSongVoices";
 
 // Instrumentos soportados para voces adicionales
@@ -31,6 +46,13 @@ function SongEditor() {
   // existian, sin el campo `public`, se mantienen privadas.
   const [isPublic, setIsPublic] = useState(true);
   
+  // Formato del cuerpo: acordes en texto (lo de siempre) o partituras en PDF.
+  // Las canciones existentes no tienen el campo y cuentan como acordes.
+  const [format, setFormat] = useState(SONG_FORMAT_CHORDS);
+  const [pdfs, setPdfs] = useState({});
+  // Qué casilla se está subiendo ahora, como "bb_trumpet-1:conNotas"
+  const [subiendo, setSubiendo] = useState("");
+
   // Estado del gestor de voces (UI)
   const [showVoicesManager, setShowVoicesManager] = useState(false);
   const [newVoiceInstrument, setNewVoiceInstrument] = useState("bb_trumpet");
@@ -98,6 +120,8 @@ function SongEditor() {
       setAlbum(song.album || "");
       setIsPublic(song.public === true);
       setContent(song.content || "");
+      setFormat(getSongFormat(song));
+      setPdfs(song.pdfs || {});
 
       if (song.lyricsOnly) {
         setLyricsOnly(song.lyricsOnly);
@@ -113,6 +137,27 @@ function SongEditor() {
         setCurrentTab(`${savedPrimaryInstrument}-${savedPrimaryVoiceNumber}`);
         setPrimaryInstrument(savedPrimaryInstrument);
         setPrimaryVoiceNumber(savedPrimaryVoiceNumber);
+      } else if (song.pdfs && Object.keys(song.pdfs).length > 0) {
+        // Canción en PDF: las pestañas salen de la matriz de archivos. El
+        // mapa `voices` es el que dice qué casillas tiene la canción, con
+        // independencia de si el cuerpo es texto o PDF.
+        const desdePdfs = {};
+        Object.entries(song.pdfs).forEach(([instrumentId, porVoz]) => {
+          desdePdfs[instrumentId] = {};
+          Object.keys(porVoz).forEach((voiceNumber) => {
+            desdePdfs[instrumentId][voiceNumber] = "";
+          });
+        });
+
+        const primerInstrumento = song.primaryInstrument || Object.keys(desdePdfs)[0];
+        const primeraVoz = song.primaryVoiceNumber
+          || Object.keys(desdePdfs[primerInstrumento] || {})[0]
+          || "1";
+
+        setVoices(desdePdfs);
+        setCurrentTab(`${primerInstrumento}-${primeraVoz}`);
+        setPrimaryInstrument(primerInstrumento);
+        setPrimaryVoiceNumber(primeraVoz);
       } else {
         // Legacy song without voices - create trumpet 1 with the content
         const legacyVoices = { bb_trumpet: { "1": song.content || "" } };
@@ -188,8 +233,13 @@ function SongEditor() {
 
     // Get the primary voice content
     const primaryContent = voices[primaryInstrument]?.[primaryVoiceNumber] || "";
+    const esPdf = format === SONG_FORMAT_PDF;
 
-    if (!primaryContent.trim()) {
+    // En una canción en PDF el cuerpo son los archivos, no el texto. Y no se
+    // puede exigir que haya alguno al guardar: la regla de Storage consulta
+    // la canción en Firestore para dejar subir, así que primero hay que
+    // guardarla y después subir las partituras.
+    if (!esPdf && !primaryContent.trim()) {
       setError("El contenido de la canción no puede estar vacío");
       return;
     }
@@ -206,6 +256,8 @@ function SongEditor() {
         content: primaryContent, // Store primary voice in content for backward compatibility
         lyricsOnly,
         voices,
+        format,
+        pdfs,
         primaryInstrument,
         primaryVoiceNumber,
         public: isPublic,
@@ -213,7 +265,14 @@ function SongEditor() {
       };
 
       if (isNewSong) {
-        await createSong(songData);
+        // Una canción en PDF nace vacía y hay que volver a ella para subir
+        // los archivos: la regla de Storage necesita que exista primero.
+        const creada = await createSong(songData);
+        if (esPdf) {
+          setIsNewSong(false);
+          navigate(`/songs/${creada.id}/edit`, { replace: true });
+          return;
+        }
       } else {
         await updateSong(id, songData);
       }
@@ -224,6 +283,73 @@ function SongEditor() {
       console.error("Error saving song:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  /**
+   * Sube el PDF de una variante de la pestaña activa.
+   *
+   * Se sube y se guarda en el acto, sin esperar al botón de Guardar: subir un
+   * archivo ya es un cambio hecho en Storage, y dejar el documento sin la
+   * ruta hasta que alguien pulse Guardar deja partituras huérfanas cada vez
+   * que se cierra la pestaña a medias.
+   */
+  const handleUploadScore = async (variant, file) => {
+    const parsed = parseVoiceKey(currentTab);
+    if (!parsed || !id) return;
+
+    const { instrumentId, voiceNumber } = parsed;
+    setSubiendo(`${currentTab}:${variant}`);
+    setError("");
+
+    try {
+      const path = await uploadScore({
+        songId: id,
+        instrumentId,
+        voiceNumber,
+        variant,
+        file
+      });
+
+      const actualizado = setScoreInMap(pdfs, instrumentId, voiceNumber, variant, path);
+      setPdfs(actualizado);
+      await updateSong(id, { pdfs: actualizado, format: SONG_FORMAT_PDF });
+    } catch (uploadError) {
+      console.error("Error uploading score:", uploadError);
+      setError("Error al subir la partitura: " + uploadError.message);
+    } finally {
+      setSubiendo("");
+    }
+  };
+
+  /**
+   * Quita el PDF de una variante: primero de Storage y después del documento.
+   *
+   * Ese orden, y no el contrario: la regla de Storage mira la canción en
+   * Firestore para dejar borrar, así que si se quitase antes la ruta y el
+   * borrado fallase, el archivo quedaría ahí sin forma de llegar a él.
+   */
+  const handleRemoveScore = async (variant) => {
+    const parsed = parseVoiceKey(currentTab);
+    if (!parsed || !id) return;
+
+    const { instrumentId, voiceNumber } = parsed;
+    const path = pdfs?.[instrumentId]?.[voiceNumber]?.[variant];
+    if (!path) return;
+
+    if (!confirm("¿Quitar esta partitura? El archivo se borra.")) return;
+
+    setError("");
+
+    try {
+      await deleteScore(path);
+
+      const actualizado = removeScoreFromMap(pdfs, instrumentId, voiceNumber, variant);
+      setPdfs(actualizado);
+      await updateSong(id, { pdfs: actualizado });
+    } catch (removeError) {
+      console.error("Error removing score:", removeError);
+      setError("Error al quitar la partitura: " + removeError.message);
     }
   };
 
@@ -247,7 +373,28 @@ function SongEditor() {
       return;
     }
 
-    await removeVoice(instrumentId, voiceNumber);
+    const quitada = await removeVoice(instrumentId, voiceNumber);
+    if (!quitada) return;
+
+    // Quitar la voz se lleva también sus PDF: si no, quedarían en Storage
+    // sin pestaña desde la que llegar a ellos. Otra vez los archivos antes
+    // que el documento, por la regla de Storage.
+    const casilla = pdfs?.[instrumentId]?.[voiceNumber];
+    if (!casilla || !id) return;
+
+    try {
+      let actualizado = pdfs;
+      for (const variant of Object.keys(casilla)) {
+        await deleteScore(casilla[variant]);
+        actualizado = removeScoreFromMap(actualizado, instrumentId, voiceNumber, variant);
+      }
+
+      setPdfs(actualizado);
+      await updateSong(id, { pdfs: actualizado });
+    } catch (removeError) {
+      console.error("Error removing scores of voice:", removeError);
+      setError("La voz se quitó, pero sus partituras no: " + removeError.message);
+    }
   };
 
   // Función para generar automáticamente la letra
@@ -260,6 +407,13 @@ function SongEditor() {
   const handleTabChange = (tabId) => {
     setCurrentTab(tabId);
   };
+
+  // Las dos casillas de PDF de la pestaña activa
+  const pdfsDeLaPestana = (() => {
+    const parsed = parseVoiceKey(currentTab);
+    if (!parsed) return {};
+    return pdfs?.[parsed.instrumentId]?.[parsed.voiceNumber] || {};
+  })();
 
   // Opciones para el editor SimpleMDE
   const editorOptions = {
@@ -334,10 +488,16 @@ function SongEditor() {
       Object.keys(instrumentVoices).sort().forEach(voiceNumber => {
         const instrumentName = TRANSPOSING_INSTRUMENTS[instrumentId]?.name || instrumentId;
         const isPrimary = instrumentId === primaryInstrument && voiceNumber === primaryVoiceNumber;
+        // En PDF, cuántas de las dos variantes están subidas. Verlo en la
+        // propia pestaña es lo que evita tener que entrar una por una para
+        // saber qué falta con nueve instrumentos por delante.
+        const subidas = Object.keys(pdfs?.[instrumentId]?.[voiceNumber] || {}).length;
+
         tabs.push({
           id: `${instrumentId}-${voiceNumber}`,
           label: `${instrumentName} ${voiceNumber}`,
           icon: "bi-music-note-beamed",
+          badge: format === SONG_FORMAT_PDF ? `${subidas}/2` : null,
           removable: !isPrimary // Don't allow removing the primary voice
         });
       });
@@ -356,6 +516,14 @@ function SongEditor() {
           >
             <i className={tab.icon}></i>
             <span className="ms-1">{tab.label}</span>
+            {tab.badge && (
+              <span
+                className={`tab-badge ${tab.badge === '2/2' ? 'tab-badge--completa' : ''}`}
+                title="Partituras subidas de las dos posibles"
+              >
+                {tab.badge}
+              </span>
+            )}
             {tab.removable && canEditSongs() && (
               <button
                 className="tab-close"
@@ -569,6 +737,36 @@ function SongEditor() {
 
             <div className="form-group-modern">
               <label className="form-label-modern">
+                <i className="bi bi-file-earmark-music me-2"></i>
+                Formato
+              </label>
+              <div className="visibility-toggle">
+                <button
+                  type="button"
+                  className={`visibility-option ${format === SONG_FORMAT_CHORDS ? 'active' : ''}`}
+                  onClick={() => setFormat(SONG_FORMAT_CHORDS)}
+                >
+                  <i className="bi bi-music-note-list me-2"></i>
+                  Acordes
+                </button>
+                <button
+                  type="button"
+                  className={`visibility-option ${format === SONG_FORMAT_PDF ? 'active' : ''}`}
+                  onClick={() => setFormat(SONG_FORMAT_PDF)}
+                >
+                  <i className="bi bi-file-earmark-pdf me-2"></i>
+                  Partituras PDF
+                </button>
+              </div>
+              <div className="form-help-text">
+                En PDF, cada pestaña de voz lleva sus dos archivos: la
+                partitura y la versión con los nombres de las notas encima.
+                No se transpone ni se cambia de notación.
+              </div>
+            </div>
+
+            <div className="form-group-modern">
+              <label className="form-label-modern">
                 <i className="bi bi-eye me-2"></i>
                 Visibilidad
               </label>
@@ -645,8 +843,9 @@ function SongEditor() {
             </div>
           )}
           
-          {/* Mostrar botón "Generar letra automáticamente" solo en pestaña de letra */}
-          {currentTab === "lyrics" && (
+          {/* Generar la letra quitando los acordes no tiene de dónde sacarla
+              en un PDF: allí la letra se escribe a mano si se quiere. */}
+          {currentTab === "lyrics" && format === SONG_FORMAT_CHORDS && (
             <div className="p-3" style={{ background: 'rgba(255, 255, 255, 0.05)', borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>
               <button 
                 className="btn-editor-secondary"
@@ -661,20 +860,43 @@ function SongEditor() {
             </div>
           )}
           
-          {/* Contenido del editor */}
+          {/* Contenido del editor: el texto, o las dos casillas de PDF de
+              esta voz. La pestaña de letra sigue siendo texto en los dos
+              formatos: un PDF puede traer además la letra. */}
           <div className="editor-content">
-            <SimpleMDE
-              ref={editorRef}
-              value={getCurrentTabContent()}
-              onChange={handleEditorChange}
-              onBlur={handleEditorBlur}
-              options={editorOptions}
-            />
+            {format === SONG_FORMAT_PDF && currentTab !== "lyrics" ? (
+              <ScoreUploader
+                casilla={pdfsDeLaPestana}
+                disabled={isNewSong || !id}
+                disabledReason="Guarda la canción antes de subir partituras: el permiso de subida se comprueba contra la canción ya guardada."
+                onUpload={handleUploadScore}
+                onRemove={handleRemoveScore}
+                subiendo={subiendo.startsWith(`${currentTab}:`)
+                  ? subiendo.split(":")[1]
+                  : ""}
+              />
+            ) : (
+              <SimpleMDE
+                ref={editorRef}
+                value={getCurrentTabContent()}
+                onChange={handleEditorChange}
+                onBlur={handleEditorBlur}
+                options={editorOptions}
+              />
+            )}
           </div>
-          
+
           {/* Texto de ayuda */}
           <div className="editor-help-text">
-            {currentTab === "lyrics" ? (
+            {format === SONG_FORMAT_PDF && currentTab !== "lyrics" ? (
+              <>
+                <i className="bi bi-info-circle me-2"></i>
+                Sube el PDF de esta voz. La versión <strong>con nombres de
+                notas</strong> es para quien todavía no lee partitura: si no
+                está, a quien la tenga elegida se le muestra la normal y se le
+                avisa.
+              </>
+            ) : currentTab === "lyrics" ? (
               <>
                 <i className="bi bi-info-circle me-2"></i>
                 Escribe solo la letra, sin acordes. Mantén los títulos de sección con <code>## Título</code>.

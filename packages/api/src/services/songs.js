@@ -11,7 +11,9 @@ import {
   where,
   orderBy
 } from 'firebase/firestore';
+import { listScorePaths } from '@notesheet/core';
 import { db } from '../firebase/config';
+import { deleteScores } from './scores';
 
 // Colección de canciones
 const songsCollection = collection(db, 'songs');
@@ -172,10 +174,25 @@ export const updateSong = async (songId, songData) => {
   }
 };
 
-// Eliminar una canción
+/**
+ * Elimina una canción y, si tenía partituras en PDF, también sus archivos.
+ *
+ * El orden importa y no se puede invertir: la regla de `storage.rules`
+ * consulta la canción en Firestore para decidir si deja borrar. Si se borrase
+ * antes el documento, los PDF quedarían en Storage para siempre, ilegibles
+ * pero ocupando sitio, sin forma de borrarlos desde la app.
+ */
 export const deleteSong = async (songId) => {
   try {
-    await deleteDoc(doc(db, 'songs', songId));
+    const songRef = doc(db, 'songs', songId);
+    const songDoc = await getDoc(songRef);
+    const pdfs = songDoc.exists() ? songDoc.data().pdfs : null;
+
+    if (pdfs) {
+      await deleteScores(listScorePaths(pdfs));
+    }
+
+    await deleteDoc(songRef);
     return songId;
   } catch (error) {
     throw error;
