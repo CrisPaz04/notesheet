@@ -40,6 +40,13 @@ export default defineConfig({
         // Las fuentes de bootstrap-icons no entran en el patrón por defecto,
         // y sin ellas los iconos salen como cuadros vacíos sin conexión.
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
+        // pdf.js fuera del precache: son 400 KB de biblioteca y 1,4 MB de
+        // worker, y se los tragaria en la instalacion tambien quien solo abre
+        // canciones de texto. Las partituras sin red no son prioritarias
+        // (PLAN-PARTITURAS-PDF.md): quien no tiene wifi tira de datos.
+        // Si algun dia molesta, la solucion es una regla `CacheFirst` acotada
+        // a estos dos archivos y a las descargas de Storage.
+        globIgnores: ['**/pdfjs-*.js', '**/pdf.worker*'],
         // La CSS de bootstrap-icons pide las fuentes con un hash de query
         // (`...woff2?dd6703...`) que no está en la clave del precache, así que
         // sin esto Workbox no las encuentra y los iconos desaparecen offline.
@@ -74,6 +81,10 @@ export default defineConfig({
           firebase: ['firebase/app', 'firebase/auth', 'firebase/firestore', 'firebase/storage'],
           editor: ['easymde', 'react-simplemde-editor'],
           dnd: ['@hello-pangea/dnd'],
+          // Se sigue cargando solo cuando se abre una partitura (el import de
+          // `lib/pdfjs.js` es dinamico). Esta aqui para que el archivo tenga
+          // un nombre estable y `globIgnores` pueda apuntarlo.
+          pdfjs: ['pdfjs-dist/legacy/build/pdf.mjs'],
         },
       },
     },

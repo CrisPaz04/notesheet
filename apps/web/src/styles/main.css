@@ -11,6 +11,7 @@
 @import './components/_dashboard.css';
 @import './components/_song-editor.css';
 @import './components/_song-viewer.css';
+@import './components/_pdf-score.css';
 @import './components/_playlists.css';
 @import './components/_footer.css';
 @import './components/_theme-toggle.css';

@@ -1,0 +1,104 @@
+/* src/styles/components/_pdf-score.css */
+
+/* Visor de partituras en PDF.
+ *
+ * El papel va siempre sobre fondo blanco, en todos los temas. Una partitura
+ * escaneada es negro sobre blanco, y sobre el fondo oscuro de la app quedaría
+ * un recorte luminoso con bordes sucios. El blanco explícito hace que parezca
+ * papel, que es lo que el músico espera ver en el atril. */
+
+.pdf-score {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* Un PDF sin letra tiene una sola vista, así que el carrusel de dos
+   (`.song-sections` mide 200% y cada vista 50%) deja de tener sentido. */
+.song-sections--sola {
+  width: 100%;
+}
+
+.song-sections--sola .song-view {
+  width: 100%;
+}
+
+.pdf-score-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.pdf-score-pagecount {
+  color: var(--text-secondary, rgba(255, 255, 255, 0.6));
+  font-size: 0.85rem;
+  margin-left: auto;
+}
+
+.pdf-score-pages {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+}
+
+.pdf-score-page {
+  position: relative;
+  background: #fff;
+  border-radius: var(--radius-sm);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+  /* El hueco se reserva aunque la página no esté pintada: sin esto la barra
+     de desplazamiento pegaría saltos al pasar página. */
+  flex: 0 0 auto;
+  max-width: 100%;
+}
+
+.pdf-score-canvas {
+  display: block;
+}
+
+/* Número de la página mientras aún no está pintada: así el hueco en blanco
+   se entiende como "viene ahora" y no como un fallo. */
+.pdf-score-page-number {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(0, 0, 0, 0.18);
+  font-size: 2.5rem;
+  font-weight: 700;
+}
+
+.pdf-score-empty {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: var(--text-secondary, rgba(255, 255, 255, 0.6));
+}
+
+.pdf-score-empty i {
+  font-size: 3rem;
+  display: block;
+  margin-bottom: 1rem;
+}
+
+/* Aviso de que la variante pedida no está y se muestra la otra. Quedarse sin
+   explicación delante de una partitura que no es la que se esperaba es peor
+   que el propio hueco. */
+.pdf-score-fallback {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+}
+
+/* Imprimir un canvas recortado no sale bien, y además solo están pintadas las
+   páginas cercanas a la vista. Para papel está el botón de abrir el PDF. */
+@media print {
+  .pdf-score {
+    display: none;
+  }
+}

@@ -1,14 +1,27 @@
 // apps/web/src/pages/SongView.jsx
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
-import { getSongById, getAllSongs, getUserPreferences, updateUserPreferences } from "@notesheet/api";
+import {
+  getSongById,
+  getAllSongs,
+  getUserPreferences,
+  updateUserPreferences,
+  getScoreUrl
+} from "@notesheet/api";
 import {
   detectNotationSystem,
   getVisualKeyForInstrument,
   renderSongContent,
+  formatSong,
   buildVoicesList,
   parseVoiceKey,
   resolveInitialVoice,
+  isPdfSong,
+  buildScoreVoicesList,
+  resolveScore,
+  SCORE_VARIANTS,
+  SCORE_VARIANT_LABELS,
+  DEFAULT_SCORE_VARIANT,
   SOURCE_INSTRUMENT,
   TRANSPOSING_INSTRUMENTS
 } from "@notesheet/core";
@@ -20,6 +33,7 @@ import Tuner from "./Tuner";
 import useModal from "../hooks/useModal";
 import useSwipeViews from "../hooks/useSwipeViews";
 import useFontSizePreference from "../hooks/useFontSizePreference";
+import PdfScoreViewer from "../components/PdfScoreViewer";
 
 // Arrays de pares de tonalidades relativas
 const RELATIVE_KEYS = [
@@ -61,17 +75,36 @@ function SongView() {
   const [availableVoicesList, setAvailableVoicesList] = useState([]);
   const [hermanasDeAlbum, setHermanasDeAlbum] = useState([]);
 
+  // --- Partituras en PDF ---
+  // Una canción en PDF no tiene `content` que renderizar: lo que se elige es
+  // un archivo de la matriz instrumento × voz × variante.
+  const [scoreVariant, setScoreVariant] = useState(DEFAULT_SCORE_VARIANT);
+  const [score, setScore] = useState(null);
+  const [scoreVoicesList, setScoreVoicesList] = useState([]);
+
   // --- Dropdowns ---
   const [showVoiceDropdown, setShowVoiceDropdown] = useState(false);
   const [showKeyDropdown, setShowKeyDropdown] = useState(false);
   const [showInstrumentDropdown, setShowInstrumentDropdown] = useState(false);
   const [showNotationDropdown, setShowNotationDropdown] = useState(false);
+  const [showVariantDropdown, setShowVariantDropdown] = useState(false);
 
   const metronomeModal = useModal();
   const tunerModal = useModal();
 
   const { id } = useParams();
   const { currentUser, canEditSongs } = useAuth();
+
+  // Una canción sin `format` es de acordes, como las 118 importadas. Lo que
+  // sigue se apoya en esto para decidir qué controles tienen sentido: un
+  // selector de tonalidad que no hace nada es peor que no tenerlo.
+  const esPdf = isPdfSong(song);
+
+  // Un PDF puede traer además la letra (las 118 la tienen aparte). Si la
+  // trae, se mantienen las dos vistas y el deslizamiento; si no, sobra.
+  const tieneLetra = esPdf
+    ? Boolean(song?.lyricsOnly?.trim())
+    : true;
 
   const {
     fontSize,
@@ -124,6 +157,7 @@ function SongView() {
         // variables locales para pasárselas al pipeline.
         let instrument = currentInstrument;
         let notation = notationSystem;
+        let variant = scoreVariant;
 
         if (currentUser) {
           try {
@@ -139,6 +173,10 @@ function SongView() {
             if (prefs.defaultFontSize) {
               setFontSize(prefs.defaultFontSize);
             }
+            if (prefs.defaultScoreVariant) {
+              variant = prefs.defaultScoreVariant;
+              setScoreVariant(variant);
+            }
           } catch (prefsError) {
             console.error("Error loading user preferences:", prefsError);
           }
@@ -151,24 +189,51 @@ function SongView() {
         setBaseKey(songKey);
         setTargetKey(songKey);
 
-        setAvailableVoicesList(buildVoicesList(loadedSong.voices, TRANSPOSING_INSTRUMENTS));
+        if (isPdfSong(loadedSong)) {
+          // En un PDF no hay nada que transponer ni notación que convertir:
+          // `defaultInstrument` deja de servir para transponer y pasa a elegir
+          // el archivo, que es justo lo que quiere el músico.
+          const lista = buildScoreVoicesList(loadedSong.pdfs, TRANSPOSING_INSTRUMENTS);
+          const elegida = resolveScore(loadedSong, {
+            voiceKey: selectedVoiceKey,
+            variant,
+            instrument
+          });
 
-        const { content, voiceKey } = resolveInitialVoice(loadedSong, selectedVoiceKey);
-        setSelectedVoiceKey(voiceKey);
-        setOriginalContent(content);
+          setScoreVoicesList(lista);
+          setScore(elegida);
+          setSelectedVoiceKey(elegida.voiceKey);
+          setAvailableVoicesList([]);
+          setOriginalContent("");
+          setFormattedSong(null);
 
-        // Sin usuario no hay preferencia guardada: deducir el sistema
-        if (!currentUser) {
-          notation = detectNotationSystem(content);
-          setNotationSystem(notation);
+          // La letra, si la hay, se muestra tal cual: en un PDF no hay
+          // acordes que quitar, así que aquí no pinta el pipeline entero.
+          setFormattedLyricsOnly(
+            loadedSong.lyricsOnly?.trim() ? formatSong(loadedSong.lyricsOnly) : null
+          );
+        } else {
+          setScore(null);
+          setScoreVoicesList([]);
+          setAvailableVoicesList(buildVoicesList(loadedSong.voices, TRANSPOSING_INSTRUMENTS));
+
+          const { content, voiceKey } = resolveInitialVoice(loadedSong, selectedVoiceKey);
+          setSelectedVoiceKey(voiceKey);
+          setOriginalContent(content);
+
+          // Sin usuario no hay preferencia guardada: deducir el sistema
+          if (!currentUser) {
+            notation = detectNotationSystem(content);
+            setNotationSystem(notation);
+          }
+
+          applyRender(content, {
+            baseKey: songKey,
+            targetKey: songKey,
+            instrument,
+            notationSystem: notation
+          });
         }
-
-        applyRender(content, {
-          baseKey: songKey,
-          targetKey: songKey,
-          instrument,
-          notationSystem: notation
-        });
         // Canciones del mismo álbum. Solo se consulta el repertorio si esta
         // canción pertenece a uno, para no traerlo entero en cada visita.
         if (loadedSong.album) {
@@ -241,6 +306,14 @@ function SongView() {
     setShowVoiceDropdown(false);
     if (voiceKey === selectedVoiceKey) return;
 
+    // En un PDF cambiar de voz no re-renderiza nada: elige otro archivo
+    if (esPdf) {
+      const elegida = resolveScore(song, { voiceKey, variant: scoreVariant });
+      setScore(elegida);
+      setSelectedVoiceKey(elegida.voiceKey);
+      return;
+    }
+
     try {
       const parsed = parseVoiceKey(voiceKey);
       const content = parsed && song.voices?.[parsed.instrumentId]?.[parsed.voiceNumber];
@@ -276,6 +349,45 @@ function SongView() {
     } catch (instrumentError) {
       setError("Error al cambiar de instrumento: " + instrumentError.message);
       console.error("Error completo:", instrumentError);
+    }
+  };
+
+  /**
+   * Cambia la variante (con o sin los nombres de las notas encima).
+   *
+   * Se guarda en las preferencias porque quien no lee partitura la quiere así
+   * siempre, no canción por canción. El botón del visor sirve para salirse de
+   * la preferencia un rato, y queda guardado igual: si la toca, es la que
+   * quiere.
+   */
+  const handleVariantChange = (variant) => {
+    setShowVariantDropdown(false);
+    if (variant === scoreVariant) return;
+
+    setScoreVariant(variant);
+    setScore(resolveScore(song, { voiceKey: selectedVoiceKey, variant }));
+
+    if (currentUser) {
+      updateUserPreferences(currentUser.uid, { defaultScoreVariant: variant })
+        .catch((prefError) => console.error("Error saving variant preference:", prefError));
+    }
+  };
+
+  /**
+   * Abre el PDF tal cual en otra pestaña.
+   *
+   * Imprimir un PDF desde aquí no sale bien: lo que hay en pantalla son
+   * canvas, y solo están pintadas las páginas cercanas a la vista. Para papel
+   * vale más el visor del propio dispositivo, que además sabe imprimir.
+   */
+  const handleOpenPdf = async () => {
+    if (!score?.path) return;
+
+    try {
+      const url = await getScoreUrl(score.path);
+      window.open(url, "_blank", "noopener,noreferrer");
+    } catch (openError) {
+      setError("No se pudo abrir el PDF: " + openError.message);
     }
   };
 
@@ -360,29 +472,46 @@ function SongView() {
               </div>
               <div className="song-meta-value">
                 {selectedVoiceKey
-                  ? availableVoicesList.find(v => v.id === selectedVoiceKey)?.label || "—"
+                  ? (esPdf ? scoreVoicesList : availableVoicesList)
+                      .find(v => v.id === selectedVoiceKey)?.label || "—"
                   : "—"}
               </div>
             </div>
 
-            <div className="song-meta-item">
-              <div className="song-meta-label">
-                <i className="bi bi-arrow-left-right me-1"></i>
-                Transpuesto a
+            {/* En un PDF no hay transposición: lo que distingue un archivo de
+                otro es la variante, con o sin los nombres de las notas. */}
+            {esPdf ? (
+              <div className="song-meta-item">
+                <div className="song-meta-label">
+                  <i className="bi bi-file-earmark-music me-1"></i>
+                  Partitura
+                </div>
+                <div className="song-meta-value">
+                  {score?.variant ? SCORE_VARIANT_LABELS[score.variant] : "—"}
+                </div>
               </div>
-              <div className="song-meta-value">
-                {TRANSPOSING_INSTRUMENTS[currentInstrument]?.name || "Trompeta en Sib"}
+            ) : (
+              <div className="song-meta-item">
+                <div className="song-meta-label">
+                  <i className="bi bi-arrow-left-right me-1"></i>
+                  Transpuesto a
+                </div>
+                <div className="song-meta-value">
+                  {TRANSPOSING_INSTRUMENTS[currentInstrument]?.name || "Trompeta en Sib"}
+                </div>
               </div>
-            </div>
-            
+            )}
+
+            {/* En un PDF la tonalidad es informativa: está impresa en el papel
+                y no se puede cambiar, pero saberla sigue sirviendo. */}
             <div className="song-meta-item">
               <div className="song-meta-label">
                 <i className="bi bi-key me-1"></i>
                 Tonalidad
               </div>
-              <div className="song-meta-value">{displayKey}</div>
+              <div className="song-meta-value">{esPdf ? (song.key || "—") : displayKey}</div>
             </div>
-            
+
             <div className="song-meta-item">
               <div className="song-meta-label">
                 <i className="bi bi-heart me-1"></i>
@@ -407,8 +536,10 @@ function SongView() {
         <div className="controls-toolbar fade-in-delay no-print">
           <div className="controls-row">
             <div className="controls-group">
-              {/* Selector de Voz (partes disponibles en la canción) */}
-              {availableVoicesList.length > 0 && (
+              {/* Selector de Voz (partes disponibles en la canción).
+                  En un PDF la lista sale del mapa `pdfs`, y elegir voz no
+                  transpone nada: cambia de archivo. */}
+              {(esPdf ? scoreVoicesList : availableVoicesList).length > 0 && (
                 <div className="control-dropdown">
                   <button
                     className={`dropdown-button ${showVoiceDropdown ? 'active' : ''}`}
@@ -422,7 +553,8 @@ function SongView() {
                     <i className="bi bi-music-note-list"></i>
                     <span>
                       {selectedVoiceKey
-                        ? availableVoicesList.find(v => v.id === selectedVoiceKey)?.label || "Voz"
+                        ? (esPdf ? scoreVoicesList : availableVoicesList)
+                            .find(v => v.id === selectedVoiceKey)?.label || "Voz"
                         : "Seleccionar Voz"}
                     </span>
                     <i className={`bi bi-chevron-${showVoiceDropdown ? 'up' : 'down'}`}></i>
@@ -430,7 +562,7 @@ function SongView() {
 
                   {showVoiceDropdown && (
                     <div className="dropdown-menu-custom">
-                      {availableVoicesList.map((voice) => (
+                      {(esPdf ? scoreVoicesList : availableVoicesList).map((voice) => (
                         <div
                           key={voice.id}
                           className={`dropdown-item-custom ${selectedVoiceKey === voice.id ? 'active' : ''}`}
@@ -444,6 +576,44 @@ function SongView() {
                 </div>
               )}
 
+              {/* Selector de variante, solo en PDF: la partitura normal o la
+                  que lleva los nombres de las notas encima. Ocupa el sitio de
+                  los tres controles de abajo, que aquí no pintan nada. */}
+              {esPdf && score?.voiceKey && (
+                <div className="control-dropdown">
+                  <button
+                    className={`dropdown-button ${showVariantDropdown ? 'active' : ''}`}
+                    onClick={() => {
+                      setShowVariantDropdown(!showVariantDropdown);
+                      setShowVoiceDropdown(false);
+                    }}
+                  >
+                    <i className="bi bi-eyeglasses"></i>
+                    <span>{SCORE_VARIANT_LABELS[score.variant] || "Partitura"}</span>
+                    <i className={`bi bi-chevron-${showVariantDropdown ? 'up' : 'down'}`}></i>
+                  </button>
+
+                  {showVariantDropdown && (
+                    <div className="dropdown-menu-custom">
+                      {SCORE_VARIANTS.map((variant) => (
+                        <div
+                          key={variant}
+                          className={`dropdown-item-custom ${scoreVariant === variant ? 'active' : ''}`}
+                          onClick={() => handleVariantChange(variant)}
+                        >
+                          {SCORE_VARIANT_LABELS[variant]}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Transposición, tonalidad y notación no existen en un PDF: es
+                  una imagen. Se ocultan en vez de dejarlos puestos sin efecto,
+                  que confunde más que no tenerlos. */}
+              {!esPdf && (
+                <>
               {/* Selector de Instrumento (Transponer a) */}
               <div className="control-dropdown">
                 <button
@@ -567,11 +737,14 @@ function SongView() {
                   </div>
                 )}
               </div>
+                </>
+              )}
             </div>
             
             <div className="controls-group">
-              {/* Controles de fuente */}
-              <div className="font-controls">
+              {/* Controles de fuente. En un PDF el tamaño no lo manda la
+                  fuente sino el zoom, que vive en el propio visor. */}
+              <div className="font-controls" hidden={esPdf && !tieneLetra}>
                 <button
                   className="font-control-btn"
                   onClick={decreaseFontSize}
@@ -595,23 +768,26 @@ function SongView() {
                 </button>
               </div>
               
-              {/* Toggle de vista */}
-              <div className="view-toggle-controls">
-                <button
-                  className={`view-toggle-btn-song ${activeView === 0 ? 'active' : ''}`}
-                  onClick={() => setActiveView(0)}
-                >
-                  <i className="bi bi-music-note-list"></i>
-                  Acordes
-                </button>
-                <button
-                  className={`view-toggle-btn-song ${activeView === 1 ? 'active' : ''}`}
-                  onClick={() => setActiveView(1)}
-                >
-                  <i className="bi bi-card-text"></i>
-                  Letra
-                </button>
-              </div>
+              {/* Toggle de vista. Un PDF sin letra tiene una sola vista: el
+                  botón sobraría. */}
+              {tieneLetra && (
+                <div className="view-toggle-controls">
+                  <button
+                    className={`view-toggle-btn-song ${activeView === 0 ? 'active' : ''}`}
+                    onClick={() => setActiveView(0)}
+                  >
+                    <i className={esPdf ? "bi bi-file-earmark-music" : "bi bi-music-note-list"}></i>
+                    {esPdf ? "Partitura" : "Acordes"}
+                  </button>
+                  <button
+                    className={`view-toggle-btn-song ${activeView === 1 ? 'active' : ''}`}
+                    onClick={() => setActiveView(1)}
+                  >
+                    <i className="bi bi-card-text"></i>
+                    Letra
+                  </button>
+                </div>
+              )}
               
               {/* Botones de acción */}
               <div className="action-buttons-song">
@@ -633,14 +809,30 @@ function SongView() {
                   Afinador
                 </button>
 
-                <button
-                  className="btn-song-action"
-                  onClick={handlePrint}
-                  title="Imprimir"
-                >
-                  <i className="bi bi-printer"></i>
-                  Imprimir
-                </button>
+                {/* En un PDF lo que hay en pantalla son canvas, y solo están
+                    pintadas las páginas cercanas a la vista: imprimir desde
+                    aquí saldría medio en blanco. El visor del dispositivo lo
+                    hace mejor, y además sabe imprimir. */}
+                {esPdf ? (
+                  <button
+                    className="btn-song-action"
+                    onClick={handleOpenPdf}
+                    disabled={!score?.path}
+                    title="Abrir el PDF"
+                  >
+                    <i className="bi bi-box-arrow-up-right"></i>
+                    Abrir PDF
+                  </button>
+                ) : (
+                  <button
+                    className="btn-song-action"
+                    onClick={handlePrint}
+                    title="Imprimir"
+                  >
+                    <i className="bi bi-printer"></i>
+                    Imprimir
+                  </button>
+                )}
 
                 {canEditSongs() && song.userId === currentUser?.uid && (
                   <Link
@@ -666,61 +858,89 @@ function SongView() {
 
         {/* Contenido de la canción */}
         <div className="song-content slide-up">
-          {/* Indicador de vista */}
-          <div className="view-indicator no-print">
-            <div className="view-dots">
-              <button 
-                onClick={() => setActiveView(0)} 
-                className={`view-dot ${activeView === 0 ? 'active' : ''}`}
-              />
-              <button 
-                onClick={() => setActiveView(1)} 
-                className={`view-dot ${activeView === 1 ? 'active' : ''}`}
-              />
+          {/* Indicador de vista. Sin segunda vista no hay nada entre lo que
+              deslizar, y los puntos solo despistarían. */}
+          {tieneLetra && (
+            <div className="view-indicator no-print">
+              <div className="view-dots">
+                <button
+                  onClick={() => setActiveView(0)}
+                  className={`view-dot ${activeView === 0 ? 'active' : ''}`}
+                />
+                <button
+                  onClick={() => setActiveView(1)}
+                  className={`view-dot ${activeView === 1 ? 'active' : ''}`}
+                />
+              </div>
+              <div className="view-hint">
+                {activeView === 0
+                  ? 'Deslizar para ver solo letra →'
+                  : `← Deslizar para ver ${esPdf ? 'la partitura' : 'acordes'}`}
+              </div>
             </div>
-            <div className="view-hint">
-              {activeView === 0 ? 'Deslizar para ver solo letra →' : '← Deslizar para ver acordes'}
-            </div>
-          </div>
+          )}
 
           {/* Contenedor de vistas con swipe */}
-          <div 
+          <div
             className="song-sections-container"
-            onTouchStart={handleTouchStart}
-            onTouchMove={handleTouchMove}
-            onTouchEnd={handleTouchEnd}
+            onTouchStart={tieneLetra ? handleTouchStart : undefined}
+            onTouchMove={tieneLetra ? handleTouchMove : undefined}
+            onTouchEnd={tieneLetra ? handleTouchEnd : undefined}
           >
-            <div 
-              className="song-sections"
-              style={{ 
-                transform: `translateX(-${activeView * 50}%)`,
+            <div
+              className={`song-sections${tieneLetra ? '' : ' song-sections--sola'}`}
+              style={{
+                transform: tieneLetra ? `translateX(-${activeView * 50}%)` : undefined,
               }}
             >
-              {/* Vista de acordes */}
-              <div 
+              {/* Vista principal: la partitura en PDF o los acordes */}
+              <div
                 ref={chordsViewRef}
                 className="song-view"
                 style={{ fontSize: `${fontSize}px !important` }}
-              > 
-                {formattedSong && formattedSong.sections.map((section, index) => (
-                  <div key={index} className="song-section-modern">
-                    {section.title && <h3 className="song-section-title">{section.title}</h3>}
-                    <div className="song-section-content" style={{ fontSize: `${fontSize}px` }}>
-                      {section.content}
-                    </div>
-                  </div>
-                ))}
-                
-                {(!formattedSong || formattedSong.sections.length === 0) && (
-                  <div className="text-center" style={{ color: 'rgba(255, 255, 255, 0.6)', padding: '3rem' }}>
-                    <i className="bi bi-music-note-list" style={{ fontSize: '3rem', marginBottom: '1rem' }}></i>
-                    <p>No hay contenido disponible para esta canción.</p>
-                  </div>
+              >
+                {esPdf ? (
+                  <>
+                    {/* Si la variante que pidió el músico no está, se muestra
+                        la que hay y se dice. Quedarse delante de una partitura
+                        que no es la que esperaba, sin explicación, es peor. */}
+                    {score?.variantFallback && (
+                      <div className="alert alert-warning pdf-score-fallback no-print" role="status">
+                        <i className="bi bi-info-circle"></i>
+                        <span>
+                          Esta voz no tiene la versión
+                          {" "}<strong>{SCORE_VARIANT_LABELS[score.requestedVariant]?.toLowerCase()}</strong>.
+                          {" "}Se muestra la de <strong>{SCORE_VARIANT_LABELS[score.variant]?.toLowerCase()}</strong>.
+                        </span>
+                      </div>
+                    )}
+
+                    <PdfScoreViewer path={score?.path || null} title={song.title} />
+                  </>
+                ) : (
+                  <>
+                    {formattedSong && formattedSong.sections.map((section, index) => (
+                      <div key={index} className="song-section-modern">
+                        {section.title && <h3 className="song-section-title">{section.title}</h3>}
+                        <div className="song-section-content" style={{ fontSize: `${fontSize}px` }}>
+                          {section.content}
+                        </div>
+                      </div>
+                    ))}
+
+                    {(!formattedSong || formattedSong.sections.length === 0) && (
+                      <div className="text-center" style={{ color: 'rgba(255, 255, 255, 0.6)', padding: '3rem' }}>
+                        <i className="bi bi-music-note-list" style={{ fontSize: '3rem', marginBottom: '1rem' }}></i>
+                        <p>No hay contenido disponible para esta canción.</p>
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
               
               {/* Vista de solo letras */}
-              <div 
+              {tieneLetra && (
+              <div
                 ref={lyricsViewRef}
                 className="song-view"
                 style={{ fontSize: `${fontSize}px !important` }}
@@ -741,6 +961,7 @@ function SongView() {
                  </div>
                )}
              </div>
+              )}
            </div>
          </div>
        </div>
