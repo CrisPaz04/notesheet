@@ -28,6 +28,10 @@
     margin-bottom: 2rem;
   }
   
+  /* Sin `text-shadow`: el halo iba en menta fijo (rgba(100,255,218,.3)) aunque
+     el número se pinta con `--color-primary`, que en tema claro es azul. Sobre
+     el fondo claro quedaba un resplandor verdoso alrededor de unas cifras
+     azules, que es lo que se veía como una luz rara. */
   .notfound-number span {
     font-size: 8rem;
     font-weight: 900;
@@ -35,7 +39,6 @@
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
-    text-shadow: 0 0 30px rgba(100, 255, 218, 0.3);
     position: relative;
   }
   
@@ -404,6 +407,18 @@
   
   [data-bs-theme="light"] .notfound-description {
     color: #6c757d;
+  }
+
+  /* Mismo caso que el halo del número: las notas y las copias del glitch iban
+     en menta fija, y sobre el fondo claro se veían como manchas verdosas. */
+  [data-bs-theme="light"] .music-note {
+    color: rgba(13, 110, 253, 0.25);
+  }
+
+  [data-bs-theme="light"] .number-4::before,
+  [data-bs-theme="light"] .number-4-2::before,
+  [data-bs-theme="light"] .number-0::before {
+    color: rgba(13, 110, 253, 0.1);
   }
   
   [data-bs-theme="light"] .suggestion-item {
