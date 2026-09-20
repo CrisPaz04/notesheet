@@ -201,6 +201,24 @@ Conviene comprobar la página **en escritorio primero**: allí `iframe` y
 `object` muestran el visor nativo y pdf.js pinta todas las páginas. Si luego en
 la tablet sale en blanco, ya se sabe que es la tablet y no la página.
 
+**Y una trampa que cuesta un rato largo si no se sabe:** pdf.js avanza el
+pintado con `requestAnimationFrame`, y en una pestaña **oculta o en segundo
+plano** `requestAnimationFrame` no se dispara. `page.render().promise` se queda
+ahí para siempre: ni resuelve ni falla, y no aparece ningún error por ninguna
+parte. Parece un cuelgue del visor y no lo es.
+
+Pasa con cualquier ventana de navegador que no esté visible, y también al
+automatizar la prueba desde fuera. Para descartarlo, en la consola:
+
+```js
+window.requestAnimationFrame = (cb) => setTimeout(() => cb(performance.now()), 0);
+```
+
+Si con eso pinta, era la visibilidad. Comprobado así en esta misma
+implementación: 3 páginas medidas, la primera pintada en 55 ms, y
+`renderTask.cancel()` lanzando `RenderingCancelledException`, que es justo el
+nombre que mira `PdfScorePage` para no tratarlo como un fallo.
+
 **Coste medido de pdf.js: 320 KB** el `pdf.min.js`, más 1 MB el worker (que se
 carga aparte y solo cuando hace falta). No es una estimación: son los archivos
 descargados en el banco de pruebas.
@@ -281,6 +299,12 @@ probada de verdad:
    largo no se quede sin memoria al deslizar. Si ese dispositivo no soporta
    workers de módulo, pdf.js se cae solo a pintar en el hilo principal: irá
    más lento, pero tiene que verse.
+
+   Lo que **sí** está comprobado en un navegador de verdad es la cadena
+   entera: que `lib/pdfjs.js` carga la biblioteca y su worker, que el
+   documento abre, que las páginas se miden y que el canvas acaba con píxeles
+   de verdad encima. Lo que falta es el hardware viejo, que desde aquí no se
+   puede tocar.
 4. **Medir si pdf.js sobra.** Sigue en pie la alternativa de convertir cada
    página a imagen al subirla. Con el visor ya hecho se puede comparar de
    verdad en la tablet en vez de suponer.
