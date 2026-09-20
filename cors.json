@@ -1,9 +1,9 @@
 [
   {
     "origin": [
+      "https://notesheet-app.netlify.app",
       "http://localhost:5173",
-      "http://localhost:5191",
-      "https://notesheet.netlify.app"
+      "http://localhost:5191"
     ],
     "method": ["GET"],
     "responseHeader": [

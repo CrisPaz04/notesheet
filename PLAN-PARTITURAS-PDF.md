@@ -327,10 +327,10 @@ encontrar igual:
 1. **Abrir una partitura desde otra cuenta de la banda**, para comprobar en
    real que la regla deja leer lo publicado y no lo privado. Es lo único de
    la cadena de permisos que no se ha visto funcionar todavía.
-2. **Confirmar el dominio de producción en `cors.json`.** El que lleva ahora
-   es una suposición: si no es el bueno, las partituras se verán en local y
-   no en producción, y el fallo aparecerá justo cuando la banda las
-   necesite.
+2. **Aplicar el `cors.json` con el dominio de producción**
+   (`notesheet-app.netlify.app`), que al principio se puso a ojo y estaba
+   mal. Hasta que se aplique, las partituras se ven en local pero no en
+   producción.
 3. **Probarlo en el dispositivo más viejo de la sección**, no solo en la tab
    Samsung. Lo que hay que mirar: que las páginas se pinten, y que un popurrí
    largo no se quede sin memoria al deslizar. Si ese dispositivo no soporta

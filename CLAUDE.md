@@ -50,7 +50,10 @@ gcloud storage buckets update gs://notesheet-d63e8.firebasestorage.app --cors-fi
 ```
 
 **Hay que añadir ahí cada origen nuevo** desde el que se sirva la app, o las
-partituras dejan de verse solo en ese dominio. Además, el visor pide el PDF
+partituras dejan de verse solo en ese dominio. Hoy están producción
+(`notesheet-app.netlify.app`) y los puertos de desarrollo. Ojo con las ramas de
+previsualización de Netlify: tienen dominio propio y no están en la lista, así
+que en ellas las partituras no se verán. Además, el visor pide el PDF
 entero (`disableRange`): a trozos, las cabeceras `Range` obligan a un
 *preflight* que Cloud Storage tampoco admite.
 
