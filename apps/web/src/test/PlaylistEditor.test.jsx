@@ -7,7 +7,7 @@ const mockGetAllSongs = vi.fn();
 const mockGetPlaylistById = vi.fn();
 const mockCreatePlaylist = vi.fn();
 const mockUpdatePlaylist = vi.fn();
-const mockUpdateSong = vi.fn();
+const mockPublishOwnSongs = vi.fn();
 const mockNavigate = vi.fn();
 
 vi.mock('@notesheet/api', () => ({
@@ -15,7 +15,7 @@ vi.mock('@notesheet/api', () => ({
   getPlaylistById: (...a) => mockGetPlaylistById(...a),
   createPlaylist: (...a) => mockCreatePlaylist(...a),
   updatePlaylist: (...a) => mockUpdatePlaylist(...a),
-  updateSong: (...a) => mockUpdateSong(...a)
+  publishOwnSongs: (...a) => mockPublishOwnSongs(...a)
 }));
 
 const routeParams = {};
@@ -64,7 +64,7 @@ beforeEach(() => {
   mockGetAllSongs.mockResolvedValue(SONGS);
   mockCreatePlaylist.mockResolvedValue({ id: 'p1' });
   mockUpdatePlaylist.mockResolvedValue({ id: 'p1' });
-  mockUpdateSong.mockResolvedValue({});
+  mockPublishOwnSongs.mockResolvedValue([]);
 });
 
 const renderNueva = async () => {
@@ -416,7 +416,11 @@ voy a perder la compostura`;
     // Compartir la lista tiene que compartir lo que contiene: con la regla
     // de Firestore endurecida, una canción privada no la lee nadie más y la
     // lista le aparecería vacía al resto de la banda.
-    it('publica las canciones propias privadas al compartir la lista', async () => {
+    //
+    // Cuál publicar y cuál no lo decide `publishOwnSongs` —el mismo que usa
+    // `createSession`— y está probado en `publishOwnSongs.test.js`. Aquí lo
+    // que toca comprobar es que la página delega, y con qué.
+    it('manda a publicar las canciones al compartir la lista', async () => {
       const user = userEvent.setup();
       await renderNueva();
 
@@ -427,9 +431,22 @@ voy a perder la compostura`;
       await user.click(screen.getByRole('button', { name: /Guardar/i }));
 
       await waitFor(() => expect(mockCreatePlaylist).toHaveBeenCalled());
+      expect(mockPublishOwnSongs).toHaveBeenCalledWith(['s1', 's2'], 'user-1');
+    });
 
-      expect(mockUpdateSong).toHaveBeenCalledTimes(1);
-      expect(mockUpdateSong).toHaveBeenCalledWith('s1', { public: true });
+    // Se mandan todas, también las ajenas: filtrarlas aquí sería repetir la
+    // decisión en dos sitios, que es justo lo que acaba separándose.
+    it('manda también las ajenas y deja que el servicio decida', async () => {
+      const user = userEvent.setup();
+      await renderNueva();
+
+      await user.type(screen.getByPlaceholderText('Nombre de la lista'), 'Domingo');
+      await user.click(botonDisponible('Al Que Está Sentado')); // ajena
+      await user.click(screen.getByRole('button', { name: /Pública/ }));
+      await user.click(screen.getByRole('button', { name: /Guardar/i }));
+
+      await waitFor(() => expect(mockCreatePlaylist).toHaveBeenCalled());
+      expect(mockPublishOwnSongs).toHaveBeenCalledWith(['s3'], 'user-1');
     });
 
     it('no publica nada si la lista se guarda como privada', async () => {
@@ -441,20 +458,7 @@ voy a perder la compostura`;
       await user.click(screen.getByRole('button', { name: /Guardar/i }));
 
       await waitFor(() => expect(mockCreatePlaylist).toHaveBeenCalled());
-      expect(mockUpdateSong).not.toHaveBeenCalled();
-    });
-
-    it('no toca las canciones de otros músicos', async () => {
-      const user = userEvent.setup();
-      await renderNueva();
-
-      await user.type(screen.getByPlaceholderText('Nombre de la lista'), 'Domingo');
-      await user.click(botonDisponible('Al Que Está Sentado')); // ajena
-      await user.click(screen.getByRole('button', { name: /Pública/ }));
-      await user.click(screen.getByRole('button', { name: /Guardar/i }));
-
-      await waitFor(() => expect(mockCreatePlaylist).toHaveBeenCalled());
-      expect(mockUpdateSong).not.toHaveBeenCalled();
+      expect(mockPublishOwnSongs).not.toHaveBeenCalled();
     });
 
     it('guarda la visibilidad pública', async () => {

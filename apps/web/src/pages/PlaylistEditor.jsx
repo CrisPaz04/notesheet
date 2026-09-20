@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { createPlaylist, getPlaylistById, updatePlaylist, getAllSongs, updateSong } from "@notesheet/api";
+import { createPlaylist, getPlaylistById, updatePlaylist, getAllSongs, publishOwnSongs } from "@notesheet/api";
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import LoadingSpinner from "../components/LoadingSpinner";
 import PlaylistKeySelector from "../components/PlaylistKeySelector";
@@ -149,20 +149,6 @@ function PlaylistEditor() {
     isPdfSong(availableSongs.find((c) => c.id === songId))
   );
 
-  /**
-   * Publica en el repertorio las canciones propias de la lista que todavía
-   * sean privadas. `availableSongs` ya trae `isOwn` y `public` del servicio.
-   */
-  const publicarCancionesDeLaLista = async () => {
-    const porPublicar = selectedSongs
-      .map((s) => availableSongs.find((a) => a.id === s.id))
-      .filter((cancion) => cancion && cancion.isOwn && !cancion.public);
-
-    await Promise.all(
-      porPublicar.map((cancion) => updateSong(cancion.id, { public: true }))
-    );
-  };
-
   const handleSave = async (e) => {
     e.preventDefault();
 
@@ -185,10 +171,13 @@ function PlaylistEditor() {
       // Compartir la lista implica compartir lo que contiene: una canción
       // privada no la puede leer nadie más, así que una lista pública con
       // canciones privadas le aparecería vacía al resto de la banda.
-      // Solo se publican las propias; las ajenas ya estaban en el repertorio,
-      // porque es la única forma de haberlas podido añadir.
+      //
+      // El mismo `publishOwnSongs` que usa `createSession` al abrir una sesión
+      // en vivo. Antes había aquí una copia que decidía a partir de
+      // `availableSongs`; tenerlo dos veces es como se pudre un invariante de
+      // seguridad, y ya costó que la banda entera viera "no se pudo cargar".
       if (isPublic) {
-        await publicarCancionesDeLaLista();
+        await publishOwnSongs(selectedSongs.map((s) => s.id), currentUser.uid);
       }
 
       if (isNewPlaylist) {

@@ -5,3 +5,4 @@ export * from './services/playlists';
 export * from './services/user';
 export * from './services/toolsPreferences';
 export * from './services/scores';
+export * from './services/sessions';

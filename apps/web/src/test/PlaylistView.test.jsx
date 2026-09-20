@@ -5,13 +5,20 @@ import { render, screen, waitFor } from '@testing-library/react';
 const mockGetPlaylistById = vi.fn();
 const mockGetSongById = vi.fn();
 
+// `createSession` y `useNavigate` los necesita el botón de sesión en vivo que
+// vive en la barra de acciones. Sin ellos el import falla y la página no
+// llega a renderizar nada.
+const mockCreateSession = vi.fn();
+
 vi.mock('@notesheet/api', () => ({
   getPlaylistById: (...a) => mockGetPlaylistById(...a),
-  getSongById: (...a) => mockGetSongById(...a)
+  getSongById: (...a) => mockGetSongById(...a),
+  createSession: (...a) => mockCreateSession(...a)
 }));
 
 vi.mock('react-router-dom', () => ({
   useParams: () => ({ id: 'p1' }),
+  useNavigate: () => vi.fn(),
   Link: ({ children, to }) => <a href={to}>{children}</a>
 }));
 

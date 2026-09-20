@@ -26,6 +26,8 @@ const PlaylistEditor = lazyConRecarga(() => import("./pages/PlaylistEditor"));
 const PlaylistView = lazyConRecarga(() => import("./pages/PlaylistView"));
 const Metronome = lazyConRecarga(() => import("./pages/Metronome"));
 const Tuner = lazyConRecarga(() => import("./pages/Tuner"));
+const LiveSession = lazyConRecarga(() => import("./pages/LiveSession"));
+const JoinLive = lazyConRecarga(() => import("./pages/JoinLive"));
 
 // Componentes
 import Navbar from "./components/Navbar";
@@ -63,7 +65,7 @@ function AppLayout() {
   // Páginas donde NO queremos mostrar navbar y footer
   const authPages = ['/login', '/register'];
   // Páginas que necesitan pantalla completa (sin padding del container)
-  const fullScreenPages = ['/login', '/register', '/', '/home', '/dashboard', '/songs/new', '/playlists', '/playlists/new', '/preferences', '/metronome', '/tuner'];
+  const fullScreenPages = ['/login', '/register', '/', '/home', '/dashboard', '/songs/new', '/playlists', '/playlists/new', '/preferences', '/metronome', '/tuner', '/live'];
   
   const isAuthPage = authPages.includes(location.pathname);
   const isFullScreenPage = fullScreenPages.includes(location.pathname) || 
@@ -71,6 +73,8 @@ function AppLayout() {
                        location.pathname.match(/^\/songs\/[^/]+$/) ||
                        location.pathname.match(/^\/playlists\/[^/]+$/) ||
                        location.pathname.match(/^\/playlists\/[^/]+\/edit$/) ||
+                       // La sesión en vivo trae su propio contenedor
+                       location.pathname.match(/^\/live\/[^/]+$/) ||
                        // Detectar rutas 404 (rutas que no están definidas en nuestro sistema)
                        (location.pathname !== '/' && 
                         location.pathname !== '/home' && 
@@ -146,6 +150,12 @@ function AppLayout() {
               <Tuner />
             </ProtectedRoute>
           } />
+          {/* Sesiones en vivo. Sin `ProtectedRoute` a propósito: el enlace
+              llega por WhatsApp a músicos sin cuenta, y la propia pantalla
+              ofrece entrar como invitado. Las reglas de Firestore siguen
+              exigiendo estar autenticado para leer o escribir nada. */}
+          <Route path="/live" element={<JoinLive />} />
+          <Route path="/live/:code" element={<LiveSession />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
         </Suspense>
