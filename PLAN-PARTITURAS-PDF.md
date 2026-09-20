@@ -1,5 +1,13 @@
 # Plan: partituras en PDF dentro de la app
 
+> **Implementado.** Los siete pasos del orden de trabajo están hechos. Este
+> documento se queda como registro de **por qué** está así: qué se probó, qué
+> se descartó y qué sigue abierto. Lo que hay que saber para tocar el código
+> está resumido en `CLAUDE.md`.
+>
+> Lo que falta antes de darlo por bueno en el escenario, y que no se puede
+> hacer desde aquí, está al final, en **Lo que queda**.
+
 Documento para implementarlo en otra sesión. Recoge el estado del código a día
 de hoy, las decisiones ya tomadas y las que quedan abiertas.
 
@@ -104,6 +112,9 @@ Afecta a:
 
 ## Estado real del código
 
+*(Esto describía el punto de partida. Los tres puntos están resueltos; se
+deja porque explica de dónde salen las decisiones de abajo.)*
+
 Tres cosas que parecen estar y no están:
 
 1. **Storage no se usa.** Está inicializado en
@@ -111,7 +122,14 @@ Tres cosas que parecen estar y no están:
    `storage.rules` y Storage ni aparece en `firebase.json`. Hay que escribir
    reglas espejo de las de `songs` (lo propio o lo publicado) y añadirlas al
    `firebase.json`, o las partituras quedan abiertas o ilegibles.
+
+   **Hecho.** Y las reglas no duplican el criterio: lo **leen** de la propia
+   canción en Firestore con `firestore.get`. Eso trajo un límite que conviene
+   recordar —dos documentos por evaluación— y un orden que no se puede
+   invertir: al borrar, primero el archivo y después el documento, porque sin
+   documento la regla ya no deja tocar el archivo.
 2. **No hay ninguna subida de archivos en la app.** Sería la primera.
+   **Hecho**, en `packages/api/src/services/scores.js`.
 3. **El service worker no cachea nada en ejecución** (`runtimeCaching: []` en
    `apps/web/vite.config.js`), así que un PDF no estará disponible sin red.
    **Decidido: no es prioritario** — quien no tiene wifi tira de datos móviles.
@@ -223,5 +241,46 @@ a propósito y comprobar que algún test falla. Lo que merece cubrirse:
 - **Cuántos PDF por canción.** Nueve instrumentos × voces × 2 variantes son
   muchos archivos. ¿Se suben todos de golpe con un nombre que los ordene solo,
   o uno a uno desde su pestaña?
+
+  **Por ahora, uno a uno desde su pestaña**, que es lo que decía el paso 4 y
+  no obliga a inventar un convenio de nombres antes de saber cómo se llaman
+  los archivos que hay en OneDrive. Para que no haya que entrar en cada
+  pestaña a ver qué falta, cada una lleva un contador `1/2`.
+
+  Si al subir el repertorio de verdad esto se hace pesado, lo que hay que
+  mirar primero es **cómo se llaman ya esos archivos**: si el nombre permite
+  deducir instrumento, voz y variante, una subida múltiple que los reparta
+  sola es media tarde. Si no, el convenio habría que imponerlo a mano antes,
+  y entonces no ahorra nada.
+
 - **Qué pasa con una canción que tenga las dos cosas**: texto (de las 118) y
   PDF. ¿Se eligen desde el mismo selector de voces, o son pestañas aparte?
+
+  **Resuelto de la forma más pequeña que funciona:** `format` dice cuál es el
+  cuerpo. Si es PDF, el PDF ocupa la vista principal y la letra (`lyricsOnly`)
+  se queda como segunda vista, con el mismo deslizamiento de siempre. Si no
+  hay letra, no hay segunda vista.
+
+  Lo que **no** se ha hecho es mezclar voces de texto y voces de PDF en el
+  mismo selector. No hay ninguna canción así todavía, y decidirlo sin un caso
+  real delante es inventarse el problema.
+
+## Lo que queda
+
+Nada de esto se puede hacer escribiendo código, y sin ello la función no está
+probada de verdad:
+
+1. **Desplegar las reglas de Storage.** `npx firebase-tools deploy --only
+   storage`. La primera vez pide conceder el permiso entre servicios, porque
+   `storage.rules` lee la canción en Firestore; hay que aceptarlo o toda
+   subida y toda descarga fallarán por permisos.
+2. **Subir una canción de verdad** y abrirla desde otra cuenta de la banda,
+   para comprobar que la regla deja leer lo publicado y no lo privado.
+3. **Probarlo en el dispositivo más viejo de la sección**, no solo en la tab
+   Samsung. Lo que hay que mirar: que las páginas se pinten, y que un popurrí
+   largo no se quede sin memoria al deslizar. Si ese dispositivo no soporta
+   workers de módulo, pdf.js se cae solo a pintar en el hilo principal: irá
+   más lento, pero tiene que verse.
+4. **Medir si pdf.js sobra.** Sigue en pie la alternativa de convertir cada
+   página a imagen al subirla. Con el visor ya hecho se puede comparar de
+   verdad en la tablet en vez de suponer.

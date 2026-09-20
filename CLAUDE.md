@@ -8,30 +8,43 @@ NoteSheet is a multiplataform music application for church musicians built as a 
 
 **Tech Stack:** React 19, Vite 6.2, Bootstrap 5.3, React Router 7, Firebase (Auth, Firestore, Storage), npm workspaces
 
-## Lo siguiente: las partituras en PDF
+## Las partituras en PDF
 
-Parte del repertorio no está en texto sino como **partituras de verdad en PDF**,
-y hay que poder meterlas en una lista en cualquier posición. **Está todo
-planificado y sin empezar: el plan es `PLAN-PARTITURAS-PDF.md`, y es lo primero
-que hay que leer para trabajar en ello.**
-
-Lo decidido en corto, para no tener que releerlo entero:
+Parte del repertorio no está en texto sino como **partituras de verdad en PDF**.
+Está implementado de punta a punta; el plan que lo guió es
+`PLAN-PARTITURAS-PDF.md`, que sirve ya solo para saber **por qué** está así.
 
 - De cada canción **no hay un PDF, hay una matriz**: instrumento × nº de voz ×
-  variante (con o sin los nombres de las notas encima, para quien aún no lee
-  partitura).
-- **Un PDF es una canción con el cuerpo en otro formato**, no un tipo nuevo de
-  elemento en las listas. Así entra en cualquier posición sin tocar el modelo de
-  listas ni migrar nada, y `defaultInstrument` ya elige la voz del músico sola.
-- Para mostrarlos hace falta **pdf.js**. Probado en una tab Samsung: `iframe`,
-  `object` y `embed` salen **en blanco** en Android. Y la sección de vientos
-  mezcla tabs Samsung, iPads y otras marcas, así que no cabe ramificar por
-  dispositivo.
-- Storage está inicializado pero **sin usar**: no hay `storage.rules`, no
-  aparece en `firebase.json` y no existe ninguna subida de archivos en la app.
+  variante (`partitura` y `conNotas`, esta última con los nombres de las notas
+  encima para quien aún no lee partitura). Vive en el campo `pdfs`.
+- **Un PDF es una canción con el cuerpo en otro formato** (`format: "pdf"`), no
+  un tipo nuevo de elemento en las listas. Por eso entra en cualquier posición
+  sin tocar el modelo de listas ni migrar nada. La ausencia de `format` cuenta
+  como `"chords"`, igual que la de `public` cuenta como privada.
+- La lógica de "qué archivo toca" vive en `packages/core/src/music/scores.js` y
+  no toca Firebase: `resolveScore` elige voz y variante. En una canción de texto
+  `defaultInstrument` sirve para transponer; en un PDF **elige el archivo**, que
+  es lo que hace que el trombonista abra el popurrí y le salga la de trombón.
+- Se muestra con **pdf.js** (`apps/web/src/lib/pdfjs.js`, build `legacy` de la
+  4.x). Probado en una tab Samsung: `iframe`, `object` y `embed` salen **en
+  blanco** en Android, y la sección mezcla tabs Samsung, iPads y otras marcas,
+  así que no cabe ramificar por dispositivo. Se carga con `import()` dinámico y
+  queda **fuera del precache** (`globIgnores` en `vite.config.js`): son 400 KB
+  más 1,4 MB de worker que no tiene por qué tragarse quien solo lee texto.
+- El visor pinta **solo las páginas cercanas a la vista**. Cada página es un
+  canvas a tamaño completo; un popurrí largo pintado entero tumba la tablet más
+  barata de la sección. Por lo mismo, una lista **no abre ningún PDF**: enlaza a
+  la canción.
 
-Queda abierto qué hacer con una canción que tenga texto **y** PDF, y cómo subir
-tantos archivos por canción.
+**Dos órdenes que no se pueden invertir**, y cada uno tiene su test porque el
+código por sí solo no lo delata: al quitar una partitura y al borrar una
+canción, primero el **archivo** de Storage y después el documento de Firestore.
+`storage.rules` consulta la canción en Firestore para decidir el permiso, así
+que sin documento el archivo queda inaccesible y sin forma de borrarlo.
+
+Queda por decidir cómo subir tantos archivos de golpe: hoy se sube uno a uno
+desde la pestaña de su voz. Una canción con texto **y** PDF ya funciona: el PDF
+es el cuerpo y la letra se queda como segunda vista.
 
 ## Commands
 
@@ -94,7 +107,9 @@ packages/ui/          # Shared UI components (planned)
 
 **songs**: `userId` (dueño), `public` (repertorio compartido), `album`, `title`, `key`,
 `type`, `version`, `content`, `lyricsOnly`, `voices` (mapa instrumento → nº de voz →
-contenido), `primaryInstrument`, `primaryVoiceNumber`.
+contenido), `primaryInstrument`, `primaryVoiceNumber`, `format` (`"chords"` por
+ausencia, o `"pdf"`), `pdfs` (mapa instrumento → nº de voz → variante → **ruta**
+en Storage, nunca la URL de descarga).
 
 - Una canción **sin** campo `public` cuenta como privada. Las nuevas nacen públicas.
 - `getAllSongs(userId)` devuelve las propias **más** las públicas de otros, y marca cada
@@ -113,6 +128,13 @@ porque la regla de lectura solo deja ver lo propio o lo publicado.
 ## Security Rules
 
 Firestore rules live in `firestore.rules` (deploy with `npx firebase-tools deploy --only firestore`).
+Las de Storage, en `storage.rules` (`npx firebase-tools deploy --only storage`).
+Estas últimas **leen la canción en Firestore** con las reglas entre servicios
+(`firestore.get`), para que el criterio sea exactamente el mismo que el de
+`songs` y no haya que acordarse de cambiarlo en dos sitios. Dos consecuencias:
+hay un tope de **dos** documentos por evaluación (la canción para leer; la
+canción y el usuario para escribir: justo dos), y el primer despliegue pide
+conceder el permiso entre servicios.
 The `role` field on `users/{uid}` is **not** writable by the user — assign roles from the Firebase
 console or the Admin SDK. Client-side `EditorRoute` / `canEditSongs` are UX only; the rules are the
 actual permission boundary.
@@ -152,10 +174,12 @@ Netlify auto-deploys from `master` branch. Configuration in `netlify.toml`:
 ## Notes
 
 - No TypeScript - pure JavaScript
-- Vitest configured; 1032 tests in `apps/web/src/test/` (run with `npm run test:run`)
+- Vitest configured; 1121 tests in `apps/web/src/test/` (run with `npm run test:run`)
 - Los tests se validan con **mutaciones**: se rompe el código a propósito y se comprueba
-  que algún test falla. Ha destapado cuatro tests que pasaban por la razón equivocada.
-  Merece la pena hacerlo con cualquier lógica no trivial que añadas.
+  que algún test falla. Ha destapado cuatro tests que pasaban por la razón equivocada,
+  y un bug de verdad en `scores.js` (las voces se ordenaban como texto, así que la 10
+  iba antes que la 2). Merece la pena hacerlo con cualquier lógica no trivial que añadas.
+  `scripts/mutantes-scores.sh` es un ejemplo de cómo automatizarlo.
 - The song rendering pipeline (transposición → instrumento → notación → formato)
   lives in `packages/core/src/music/songRendering.js`. Úsalo en vez de encadenar
   `transposeContent` / `transposeForInstrument` / `convertNotationSystem` a mano.
