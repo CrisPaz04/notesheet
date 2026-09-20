@@ -1,25 +1,31 @@
 // apps/web/src/App.jsx
-import { lazy, Suspense } from "react";
+import { Suspense } from "react";
 import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import { useTheme } from "./hooks/useTheme";
 import { useAuth } from "./context/AuthContext";
 import LoadingSpinner from "./components/LoadingSpinner";
+import { lazyConRecarga } from "./lib/lazyConRecarga";
 
-// Páginas (carga diferida: cada ruta viaja en su propio chunk)
-const Home = lazy(() => import("./pages/Home"));
-const Login = lazy(() => import("./pages/Login"));
-const Register = lazy(() => import("./pages/Register"));
-const Dashboard = lazy(() => import("./pages/Dashboard"));
-const SongEditor = lazy(() => import("./pages/SongEditor"));
-const SongView = lazy(() => import("./pages/SongView"));
-const NotFound = lazy(() => import("./pages/NotFound"));
-const UserPreferences = lazy(() => import("./pages/UserPreferences"));
-const PlaylistsList = lazy(() => import("./pages/PlaylistsList"));
-const PlaylistEditor = lazy(() => import("./pages/PlaylistEditor"));
-const PlaylistView = lazy(() => import("./pages/PlaylistView"));
-const Metronome = lazy(() => import("./pages/Metronome"));
-const Tuner = lazy(() => import("./pages/Tuner"));
+// Páginas (carga diferida: cada ruta viaja en su propio chunk).
+//
+// `lazyConRecarga` y no `lazy` a secas: tras un despliegue, los archivos de
+// la versión anterior desaparecen, y quien tuviera la app abierta se queda en
+// blanco al entrar en una vista que aún no había visitado. Ver el comentario
+// de `lib/lazyConRecarga.js`.
+const Home = lazyConRecarga(() => import("./pages/Home"));
+const Login = lazyConRecarga(() => import("./pages/Login"));
+const Register = lazyConRecarga(() => import("./pages/Register"));
+const Dashboard = lazyConRecarga(() => import("./pages/Dashboard"));
+const SongEditor = lazyConRecarga(() => import("./pages/SongEditor"));
+const SongView = lazyConRecarga(() => import("./pages/SongView"));
+const NotFound = lazyConRecarga(() => import("./pages/NotFound"));
+const UserPreferences = lazyConRecarga(() => import("./pages/UserPreferences"));
+const PlaylistsList = lazyConRecarga(() => import("./pages/PlaylistsList"));
+const PlaylistEditor = lazyConRecarga(() => import("./pages/PlaylistEditor"));
+const PlaylistView = lazyConRecarga(() => import("./pages/PlaylistView"));
+const Metronome = lazyConRecarga(() => import("./pages/Metronome"));
+const Tuner = lazyConRecarga(() => import("./pages/Tuner"));
 
 // Componentes
 import Navbar from "./components/Navbar";

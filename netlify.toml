@@ -41,6 +41,23 @@
 [build.environment]
   NODE_VERSION = "22"
 
+# Un archivo de /assets que no existe tiene que dar 404, no index.html.
+#
+# Esta regla va ANTES de la del SPA, porque se aplican en orden y los archivos
+# que sí existen se sirven igual (Netlify da prioridad al fichero estático
+# sobre la redirección).
+#
+# Sin esto, pedir un trozo de JavaScript de una compilación anterior --lo que
+# hace el navegador de quien tenía la app abierta cuando se despliega-- caía
+# en la regla de abajo y devolvía HTML con estado 200. El navegador se
+# encontraba `text/html` donde esperaba un módulo y soltaba un error sobre
+# tipos MIME que no señala a ninguna parte. Con un 404 el fallo se entiende, y
+# `lazyConRecarga` lo convierte en una recarga.
+[[redirects]]
+  from = "/assets/*"
+  to = "/404.html"
+  status = 404
+
 # SPA redirect - all routes go to index.html for client-side routing
 [[redirects]]
   from = "/*"
