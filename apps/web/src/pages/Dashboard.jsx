@@ -1,9 +1,15 @@
 import { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
-import { getAllSongs, deleteSong } from "@notesheet/api";
+import {
+  getAllSongs,
+  deleteSong,
+  getPlaylistsWithSong,
+  removeSongFromPlaylists
+} from "@notesheet/api";
 import { identificarTonalidad, nombrarTonalidad } from "@notesheet/core";
 import { useAuth } from "../context/AuthContext";
 import { getUserDisplayName } from "../utils/userHelpers";
+import { mensajeDeBorrado } from "../utils/avisoBorrado";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { SkeletonGrid } from "../components/SkeletonCard";
 import usePreferenciaLocal from "../hooks/usePreferenciaLocal";
@@ -169,16 +175,46 @@ function Dashboard() {
     e.preventDefault();
     e.stopPropagation();
 
-    if (!confirm(`¿Estás seguro de que deseas eliminar "${songTitle}"? Esta acción no se puede deshacer.`)) {
+    // Se mira antes de preguntar: el aviso solo sirve si dice en qué listas
+    // está. `null` marca que no se ha podido consultar; no poder mirar no
+    // debe impedir borrar, pero sí se avisa de que no se sabe.
+    let enListas = null;
+    try {
+      enListas = await getPlaylistsWithSong(songId, currentUser.uid);
+    } catch (error) {
+      console.error("Error buscando las listas que usan la canción:", error);
+    }
+
+    if (!confirm(mensajeDeBorrado(songTitle, enListas))) {
       return;
     }
 
     try {
       await deleteSong(songId);
-      setSongs(songs.filter(song => song.id !== songId));
+      // Forma funcional porque hay awaits por medio: `songs` capturada al
+      // entrar puede no ser ya la del estado.
+      setSongs(prev => prev.filter(song => song.id !== songId));
     } catch (error) {
       setError("Error al eliminar la canción: " + error.message);
       console.error("Error deleting song:", error);
+      return;
+    }
+
+    // La limpieza va DESPUÉS del borrado, no antes. Si se limpiara primero y
+    // fallara el borrado, habríamos vaciado las listas de una canción que
+    // sigue existiendo, y ahí sí se pierden datos: cada entrada lleva su
+    // propia tonalidad para esa ocasión. Al revés lo peor que queda es el
+    // hueco de siempre, que la app ya sabe pintar.
+    if (enListas && enListas.length > 0) {
+      const { fallidas } = await removeSongFromPlaylists(
+        songId, enListas, currentUser.uid
+      );
+      if (fallidas > 0) {
+        setError(
+          `Se eliminó "${songTitle}", pero no se pudo quitar de ${fallidas} ` +
+          `${fallidas === 1 ? "lista" : "listas"}. Ábrelas para revisarlas.`
+        );
+      }
     }
   };
 

@@ -183,6 +183,23 @@ Al guardar una lista como pública se publican sus canciones propias privadas
 (`publicarCancionesDeLaLista`). Sin eso, la lista le aparecería vacía al resto de la banda,
 porque la regla de lectura solo deja ver lo propio o lo publicado.
 
+Borrar una canción **no** la quita de las listas: queda una entrada apuntando a un
+documento inexistente. Desde el cliente eso no se distingue de una canción que no está
+compartida, y no es un descuido de la regla: `resource.data.userId` sobre un documento
+que no existe no se puede evaluar, así que deniega, y sale `permission-denied` en vez de
+`not-found` — una regla que devolviera `not-found` estaría filtrando qué ids existen.
+
+Por eso se avisa **al borrar**, que es el único momento en que aún se sabe qué pasa:
+`getPlaylistsWithSong` busca las listas afectadas, el aviso las nombra y
+`removeSongFromPlaylists` limpia las que son del usuario. No se limpian las de otros
+músicos porque las reglas no dejan escribirlas, y el recuento es un mínimo: una lista
+privada ajena no se puede ni leer. El borrado va **antes** de la limpieza; al revés, un
+borrado fallido dejaría las listas vaciadas de una canción que sigue existiendo, y cada
+entrada lleva su propia tonalidad.
+
+Para ver cuántas listas arrastran ya referencias muertas hay un script de solo lectura:
+`scripts/listas-con-canciones-huerfanas.js` (se pega en la consola del navegador).
+
 **sessions** (sesiones en vivo, `packages/api/src/services/sessions.js`):
 
 ```
@@ -275,7 +292,7 @@ SPA (el orden importa).
 ## Notes
 
 - No TypeScript - pure JavaScript
-- Vitest configured; 1496 tests in `apps/web/src/test/` (run with `npm run test:run`)
+- Vitest configured; 1531 tests in `apps/web/src/test/` (run with `npm run test:run`)
 - Los tests se validan con **mutaciones**: se rompe el código a propósito y se comprueba
   que algún test falla. Ha destapado cuatro tests que pasaban por la razón equivocada,
   y un bug de verdad en `scores.js` (las voces se ordenaban como texto, así que la 10

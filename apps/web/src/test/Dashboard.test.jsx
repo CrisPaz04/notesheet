@@ -6,12 +6,16 @@ import userEvent from '@testing-library/user-event';
 const mockGetAllSongs = vi.fn();
 const mockDeleteSong = vi.fn();
 const mockGetUserPreferences = vi.fn();
+const mockGetPlaylistsWithSong = vi.fn();
+const mockRemoveSongFromPlaylists = vi.fn();
 
 vi.mock('@notesheet/api', () => ({
   getAllSongs: (...a) => mockGetAllSongs(...a),
   deleteSong: (...a) => mockDeleteSong(...a),
   getUserPreferences: (...a) => mockGetUserPreferences(...a),
-  updateUserPreferences: vi.fn().mockResolvedValue({})
+  updateUserPreferences: vi.fn().mockResolvedValue({}),
+  getPlaylistsWithSong: (...a) => mockGetPlaylistsWithSong(...a),
+  removeSongFromPlaylists: (...a) => mockRemoveSongFromPlaylists(...a)
 }));
 
 vi.mock('react-router-dom', () => ({
@@ -24,6 +28,7 @@ const mockAuth = { currentUser: { uid: 'user-1', email: 'lucia@iglesia.org' }, c
 vi.mock('../context/AuthContext', () => ({ useAuth: () => mockAuth }));
 
 const { default: Dashboard } = await import('../pages/Dashboard');
+const { mensajeDeBorrado } = await import('../utils/avisoBorrado');
 
 // `updatedAt` llega como Timestamp de Firestore, con .toDate()
 const timestamp = (date) => ({ toDate: () => date });
@@ -85,6 +90,8 @@ beforeEach(() => {
   mockGetAllSongs.mockResolvedValue(SONGS);
   mockDeleteSong.mockResolvedValue('1');
   mockGetUserPreferences.mockResolvedValue({});
+  mockGetPlaylistsWithSong.mockResolvedValue([]);
+  mockRemoveSongFromPlaylists.mockResolvedValue({ limpiadas: 0, fallidas: 0, ajenas: 0 });
   vi.stubGlobal('confirm', vi.fn(() => true));
 });
 
@@ -500,6 +507,165 @@ describe('Dashboard', () => {
 
       expect(await screen.findByRole('alert')).toHaveTextContent(/Error al eliminar/i);
       expect(screen.getByText('Cristo Vive')).toBeInTheDocument();
+    });
+  });
+
+  // Borrar una canción no la quitaba de las listas que la contienen: quedaba
+  // una entrada apuntando a un documento inexistente y la lista mostraba
+  // "Esta canción no está disponible" sin decir por qué. Ahora se avisa antes
+  // y se limpian las listas que el usuario puede escribir.
+  describe('referencias en listas al eliminar', () => {
+    const LISTA_MIA = {
+      id: 'viernes', name: 'Lista de Viernes', creatorId: 'user-1', isOwn: true,
+      songs: [{ id: '1', title: 'Cristo Vive', key: 'DO' }]
+    };
+    const LISTA_AJENA = {
+      id: 'vientos', name: 'Ensayo de vientos', creatorId: 'trompetista', isOwn: false,
+      songs: [{ id: '1', title: 'Cristo Vive', key: 'MI' }]
+    };
+
+    const borrarLaPrimera = async () => {
+      const user = userEvent.setup();
+      await renderDashboard();
+      await user.click(document.querySelectorAll('.song-delete-btn')[0]);
+    };
+
+    it('consulta las listas de la canción antes de preguntar', async () => {
+      await borrarLaPrimera();
+
+      expect(mockGetPlaylistsWithSong).toHaveBeenCalledWith('1', 'user-1');
+    });
+
+    it('el aviso nombra las listas afectadas', async () => {
+      mockGetPlaylistsWithSong.mockResolvedValue([LISTA_MIA, LISTA_AJENA]);
+
+      await borrarLaPrimera();
+
+      const texto = confirm.mock.calls[0][0];
+      expect(texto).toContain('Lista de Viernes');
+      expect(texto).toContain('Ensayo de vientos');
+    });
+
+    it('quita la canción de las listas tras borrarla', async () => {
+      mockGetPlaylistsWithSong.mockResolvedValue([LISTA_MIA]);
+
+      await borrarLaPrimera();
+
+      await waitFor(() => {
+        expect(mockRemoveSongFromPlaylists).toHaveBeenCalledWith('1', [LISTA_MIA], 'user-1');
+      });
+    });
+
+    // El orden importa: limpiar primero y fallar el borrado dejaría las listas
+    // vacías de una canción que sigue existiendo, y cada entrada lleva su
+    // propia tonalidad para esa ocasión.
+    it('borra antes de limpiar, nunca al revés', async () => {
+      const orden = [];
+      mockGetPlaylistsWithSong.mockResolvedValue([LISTA_MIA]);
+      mockDeleteSong.mockImplementation(async () => { orden.push('borrar'); });
+      mockRemoveSongFromPlaylists.mockImplementation(async () => {
+        orden.push('limpiar');
+        return { limpiadas: 1, fallidas: 0, ajenas: 0 };
+      });
+
+      await borrarLaPrimera();
+
+      await waitFor(() => expect(orden).toEqual(['borrar', 'limpiar']));
+    });
+
+    it('no toca las listas si falla el borrado', async () => {
+      mockGetPlaylistsWithSong.mockResolvedValue([LISTA_MIA]);
+      mockDeleteSong.mockRejectedValue(new Error('sin permisos'));
+
+      await borrarLaPrimera();
+
+      expect(await screen.findByRole('alert')).toHaveTextContent(/Error al eliminar/i);
+      expect(mockRemoveSongFromPlaylists).not.toHaveBeenCalled();
+    });
+
+    it('no toca las listas si el usuario cancela', async () => {
+      mockGetPlaylistsWithSong.mockResolvedValue([LISTA_MIA]);
+      vi.stubGlobal('confirm', vi.fn(() => false));
+
+      await borrarLaPrimera();
+
+      expect(mockDeleteSong).not.toHaveBeenCalled();
+      expect(mockRemoveSongFromPlaylists).not.toHaveBeenCalled();
+    });
+
+    // La canción ya está borrada: el fallo de limpieza no se puede deshacer,
+    // solo contar, para que el usuario sepa que le queda un hueco.
+    it('avisa si alguna lista no se pudo limpiar', async () => {
+      mockGetPlaylistsWithSong.mockResolvedValue([LISTA_MIA]);
+      mockRemoveSongFromPlaylists.mockResolvedValue({ limpiadas: 0, fallidas: 1, ajenas: 0 });
+
+      await borrarLaPrimera();
+
+      expect(await screen.findByRole('alert')).toHaveTextContent(/no se pudo quitar de 1 lista/i);
+      // Pero la canción sí se borró: no debe volver a aparecer.
+      expect(screen.queryByText('Cristo Vive')).not.toBeInTheDocument();
+    });
+
+    // No poder mirar las listas no debe impedir borrar; pero tampoco se puede
+    // callar y dar a entender que no esta en ninguna.
+    it('deja borrar aunque falle la consulta, y lo dice', async () => {
+      mockGetPlaylistsWithSong.mockRejectedValue(new Error('sin conexión'));
+
+      await borrarLaPrimera();
+
+      expect(confirm.mock.calls[0][0]).toMatch(/No se ha podido comprobar/i);
+      await waitFor(() => expect(mockDeleteSong).toHaveBeenCalledWith('1'));
+      expect(mockRemoveSongFromPlaylists).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('mensajeDeBorrado', () => {
+    const lista = (name, isOwn) => ({ name, isOwn });
+
+    it('sin listas, solo el aviso de siempre', () => {
+      const texto = mensajeDeBorrado('Cristo Vive', []);
+      expect(texto).toContain('Cristo Vive');
+      expect(texto).not.toMatch(/lista/i);
+    });
+
+    it('cuenta y nombra las listas', () => {
+      const texto = mensajeDeBorrado('Cristo Vive', [lista('Viernes', true), lista('Domingo', true)]);
+      expect(texto).toContain('Está en 2 listas');
+      expect(texto).toContain('Viernes');
+      expect(texto).toContain('Domingo');
+    });
+
+    it('singular con una sola lista', () => {
+      expect(mensajeDeBorrado('Cristo Vive', [lista('Viernes', true)]))
+        .toContain('Está en 1 lista:');
+    });
+
+    it('promete limpiar solo las propias', () => {
+      const texto = mensajeDeBorrado('Cristo Vive', [lista('Viernes', true), lista('Vientos', false)]);
+      expect(texto).toContain('Se quitará de la que es tuya');
+      expect(texto).toMatch(/1 es de otro músico/i);
+    });
+
+    // Si todas son ajenas no se puede limpiar ninguna: prometerlo sería
+    // mentir, porque las reglas no dejan escribir en la lista de otro.
+    it('no promete limpiar nada si ninguna es propia', () => {
+      const texto = mensajeDeBorrado('Cristo Vive', [lista('Vientos', false)]);
+      expect(texto).not.toMatch(/Se quitará/i);
+      expect(texto).toMatch(/seguirá mostrando un hueco/i);
+    });
+
+    it('no menciona a otros músicos si todas son propias', () => {
+      const texto = mensajeDeBorrado('Cristo Vive', [lista('Viernes', true)]);
+      expect(texto).not.toMatch(/otro músico/i);
+    });
+
+    // null es "no se ha podido consultar", distinto de "no está en ninguna".
+    it('distingue no saber de no haber ninguna', () => {
+      expect(mensajeDeBorrado('Cristo Vive', null)).toMatch(/No se ha podido comprobar/i);
+    });
+
+    it('aguanta una lista sin nombre', () => {
+      expect(mensajeDeBorrado('Cristo Vive', [lista(undefined, true)])).toContain('(sin nombre)');
     });
   });
 
