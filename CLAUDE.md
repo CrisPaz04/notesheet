@@ -110,6 +110,37 @@ Al guardar una lista como pública se publican sus canciones propias privadas
 (`publicarCancionesDeLaLista`). Sin eso, la lista le aparecería vacía al resto de la banda,
 porque la regla de lectura solo deja ver lo propio o lo publicado.
 
+**sessions** (sesiones en vivo, `packages/api/src/services/sessions.js`):
+
+```
+sessions/{code}                     songs[], activeSongId, version, status, hostId, expiresAt
+sessions/{code}/participants/{uid}  name, instrumentId, voiceNumber, lastSeen, expiresAt
+```
+
+- Una sesión **copia** la lista al nacer y luego vive sola: lo que se cambia durante el
+  servicio no reescribe el repertorio. Las reglas de `playlists` solo dejan escribir al
+  creador, y en vivo el que baja una tonalidad suele ser otro.
+- **El código es la llave.** Es el id del documento, 6 caracteres Crockford base32 de
+  `crypto.getRandomValues`. Por eso las reglas permiten `get` pero **no `list`**: con
+  `list` abierto cualquiera se descargaría la colección y el código no protegería nada.
+- **`version` sube exactamente en uno** por cambio, con el número calculado por el cliente,
+  y la regla comprueba `version == resource.version + 1`. Es el guardia contra la escritura
+  que Firestore encola sin red y reenvía minutos después: sin él, un cambio viejo pisa el
+  actual. No sirve `increment()`: lo calcularía el servidor y la comparación se cumpliría
+  siempre.
+- La canción activa se guarda por **id**, no por posición, para que quitar o reordenar no
+  cambie cuál se está tocando.
+- La tonalidad compartida es la **de concierto**. Cada cliente la pasa por
+  `renderSongContent` con su instrumento local (`useLiveSongContent`). Instrumento, voz,
+  notación y tamaño de letra **no viajan**: son de cada dispositivo.
+
+Tres cosas hay que habilitar a mano en la consola de Firebase, y sin ellas la función
+no funciona o deja basura:
+1. **Auth anónima** — el enlace llega por WhatsApp a músicos sin cuenta (`signInAsGuest`).
+2. **Política TTL sobre `expiresAt` en `sessions`**.
+3. **Otra política TTL sobre el grupo de colecciones `participants`** — la del padre no
+   alcanza a la subcolección, y sin esta los documentos de presencia quedan huérfanos.
+
 ## Security Rules
 
 Firestore rules live in `firestore.rules` (deploy with `npx firebase-tools deploy --only firestore`).
