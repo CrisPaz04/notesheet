@@ -148,6 +148,49 @@
   margin-top: auto;
 }
 
+/* --- Dentro de una lista ---------------------------------------------- */
+
+/* Enlace a la partitura desde la lista. La lista no abre ningún PDF: sobre el
+   atril se lee una canción cada vez, y ocho documentos abiertos a la vez es
+   justo lo que no aguanta la tablet más barata de la sección. */
+.playlist-song-pdf {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.2s ease;
+}
+
+.playlist-song-pdf:hover {
+  border-color: var(--color-primary);
+}
+
+.playlist-song-pdf > span {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.playlist-song-pdf small {
+  opacity: 0.7;
+}
+
+.playlist-song-pdf > i:first-child {
+  font-size: 1.5rem;
+  color: var(--color-primary);
+}
+
+/* Tonalidad de una entrada de PDF dentro del editor de listas: es un dato,
+   no un control. */
+.tonality-fixed {
+  opacity: 0.75;
+  font-size: 0.9rem;
+}
+
 /* Contador "1/2" en la pestaña de cada voz */
 .tab-badge {
   margin-left: 0.5rem;

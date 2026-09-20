@@ -2,7 +2,12 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import { getUserPreferences, updateUserPreferences } from "@notesheet/api";
-import { TRANSPOSING_INSTRUMENTS } from "@notesheet/core";
+import {
+  TRANSPOSING_INSTRUMENTS,
+  SCORE_VARIANTS,
+  SCORE_VARIANT_LABELS,
+  DEFAULT_SCORE_VARIANT
+} from "@notesheet/core";
 import { useThemeWithAuth } from "../hooks/useThemeWithAuth";
 import LoadingSpinner from "../components/LoadingSpinner";
 import PreferencesInstrumentSelector from "../components/PreferencesInstrumentSelector";
@@ -17,6 +22,7 @@ function UserPreferences() {
   const [preferences, setPreferences] = useState({
     defaultInstrument: "bb_trumpet",
     defaultNotationSystem: "latin",
+    defaultScoreVariant: DEFAULT_SCORE_VARIANT,
     defaultFontSize: 18,
     defaultTheme: "light"
   });
@@ -204,6 +210,48 @@ function UserPreferences() {
                     </div>
                   </div>
                   
+                  {/* La variante es del músico, no de la canción: quien
+                      todavía no lee partitura la quiere con los nombres de
+                      las notas encima siempre, no canción por canción. */}
+                  <div className="form-group-modern mb-4">
+                    <label className="form-label-modern">
+                      <i className="bi bi-file-earmark-music me-2"></i>
+                      Partituras en PDF
+                    </label>
+                    <div className="notation-options">
+                      {SCORE_VARIANTS.map((variant) => (
+                        <div className="notation-option" key={variant}>
+                          <input
+                            type="radio"
+                            id={`pref-score-variant-${variant}`}
+                            name="defaultScoreVariant"
+                            value={variant}
+                            checked={preferences.defaultScoreVariant === variant}
+                            onChange={(e) => handleChange("defaultScoreVariant", e.target.value)}
+                            className="notation-radio"
+                          />
+                          <label
+                            htmlFor={`pref-score-variant-${variant}`}
+                            className="notation-label"
+                          >
+                            <div className="notation-preview">
+                              <i className={variant === "conNotas"
+                                ? "bi bi-eyeglasses"
+                                : "bi bi-file-earmark-music"}></i>
+                            </div>
+                            <div className="notation-name">
+                              {SCORE_VARIANT_LABELS[variant]}
+                            </div>
+                          </label>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="form-help-text">
+                      Si una voz no tiene la versión elegida, se muestra la
+                      otra y se avisa en pantalla.
+                    </div>
+                  </div>
+
                   <div className="form-group-modern mb-4">
                     <label htmlFor="pref-font-size-slider" className="form-label-modern">
                       <i className="bi bi-fonts me-2"></i>

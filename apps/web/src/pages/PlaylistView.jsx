@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { getPlaylistById, getSongById } from "@notesheet/api";
 import { useAuth } from "../context/AuthContext";
-import { renderSongContent } from "@notesheet/core";
+import { renderSongContent, isPdfSong } from "@notesheet/core";
 import LoadingSpinner from "../components/LoadingSpinner";
 
 function PlaylistView() {
@@ -32,6 +32,20 @@ function PlaylistView() {
               try {
                 const fullSong = await getSongById(song.id);
 
+                // Una partitura en PDF no tiene `content` que formatear ni
+                // tonalidad a la que transponer: se enlaza a la canción, que
+                // es donde vive el visor. Aquí no se abre ninguna: una lista
+                // con ocho PDF abiertos a la vez es justo lo que no aguanta
+                // la tablet más barata de la sección, y sobre el atril se
+                // lee una canción cada vez.
+                if (isPdfSong(fullSong)) {
+                  return {
+                    ...fullSong,
+                    selectedKey: song.key,
+                    formattedContent: null
+                  };
+                }
+
                 // La lista puede transponer una canción solo para esta ocasión:
                 // hay que mostrarla en la tonalidad elegida, no en la original.
                 // Antes se formateaba sin transponer y la etiqueta decía una
@@ -43,7 +57,7 @@ function PlaylistView() {
                     targetKey: song.key || fullSong.key
                   }
                 );
-                
+
                 // Combinar los datos de la canción con los datos de la playlist
                 return {
                   ...fullSong,
@@ -336,6 +350,21 @@ function PlaylistView() {
                     </div>
                   </div>
                   
+                  {/* Una partitura en PDF se abre en su propia pantalla. Sin
+                      esto no se vería nada y parecería una canción vacía. */}
+                  {!song.error && isPdfSong(song) && (
+                    <div className="song-content-section">
+                      <Link to={`/songs/${song.id}`} className="playlist-song-pdf">
+                        <i className="bi bi-file-earmark-music"></i>
+                        <span>
+                          <strong>Partitura en PDF</strong>
+                          <small>Ábrela para verla en tu voz</small>
+                        </span>
+                        <i className="bi bi-chevron-right"></i>
+                      </Link>
+                    </div>
+                  )}
+
                   {/* Contenido de la canción */}
                   {!song.error && song.formattedContent && (
                     <div className="song-content-section">

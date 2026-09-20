@@ -7,7 +7,7 @@ import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import LoadingSpinner from "../components/LoadingSpinner";
 import PlaylistKeySelector from "../components/PlaylistKeySelector";
 import useSelectedSongs from "../hooks/useSelectedSongs";
-import { emparejarSetlist } from "@notesheet/core";
+import { emparejarSetlist, isPdfSong } from "@notesheet/core";
 
 function PlaylistEditor() {
   const [name, setName] = useState("");
@@ -136,6 +136,18 @@ function PlaylistEditor() {
     setResultadoImport(null);
     setTextoImport("");
   };
+
+  /**
+   * Si una canción de la lista es una partitura en PDF.
+   *
+   * Se consulta al repertorio ya cargado en vez de guardar el formato en la
+   * entrada de la lista: así vale también para las listas que ya existen,
+   * sin migrar nada, y una canción que cambie de formato no deja entradas
+   * mintiendo por ahí.
+   */
+  const esPdfEnLista = (songId) => (
+    isPdfSong(availableSongs.find((c) => c.id === songId))
+  );
 
   /**
    * Publica en el repertorio las canciones propias de la lista que todavía
@@ -535,12 +547,29 @@ function PlaylistEditor() {
                                   <div className="selected-song-content">
                                     <h5 className="selected-song-title">{song.title || "Sin título"}</h5>
                                     <div className="selected-song-controls">
-                                      <label className="tonality-label">Tonalidad:</label>
-                                      <PlaylistKeySelector
-                                        value={song.key}
-                                        onChange={(newKey) => changeKey(song.id, newKey)}
-                                        originalKey={song.originalKey}
-                                      />
+                                      {/* Una partitura en PDF no se transpone:
+                                          es una imagen. Aquí la tonalidad es
+                                          informativa, y un selector que no
+                                          hace nada confunde más que no
+                                          tenerlo. */}
+                                      {esPdfEnLista(song.id) ? (
+                                        <>
+                                          <label className="tonality-label">Tonalidad:</label>
+                                          <span className="tonality-fixed">
+                                            <i className="bi bi-file-earmark-pdf me-1"></i>
+                                            {song.key || "—"} · partitura
+                                          </span>
+                                        </>
+                                      ) : (
+                                        <>
+                                          <label className="tonality-label">Tonalidad:</label>
+                                          <PlaylistKeySelector
+                                            value={song.key}
+                                            onChange={(newKey) => changeKey(song.id, newKey)}
+                                            originalKey={song.originalKey}
+                                          />
+                                        </>
+                                      )}
                                     </div>
                                   </div>
                                   
