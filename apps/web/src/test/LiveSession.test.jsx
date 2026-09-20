@@ -230,6 +230,56 @@ describe('seguir al director', () => {
   });
 });
 
+describe('cabecera fija', () => {
+  // El fallo que apareció usándolo: solo se pegaba la barra de estado, así que
+  // al bajar por la canción había que volver arriba para pasar a la siguiente.
+  it('la navegación va dentro de la cabecera que se queda fija', () => {
+    render(<LiveSession />);
+
+    const cabecera = document.querySelector('.live-header');
+    expect(cabecera).toBeInTheDocument();
+    expect(within(cabecera).getByRole('button', { name: /siguiente/i })).toBeInTheDocument();
+    expect(within(cabecera).getByRole('button', { name: /anterior/i })).toBeInTheDocument();
+    expect(within(cabecera).getByRole('button', { name: /compartir/i })).toBeInTheDocument();
+  });
+
+  // Las canciones no: son justo lo que tiene que poder scrollear.
+  it('las canciones se quedan fuera de la cabecera', () => {
+    render(<LiveSession />);
+
+    const cabecera = document.querySelector('.live-header');
+    expect(within(cabecera).queryByRole('heading', { name: 'Cristo Vive' })).not.toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Cristo Vive' })).toBeInTheDocument();
+  });
+
+  // Fijarlo todo tiene un precio en un móvil: instrumento, notación, tamaño y
+  // seguir se comen la pantalla que hace falta para leer.
+  it('los ajustes propios se pliegan y el dispositivo lo recuerda', async () => {
+    render(<LiveSession />);
+    expect(screen.getByLabelText('Mi instrumento')).toBeVisible();
+
+    await userEvent.click(screen.getByRole('button', { name: /mis ajustes/i }));
+
+    expect(localStorage.getItem('live:ajustes')).toBe('no');
+    expect(document.querySelector('.live-controls')).toHaveClass('plegado');
+  });
+
+  it('plegado sigue diciendo qué instrumento estás leyendo', async () => {
+    render(<LiveSession />);
+    await userEvent.click(screen.getByRole('button', { name: /mis ajustes/i }));
+
+    expect(screen.getByRole('button', { name: /mis ajustes/i }))
+      .toHaveTextContent(/Trompeta en Sib/);
+  });
+
+  it('arranca desplegado la primera vez', () => {
+    render(<LiveSession />);
+
+    expect(screen.getByRole('button', { name: /mis ajustes/i }))
+      .toHaveAttribute('aria-expanded', 'true');
+  });
+});
+
 describe('controles a la vista', () => {
   // La primera versión los escondió detrás de un botón que no parecía un
   // botón, y no los encontró nadie.

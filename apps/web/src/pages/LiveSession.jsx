@@ -54,6 +54,17 @@ function LiveSession() {
    */
   const [seguir, setSeguir] = usePreferenciaLocal("live:seguir", "si", SEGUIR);
 
+  /**
+   * Si los controles propios están desplegados.
+   *
+   * Todo lo de arriba se queda fijo para poder pasar de canción sin volver al
+   * principio, pero eso tiene un precio: en un móvil, instrumento + notación +
+   * tamaño + seguir se comen media pantalla, que es justo la que hace falta
+   * para leer. Se configuran una vez al entrar y después estorban, así que se
+   * pliegan y el dispositivo lo recuerda.
+   */
+  const [verAjustes, setVerAjustes] = usePreferenciaLocal("live:ajustes", "si", SEGUIR);
+
   const [voiceKeys, setVoiceKeys] = useState({});
   const [verIndice, setVerIndice] = useState(false);
 
@@ -79,6 +90,34 @@ function LiveSession() {
   // --- Scroll hacia la canción activa ---
   const refsCanciones = useRef({});
   const ultimaActiva = useRef(null);
+  const headerRef = useRef(null);
+
+  /**
+   * Publica la altura de la cabecera fija en una variable CSS.
+   *
+   * `scroll-margin-top` la usa para que, al saltar a una canción, su título no
+   * quede escondido debajo de la cabecera. Un valor fijo no sirve porque la
+   * cabecera cambia de alto al plegar los ajustes o al aparecer el aviso de
+   * "sin conexión".
+   */
+  useEffect(() => {
+    const nodo = headerRef.current;
+    if (!nodo) return undefined;
+
+    const aplicar = () => {
+      nodo.parentElement?.style.setProperty("--live-header-h", `${nodo.offsetHeight}px`);
+    };
+
+    aplicar();
+
+    // jsdom no implementa ResizeObserver; sin red de seguridad, los tests de
+    // esta pantalla reventarían al montar.
+    if (typeof ResizeObserver === "undefined") return undefined;
+
+    const observador = new ResizeObserver(aplicar);
+    observador.observe(nodo);
+    return () => observador.disconnect();
+  }, [verAjustes, sinRed, estado]);
 
   /**
    * Marca que el salto lo he pedido yo.
@@ -221,6 +260,9 @@ function LiveSession() {
 
   return (
     <div className="live-container">
+      {/* Todo esto se queda fijo: pasar de canción no puede obligar a volver
+          arriba scrolleando con el instrumento en la mano. */}
+      <div className="live-header" ref={headerRef}>
       <LiveBar
         code={code}
         name={session?.name}
@@ -240,7 +282,21 @@ function LiveSession() {
       )}
 
       {/* Controles propios: nada de esto viaja a los demás */}
-      <div className="live-controls no-print">
+      <button
+        type="button"
+        className="live-ajustes-toggle no-print"
+        onClick={() => setVerAjustes(verAjustes === "si" ? "no" : "si")}
+        aria-expanded={verAjustes === "si"}
+      >
+        <i className={`bi bi-chevron-${verAjustes === "si" ? "up" : "down"} me-2`} />
+        Mis ajustes
+        <span className="live-ajustes-resumen">
+          {TRANSPOSING_INSTRUMENTS[instrumento]?.name}
+          {notacion === "latin" ? " · DO-RE-MI" : " · C-D-E"}
+        </span>
+      </button>
+
+      <div className={`live-controls no-print ${verAjustes === "si" ? "" : "plegado"}`}>
         <div className="live-control-group">
           <label className="live-control-label" htmlFor="live-instrumento">
             Mi instrumento
@@ -322,6 +378,7 @@ function LiveSession() {
           Siguiente
           <i className="bi bi-chevron-right" />
         </button>
+      </div>
       </div>
 
       {verIndice && (

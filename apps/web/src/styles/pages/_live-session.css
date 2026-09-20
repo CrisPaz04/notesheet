@@ -4,23 +4,51 @@
  *
  * Se usa sobre el escenario, de pie, con el instrumento en la mano: los
  * controles son grandes (44px de alto mínimo, que es lo que se acierta con el
- * pulgar sin mirar) y la barra de estado va pegada arriba para que el aviso de
- * "sin conexión" no se pierda al hacer scroll por la canción.
+ * pulgar sin mirar) y la cabecera entera va fija, porque pasar de canción no
+ * puede obligar a volver arriba scrolleando.
  */
 
+/* El fondo va a sangre completa y el ancho lo limitan los hijos, como en
+ * `playlists-container`. Ponerlo todo en un mismo elemento dejaba los
+ * laterales con el blanco del body asomando en tema oscuro. */
 .live-container {
-  max-width: 900px;
-  margin: 0 auto;
-  padding: var(--spacing-md);
-  padding-bottom: var(--spacing-xxl);
+  background: var(--bg-dark-primary);
+  min-height: 100vh;
+  padding: var(--spacing-md) var(--spacing-md) var(--spacing-xxl);
 }
 
-/* --- Barra de estado --- */
+.live-container > * {
+  max-width: 900px;
+  margin-left: auto;
+  margin-right: auto;
+}
 
-.live-bar {
+/* --- Cabecera fija ---
+ *
+ * Se queda entera arriba: barra de estado, ajustes y navegación. Pasar de
+ * canción no puede obligar a volver al principio scrolleando, que es lo que
+ * pasaba cuando solo se pegaba la barra.
+ *
+ * Su altura se publica en `--live-header-h` desde la página, porque cambia al
+ * plegar los ajustes o al aparecer el aviso de "sin conexión", y las tarjetas
+ * la necesitan para que al saltar a una canción su título no quede debajo.
+ */
+.live-header {
   position: sticky;
   top: 0;
-  z-index: 20;
+  z-index: 30;
+  background: var(--bg-dark-primary);
+  padding-top: var(--spacing-sm);
+  /* El `padding-bottom` no es decorativo: sin él, el margen inferior de la
+     navegación se colapsa fuera de la cabecera y la partitura aparece cortada
+     a ras de los botones, a media letra. */
+  padding-bottom: var(--spacing-sm);
+  /* Una sombra en vez de un borde: al scrollear se ve que hay contenido
+     pasando por debajo, en vez de parecer una caja suelta. */
+  box-shadow: 0 6px 12px -6px rgba(0, 0, 0, 0.45);
+}
+
+.live-bar {
   background: var(--bg-dark-secondary);
   border: 1px solid var(--border-light);
   border-radius: var(--radius-lg);
@@ -194,6 +222,34 @@
 .live-icon-danger:hover:not(:disabled) { border-color: #ef4444; color: #f87171; }
 
 /* --- Controles propios --- */
+
+.live-ajustes-toggle {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 44px;
+  padding: 0 var(--spacing-md);
+  margin-bottom: var(--spacing-sm);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  background: var(--bg-dark-secondary);
+  color: var(--text-light-secondary);
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+/* Plegado sigue diciendo qué instrumento estás leyendo: es lo que confirma de
+   un vistazo que no vas a tocar el papel equivocado. */
+.live-ajustes-resumen {
+  margin-left: auto;
+  color: var(--text-light-muted);
+  font-size: 0.82rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.live-controls.plegado { display: none; }
 
 .live-controls {
   display: flex;
@@ -413,8 +469,16 @@
   border-left: 4px solid transparent;
   border-radius: var(--radius-lg);
   padding: var(--spacing-lg);
-  /* Deja sitio bajo la barra pegajosa cuando el scroll salta hasta aquí. */
-  scroll-margin-top: 96px;
+  /* Contexto de apilado propio. `PlaylistKeySelector` lleva z-index 1000 por
+     dentro (y su menú 9999), pensado para la lista del editor; sin encerrarlo,
+     el selector de tonalidad de cada canción se dibujaba POR ENCIMA de la
+     cabecera fija y asomaba arriba del todo al scrollear. Encerrarlo aquí lo
+     resuelve sin entrar en una carrera de z-index. */
+  position: relative;
+  z-index: 1;
+  /* Deja sitio bajo la cabecera fija cuando el scroll salta hasta aquí. La
+     altura real la publica la página, porque cambia al plegar los ajustes. */
+  scroll-margin-top: calc(var(--live-header-h, 180px) + var(--spacing-sm));
 }
 
 /* La activa se marca, no se aísla: lo de al lado tiene que seguir a la vista
@@ -587,6 +651,8 @@
   .live-bar,
   .live-controls,
   .live-nav,
+  .live-header,
+  .live-ajustes-toggle,
   .live-setlist,
   .live-add,
   .live-card-controls { display: none !important; }
