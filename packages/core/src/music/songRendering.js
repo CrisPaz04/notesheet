@@ -10,7 +10,12 @@
 
 import { transposeContent } from './transposition';
 import { convertNotationSystem, formatSong } from './notation';
-import { transposeForInstrument, getVisualKeyForInstrument } from './transposition-helper';
+import {
+  transposeForInstrument,
+  transposeBySemitones,
+  transposeKeyBySemitones,
+  getVisualKeyForInstrument
+} from './transposition-helper';
 import { splitChordSegment } from './chords';
 
 // Las voces se escriben siempre en la tonalidad de trompeta en Sib; el resto
@@ -18,12 +23,45 @@ import { splitChordSegment } from './chords';
 export const SOURCE_INSTRUMENT = 'bb_trumpet';
 
 /**
+ * Funde varias secciones en una sola.
+ *
+ * Las cabeceras `##` son de la vista de acordes: marcan dónde entra cada
+ * instrumento, y se pintan como tarjetas sueltas, con el título en mayúsculas
+ * y tres rem de aire entre una y la siguiente. A quien viene a cantar eso le
+ * parte la letra en trozos y le multiplica el scroll. Aquí el título se queda
+ * como una línea más dentro del mismo bloque, que es como está escrita una
+ * hoja de letra de toda la vida.
+ *
+ * Una sección que se queda sin contenido —un "Intro" o un interludio al que se
+ * le han quitado los acordes— desaparece entera: su título suelto no le dice
+ * nada a quien viene a leer la letra.
+ *
+ * @param {Array<{title: string, content: string}>} sections
+ * @returns {Array<{title: string, content: string}>} Cero o una sección
+ */
+const unirSecciones = (sections) => {
+  const bloques = sections
+    .map((section) => {
+      const texto = (section.content || '').trim();
+      if (!texto) return '';
+      return section.title ? `${section.title}\n${texto}` : texto;
+    })
+    .filter(Boolean);
+
+  const content = bloques.join('\n\n');
+  return content ? [{ title: '', content }] : [];
+};
+
+/**
  * Elimina los acordes de una canción ya formateada, dejando solo la letra.
  * Opera sobre el objeto que devuelve `formatSong`, no sobre texto plano
  * (para eso existe `extractLyricsOnly` en notation.js).
  *
+ * Devuelve **una sola sección**, aunque la canción venga partida en muchas
+ * (ver `unirSecciones`).
+ *
  * @param {Object} formattedSong - Resultado de `formatSong`
- * @returns {Object|null} Misma estructura, con las secciones sin acordes
+ * @returns {Object|null} Misma estructura, con la letra entera en `sections[0]`
  */
 export const extractLyricsSections = (formattedSong) => {
   if (!formattedSong || !formattedSong.sections) return null;
@@ -31,7 +69,7 @@ export const extractLyricsSections = (formattedSong) => {
   // Se quitan las líneas de acordes enteras en vez de borrar nota a nota:
   // splitChordSegment distingue un acorde de una palabra, así que "LAm" o
   // "Cmaj7" desaparecen sin tocar letra como "Amor" o "Dame".
-  const sections = formattedSong.sections.map((section) => ({
+  const sinAcordes = formattedSong.sections.map((section) => ({
     ...section,
     content: section.content
       .split('\n')
@@ -41,16 +79,39 @@ export const extractLyricsSections = (formattedSong) => {
       .trim()
   }));
 
-  return { ...formattedSong, sections };
+  return { ...formattedSong, sections: unirSecciones(sinAcordes) };
 };
 
 /**
- * Aplica transposición de tonalidad, transposición por instrumento y
+ * Formatea un texto que ya es solo letra —el campo `lyricsOnly`, que en las
+ * canciones en PDF es la única vista de texto que hay— en un único bloque.
+ *
+ * No pasa por `extractLyricsSections` a propósito: ahí no hay acordes que
+ * quitar, y quitarlos se llevaría por delante una línea de letra que por mala
+ * suerte se pareciera a una de acordes.
+ *
+ * @param {string} content - Texto de la letra
+ * @returns {Object|null} Estructura de `formatSong` con la letra en `sections[0]`
+ */
+export const formatLyrics = (content) => {
+  if (!content || !content.trim()) return null;
+
+  const formatted = formatSong(content);
+  return { ...formatted, sections: unirSecciones(formatted.sections) };
+};
+
+/**
+ * Aplica transposición de tonalidad, transposición por instrumento, capo y
  * conversión de notación, y devuelve el contenido listo para mostrar.
  *
  * El orden importa: primero se cambia de tonalidad, después se adapta al
- * instrumento y solo al final se traduce la notación. Invertirlo produce
- * dobles alteraciones.
+ * instrumento, luego el capo, y solo al final se traduce la notación.
+ * Invertirlo produce dobles alteraciones.
+ *
+ * **El capo no cambia lo que suena, cambia lo que se lee.** Con la cejilla en
+ * el traste 3, el guitarrista toca las formas tres semitonos por debajo y la
+ * cejilla las devuelve a su sitio. Por eso se resta: `displayKey` es lo que
+ * el músico lee y `soundingKey` lo que la banda oye, y con capo no coinciden.
  *
  * @param {string} content - Contenido original de la voz seleccionada
  * @param {Object} options
@@ -58,13 +119,15 @@ export const extractLyricsSections = (formattedSong) => {
  * @param {string} options.targetKey - Tonalidad a la que se quiere transponer
  * @param {string} options.instrument - Instrumento de destino
  * @param {string} options.notationSystem - 'latin' o 'english'
- * @returns {{ formatted: Object, lyricsOnly: Object, displayKey: string }}
+ * @param {number} options.capo - Traste de la cejilla (0 = sin capo)
+ * @returns {{ formatted: Object, lyricsOnly: Object, displayKey: string, soundingKey: string }}
  */
 export const renderSongContent = (content, {
   baseKey,
   targetKey,
   instrument = SOURCE_INSTRUMENT,
-  notationSystem = 'latin'
+  notationSystem = 'latin',
+  capo = 0
 } = {}) => {
   let processed = content || '';
 
@@ -76,16 +139,24 @@ export const renderSongContent = (content, {
     processed = transposeForInstrument(processed, SOURCE_INSTRUMENT, instrument);
   }
 
+  // Un capo negativo o no numérico no significa nada: se ignora.
+  const trasteCapo = Number.isInteger(capo) && capo > 0 ? capo : 0;
+  if (trasteCapo) {
+    processed = transposeBySemitones(processed, -trasteCapo);
+  }
+
   // `convertNotationSystem` es idempotente: aplicarla siempre mantiene el
   // sistema elegido aunque la canción se haya escrito en el otro.
   processed = convertNotationSystem(processed, notationSystem);
 
   const formatted = formatSong(processed);
+  const soundingKey = getVisualKeyForInstrument(targetKey || baseKey, instrument);
 
   return {
     formatted,
     lyricsOnly: extractLyricsSections(formatted),
-    displayKey: getVisualKeyForInstrument(targetKey || baseKey, instrument)
+    displayKey: transposeKeyBySemitones(soundingKey, -trasteCapo),
+    soundingKey
   };
 };
 

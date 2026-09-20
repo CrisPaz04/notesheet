@@ -11,12 +11,15 @@ import {
 import {
   detectNotationSystem,
   getVisualKeyForInstrument,
+  transposeKeyBySemitones,
   renderSongContent,
-  formatSong,
+  formatLyrics,
   buildVoicesList,
   parseVoiceKey,
   resolveInitialVoice,
   isPdfSong,
+  readsChordChart,
+  supportsCapo,
   buildScoreVoicesList,
   resolveScore,
   SCORE_VARIANTS,
@@ -34,6 +37,13 @@ import useModal from "../hooks/useModal";
 import useSwipeViews from "../hooks/useSwipeViews";
 import useFontSizePreference from "../hooks/useFontSizePreference";
 import PdfScoreViewer from "../components/PdfScoreViewer";
+
+// Trastes donde se pone la cejilla. Más allá del VII ya no queda mástil para
+// tocar cómodo, y la guitarra se queda sin graves.
+const TRASTES_CAPO = [0, 1, 2, 3, 4, 5, 6, 7];
+
+// Los trastes se numeran en romanos en toda la literatura de guitarra.
+const TRASTES_ROMANOS = ["", "I", "II", "III", "IV", "V", "VI", "VII"];
 
 // Arrays de pares de tonalidades relativas
 const RELATIVE_KEYS = [
@@ -65,12 +75,17 @@ function SongView() {
   // --- Tonalidades ---
   const [baseKey, setBaseKey] = useState("");       // tonalidad escrita
   const [displayKey, setDisplayKey] = useState(""); // la que ve el instrumentista
+  const [soundingKey, setSoundingKey] = useState(""); // la que oye la banda (difiere con capo)
   const [targetKey, setTargetKey] = useState("");   // a la que se transpone
 
   // --- Contenido y presentación ---
   const [originalContent, setOriginalContent] = useState("");
   const [notationSystem, setNotationSystem] = useState("latin");
   const [currentInstrument, setCurrentInstrument] = useState(SOURCE_INSTRUMENT);
+  // Traste de la cejilla. No se guarda: depende de la tonalidad de esta
+  // canción, así que arrastrarlo a la siguiente daría un valor equivocado.
+  const [capo, setCapo] = useState(0);
+  const [showCapoDropdown, setShowCapoDropdown] = useState(false);
   const [selectedVoiceKey, setSelectedVoiceKey] = useState(null); // ej. "bb_trumpet-1"
   const [availableVoicesList, setAvailableVoicesList] = useState([]);
   const [hermanasDeAlbum, setHermanasDeAlbum] = useState([]);
@@ -136,12 +151,14 @@ function SongView() {
       targetKey,
       instrument: currentInstrument,
       notationSystem,
+      capo,
       ...overrides
     });
 
     setFormattedSong(rendered.formatted);
     setFormattedLyricsOnly(rendered.lyricsOnly);
     setDisplayKey(rendered.displayKey);
+    setSoundingKey(rendered.soundingKey);
   };
 
   // Cargar canción y preferencias de usuario.
@@ -209,9 +226,7 @@ function SongView() {
 
           // La letra, si la hay, se muestra tal cual: en un PDF no hay
           // acordes que quitar, así que aquí no pinta el pipeline entero.
-          setFormattedLyricsOnly(
-            loadedSong.lyricsOnly?.trim() ? formatSong(loadedSong.lyricsOnly) : null
-          );
+          setFormattedLyricsOnly(formatLyrics(loadedSong.lyricsOnly));
         } else {
           setScore(null);
           setScoreVoicesList([]);
@@ -340,16 +355,37 @@ function SongView() {
       setCurrentInstrument(instrumentId);
       setShowInstrumentDropdown(false);
 
+      // Al salir de la guitarra el capo deja de existir. Si se quedara puesto,
+      // el trompetista heredaría una transposición invisible: el control ya no
+      // se ve, pero seguiría bajándole los acordes.
+      const capoNuevo = supportsCapo(instrumentId) ? capo : 0;
+      if (capoNuevo !== capo) setCapo(capoNuevo);
+
       if (currentUser) {
         updateUserPreferences(currentUser.uid, { defaultInstrument: instrumentId })
           .catch((prefError) => console.error("Error saving instrument preference:", prefError));
       }
 
-      applyRender(originalContent, { instrument: instrumentId });
+      applyRender(originalContent, { instrument: instrumentId, capo: capoNuevo });
     } catch (instrumentError) {
       setError("Error al cambiar de instrumento: " + instrumentError.message);
       console.error("Error completo:", instrumentError);
     }
+  };
+
+  /**
+   * Cambia el traste de la cejilla.
+   *
+   * No va a las preferencias del usuario: el capo que sirve depende de la
+   * tonalidad de esta canción, así que guardarlo y aplicarlo a la siguiente
+   * daría un valor equivocado sin avisar.
+   */
+  const handleCapoChange = (traste) => {
+    setShowCapoDropdown(false);
+    if (traste === capo) return;
+
+    setCapo(traste);
+    applyRender(originalContent, { capo: traste });
   };
 
   /**
@@ -503,13 +539,24 @@ function SongView() {
             )}
 
             {/* En un PDF la tonalidad es informativa: está impresa en el papel
-                y no se puede cambiar, pero saberla sigue sirviendo. */}
+                y no se puede cambiar, pero saberla sigue sirviendo.
+
+                Con capo, la que se lee y la que suena no son la misma. Hay que
+                decir las dos: el guitarrista necesita la suya para tocar, y la
+                de concierto para entenderse con el resto de la banda. */}
             <div className="song-meta-item">
               <div className="song-meta-label">
                 <i className="bi bi-key me-1"></i>
                 Tonalidad
               </div>
-              <div className="song-meta-value">{esPdf ? (song.key || "—") : displayKey}</div>
+              <div className="song-meta-value">
+                {esPdf ? (song.key || "—") : displayKey}
+                {!esPdf && capo > 0 && (
+                  <span className="song-meta-nota">
+                    {" "}· capo {TRASTES_ROMANOS[capo]}, suena en {soundingKey}
+                  </span>
+                )}
+              </div>
             </div>
 
             <div className="song-meta-item">
@@ -538,8 +585,13 @@ function SongView() {
             <div className="controls-group">
               {/* Selector de Voz (partes disponibles en la canción).
                   En un PDF la lista sale del mapa `pdfs`, y elegir voz no
-                  transpone nada: cambia de archivo. */}
-              {(esPdf ? scoreVoicesList : availableVoicesList).length > 0 && (
+                  transpone nada: cambia de archivo.
+
+                  A quien lee la hoja de acordes no se le ofrece: un guitarrista
+                  no toca "la voz 2", toca los acordes. En un PDF sí se deja,
+                  porque ahí la voz elige qué archivo se abre. */}
+              {(esPdf || !readsChordChart(currentInstrument)) &&
+               (esPdf ? scoreVoicesList : availableVoicesList).length > 0 && (
                 <div className="control-dropdown">
                   <button
                     className={`dropdown-button ${showVoiceDropdown ? 'active' : ''}`}
@@ -647,6 +699,47 @@ function SongView() {
                   </div>
                 )}
               </div>
+
+              {/* Cejilla. Solo para la guitarra: al resto no se le pone.
+                  Baja los acordes que se leen sin tocar lo que suena, por eso
+                  al lado se recuerda en qué tonalidad sigue sonando. */}
+              {supportsCapo(currentInstrument) && (
+                <div className="control-dropdown">
+                  <button
+                    className={`dropdown-button ${showCapoDropdown ? 'active' : ''}`}
+                    onClick={() => {
+                      setShowCapoDropdown(!showCapoDropdown);
+                      setShowInstrumentDropdown(false);
+                      setShowVoiceDropdown(false);
+                      setShowKeyDropdown(false);
+                      setShowNotationDropdown(false);
+                    }}
+                  >
+                    <i className="bi bi-sliders"></i>
+                    <span>{capo ? `Capo ${TRASTES_ROMANOS[capo]}` : "Sin capo"}</span>
+                    <i className={`bi bi-chevron-${showCapoDropdown ? 'up' : 'down'}`}></i>
+                  </button>
+
+                  {showCapoDropdown && (
+                    <div className="dropdown-menu-custom">
+                      {TRASTES_CAPO.map((traste) => (
+                        <div
+                          key={traste}
+                          className={`dropdown-item-custom ${capo === traste ? 'active' : ''}`}
+                          onClick={() => handleCapoChange(traste)}
+                        >
+                          {traste === 0 ? "Sin capo" : `Traste ${TRASTES_ROMANOS[traste]}`}
+                          {traste > 0 && (
+                            <div style={{ fontSize: '0.8rem', opacity: 0.7 }}>
+                              Se lee en {transposeKeyBySemitones(soundingKey, -traste)}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Selector de Tonalidad */}
               <div className="control-dropdown">

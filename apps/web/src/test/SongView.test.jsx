@@ -293,4 +293,134 @@ describe('SongView', () => {
       errorSpy.mockRestore();
     });
   });
+
+  describe('instrumentos que leen la hoja de acordes', () => {
+    const elegirInstrumento = async (user, nombre) => {
+      await user.click(screen.getByRole('button', { name: /Transponer:/i }));
+      await user.click(screen.getByText(nombre));
+    };
+
+    it('ofrece la guitarra en el selector', async () => {
+      const user = userEvent.setup();
+      await renderSongView();
+
+      await user.click(screen.getByRole('button', { name: /Transponer:/i }));
+
+      expect(screen.getByText('Guitarra')).toBeInTheDocument();
+      expect(screen.getByText('Piano / Teclado')).toBeInTheDocument();
+    });
+
+    // Un guitarrista no toca "la voz 2", toca los acordes. Ofrecerle un
+    // selector de voces es ruido que encima le cambia el contenido.
+    it('esconde el selector de voces para la guitarra', async () => {
+      const user = userEvent.setup();
+      await renderSongView();
+
+      expect(screen.getByRole('button', { name: /Trompeta.*1/i })).toBeInTheDocument();
+
+      await elegirInstrumento(user, 'Guitarra');
+
+      await waitFor(() => {
+        expect(screen.queryByRole('button', { name: /Trompeta.*1/i })).not.toBeInTheDocument();
+      });
+    });
+
+    it('lo devuelve al volver a un instrumento de viento', async () => {
+      const user = userEvent.setup();
+      await renderSongView();
+
+      await elegirInstrumento(user, 'Guitarra');
+      await waitFor(() => {
+        expect(screen.queryByRole('button', { name: /Trompeta.*1/i })).not.toBeInTheDocument();
+      });
+
+      await elegirInstrumento(user, 'Flauta en DO');
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /Trompeta.*1/i })).toBeInTheDocument();
+      });
+    });
+  });
+
+  describe('capo', () => {
+    const elegirInstrumento = async (user, nombre) => {
+      await user.click(screen.getByRole('button', { name: /Transponer:/i }));
+      await user.click(screen.getByText(nombre));
+    };
+
+    it('solo aparece con la guitarra', async () => {
+      const user = userEvent.setup();
+      await renderSongView();
+
+      expect(screen.queryByRole('button', { name: /capo/i })).not.toBeInTheDocument();
+
+      await elegirInstrumento(user, 'Guitarra');
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /Sin capo/i })).toBeInTheDocument();
+      });
+
+      await elegirInstrumento(user, 'Piano / Teclado');
+      await waitFor(() => {
+        expect(screen.queryByRole('button', { name: /capo/i })).not.toBeInTheDocument();
+      });
+    });
+
+    it('baja los acordes al ponerlo', async () => {
+      const user = userEvent.setup();
+      await renderSongView();
+
+      await elegirInstrumento(user, 'Guitarra');
+      await waitFor(() => screen.getByRole('button', { name: /Sin capo/i }));
+
+      // DO en trompeta llega a LA# en guitarra; con capo II baja a SOL#.
+      expect(screen.getAllByText(/LA#/).length).toBeGreaterThan(0);
+
+      await user.click(screen.getByRole('button', { name: /Sin capo/i }));
+      await user.click(screen.getByText('Traste II'));
+
+      await waitFor(() => {
+        expect(screen.getAllByText(/SOL#/).length).toBeGreaterThan(0);
+      });
+    });
+
+    // Lo que se lee y lo que suena dejan de coincidir: hay que decir las dos,
+    // o el guitarrista no sabe qué tonalidad cantarle al resto de la banda.
+    it('dice en qué tonalidad sigue sonando', async () => {
+      const user = userEvent.setup();
+      await renderSongView();
+
+      await elegirInstrumento(user, 'Guitarra');
+      await waitFor(() => screen.getByRole('button', { name: /Sin capo/i }));
+
+      await user.click(screen.getByRole('button', { name: /Sin capo/i }));
+      await user.click(screen.getByText('Traste II'));
+
+      await waitFor(() => {
+        expect(screen.getByText(/capo II, suena en LA#/)).toBeInTheDocument();
+      });
+    });
+
+    // Si el capo sobreviviera al cambio de instrumento, el trompetista se
+    // llevaría una transposición invisible: el control ya no se ve.
+    it('se quita al cambiar a un instrumento sin cejilla', async () => {
+      const user = userEvent.setup();
+      await renderSongView();
+
+      await elegirInstrumento(user, 'Guitarra');
+      await waitFor(() => screen.getByRole('button', { name: /Sin capo/i }));
+
+      await user.click(screen.getByRole('button', { name: /Sin capo/i }));
+      await user.click(screen.getByText('Traste II'));
+      await waitFor(() => screen.getByText(/capo II/));
+
+      await elegirInstrumento(user, 'Flauta en DO');
+
+      await waitFor(() => {
+        expect(screen.queryByText(/capo/i)).not.toBeInTheDocument();
+      });
+
+      // La flauta tiene la misma transposición que la guitarra (-2): si el
+      // capo hubiera sobrevivido, aquí se leería SOL# en vez de LA#.
+      expect(screen.getAllByText(/LA#/).length).toBeGreaterThan(0);
+    });
+  });
 });

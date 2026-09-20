@@ -4,27 +4,25 @@ import { mapChordLine, countChordRoots } from './chords';
 import { TRANSPOSING_INSTRUMENTS } from './instruments';
 
 /**
- * Transpone el contenido de un instrumento a otro
+ * Transpone el contenido un número de semitonos, sin pasar por tonalidades.
+ *
+ * Es el motor que hay debajo de `transposeForInstrument`, y lo usa también el
+ * capo, que no es un cambio de tonalidad sino un desplazamiento fijo: con la
+ * cejilla en el traste 3 se tocan las formas tres semitonos por debajo de lo
+ * que suena.
+ *
+ * Respeta el sistema de notación predominante de la canción y la preferencia
+ * de bemoles de cada acorde.
+ *
  * @param {string} content - Contenido de la canción
- * @param {string} fromInstrument - ID del instrumento de origen
- * @param {string} toInstrument - ID del instrumento de destino
- * @returns {string} - Contenido transpuesto para el instrumento de destino
+ * @param {number} semitones - Semitonos a desplazar (puede ser negativo)
+ * @returns {string} - Contenido transpuesto
  */
-// Corrección para mantener consistencia en el sistema de notación
-export function transposeForInstrument(content, fromInstrument, toInstrument) {
-  // Si los instrumentos son iguales, no hay transposición
-  if (fromInstrument === toInstrument) return content;
-  
-  // Calculamos el intervalo de transposición entre instrumentos
-  const fromTransposition = TRANSPOSING_INSTRUMENTS[fromInstrument]?.transposition || 0;
-  const toTransposition = TRANSPOSING_INSTRUMENTS[toInstrument]?.transposition || 0;
-  
-  // La transposición necesaria es la diferencia entre ambos instrumentos
-  const transpositionInterval = toTransposition - fromTransposition;
-  
-  // Si no hay diferencia de transposición, retornamos el contenido original
-  if (transpositionInterval === 0) return content;
-  
+export function transposeBySemitones(content, semitones) {
+  if (!content || !semitones) return content;
+
+  const transpositionInterval = semitones;
+
   // Definimos las escalas completas
   const LATIN_NOTES = ['DO', 'DO#', 'RE', 'RE#', 'MI', 'FA', 'FA#', 'SOL', 'SOL#', 'LA', 'LA#', 'SI'];
   const LATIN_NOTES_FLAT = ['DO', 'REb', 'RE', 'MIb', 'MI', 'FA', 'SOLb', 'SOL', 'LAb', 'LA', 'SIb', 'SI'];
@@ -78,25 +76,42 @@ export function transposeForInstrument(content, fromInstrument, toInstrument) {
       return targetArray[newIndex];
     });
   });
-  
+
   return processedLines.join('\n');
 }
 
 /**
- * Calcula la tonalidad visual para un instrumento
- * @param {string} baseKey - Tonalidad base (en referencia a trompeta)
- * @param {string} instrument - ID del instrumento
- * @returns {string} - Tonalidad visual para ese instrumento
+ * Transpone el contenido de un instrumento a otro
+ * @param {string} content - Contenido de la canción
+ * @param {string} fromInstrument - ID del instrumento de origen
+ * @param {string} toInstrument - ID del instrumento de destino
+ * @returns {string} - Contenido transpuesto para el instrumento de destino
  */
-export function getVisualKeyForInstrument(baseKey, instrument) {
-  if (!baseKey || !instrument || instrument === "bb_trumpet") {
-    return baseKey; // Para trompeta, la tonalidad visual es la misma
-  }
-  
-  // Definimos las escalas completas en notación latina
-  const KEYS_MAJOR = ['DO', 'DO#', 'RE', 'RE#', 'MI', 'FA', 'FA#', 'SOL', 'SOL#', 'LA', 'LA#', 'SI'];
-  const KEYS_MAJOR_ALT = ['DO', 'REb', 'RE', 'MIb', 'MI', 'FA', 'SOLb', 'SOL', 'LAb', 'LA', 'SIb', 'SI', 'DOb'];
-  
+export function transposeForInstrument(content, fromInstrument, toInstrument) {
+  // Si los instrumentos son iguales, no hay transposición
+  if (fromInstrument === toInstrument) return content;
+
+  const fromTransposition = TRANSPOSING_INSTRUMENTS[fromInstrument]?.transposition || 0;
+  const toTransposition = TRANSPOSING_INSTRUMENTS[toInstrument]?.transposition || 0;
+
+  // La transposición necesaria es la diferencia entre ambos instrumentos
+  return transposeBySemitones(content, toTransposition - fromTransposition);
+}
+
+/**
+ * Desplaza una tonalidad un número de semitonos.
+ *
+ * Conserva el modo (mayor o menor) y la preferencia de bemoles o sostenidos
+ * de la tonalidad de partida. Es el motor de `getVisualKeyForInstrument` y lo
+ * usa también el capo, que baja la tonalidad que se lee sin tocar la que suena.
+ *
+ * @param {string} key - Tonalidad de partida ("RE", "LAm", "MIb", "Am"...)
+ * @param {number} semitones - Semitonos a desplazar (puede ser negativo)
+ * @returns {string} - Tonalidad desplazada, o la original si no se reconoce
+ */
+export function transposeKeyBySemitones(key, semitones) {
+  if (!key || !semitones) return key;
+
   // Mapa de tonalidades para una búsqueda más sencilla
   const keyToIndexMap = {
     // Tonalidades mayores con sostenidos
@@ -119,23 +134,21 @@ export function getVisualKeyForInstrument(baseKey, instrument) {
   };
   
   // Identificar si es menor
-  const isMinor = baseKey.includes('m');
-  
+  const isMinor = key.includes('m');
+
   // Identificar si usa bemoles o sostenidos
-  const usesFlats = baseKey.includes('b');
-  
+  const usesFlats = key.includes('b');
+
   // Obtener el índice de la tonalidad base
-  let keyIndex = keyToIndexMap[baseKey];
-  
+  const keyIndex = keyToIndexMap[key];
+
   if (keyIndex === undefined) {
-    console.warn(`Tonalidad no reconocida: ${baseKey}`);
-    return baseKey; // Fallback a la tonalidad original
+    console.warn(`Tonalidad no reconocida: ${key}`);
+    return key; // Fallback a la tonalidad original
   }
-  
-  // Aplicar transposición del instrumento
-  const instrumentTransposition = TRANSPOSING_INSTRUMENTS[instrument].transposition;
-  const newIndex = (keyIndex + instrumentTransposition + 12) % 12;
-  
+
+  const newIndex = ((keyIndex + semitones) % 12 + 12) % 12;
+
   // Determinar si la nueva tonalidad debe usar sostenidos o bemoles (mantener la preferencia original)
   let targetScale;
   if (isMinor) {
@@ -158,4 +171,21 @@ export function getVisualKeyForInstrument(baseKey, instrument) {
   
   // Obtener la nueva tonalidad
   return targetScale[newIndex];
+}
+
+/**
+ * Calcula la tonalidad visual para un instrumento
+ * @param {string} baseKey - Tonalidad base (en referencia a trompeta)
+ * @param {string} instrument - ID del instrumento
+ * @returns {string} - Tonalidad visual para ese instrumento
+ */
+export function getVisualKeyForInstrument(baseKey, instrument) {
+  if (!baseKey || !instrument || instrument === "bb_trumpet") {
+    return baseKey; // Para trompeta, la tonalidad visual es la misma
+  }
+
+  return transposeKeyBySemitones(
+    baseKey,
+    TRANSPOSING_INSTRUMENTS[instrument]?.transposition ?? 0
+  );
 }

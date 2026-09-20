@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   renderSongContent,
   extractLyricsSections,
+  formatLyrics,
   buildVoicesList,
   parseVoiceKey,
   resolveInitialVoice,
@@ -129,24 +130,173 @@ describe('resolveInitialVoice', () => {
 });
 
 describe('extractLyricsSections', () => {
-  it('elimina los acordes y conserva la letra', () => {
-    const { formatted } = renderSongContent(SONG, {
+  const letraDe = (song = SONG) => {
+    const { formatted } = renderSongContent(song, {
       baseKey: 'DO',
       targetKey: 'DO',
       notationSystem: 'latin'
     });
-    const lyrics = extractLyricsSections(formatted);
-    const verso = lyrics.sections.find((s) => s.title === 'Verso');
+    return extractLyricsSections(formatted);
+  };
 
-    expect(verso.content).toContain('Cristo vive hoy');
-    expect(verso.content).toContain('para siempre');
-    expect(verso.content).not.toMatch(/\bSOL\b/);
-    expect(verso.content).not.toMatch(/\bLAm\b/);
+  it('elimina los acordes y conserva la letra', () => {
+    const [bloque] = letraDe().sections;
+
+    expect(bloque.content).toContain('Cristo vive hoy');
+    expect(bloque.content).toContain('para siempre');
+    expect(bloque.content).not.toMatch(/\bSOL\b/);
+    expect(bloque.content).not.toMatch(/\bLAm\b/);
+  });
+
+  // El `##` está para la vista de acordes. En la de letra partía la canción en
+  // tarjetas con tres rem entre una y otra, y a quien canta eso solo le
+  // multiplica el scroll. Hacen falta DOS secciones con letra: con una sola,
+  // un `extractLyricsSections` que no uniera nada pasaría igual.
+  it('devuelve un único bloque aunque la canción tenga varias secciones', () => {
+    const dosVersos = `## Verso 1\nDO   SOL\nCristo vive hoy\n\n## Verso 2\nLAm  FA\nGrande es tu amor\n`;
+    const { formatted } = renderSongContent(dosVersos, {
+      baseKey: 'DO',
+      targetKey: 'DO',
+      notationSystem: 'latin'
+    });
+
+    expect(formatted.sections).toHaveLength(2);
+
+    const { sections } = extractLyricsSections(formatted);
+    expect(sections).toHaveLength(1);
+    expect(sections[0].content).toContain('Cristo vive hoy');
+    expect(sections[0].content).toContain('Grande es tu amor');
+  });
+
+  it('conserva el título de la sección como una línea más del bloque', () => {
+    const [bloque] = letraDe().sections;
+
+    expect(bloque.title).toBe('');
+    expect(bloque.content).toContain('Verso\nCristo vive hoy');
+  });
+
+  // "Intro" son cuatro acordes y ni una palabra: en la vista de letra era una
+  // tarjeta vacía con un título encima.
+  it('descarta las secciones que se quedan sin letra al quitar los acordes', () => {
+    const [bloque] = letraDe().sections;
+
+    expect(bloque.content).not.toContain('Intro');
+  });
+
+  it('no devuelve ninguna sección si la canción es instrumental', () => {
+    const instrumental = `## Intro\nDO SOL LAm FA\n\n## Puente\nFA SOL DO\n`;
+
+    expect(letraDe(instrumental).sections).toEqual([]);
   });
 
   it('devuelve null sin canción formateada', () => {
     expect(extractLyricsSections(null)).toBeNull();
     expect(extractLyricsSections({})).toBeNull();
+  });
+});
+
+describe('capo', () => {
+  // Con la cejilla en el traste 3, el guitarrista toca las formas tres
+  // semitonos por debajo y la cejilla las devuelve a su sitio. Si esto se
+  // invierte, toca en la tonalidad equivocada y encima suena bien en su
+  // cabeza: el error solo aparece cuando entra la banda.
+  const guitarra = (capo) => renderSongContent(SONG, {
+    baseKey: 'DO',
+    targetKey: 'DO',
+    instrument: 'c_guitar',
+    notationSystem: 'latin',
+    capo
+  });
+
+  it('baja los acordes que se leen', () => {
+    // El DO del Intro llega a LA# en guitarra (-2), y con capo 2 baja a SOL#.
+    const sinCapo = guitarra(0).formatted.sections[0].content;
+    const conCapo = guitarra(2).formatted.sections[0].content;
+
+    expect(sinCapo).toContain('LA#');
+    expect(conCapo).toContain('SOL#');
+    expect(conCapo).not.toBe(sinCapo);
+  });
+
+  // No basta con que `displayKey` y `soundingKey` sean distintas: con el signo
+  // invertido también lo serían, y la hoja diría una tonalidad dos semitonos
+  // por encima de la que el guitarrista está leyendo. Hay que atar la
+  // tonalidad mostrada al primer acorde que se ve.
+  it('baja la tonalidad que se lee pero no la que suena', () => {
+    const sinCapo = guitarra(0);
+    const conCapo = guitarra(2);
+
+    expect(sinCapo.soundingKey).toBe('LA#');
+    expect(conCapo.soundingKey).toBe('LA#'); // la banda sigue oyendo lo mismo
+    expect(conCapo.displayKey).toBe('SOL#'); // pero él lee dos semitonos abajo
+
+    // El primer acorde del Intro es la tónica: tiene que coincidir con la
+    // tonalidad que se anuncia en pantalla.
+    expect(conCapo.formatted.sections[0].content.startsWith(conCapo.displayKey))
+      .toBe(true);
+    expect(sinCapo.formatted.sections[0].content.startsWith(sinCapo.displayKey))
+      .toBe(true);
+  });
+
+  // Doce trastes es una octava: se vuelve al mismo sitio.
+  it('un capo de 12 deja la misma tonalidad', () => {
+    expect(guitarra(12).displayKey).toBe(guitarra(0).displayKey);
+  });
+
+  it('sin capo no toca nada', () => {
+    const base = guitarra(0);
+
+    expect(base.displayKey).toBe(base.soundingKey);
+    expect(guitarra(undefined).formatted.sections[0].content)
+      .toBe(base.formatted.sections[0].content);
+  });
+
+  it('ignora valores que no son un traste', () => {
+    const base = guitarra(0).formatted.sections[0].content;
+
+    [-3, 1.5, 'III', null].forEach((malo) => {
+      expect(guitarra(malo).formatted.sections[0].content).toBe(base);
+    });
+  });
+
+  it('conserva los sufijos y los bajos del acorde', () => {
+    const conSufijos = renderSongContent('## Verso\nDOsus4 LAm7 FA/DO\n', {
+      baseKey: 'DO',
+      targetKey: 'DO',
+      instrument: 'c_guitar',
+      notationSystem: 'latin',
+      capo: 2
+    });
+    const contenido = conSufijos.formatted.sections[0].content;
+
+    expect(contenido).toMatch(/sus4/);
+    expect(contenido).toMatch(/m7/);
+    expect(contenido).toMatch(/\//);
+  });
+});
+
+describe('formatLyrics', () => {
+  // La letra de una canción en PDF se escribe a mano y puede traer sus propios
+  // `##`. Tampoco ahí deben partirla en tarjetas.
+  it('funde las secciones de la letra en un solo bloque', () => {
+    const letra = formatLyrics('## Coro\nSanto eres\n\n## Verso\nGrande es tu amor\n');
+
+    expect(letra.sections).toHaveLength(1);
+    expect(letra.sections[0].content).toBe('Coro\nSanto eres\n\nVerso\nGrande es tu amor');
+  });
+
+  // Aquí no hay acordes que quitar: una línea de letra que por mala suerte se
+  // pareciera a una de acordes se perdería para siempre.
+  it('no borra líneas que parecen acordes', () => {
+    const letra = formatLyrics('DO SOL LAm FA\nCristo vive hoy\n');
+
+    expect(letra.sections[0].content).toContain('DO SOL LAm FA');
+  });
+
+  it('devuelve null sin letra', () => {
+    expect(formatLyrics('')).toBeNull();
+    expect(formatLyrics('   \n  ')).toBeNull();
+    expect(formatLyrics(null)).toBeNull();
   });
 });
 
@@ -292,8 +442,7 @@ describe('renderSongContent', () => {
       targetKey: 'DO',
       notationSystem: 'latin'
     });
-    const verso = lyricsOnly.sections.find((s) => s.title === 'Verso');
-    expect(verso.content).toContain('Cristo vive hoy');
+    expect(lyricsOnly.sections[0].content).toContain('Cristo vive hoy');
   });
 
   it('no revienta con contenido vacío', () => {

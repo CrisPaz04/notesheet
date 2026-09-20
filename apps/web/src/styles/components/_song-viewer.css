@@ -53,6 +53,15 @@
     font-size: 1.1rem;
     font-weight: 600;
   }
+
+  /* Aclaración dentro del valor: el capo y la tonalidad en la que suena.
+     Va más pequeña y apagada para que la tonalidad que se lee siga siendo lo
+     primero que ve el guitarrista. */
+  .song-meta-nota {
+    color: var(--text-light-muted);
+    font-size: 0.85rem;
+    font-weight: 500;
+  }
   
   .controls-toolbar {
     background: rgba(255, 255, 255, 0.05);

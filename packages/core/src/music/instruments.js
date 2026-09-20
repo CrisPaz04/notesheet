@@ -43,8 +43,68 @@ export const TRANSPOSING_INSTRUMENTS = {
     name: "Corno Francés en Fa",
     transposition: -7, // Baja una quinta justa (7 semitonos)
     description: "Baja una quinta justa desde trompeta (DO → FA)"
+  },
+
+  // --- Instrumentos que leen la hoja de acordes -------------------------
+  //
+  // Guitarra, piano, bajo y voz están en DO, igual que la flauta: -2 desde la
+  // trompeta en Sib, que es la referencia en la que se escriben las voces.
+  //
+  // Lo que los separa del resto no es la transposición, es QUÉ leen. Un
+  // trompetista lee su voz —una línea numerada—; un guitarrista lee los
+  // acordes y no le dice nada un selector de "voz 1 / voz 2". Eso lo marca
+  // `readsChordChart`, y la interfaz decide con él qué controles ofrecer.
+  //
+  // Antes de que existieran, un guitarrista tenía que elegir "Flauta en DO"
+  // para ver los acordes en tono de concierto.
+  "c_guitar": {
+    name: "Guitarra",
+    transposition: -2,
+    description: "Instrumento en DO (tono de concierto)",
+    readsChordChart: true,
+    capo: true // Es el único de la lista al que se le pone cejilla
+  },
+  "c_piano": {
+    name: "Piano / Teclado",
+    transposition: -2,
+    description: "Instrumento en DO (tono de concierto)",
+    readsChordChart: true
+  },
+  "c_bass": {
+    name: "Bajo",
+    transposition: -2,
+    description: "Instrumento en DO (tono de concierto)",
+    readsChordChart: true
+  },
+  "c_voice": {
+    name: "Voz",
+    transposition: -2,
+    description: "Tono de concierto",
+    readsChordChart: true
   }
 };
+
+/**
+ * ¿Este instrumento lee la hoja de acordes en vez de una voz numerada?
+ *
+ * La ausencia de la marca cuenta como "no", igual que la de `format` cuenta
+ * como `"chords"`: los instrumentos de viento, que son la mayoría, no llevan
+ * nada.
+ *
+ * @param {string} instrumentId
+ * @returns {boolean}
+ */
+export const readsChordChart = (instrumentId) =>
+  Boolean(TRANSPOSING_INSTRUMENTS[instrumentId]?.readsChordChart);
+
+/**
+ * ¿A este instrumento se le puede poner cejilla?
+ *
+ * @param {string} instrumentId
+ * @returns {boolean}
+ */
+export const supportsCapo = (instrumentId) =>
+  Boolean(TRANSPOSING_INSTRUMENTS[instrumentId]?.capo);
 
 // Agrupaciones lógicas para el selector de UI
 export const INSTRUMENT_GROUPS = [
@@ -63,5 +123,11 @@ export const INSTRUMENT_GROUPS = [
   {
     name: "Otros Instrumentos Transpositores",
     instruments: ["f_horn"]
+  },
+  // Van al final y en su propio grupo aunque musicalmente sean "en DO": quien
+  // busca "Guitarra" no la busca bajo ese epígrafe.
+  {
+    name: "Guitarra, piano y voz",
+    instruments: ["c_guitar", "c_piano", "c_bass", "c_voice"]
   }
 ];

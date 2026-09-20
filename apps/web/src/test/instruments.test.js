@@ -2,6 +2,8 @@ import { describe, it, expect } from 'vitest';
 import {
   TRANSPOSING_INSTRUMENTS,
   INSTRUMENT_GROUPS,
+  readsChordChart,
+  supportsCapo,
 } from '@notesheet/core';
 
 describe('TRANSPOSING_INSTRUMENTS', () => {
@@ -74,5 +76,55 @@ describe('INSTRUMENT_GROUPS', () => {
     const ebGroup = INSTRUMENT_GROUPS.find(g => g.name.includes('Mib'));
     expect(ebGroup).toBeTruthy();
     expect(ebGroup.instruments).toContain('eb_alto_sax');
+  });
+
+  it('agrupa guitarra, piano, bajo y voz donde se los busca', () => {
+    const grupo = INSTRUMENT_GROUPS.find(g => g.name.includes('Guitarra'));
+    expect(grupo).toBeTruthy();
+    expect(grupo.instruments).toEqual(['c_guitar', 'c_piano', 'c_bass', 'c_voice']);
+  });
+});
+
+describe('instrumentos que leen la hoja de acordes', () => {
+  const ACORDES = ['c_guitar', 'c_piano', 'c_bass', 'c_voice'];
+
+  it('están en el catálogo', () => {
+    ACORDES.forEach((id) => {
+      expect(TRANSPOSING_INSTRUMENTS).toHaveProperty(id);
+    });
+  });
+
+  // Están en DO, igual que la flauta: -2 desde la trompeta en Sib. Si esto se
+  // desvía, un guitarrista lee la canción en otra tonalidad que la banda.
+  it('transponen como la flauta, que también está en DO', () => {
+    const flauta = TRANSPOSING_INSTRUMENTS.c_flute.transposition;
+    expect(flauta).toBe(-2);
+
+    ACORDES.forEach((id) => {
+      expect(TRANSPOSING_INSTRUMENTS[id].transposition).toBe(flauta);
+    });
+  });
+
+  it('readsChordChart los distingue de los de viento', () => {
+    ACORDES.forEach((id) => expect(readsChordChart(id)).toBe(true));
+
+    ['bb_trumpet', 'eb_alto_sax', 'c_flute', 'f_horn'].forEach((id) => {
+      expect(readsChordChart(id)).toBe(false);
+    });
+  });
+
+  it('no revienta con un instrumento desconocido', () => {
+    expect(readsChordChart('ocarina')).toBe(false);
+    expect(readsChordChart(undefined)).toBe(false);
+    expect(supportsCapo('ocarina')).toBe(false);
+  });
+
+  // La cejilla es cosa de la guitarra. Ofrecérsela al pianista es ruido.
+  it('solo la guitarra admite capo', () => {
+    expect(supportsCapo('c_guitar')).toBe(true);
+
+    ['c_piano', 'c_bass', 'c_voice', 'bb_trumpet'].forEach((id) => {
+      expect(supportsCapo(id)).toBe(false);
+    });
   });
 });
