@@ -242,3 +242,59 @@
 .login-header .text-muted {
   color: rgba(241, 243, 245, 0.72) !important;
 }
+
+/* Lo mismo vale para todo lo interactivo de la tarjeta: los botones de Google,
+ * Facebook y Apple, y los campos de email y contraseña. Heredaban
+ * `--text-light-primary` y `--border-light`, que en tema claro son negros, así
+ * que sobre la tarjeta oscura el texto desaparecía y el borde tampoco se veía.
+ * El tema claro no puede aclarar esta tarjeta, solo puede romperla.
+ */
+.social-btn {
+  color: #f1f3f5;
+  border-color: rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.social-btn:hover,
+.social-btn:focus {
+  color: #f1f3f5;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.login-card .form-floating input {
+  color: #f1f3f5;
+  border-color: rgba(255, 255, 255, 0.18);
+  background-color: rgba(255, 255, 255, 0.06);
+}
+
+.login-card .form-floating input:focus {
+  color: #f1f3f5;
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Solo con el foco puesto. Bootstrap deja el placeholder transparente
+ * mientras la etiqueta está flotando encima
+ * (`.form-floating > .form-control:not(:focus)::placeholder`), y darle color
+ * sin más pinta los dos textos uno sobre otro. */
+.login-card .form-floating input:focus::placeholder {
+  color: rgba(241, 243, 245, 0.5);
+}
+
+.login-card .form-floating label {
+  color: rgba(241, 243, 245, 0.7);
+}
+
+/* El autorrelleno del navegador pinta su propio fondo y su propio color de
+ * texto; solo se le puede ganar con el box-shadow interior y -webkit-text-fill-color.
+ */
+.login-card .form-floating input:-webkit-autofill,
+.login-card .form-floating input:-webkit-autofill:hover,
+.login-card .form-floating input:-webkit-autofill:focus,
+.login-card .form-floating input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 30px #2b2b2b inset !important;
+  -webkit-text-fill-color: #f1f3f5 !important;
+}
+
+.login-card .form-floating input:-webkit-autofill + label {
+  color: rgba(241, 243, 245, 0.7) !important;
+}
