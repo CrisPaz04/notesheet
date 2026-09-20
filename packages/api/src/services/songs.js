@@ -172,6 +172,64 @@ export const updateSong = async (songId, songData) => {
   }
 };
 
+/**
+ * Publica en el repertorio las canciones propias que todavía sean privadas.
+ *
+ * Compartir algo que contiene canciones implica compartir las canciones: la
+ * regla de lectura solo deja ver lo propio o lo publicado, así que una lista
+ * (o una sesión en vivo) con canciones privadas le aparece vacía al resto de
+ * la banda. No es un detalle cosmético: sin esto, doce músicos ven "no se
+ * pudo cargar" donde debería haber partitura.
+ *
+ * Solo se tocan las propias. Las ajenas ya estaban publicadas, porque es la
+ * única forma de haberlas podido añadir, y además las reglas no dejarían
+ * cambiarlas.
+ *
+ * Una canción que ya no existe —borrada del repertorio pero todavía
+ * referenciada por una lista vieja— se salta sin ruido: no hay nada que
+ * publicar y no es motivo para impedir que empiece el servicio.
+ *
+ * @param {string[]} songIds - Canciones a revisar
+ * @param {string} userId - Dueño que publica
+ * @returns {Promise<string[]>} ids de las que se han publicado ahora
+ */
+export const publishOwnSongs = async (songIds, userId) => {
+  if (!userId || !Array.isArray(songIds) || songIds.length === 0) return [];
+
+  const unicos = [...new Set(songIds.filter(Boolean))];
+
+  const candidatas = await Promise.all(unicos.map(async (songId) => {
+    try {
+      const snap = await getDoc(doc(db, 'songs', songId));
+      if (!snap.exists()) return null;
+
+      const data = snap.data();
+      const esPropia = data.userId === userId;
+      const yaPublicada = data.public === true;
+
+      return esPropia && !yaPublicada ? songId : null;
+    } catch (error) {
+      // Solo se ignora el permiso denegado: es una canción ajena y privada,
+      // que ni podemos leer ni nos toca publicar.
+      //
+      // Lo demás se propaga a propósito. Un `catch` que se lo tragara todo
+      // convertiría un fallo de red —o un error de programación aquí dentro—
+      // en "esta canción no hacía falta publicarla", y el resultado sería
+      // repartir el código de una sesión que la banda no puede leer.
+      if (error?.code === 'permission-denied') return null;
+      throw error;
+    }
+  }));
+
+  const porPublicar = candidatas.filter(Boolean);
+
+  await Promise.all(
+    porPublicar.map((songId) => updateSong(songId, { public: true }))
+  );
+
+  return porPublicar;
+};
+
 // Eliminar una canción
 export const deleteSong = async (songId) => {
   try {
