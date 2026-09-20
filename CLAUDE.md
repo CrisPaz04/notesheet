@@ -11,8 +11,14 @@ NoteSheet is a multiplataform music application for church musicians built as a 
 ## Las partituras en PDF
 
 Parte del repertorio no está en texto sino como **partituras de verdad en PDF**.
-Está implementado de punta a punta; el plan que lo guió es
-`PLAN-PARTITURAS-PDF.md`, que sirve ya solo para saber **por qué** está así.
+Está implementado y **en producción**, probado de punta a punta con una
+partitura real: subirla, guardarla en Storage y verla pintada. El plan que lo
+guió es `PLAN-PARTITURAS-PDF.md`, que sirve ya solo para saber **por qué** está
+así y con qué se tropezó al ponerlo en marcha.
+
+Lo único de la cadena de permisos que **no** se ha visto funcionar todavía es
+abrir una partitura desde otra cuenta de la banda: que la regla deje leer lo
+publicado y no lo privado. Ese fallo no lo ve el dueño de la canción.
 
 - De cada canción **no hay un PDF, hay una matriz**: instrumento × nº de voz ×
   variante (`partitura` y `conNotas`, esta última con los nombres de las notas
@@ -192,15 +198,31 @@ Netlify auto-deploys from `master` branch. Configuration in `netlify.toml`:
 - Node 22 (`NODE_VERSION`, y `engines` en ambos package.json)
 - SPA redirect rule configured
 
+**Cada ruta viaja en su propio archivo con hash, y al desplegar los anteriores
+desaparecen.** Quien tuviera la app abierta se queda con el `index.html` viejo,
+así que al entrar en una vista que aún no había visitado pide un archivo que ya
+no existe. Por eso las rutas usan **`lazyConRecarga`** y no `lazy` a secas
+(`apps/web/src/lib/lazyConRecarga.js`): detecta ese fallo y recarga una vez.
+Si alguien vuelve a poner `lazy`, reaparece la pantalla en blanco en cada
+despliegue, y encima con un error sobre tipos MIME que no señala a ninguna
+parte, porque la regla del SPA devuelve `index.html` con estado 200 donde el
+navegador esperaba JavaScript. Para que al menos el fallo sea honesto,
+`/assets/*` inexistente da **404** con una regla propia **antes** de la del
+SPA (el orden importa).
+
 ## Notes
 
 - No TypeScript - pure JavaScript
-- Vitest configured; 1121 tests in `apps/web/src/test/` (run with `npm run test:run`)
+- Vitest configured; 1135 tests in `apps/web/src/test/` (run with `npm run test:run`)
 - Los tests se validan con **mutaciones**: se rompe el código a propósito y se comprueba
   que algún test falla. Ha destapado cuatro tests que pasaban por la razón equivocada,
   y un bug de verdad en `scores.js` (las voces se ordenaban como texto, así que la 10
   iba antes que la 2). Merece la pena hacerlo con cualquier lógica no trivial que añadas.
   `scripts/mutantes-scores.sh` es un ejemplo de cómo automatizarlo.
+- Cuidado con `waitFor` para comprobar que algo **no** pasa: `waitFor(() =>
+  expect(fn).toHaveBeenCalledTimes(1))` se da por bueno nada más empezar, antes de que
+  llegara la segunda llamada, así que pasa igual aunque el bug exista. Hay que esperar
+  y **luego** comprobar. Una mutación lo destapó en `lazyConRecarga.test.jsx`.
 - The song rendering pipeline (transposición → instrumento → notación → formato)
   lives in `packages/core/src/music/songRendering.js`. Úsalo en vez de encadenar
   `transposeContent` / `transposeForInstrument` / `convertNotationSystem` a mano.
