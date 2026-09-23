@@ -297,3 +297,40 @@ describe('SongEditor: letra de una canción que no la tiene guardada', () => {
     expect(screen.queryByRole('button', { name: /Generar letra/ })).not.toBeInTheDocument();
   });
 });
+
+describe('SongEditor: varios "versión de"', () => {
+  const nombres = () => [...document.querySelectorAll('.version-chip')].map((e) => e.textContent.trim());
+
+  it('una canción antigua con dos nombres separados por coma los muestra como dos', async () => {
+    mockGetSongById.mockResolvedValue({ ...SONG, version: 'Ebenezer San Francisco, Jorge Jaenz' });
+    await renderEditor();
+    expect(nombres()).toEqual(['Ebenezer San Francisco', 'Jorge Jaenz']);
+  });
+
+  it('guarda la lista y el texto de siempre, con lo que quedó escrito sin Enter', async () => {
+    const user = userEvent.setup();
+    mockGetSongById.mockResolvedValue({ ...SONG, version: 'Ebenezer San Francisco' });
+    await renderEditor();
+
+    await user.type(screen.getByLabelText('Versión de'), 'Jorge Jaenz');
+    await user.click(screen.getByRole('button', { name: /^Guardar$/ }));
+
+    await waitFor(() => expect(mockUpdateSong).toHaveBeenCalled());
+    expect(mockUpdateSong.mock.calls.at(-1)[1]).toEqual(expect.objectContaining({
+      versiones: ['Ebenezer San Francisco', 'Jorge Jaenz'],
+      version: 'Ebenezer San Francisco, Jorge Jaenz'
+    }));
+  });
+
+  it('sin ningún nombre guarda la lista vacía y el texto vacío', async () => {
+    const user = userEvent.setup();
+    await renderEditor();
+    await user.click(screen.getByRole('button', { name: 'Quitar v1' }));
+    await user.click(screen.getByRole('button', { name: /^Guardar$/ }));
+
+    await waitFor(() => expect(mockUpdateSong).toHaveBeenCalled());
+    expect(mockUpdateSong.mock.calls.at(-1)[1]).toEqual(expect.objectContaining({
+      versiones: [], version: ''
+    }));
+  });
+});

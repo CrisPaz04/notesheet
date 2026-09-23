@@ -12,6 +12,7 @@ export * from './music/songRendering';
 export * from './music/setlist';
 export * from './music/scores';
 export * from './music/keySuggestion';
+export * from './music/versiones';
 
 // Audio utilities
 export * from './audio/audioContext';

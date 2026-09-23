@@ -141,6 +141,68 @@
     width: 100%;
   }
   
+  /* "Versión de" con varios nombres: parece un campo más, pero dentro van
+     las etiquetas de cada nombre y un texto sin borde para añadir otro. */
+  .versiones-input {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.5rem 0.75rem;
+    min-height: 3.1rem;
+    cursor: text;
+  }
+
+  .versiones-input:focus-within {
+    border-color: rgba(var(--color-primary-rgb), 0.5);
+    box-shadow: 0 0 0 0.2rem rgba(var(--color-primary-rgb), 0.25);
+  }
+
+  .versiones-input-texto {
+    flex: 1;
+    min-width: 8rem;
+    border: none;
+    outline: none;
+    background: transparent;
+    color: var(--text-light-primary);
+    font-size: 1rem;
+    padding: 0.25rem;
+  }
+
+  .versiones-input-texto::placeholder {
+    color: var(--text-light-muted);
+  }
+
+  .version-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.2rem 0.3rem 0.2rem 0.7rem;
+    border-radius: 999px;
+    background: rgba(var(--color-primary-rgb), 0.15);
+    color: var(--text-light-primary);
+    font-size: 0.9rem;
+  }
+
+  .version-chip-quitar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.4rem;
+    height: 1.4rem;
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--text-light-secondary);
+    cursor: pointer;
+  }
+
+  .version-chip-quitar:hover,
+  .version-chip-quitar:focus-visible {
+    background: rgba(var(--color-primary-rgb), 0.25);
+    color: var(--text-light-primary);
+  }
+
   .form-control-modern:focus {
     background: rgba(var(--overlay-rgb), 0.08);
     border-color: rgba(var(--color-primary-rgb), 0.5);

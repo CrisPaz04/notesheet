@@ -154,12 +154,17 @@ Bootstrap acaban saliendo en los seis. Usa las variables:
 ## Modelo de datos
 
 **songs**: `userId` (dueño), `public` (repertorio compartido), `album`, `title`, `key`,
-`type`, `version`, `content`, `lyricsOnly`, `voices` (mapa instrumento → nº de voz →
+`type`, `version`, `versiones`, `content`, `lyricsOnly`, `voices` (mapa instrumento → nº de voz →
 contenido), `primaryInstrument`, `primaryVoiceNumber`, `format` (`"chords"` por
 ausencia, o `"pdf"`), `pdfs` (mapa instrumento → nº de voz → variante → **ruta**
 en Storage, nunca la URL de descarga).
 
 - Una canción **sin** campo `public` cuenta como privada. Las nuevas nacen públicas.
+- "Versión de" puede ser **varios nombres**: se guardan en `versiones` (lista) y,
+  unidos por comas, en `version`, que es lo que leen las tarjetas, el visor y la
+  búsqueda. Las canciones anteriores solo tienen `version`: `leerVersiones`
+  (`packages/core/src/music/versiones.js`) saca la lista de ahí, separando por
+  comas, así que no hay que migrar nada. Al guardar, escribe siempre los dos.
 - `getAllSongs(userId)` devuelve las propias **más** las públicas de otros, y marca cada
   una con `isOwn`. Son dos consultas porque Firestore no hace OR entre campos distintos.
 - La interfaz solo debe ofrecer editar o borrar cuando `isOwn`; las reglas lo imponen
@@ -336,9 +341,6 @@ ahorra volver a buscarlo.
 
 - **Una canción con más de una tonalidad.** A media canción puede haber un
   ascenso o un descenso, y hoy `key` es un solo valor.
-- **Más de un "versión de".** A veces hay que acreditar a una persona y a un
-  grupo, o a dos personas. Ejemplo: *Ebenezer San Francisco, Jorge Jaenz*.
-  Hoy `version` es un solo campo de texto.
 
 ### Música
 

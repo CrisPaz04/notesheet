@@ -18,7 +18,10 @@ import {
   setScoreInMap,
   removeScoreFromMap,
   sugerirTonalidad,
-  extractLyricsOnly
+  extractLyricsOnly,
+  leerVersiones,
+  limpiarVersiones,
+  unirVersiones
 } from "@notesheet/core";
 import KeySelector from "../components/KeySelector";
 import LoadingSpinner from "../components/LoadingSpinner";
@@ -26,6 +29,7 @@ import SimpleMDE from "react-simplemde-editor";
 import "easymde/dist/easymde.min.css";
 import TypeSelector from "../components/TypeSelector";
 import ScoreUploader from "../components/ScoreUploader";
+import VersionesInput from "../components/VersionesInput";
 import useSongVoices from "../hooks/useSongVoices";
 
 // Instrumentos soportados para voces adicionales
@@ -65,7 +69,8 @@ function SongEditor() {
   const [title, setTitle] = useState("");
   const [key, setKey] = useState("DO");
   const [type, setType] = useState("Adoración");
-  const [version, setVersion] = useState("");
+  // Uno o varios nombres (ver versiones.js en core)
+  const [versiones, setVersiones] = useState([]);
   const [album, setAlbum] = useState("");
   const [content, setContent] = useState("");
   const [lyricsOnly, setLyricsOnly] = useState("");
@@ -157,7 +162,7 @@ function SongEditor() {
       setTitle(song.title || "");
       setKey(song.key || "DO");
       setType(song.type || "Adoración");
-      setVersion(song.version || "");
+      setVersiones(leerVersiones(song));
       setAlbum(song.album || "");
       setIsPublic(song.public === true);
       setContent(song.content || "");
@@ -239,10 +244,6 @@ function SongEditor() {
     setType(newType);
   };
 
-  const handleVersionChange = (e) => {
-    setVersion(e.target.value);
-  };
-
   const handleAlbumChange = (e) => {
     setAlbum(e.target.value);
   };
@@ -279,7 +280,9 @@ function SongEditor() {
         title,
         key,
         type,
-        version,
+        // La lista, y el texto de siempre para todo lo que ya lee `version`
+        versiones: limpiarVersiones(versiones),
+        version: unirVersiones(versiones),
         album: album.trim(),
         // En un PDF el cuerpo son los archivos. Guardar aquí el texto de la
         // voz principal metía la plantilla de la canción nueva, que luego
@@ -666,7 +669,7 @@ function SongEditor() {
             <div className="song-preview-meta">
               <span><i className="bi bi-music-note me-1"></i>{type}</span>
               <span><i className="bi bi-key me-1"></i>{key}</span>
-              {version && <span><i className="bi bi-person me-1"></i>{version}</span>}
+              {versiones.length > 0 && <span><i className="bi bi-person me-1"></i>{unirVersiones(versiones)}</span>}
             </div>
           </div>
         </div>
@@ -694,17 +697,18 @@ function SongEditor() {
             </div>
 
             <div className="form-group-modern">
-              <label className="form-label-modern">
+              <label className="form-label-modern" htmlFor="song-versiones">
                 <i className="bi bi-person"></i>
                 Versión de
               </label>
-              <input
-                type="text"
-                className="form-control-modern"
-                value={version}
-                onChange={handleVersionChange}
-                placeholder="Autor original o versión"
+              <VersionesInput
+                id="song-versiones"
+                value={versiones}
+                onChange={setVersiones}
               />
+              <div className="editor-help-text mt-1">
+                Pulsa Enter para añadir otro nombre.
+              </div>
             </div>
 
             <div className="form-group-modern">
