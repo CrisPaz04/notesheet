@@ -276,6 +276,13 @@ Netlify auto-deploys from `master` branch. Configuration in `netlify.toml`:
 - Publish directory: `apps/web/dist`
 - Node 22 (`NODE_VERSION`, y `engines` en ambos package.json)
 - SPA redirect rule configured
+- **Escaneo de secretos**: Netlify para el build ("Exposed secrets detected") si el
+  valor de una variable marcada como secreta aparece en el resultado. Las `VITE_*`
+  acaban siempre en el JavaScript de la web, así que una clave pensada para usarse
+  desde el navegador (la de GetSongBPM) va en `SECRETS_SCAN_OMIT_KEYS` en
+  `netlify.toml`. No desactives el escaneo entero: sigue protegiendo el resto.
+  Un deploy fallido no se nota en la web, que sigue sirviendo el anterior: si algo
+  no aparece en producción, mira primero la lista de deploys en Netlify.
 
 **Cada ruta viaja en su propio archivo con hash, y al desplegar los anteriores
 desaparecen.** Quien tuviera la app abierta se queda con el `index.html` viejo,
