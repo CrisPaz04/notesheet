@@ -16,6 +16,7 @@ import usePreferenciaLocal from "../hooks/usePreferenciaLocal";
 import useNotacionPreferida from "../hooks/useNotacionPreferida";
 
 const ORDENES = ["nuevas", "az", "za"];
+const VISTAS = ["cards", "list"];
 
 // Minúsculas y sin tildes, para que la búsqueda no dependa de cómo se escriba
 const normalizarBusqueda = (texto) => (texto || "")
@@ -37,7 +38,9 @@ function Dashboard() {
   // Guarda la tonalidad identificada ("11m"), no el texto: así "RE#m" y
   // "MIbm" caen en la misma opción aunque cada una se escribiera distinta.
   const [keyFilter, setKeyFilter] = useState("");
-  const [viewMode, setViewMode] = useState("cards");
+  // Tarjetas o lista. Se recuerda en este dispositivo, como el orden: quien
+  // prefiere la lista la quiere siempre, no volver a elegirla en cada visita.
+  const [viewMode, setViewMode] = usePreferenciaLocal("dashboardVista", "cards", VISTAS);
   // "nuevas" respeta el orden en que llegan de Firestore (createdAt desc).
   // Se recuerda en este dispositivo: quien ordena alfabéticamente lo quiere
   // así siempre, y volver a pulsarlo cada vez que se abre el Dashboard sobra.
@@ -426,6 +429,8 @@ function Dashboard() {
                   className={`view-toggle-btn ${viewMode === 'cards' ? 'active' : ''}`}
                   onClick={() => setViewMode('cards')}
                   title="Vista de tarjetas"
+                  aria-label="Vista de tarjetas"
+                  aria-pressed={viewMode === 'cards'}
                 >
                   <i className="bi bi-grid-3x3-gap"></i>
                 </button>
@@ -433,6 +438,8 @@ function Dashboard() {
                   className={`view-toggle-btn ${viewMode === 'list' ? 'active' : ''}`}
                   onClick={() => setViewMode('list')}
                   title="Vista de lista"
+                  aria-label="Vista de lista"
+                  aria-pressed={viewMode === 'list'}
                 >
                   <i className="bi bi-list"></i>
                 </button>

@@ -756,6 +756,30 @@ describe('Dashboard', () => {
       });
     });
 
+    it('recuerda la vista elegida (tarjetas o lista) entre visitas', async () => {
+      const user = userEvent.setup();
+      await renderDashboard();
+      expect(document.querySelector('.recent-grid')).toBeInTheDocument();
+
+      await user.click(screen.getByRole('button', { name: 'Vista de lista' }));
+      expect(document.querySelector('.songs-list-view')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Vista de lista' })).toHaveAttribute('aria-pressed', 'true');
+
+      // Segunda visita: se monta de cero, como al volver al Dashboard
+      document.body.innerHTML = '';
+      render(<Dashboard />);
+      await screen.findByText('Cristo Vive');
+
+      expect(document.querySelector('.songs-list-view')).toBeInTheDocument();
+      expect(document.querySelector('.recent-grid')).not.toBeInTheDocument();
+    });
+
+    it('una vista guardada que no existe se ignora', async () => {
+      localStorage.setItem('dashboardVista', 'mosaico');
+      await renderDashboard();
+      expect(document.querySelector('.recent-grid')).toBeInTheDocument();
+    });
+
     it('recuerda el orden elegido entre visitas', async () => {
       const user = userEvent.setup();
       await renderDashboard();
