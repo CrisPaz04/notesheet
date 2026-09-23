@@ -30,9 +30,13 @@ vi.mock('react-router-dom', () => ({
 const mockAuth = { currentUser: { uid: 'user-1' }, canEditSongs: () => true };
 vi.mock('../context/AuthContext', () => ({ useAuth: () => mockAuth }));
 
-// SimpleMDE necesita un DOM real; lo sustituimos por un textarea
+// SimpleMDE necesita un DOM real; lo sustituimos por un textarea.
+// Se apunta qué `options` llega en cada render: la librería de verdad
+// rehace el editor (y pierde el foco) cada vez que cambian de identidad.
+const opcionesRecibidas = [];
 vi.mock('react-simplemde-editor', () => ({
-  default: ({ value, onChange }) => (
+  default: ({ value, onChange, options }) => (
+    opcionesRecibidas.push(options),
     <textarea
       aria-label="editor"
       value={value || ''}
@@ -159,5 +163,18 @@ describe('SongEditor', () => {
     mockGetSongById.mockRejectedValue(new Error('sin permisos'));
     render(<SongEditor />);
     expect(await screen.findByText(/Error al cargar la canción/i)).toBeInTheDocument();
+  });
+});
+
+describe('SongEditor: el editor no pierde el foco al escribir', () => {
+  it('le pasa siempre las mismas opciones, tecla tras tecla', async () => {
+    const user = userEvent.setup();
+    await renderEditor();
+    opcionesRecibidas.length = 0;
+
+    await user.type(screen.getByLabelText('editor'), 'RE MI');
+
+    expect(opcionesRecibidas.length).toBeGreaterThan(1);
+    expect(new Set(opcionesRecibidas).size).toBe(1);
   });
 });

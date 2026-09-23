@@ -30,6 +30,35 @@ import useSongVoices from "../hooks/useSongVoices";
 const VOICE_INSTRUMENTS = Object.entries(TRANSPOSING_INSTRUMENTS)
   .map(([id, instrument]) => ({ id, name: instrument.name }));
 
+// Fuera del componente a propósito. react-simplemde-editor vuelve a crear
+// el editor cada vez que `options` cambia de identidad, y un objeto escrito
+// dentro del componente es nuevo en cada render: como cada tecla provoca un
+// render, cada tecla destruía el editor y el cursor se perdía, así que había
+// que volver a hacer clic para seguir escribiendo.
+const EDITOR_OPTIONS = {
+  autofocus: false,
+  spellChecker: false,
+  status: false,
+  toolbar: false,
+  placeholder: "Escribe tu canción aquí usando la notación musical...",
+  shortcuts: {
+    "toggleBlockquote": null,
+    "toggleBold": null,
+    "cleanBlock": null,
+    "toggleHeadingSmaller": null,
+    "toggleItalic": null,
+    "drawLink": null,
+    "toggleUnorderedList": null,
+    "togglePreview": null,
+    "toggleCodeBlock": null,
+    "drawImage": null,
+    "toggleOrderedList": null,
+    "toggleHeadingBigger": null,
+    "toggleSideBySide": null,
+    "toggleFullScreen": null
+  }
+};
+
 function SongEditor() {
   const [title, setTitle] = useState("");
   const [key, setKey] = useState("DO");
@@ -430,30 +459,6 @@ function SongEditor() {
     return pdfs?.[parsed.instrumentId]?.[parsed.voiceNumber] || {};
   })();
 
-  // Opciones para el editor SimpleMDE
-  const editorOptions = {
-    autofocus: false,
-    spellChecker: false,
-    status: false,
-    toolbar: false,
-    placeholder: "Escribe tu canción aquí usando la notación musical...",
-    shortcuts: {
-      "toggleBlockquote": null,
-      "toggleBold": null,
-      "cleanBlock": null,
-      "toggleHeadingSmaller": null,
-      "toggleItalic": null,
-      "drawLink": null,
-      "toggleUnorderedList": null,
-      "togglePreview": null,
-      "toggleCodeBlock": null,
-      "drawImage": null,
-      "toggleOrderedList": null,
-      "toggleHeadingBigger": null,
-      "toggleSideBySide": null,
-      "toggleFullScreen": null
-    }
-  };
 
   // Handler para cambios en el editor
   const handleEditorChange = (value) => {
@@ -897,7 +902,7 @@ function SongEditor() {
                 value={getCurrentTabContent()}
                 onChange={handleEditorChange}
                 onBlur={handleEditorBlur}
-                options={editorOptions}
+                options={EDITOR_OPTIONS}
               />
             )}
           </div>
