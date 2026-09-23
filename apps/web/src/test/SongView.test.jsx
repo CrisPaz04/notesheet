@@ -29,7 +29,12 @@ vi.mock('../context/AuthContext', () => ({
   useAuth: () => mockAuth
 }));
 
-vi.mock('../pages/Metronome', () => ({ default: () => <div>Metrónomo</div> }));
+// Deja ver con qué tempo y compás se abre, que es lo que pone la canción
+vi.mock('../pages/Metronome', () => ({
+  default: ({ tempoInicial, compasInicial }) => (
+    <div data-testid="metronomo" data-tempo={tempoInicial ?? ''} data-compas={compasInicial ?? ''}>Metrónomo</div>
+  )
+}));
 vi.mock('../pages/Tuner', () => ({ default: () => <div>Afinador</div> }));
 
 const { default: SongView } = await import('../pages/SongView');
@@ -446,5 +451,36 @@ describe('SongView: notación', () => {
     await user.click(screen.getByText('C-D-E (Anglosajona)'));
 
     expect(screen.getByText(/^Tonalidad: C$/)).toBeInTheDocument();
+  });
+});
+
+describe('SongView: tempo y grabación original', () => {
+  it('el metrónomo se abre con el tempo y el compás de la canción', async () => {
+    const user = userEvent.setup();
+    mockGetSongById.mockResolvedValue({ ...SONG, tempo: 72, compas: '6/8' });
+    await renderSongView();
+
+    await user.click(screen.getByRole('button', { name: /Metrónomo/ }));
+
+    const metronomo = await screen.findByTestId('metronomo');
+    expect(metronomo).toHaveAttribute('data-tempo', '72');
+    expect(metronomo).toHaveAttribute('data-compas', '6/8');
+  });
+
+  it('sin tempo en la canción, el metrónomo usa lo suyo', async () => {
+    const user = userEvent.setup();
+    await renderSongView();
+    await user.click(screen.getByRole('button', { name: /Metrónomo/ }));
+    expect(await screen.findByTestId('metronomo')).toHaveAttribute('data-tempo', '');
+  });
+
+  it('enseña el recuadro con los datos de la grabación original', async () => {
+    mockGetSongById.mockResolvedValue({
+      ...SONG,
+      grabacion: { artista: 'Marco Barrientos', album: 'Muéstrame Tu Gloria', anio: 2003, tonoConcierto: 'LA', bpm: 67, fuentes: {} }
+    });
+    await renderSongView();
+    expect(screen.getByText('Datos de la grabación original')).toBeInTheDocument();
+    expect(screen.getByText('Muéstrame Tu Gloria (2003)')).toBeInTheDocument();
   });
 });

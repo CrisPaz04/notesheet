@@ -13,6 +13,7 @@ export * from './music/setlist';
 export * from './music/scores';
 export * from './music/keySuggestion';
 export * from './music/versiones';
+export * from './music/datosCancion';
 
 // Audio utilities
 export * from './audio/audioContext';

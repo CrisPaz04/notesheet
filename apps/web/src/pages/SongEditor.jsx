@@ -22,7 +22,11 @@ import {
   nombrarTonalidad,
   leerVersiones,
   limpiarVersiones,
-  unirVersiones
+  unirVersiones,
+  tempoDesdeToques,
+  TEMPO_MIN,
+  TEMPO_MAX,
+  formatearDuracion
 } from "@notesheet/core";
 import KeySelector from "../components/KeySelector";
 import LoadingSpinner from "../components/LoadingSpinner";
@@ -32,6 +36,7 @@ import TypeSelector from "../components/TypeSelector";
 import ScoreUploader from "../components/ScoreUploader";
 import VersionesInput from "../components/VersionesInput";
 import useNotacionPreferida from "../hooks/useNotacionPreferida";
+import BuscarDatosModal from "../components/datos/BuscarDatosModal";
 import useSongVoices from "../hooks/useSongVoices";
 
 // Instrumentos soportados para voces adicionales
@@ -67,6 +72,14 @@ const EDITOR_OPTIONS = {
   }
 };
 
+const COMPASES = ["2/4", "3/4", "4/4", "6/8", "12/8"];
+
+// El tempo escrito, como número, o null si está vacío o no tiene sentido
+const tempoValido = (texto) => {
+  const n = Math.round(Number(String(texto).replace(",", ".")));
+  return Number.isFinite(n) && n >= TEMPO_MIN && n <= TEMPO_MAX ? n : null;
+};
+
 function SongEditor() {
   const [title, setTitle] = useState("");
   const [key, setKey] = useState("DO");
@@ -74,6 +87,15 @@ function SongEditor() {
   // Uno o varios nombres (ver versiones.js en core)
   const [versiones, setVersiones] = useState([]);
   const [album, setAlbum] = useState("");
+  // El tempo de la banda (el que usa el metrónomo al abrirlo desde la
+  // canción) y el compás. Como texto mientras se edita.
+  const [tempo, setTempo] = useState("");
+  const [compas, setCompas] = useState("");
+  // Datos de la grabación original, traídos con "Buscar datos". En
+  // concierto: nunca se mezclan con `key` (ver datosCancion.js en core).
+  const [grabacion, setGrabacion] = useState(null);
+  const [buscandoDatos, setBuscandoDatos] = useState(false);
+  const toquesRef = useRef([]);
   const [content, setContent] = useState("");
   const [lyricsOnly, setLyricsOnly] = useState("");
   const [loading, setLoading] = useState(false);
@@ -168,6 +190,9 @@ function SongEditor() {
       setType(song.type || "Adoración");
       setVersiones(leerVersiones(song));
       setAlbum(song.album || "");
+      setTempo(song.tempo ? String(song.tempo) : "");
+      setCompas(song.compas || "");
+      setGrabacion(song.grabacion || null);
       setIsPublic(song.public === true);
       setContent(song.content || "");
       setFormat(getSongFormat(song));
@@ -252,6 +277,26 @@ function SongEditor() {
     setAlbum(e.target.value);
   };
 
+  // Tap tempo: cada toque apunta el instante; con tres ya hay tempo. Si pasan
+  // más de 2 s entre toques, se empieza de nuevo.
+  const handleTapTempo = () => {
+    const ahora = performance.now();
+    const toques = toquesRef.current;
+    if (toques.length && ahora - toques[toques.length - 1] > 2000) toques.length = 0;
+    toques.push(ahora);
+    if (toques.length > 8) toques.shift();
+    const calculado = tempoDesdeToques(toques);
+    if (calculado) setTempo(String(calculado));
+  };
+
+  // Lo que el músico aceptó en "Buscar datos": solo rellena el formulario
+  const aplicarDatos = (propuesta) => {
+    if (propuesta.grabacion) setGrabacion(propuesta.grabacion);
+    if (propuesta.tempo) setTempo(String(propuesta.tempo));
+    if (propuesta.compas) setCompas(propuesta.compas);
+    if (propuesta.versiones) setVersiones(propuesta.versiones);
+  };
+
   // Guardar la canción
   const handleSave = async (e) => {
     e.preventDefault();
@@ -288,6 +333,9 @@ function SongEditor() {
         versiones: limpiarVersiones(versiones),
         version: unirVersiones(versiones),
         album: album.trim(),
+        tempo: tempoValido(tempo),
+        compas: compas || null,
+        grabacion: grabacion || null,
         // En un PDF el cuerpo son los archivos. Guardar aquí el texto de la
         // voz principal metía la plantilla de la canción nueva, que luego
         // reaparecía como una vista de letra fantasma.
@@ -780,6 +828,79 @@ function SongEditor() {
             />
 
             <div className="form-group-modern">
+              <label className="form-label-modern" htmlFor="song-tempo">
+                <i className="bi bi-speedometer2"></i>
+                Tempo (BPM)
+              </label>
+              <div className="tempo-campo">
+                <input
+                  id="song-tempo"
+                  type="number"
+                  inputMode="numeric"
+                  min={TEMPO_MIN}
+                  max={TEMPO_MAX}
+                  className="form-control-modern"
+                  value={tempo}
+                  onChange={(e) => setTempo(e.target.value)}
+                  placeholder="Ej.: 72"
+                />
+                <button
+                  type="button"
+                  className="btn-editor-secondary tempo-tap"
+                  onClick={handleTapTempo}
+                  title="Toca al ritmo de la canción"
+                >
+                  Tap
+                </button>
+              </div>
+              <div className="editor-help-text mt-1">
+                El metrónomo arranca con él al abrirlo desde la canción.
+              </div>
+            </div>
+
+            <div className="form-group-modern">
+              <label className="form-label-modern" htmlFor="song-compas">
+                <i className="bi bi-grid-3x2"></i>
+                Compás
+              </label>
+              <select
+                id="song-compas"
+                className="form-control-modern"
+                value={compas}
+                onChange={(e) => setCompas(e.target.value)}
+              >
+                <option value="">Sin indicar</option>
+                {COMPASES.map((c) => (<option key={c} value={c}>{c}</option>))}
+              </select>
+            </div>
+
+            <div className="form-group-modern grabacion-original">
+              <label className="form-label-modern">
+                <i className="bi bi-vinyl"></i>
+                Grabación original
+              </label>
+              {grabacion ? (
+                <p className="grabacion-resumen">
+                  {[grabacion.artista, grabacion.album, grabacion.anio, formatearDuracion(grabacion.duracion)]
+                    .filter(Boolean).join(" · ") || grabacion.titulo}
+                </p>
+              ) : (
+                <p className="grabacion-resumen grabacion-resumen-vacia">Sin datos todavía.</p>
+              )}
+              <div className="grabacion-acciones">
+                <button type="button" className="btn-editor-secondary" onClick={() => setBuscandoDatos(true)}>
+                  <i className="bi bi-search me-1"></i>
+                  Buscar datos
+                </button>
+                {grabacion && (
+                  <button type="button" className="btn-editor-secondary" onClick={() => setGrabacion(null)}>
+                    Quitar
+                  </button>
+                )}
+              </div>
+            </div>
+
+            <div className="form-group-modern">
               <label className="form-label-modern">
                 <i className="bi bi-file-earmark-music me-2"></i>
                 Formato
@@ -940,6 +1061,15 @@ function SongEditor() {
           </div>
         </div>
       </div>
+      <BuscarDatosModal
+        isOpen={buscandoDatos}
+        onClose={() => setBuscandoDatos(false)}
+        titulo={title}
+        artista={versiones[0] || ""}
+        versiones={versiones}
+        notacion={notacion}
+        onAplicar={aplicarDatos}
+      />
     </div>
   );
 }

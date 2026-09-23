@@ -154,7 +154,7 @@ Bootstrap acaban saliendo en los seis. Usa las variables:
 ## Modelo de datos
 
 **songs**: `userId` (dueño), `public` (repertorio compartido), `album`, `title`, `key`,
-`type`, `version`, `versiones`, `content`, `lyricsOnly`, `voices` (mapa instrumento → nº de voz →
+`type`, `version`, `versiones`, `tempo`, `compas`, `grabacion`, `content`, `lyricsOnly`, `voices` (mapa instrumento → nº de voz →
 contenido), `primaryInstrument`, `primaryVoiceNumber`, `format` (`"chords"` por
 ausencia, o `"pdf"`), `pdfs` (mapa instrumento → nº de voz → variante → **ruta**
 en Storage, nunca la URL de descarga).
@@ -165,6 +165,10 @@ en Storage, nunca la URL de descarga).
   búsqueda. Las canciones anteriores solo tienen `version`: `leerVersiones`
   (`packages/core/src/music/versiones.js`) saca la lista de ahí, separando por
   comas, así que no hay que migrar nada. Al guardar, escribe siempre los dos.
+- `tempo` (número) y `compas` ("4/4") son los **de la banda**: con ellos arranca el
+  metrónomo al abrirlo desde la canción. `grabacion` son los datos de la grabación
+  original traídos con "Buscar datos" (artista, álbum, año, duración, `tonoConcierto`,
+  `bpm`, `compas`, y sus `fuentes`). **Está en concierto** y nunca pisa `key`.
 - `getAllSongs(userId)` devuelve las propias **más** las públicas de otros, y marca cada
   una con `isOwn`. Son dos consultas porque Firestore no hace OR entre campos distintos.
 - La interfaz solo debe ofrecer editar o borrar cuando `isOwn`; las reglas lo imponen
@@ -270,7 +274,7 @@ SPA (el orden importa).
 ## Notes
 
 - No TypeScript - pure JavaScript
-- Vitest configured; 1424 tests in `apps/web/src/test/` (run with `npm run test:run`)
+- Vitest configured; 1492 tests in `apps/web/src/test/` (run with `npm run test:run`)
 - Los tests se validan con **mutaciones**: se rompe el código a propósito y se comprueba
   que algún test falla. Ha destapado cuatro tests que pasaban por la razón equivocada,
   y un bug de verdad en `scores.js` (las voces se ordenaban como texto, así que la 10
@@ -320,6 +324,18 @@ SPA (el orden importa).
   Las tonalidades también se **muestran** en la notación elegida
   (`nombrarTonalidad`: "SIm" → "Bm"), pero se guardan y se comparan siempre en
   latina: pasa solo el texto por `nombrarTonalidad`, nunca el valor.
+- Datos de fuera ("Buscar datos" en el editor): la red va en
+  `packages/api/src/services/datosCanciones.js` (MusicBrainz, iTunes y GetSongBPM,
+  las tres desde el navegador) y la traducción y las cuentas en
+  `packages/core/src/music/datosCancion.js`. Nada se aplica solo: el músico elige
+  grabación y tempo y marca cada dato. **GetSongBPM exige el enlace visible a su
+  web**, y su comprobador lee el HTML sin JavaScript: el enlace está en el pie y en
+  un `<noscript>` de `index.html`, y un test vigila los dos. La clave va en
+  `VITE_GETSONGBPM_API_KEY` (`.env` local y variables de entorno de Netlify).
+- `Metronome.jsx` carga las preferencias y **solo entonces** monta el cuerpo que
+  llama a `useMetronome`, porque el hook toma sus valores iniciales con `useState`.
+  Antes arrancaba siempre en 120 y guardaba ese 120 encima del tempo del usuario.
+  `Tuner.jsx` tiene hoy el mismo fallo.
 - Para comparar tonalidades usa `mismaTonalidad` / `identificarTonalidad`
   (`transposition.js`), no el texto: "RE#m" y "MIbm" son la misma, y "RE" y
   "REm" no. El filtro de tonalidad del Dashboard se apoya en eso.
@@ -364,8 +380,10 @@ ahorra volver a buscarlo.
     guitarra y piano, no para los vientos**. Casi toda sale **sin
     reconocimiento automático**: YouTube embebido con marcas puestas a mano.
     **Bajar el audio de YouTube está prohibido** por sus términos.
-  - El primer paso útil no es nada de eso: guardar el **tempo** de la canción
-    (hoy no existe el campo) y que el metrónomo arranque con él.
+  - **Hecho el paso 1**: `tempo` y `compas` de la canción (el metrónomo arranca con
+    ellos), "Buscar datos" en el editor, el recuadro "Datos de la grabación
+    original" en el visor y los enlaces "Ver en…". Sigue el paso 2 (YouTube para
+    practicar).
 - **El repertorio está expuesto hoy** (lo destapó la investigación de arriba,
   pero no depende de ella): el repo de GitHub es **público** y versiona
   `scripts/repertorio/repertorio.json` con las 118 melodías transcritas, y la

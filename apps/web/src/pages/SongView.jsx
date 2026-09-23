@@ -11,6 +11,7 @@ import {
 import {
   detectNotationSystem,
   nombrarTonalidad,
+  leerVersiones,
   getVisualKeyForInstrument,
   transposeKeyBySemitones,
   renderSongContent,
@@ -39,6 +40,7 @@ import useSwipeViews from "../hooks/useSwipeViews";
 import useFontSizePreference from "../hooks/useFontSizePreference";
 import { recordarNotacionEnDispositivo } from "../hooks/useNotacionPreferida";
 import PdfScoreViewer from "../components/PdfScoreViewer";
+import DatosGrabacion from "../components/datos/DatosGrabacion";
 
 // Trastes donde se pone la cejilla. Más allá del VII ya no queda mástil para
 // tocar cómodo, y la guitarra se queda sin graves.
@@ -586,6 +588,15 @@ function SongView() {
           </div>
         </div>
 
+        {/* Datos de la grabación original: cerrado de entrada */}
+        <DatosGrabacion
+          grabacion={song.grabacion}
+          titulo={song.title}
+          artista={song.grabacion?.artista || leerVersiones(song)[0] || ""}
+          instrumento={currentInstrument}
+          notacion={notationSystem}
+        />
+
         {/* Barra de controles */}
         <div className="controls-toolbar fade-in-delay no-print">
           <div className="controls-row">
@@ -1074,7 +1085,8 @@ function SongView() {
        title="Metrónomo"
        size="large"
      >
-       <Metronome compact={true} />
+       {/* Arranca con el tempo y el compás de la canción, si los tiene */}
+       <Metronome compact={true} tempoInicial={song?.tempo || null} compasInicial={song?.compas || null} />
      </Modal>
 
      {/* Tuner Modal */}

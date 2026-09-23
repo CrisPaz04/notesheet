@@ -114,9 +114,12 @@ porque explica de dónde salen.
 
 ### Orden de trabajo que queda
 
-1. **F0 + F2 juntas:** campo `tempo`, botón "Buscar datos" (MusicBrainz, iTunes y
-   GetSongBPM), recuadro de datos originales con su nota, y los enlaces "Ver
-   en…".
+1. **F0 + F2 juntas — hecho (2026-09-23).** Campos `tempo` y `compas` (con tap
+   tempo en el editor), el metrónomo arrancando con ellos, botón "Buscar datos"
+   (MusicBrainz, iTunes y GetSongBPM), recuadro "Datos de la grabación original"
+   en el visor con la nota para transpositores y la tonalidad para el
+   instrumento de cada músico, y los enlaces "Ver en…". Sin el repaso en lote
+   de las 118: se hace canción por canción.
 2. **F3:** reproductor de YouTube para practicar (volumen, velocidad).
 3. **F4:** marcas a mano, barra por partes, selector de parte y bucle.
 4. **Rejilla de acordes escrita a mano**, con la franja que avanza con el

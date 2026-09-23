@@ -462,3 +462,55 @@
 .song-album-link:hover {
   text-decoration: underline;
 }
+
+/* --- Datos de la grabación original (visor) --- */
+.datos-grabacion {
+  background: rgba(var(--overlay-rgb), 0.04);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  padding: 0.75rem 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.datos-grabacion summary {
+  cursor: pointer;
+  color: var(--text-light-primary);
+  font-weight: 600;
+}
+
+.datos-grabacion-cuerpo {
+  margin-top: 0.75rem;
+}
+
+.datos-grabacion-lista {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0.3rem 1rem;
+  margin: 0 0 0.75rem;
+}
+
+.datos-grabacion-lista dt {
+  color: var(--text-light-muted);
+  font-weight: 500;
+}
+
+.datos-grabacion-lista dd {
+  margin: 0;
+  color: var(--text-light-primary);
+}
+
+.datos-grabacion-mio {
+  color: var(--text-light-secondary);
+}
+
+.datos-grabacion-nota,
+.datos-grabacion-fuentes,
+.datos-grabacion-vacio {
+  font-size: 0.85rem;
+  color: var(--text-light-secondary);
+  margin-bottom: 0.5rem;
+}
+
+.datos-grabacion-fuentes a {
+  color: var(--color-primary);
+}

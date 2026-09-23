@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 // --- Mocks ---
@@ -13,6 +13,7 @@ const mockAddVoiceToSong = vi.fn();
 const mockRemoveVoiceFromSong = vi.fn();
 const mockNavigate = vi.fn();
 const mockGetUserPreferences = vi.fn();
+const mockBuscarDatos = vi.fn();
 
 vi.mock('@notesheet/api', () => ({
   getSongById: (...a) => mockGetSongById(...a),
@@ -21,7 +22,8 @@ vi.mock('@notesheet/api', () => ({
   addVoiceToSong: (...a) => mockAddVoiceToSong(...a),
   removeVoiceFromSong: (...a) => mockRemoveVoiceFromSong(...a),
   getUserPreferences: (...a) => mockGetUserPreferences(...a),
-  updateUserPreferences: vi.fn().mockResolvedValue({})
+  updateUserPreferences: vi.fn().mockResolvedValue({}),
+  buscarDatosDeCancion: (...a) => mockBuscarDatos(...a)
 }));
 
 const routeParams = { id: 'song-1' };
@@ -358,5 +360,108 @@ describe('SongEditor: tonalidades en C-D-E', () => {
     await user.click(screen.getByRole('button', { name: /^Guardar$/ }));
     await waitFor(() => expect(mockUpdateSong).toHaveBeenCalled());
     expect(mockUpdateSong.mock.calls.at(-1)[1].key).toBe('RE');
+  });
+});
+
+describe('SongEditor: tempo, compás y datos de la grabación', () => {
+  const ultimoGuardado = () => mockUpdateSong.mock.calls.at(-1)[1];
+  const guardar = async (user) => {
+    await user.click(screen.getByRole('button', { name: /^Guardar$/ }));
+    await waitFor(() => expect(mockUpdateSong).toHaveBeenCalled());
+    return ultimoGuardado();
+  };
+
+  it('carga y guarda el tempo como número, y el compás', async () => {
+    const user = userEvent.setup();
+    mockGetSongById.mockResolvedValue({ ...SONG, tempo: 72, compas: '3/4' });
+    await renderEditor();
+    expect(screen.getByLabelText(/Tempo \(BPM\)/)).toHaveValue(72);
+    expect(screen.getByLabelText(/Compás/)).toHaveValue('3/4');
+
+    await user.clear(screen.getByLabelText(/Tempo \(BPM\)/));
+    await user.type(screen.getByLabelText(/Tempo \(BPM\)/), '96');
+    await user.selectOptions(screen.getByLabelText(/Compás/), '6/8');
+    const guardado = await guardar(user);
+    expect(guardado.tempo).toBe(96);
+    expect(guardado.compas).toBe('6/8');
+  });
+
+  it('un tempo vacío o disparatado se guarda como null', async () => {
+    const user = userEvent.setup();
+    await renderEditor();
+    await user.type(screen.getByLabelText(/Tempo \(BPM\)/), '5000');
+    const guardado = await guardar(user);
+    expect(guardado.tempo).toBeNull();
+    expect(guardado.compas).toBeNull();
+    expect(guardado.grabacion).toBeNull();
+  });
+
+  // Toca "Tap" en los instantes dados (ms). Solo se falsea el reloj de
+  // `performance` y se avanza a mano entre toques: simular performance.now
+  // con valores sueltos no sirve, porque React también lo llama al programar
+  // sus renders y se come los valores.
+  const tocarTap = (instantes) => {
+    vi.useFakeTimers({ toFake: ['performance'] });
+    try {
+      let previo = instantes[0];
+      for (const t of instantes) {
+        vi.advanceTimersByTime(t - previo);
+        previo = t;
+        fireEvent.click(screen.getByRole('button', { name: 'Tap' }));
+      }
+    } finally {
+      vi.useRealTimers();
+    }
+  };
+
+  it('el botón Tap marca el tempo a toques', async () => {
+    await renderEditor();
+    tocarTap([0, 500, 1000, 1500]);
+    expect(screen.getByLabelText(/Tempo \(BPM\)/)).toHaveValue(120);
+  });
+
+  it('tras una pausa larga el tap empieza de cero', async () => {
+    await renderEditor();
+    // Tres toques a 120 y, 4 s después, dos más: no bastan para un tempo
+    // nuevo, y no se mezclan con los de antes (saldría 36)
+    tocarTap([0, 500, 1000, 5000, 5500]);
+    expect(screen.getByLabelText(/Tempo \(BPM\)/)).toHaveValue(120);
+  });
+
+  it('"Buscar datos" rellena el formulario con lo aceptado, y se guarda al pulsar Guardar', async () => {
+    const user = userEvent.setup();
+    mockBuscarDatos.mockResolvedValue({
+      grabaciones: [{ fuente: 'itunes', id: '1', titulo: 'Cristo Vive', artista: 'Elim', album: 'En vivo', anio: 2010, duracion: 240, enlace: 'https://music.apple.com/x' }],
+      tempos: [{ fuente: 'getsongbpm', id: 'g1', titulo: 'Cristo Vive', artista: 'Elim', tempo: 88, tonoConcierto: 'SOL', compas: '4/4', enlace: 'https://getsongbpm.com/song/g1' }],
+      errores: {}
+    });
+    mockGetSongById.mockResolvedValue({ ...SONG, version: '' });
+    await renderEditor();
+
+    await user.click(screen.getByRole('button', { name: /Buscar datos/ }));
+    await user.click(await screen.findByRole('radio', { name: /Cristo Vive — Elim\s*En vivo/ }));
+    await user.click(within(screen.getByText('2. Tempo y tonalidad').closest('fieldset')).getByRole('radio'));
+    await user.click(screen.getByRole('button', { name: 'Aplicar' }));
+
+    expect(screen.getByLabelText(/Tempo \(BPM\)/)).toHaveValue(88);
+    expect(screen.getByText('Elim · En vivo · 2010 · 4:00')).toBeInTheDocument();
+    expect(mockUpdateSong).not.toHaveBeenCalled();
+
+    const guardado = await guardar(user);
+    expect(guardado.tempo).toBe(88);
+    expect(guardado.compas).toBe('4/4');
+    expect(guardado.versiones).toEqual(['Elim']);
+    expect(guardado.grabacion).toMatchObject({ artista: 'Elim', tonoConcierto: 'SOL', bpm: 88 });
+    // La tonalidad de la grabación no toca la de la canción
+    expect(guardado.key).toBe('DO');
+  });
+
+  it('"Quitar" borra los datos de la grabación', async () => {
+    const user = userEvent.setup();
+    mockGetSongById.mockResolvedValue({ ...SONG, grabacion: { artista: 'Elim', album: 'En vivo', fuentes: {} } });
+    await renderEditor();
+    await user.click(screen.getByRole('button', { name: 'Quitar' }));
+    expect(screen.getByText('Sin datos todavía.')).toBeInTheDocument();
+    expect((await guardar(user)).grabacion).toBeNull();
   });
 });
