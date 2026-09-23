@@ -14,6 +14,7 @@ import {
   getCentsDeviation
 } from '@notesheet/core/src/audio/pitchDetection';
 import { useAuth } from '../context/AuthContext';
+import useNotacionPreferida from './useNotacionPreferida';
 import { saveTunerPreferences } from '@notesheet/api';
 import { TRANSPOSING_INSTRUMENTS, STRING_TUNINGS } from '@notesheet/core';
 
@@ -47,7 +48,8 @@ function useTuner(initialPreferences = {}) {
       ? initialPreferences.showConcertPitch
       : true
   );
-  const [notationSystem, setNotationSystem] = useState('latin');
+  // La del perfil, compartida con el resto de la app (useNotacionPreferida)
+  const [notationSystem, setNotationSystem] = useNotacionPreferida(currentUser);
 
   // Reference tone state
   const [isPlayingTone, setIsPlayingTone] = useState(false);
@@ -233,9 +235,9 @@ function useTuner(initialPreferences = {}) {
   /**
    * Toggle notation system
    */
-  const toggleNotationSystem = useCallback(() => {
-    setNotationSystem((prev) => (prev === 'latin' ? 'english' : 'latin'));
-  }, []);
+  const toggleNotationSystem = () => {
+    setNotationSystem(notationSystem === 'latin' ? 'english' : 'latin');
+  };
 
   /**
    * Play reference tone for a specific note

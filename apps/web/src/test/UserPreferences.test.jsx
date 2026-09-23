@@ -92,6 +92,19 @@ describe('UserPreferences', () => {
       expect(guardado.defaultNotationSystem).toBe('english');
     });
 
+    it('al guardar la notación, la deja lista para la siguiente vista', async () => {
+      // Las demás vistas arrancan con la copia del dispositivo mientras llega
+      // el perfil: si no se actualiza aquí, enseñan un instante la vieja.
+      localStorage.clear();
+      const user = userEvent.setup();
+      await renderPrefs();
+
+      await elegirNotacion(user, 'english');
+      await guardar(user);
+
+      await waitFor(() => expect(localStorage.getItem('notacion')).toBe('english'));
+    });
+
     it('guarda el tamaño de texto', async () => {
       const user = userEvent.setup();
       await renderPrefs();

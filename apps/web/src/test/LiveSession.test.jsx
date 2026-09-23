@@ -41,11 +41,12 @@ vi.mock('../hooks/useLiveSetlistContent', () => ({
 const mockGetUserPreferences = vi.fn();
 const mockGetAllSongs = vi.fn();
 const mockSignInAsGuest = vi.fn();
+const mockUpdateUserPreferences = vi.fn();
 vi.mock('@notesheet/api', () => ({
   getUserPreferences: (...a) => mockGetUserPreferences(...a),
   getAllSongs: (...a) => mockGetAllSongs(...a),
   signInAsGuest: (...a) => mockSignInAsGuest(...a),
-  updateUserPreferences: vi.fn().mockResolvedValue({})
+  updateUserPreferences: (...a) => mockUpdateUserPreferences(...a)
 }));
 
 const mockNavigate = vi.fn();
@@ -103,6 +104,7 @@ beforeEach(() => {
   estadoSesion = sesionEnVivo();
   estadoLista = listaCargada();
   mockGetUserPreferences.mockResolvedValue({});
+  mockUpdateUserPreferences.mockResolvedValue({});
   mockGetAllSongs.mockResolvedValue([]);
   // jsdom no implementa scrollIntoView.
   Element.prototype.scrollIntoView = vi.fn();
@@ -476,6 +478,33 @@ describe('lo mío', () => {
     await userEvent.selectOptions(screen.getByLabelText('Notación'), 'english');
 
     expect(localStorage.getItem('live:notacion')).toBe('english');
+  });
+
+  it('con cuenta, arranca con la notación del perfil', async () => {
+    mockGetUserPreferences.mockResolvedValue({ defaultNotationSystem: 'english' });
+    render(<LiveSession />);
+
+    await waitFor(() => expect(screen.getByLabelText('Notación')).toHaveValue('english'));
+  });
+
+  it('con cuenta, cambiarla la guarda también en el perfil', async () => {
+    render(<LiveSession />);
+    await userEvent.selectOptions(screen.getByLabelText('Notación'), 'english');
+
+    await waitFor(() =>
+      expect(mockUpdateUserPreferences).toHaveBeenCalledWith('u1', { defaultNotationSystem: 'english' })
+    );
+  });
+
+  it('un invitado sin cuenta conserva la que eligió en su dispositivo', async () => {
+    auth = { currentUser: { uid: 'anon', isAnonymous: true }, loading: false };
+    localStorage.setItem('live:notacion', 'english');
+    render(<LiveSession />);
+
+    expect(screen.getByLabelText('Notación')).toHaveValue('english');
+    await userEvent.selectOptions(screen.getByLabelText('Notación'), 'latin');
+    expect(mockUpdateUserPreferences).not.toHaveBeenCalled();
+    expect(localStorage.getItem('live:notacion')).toBe('latin');
   });
 
   it('anuncia a los demás qué instrumento toco', async () => {

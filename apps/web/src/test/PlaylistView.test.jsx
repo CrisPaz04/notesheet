@@ -9,11 +9,14 @@ const mockGetSongById = vi.fn();
 // vive en la barra de acciones. Sin ellos el import falla y la página no
 // llega a renderizar nada.
 const mockCreateSession = vi.fn();
+const mockGetUserPreferences = vi.fn();
 
 vi.mock('@notesheet/api', () => ({
   getPlaylistById: (...a) => mockGetPlaylistById(...a),
   getSongById: (...a) => mockGetSongById(...a),
-  createSession: (...a) => mockCreateSession(...a)
+  createSession: (...a) => mockCreateSession(...a),
+  getUserPreferences: (...a) => mockGetUserPreferences(...a),
+  updateUserPreferences: vi.fn().mockResolvedValue({})
 }));
 
 vi.mock('react-router-dom', () => ({
@@ -61,6 +64,8 @@ const contenidoDeCancion = (i) =>
 beforeEach(() => {
   vi.clearAllMocks();
   mockAuth.currentUser = { uid: 'user-1' };
+  localStorage.clear();
+  mockGetUserPreferences.mockResolvedValue({});
   mockGetPlaylistById.mockResolvedValue(LISTA);
   mockGetSongById.mockImplementation(async (id) => {
     if (!CANCIONES[id]) throw new Error('Missing or insufficient permissions.');
@@ -148,5 +153,35 @@ describe('PlaylistView', () => {
       expect(screen.getByText('Domingo')).toBeInTheDocument();
     });
     expect(mockGetSongById).not.toHaveBeenCalled();
+  });
+
+  describe('notación del perfil', () => {
+    it('sin preferencia, las notas salen en latina', async () => {
+      await renderLista();
+      expect(contenidoDeCancion(0)).toMatch(/LA\s+MI\s+FA#m\s+RE/);
+    });
+
+    it('con anglosajona en el perfil, las notas salen en anglosajona', async () => {
+      mockGetUserPreferences.mockResolvedValue({ defaultNotationSystem: 'english' });
+      await renderLista();
+
+      // Cristo Vive, transpuesta a LA para esta lista y en C-D-E
+      await waitFor(() => expect(contenidoDeCancion(0)).toMatch(/A\s+E\s+F#m\s+D/));
+      expect(mockGetUserPreferences).toHaveBeenCalledWith('user-1');
+      // No vuelve a descargar las canciones por cambiar la notación
+      expect(mockGetSongById).toHaveBeenCalledTimes(2);
+    });
+
+    it('si el perfil llega después que las canciones, las vuelve a pintar', async () => {
+      let responder;
+      mockGetUserPreferences.mockReturnValue(new Promise((r) => { responder = r; }));
+      await renderLista();
+      await waitFor(() => expect(contenidoDeCancion(0)).toMatch(/LA\s+MI\s+FA#m\s+RE/));
+
+      responder({ defaultNotationSystem: 'english' });
+
+      await waitFor(() => expect(contenidoDeCancion(0)).toMatch(/A\s+E\s+F#m\s+D/));
+      expect(mockGetSongById).toHaveBeenCalledTimes(2);
+    });
   });
 });

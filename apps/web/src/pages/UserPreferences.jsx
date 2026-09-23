@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import { getUserPreferences, updateUserPreferences } from "@notesheet/api";
+import { recordarNotacionEnDispositivo } from "../hooks/useNotacionPreferida";
 import {
   TRANSPOSING_INSTRUMENTS,
   SCORE_VARIANTS,
@@ -91,6 +92,7 @@ function UserPreferences() {
       
       if (currentUser) {
         await updateUserPreferences(currentUser.uid, preferences);
+        recordarNotacionEnDispositivo(preferences.defaultNotationSystem);
         setSuccess(true);
         
         // Auto-hide success message after 3 seconds

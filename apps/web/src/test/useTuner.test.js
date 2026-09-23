@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { renderHook, act } from '@testing-library/react';
+import { renderHook, act, waitFor } from '@testing-library/react';
 
 // --- Mocks ---
 // Solo se sustituye TunerEngine, que necesita getUserMedia y AnalyserNode.
@@ -28,8 +28,12 @@ vi.mock('@notesheet/core/src/audio/tunerEngine', () => {
 });
 
 const mockSavePrefs = vi.fn();
+const mockGetUserPreferences = vi.fn();
+const mockUpdateUserPreferences = vi.fn();
 vi.mock('@notesheet/api', () => ({
-  saveTunerPreferences: (...a) => mockSavePrefs(...a)
+  saveTunerPreferences: (...a) => mockSavePrefs(...a),
+  getUserPreferences: (...a) => mockGetUserPreferences(...a),
+  updateUserPreferences: (...a) => mockUpdateUserPreferences(...a)
 }));
 
 const mockAuth = { currentUser: null };
@@ -55,6 +59,8 @@ beforeEach(() => {
   engineConfig.initializeError = null;
   mockAuth.currentUser = null;
   mockSavePrefs.mockResolvedValue({});
+  mockGetUserPreferences.mockResolvedValue({});
+  mockUpdateUserPreferences.mockResolvedValue({});
   localStorage.clear();
 });
 
@@ -285,6 +291,25 @@ describe('useTuner', () => {
 
       expect(result.current.notationSystem).toBe('english');
       expect(result.current.detectedNote).toBe('A4');
+    });
+
+    it('arranca con la notación del perfil', async () => {
+      mockAuth.currentUser = { uid: 'user-1' };
+      mockGetUserPreferences.mockResolvedValue({ defaultNotationSystem: 'english' });
+      const { result } = renderHook(() => useTuner());
+
+      await waitFor(() => expect(result.current.notationSystem).toBe('english'));
+    });
+
+    it('cambiarla en el afinador la guarda en el perfil', async () => {
+      mockAuth.currentUser = { uid: 'user-1' };
+      const { result } = renderHook(() => useTuner());
+
+      act(() => { result.current.toggleNotationSystem(); });
+
+      await waitFor(() =>
+        expect(mockUpdateUserPreferences).toHaveBeenCalledWith('user-1', { defaultNotationSystem: 'english' })
+      );
     });
   });
 

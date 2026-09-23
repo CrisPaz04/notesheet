@@ -424,3 +424,16 @@ describe('SongView', () => {
     });
   });
 });
+
+describe('SongView: notación', () => {
+  it('cambiarla aquí la deja lista para las demás vistas', async () => {
+    localStorage.clear();
+    const user = userEvent.setup();
+    await renderSongView();
+
+    await user.click(screen.getByText('DO-RE-MI').closest('button'));
+    await user.click(screen.getByText('C-D-E (Anglosajona)'));
+
+    expect(localStorage.getItem('notacion')).toBe('english');
+  });
+});

@@ -1,8 +1,9 @@
 // apps/web/src/pages/PlaylistView.jsx
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useParams, Link } from "react-router-dom";
 import { getPlaylistById, getSongById } from "@notesheet/api";
 import { useAuth } from "../context/AuthContext";
+import useNotacionPreferida from "../hooks/useNotacionPreferida";
 import { renderSongContent, isPdfSong } from "@notesheet/core";
 import LoadingSpinner from "../components/LoadingSpinner";
 import StartLiveButton from "../components/live/StartLiveButton";
@@ -16,6 +17,7 @@ function PlaylistView() {
   
   const { id } = useParams();
   const { currentUser } = useAuth();
+  const [notacion] = useNotacionPreferida(currentUser);
 
   useEffect(() => {
     const loadPlaylist = async () => {
@@ -47,23 +49,11 @@ function PlaylistView() {
                   };
                 }
 
-                // La lista puede transponer una canción solo para esta ocasión:
-                // hay que mostrarla en la tonalidad elegida, no en la original.
-                // Antes se formateaba sin transponer y la etiqueta decía una
-                // tonalidad mientras los acordes mostraban otra.
-                const { formatted: formattedContent } = renderSongContent(
-                  fullSong.content,
-                  {
-                    baseKey: fullSong.key,
-                    targetKey: song.key || fullSong.key
-                  }
-                );
-
-                // Combinar los datos de la canción con los datos de la playlist
+                // Se formatea más abajo (`cancionesVista`), para poder
+                // repintar si cambia la notación sin volver a descargar nada.
                 return {
                   ...fullSong,
-                  selectedKey: song.key, // Tonalidad seleccionada en la playlist
-                  formattedContent: formattedContent
+                  selectedKey: song.key // Tonalidad seleccionada en la playlist
                 };
               } catch (error) {
                 console.error(`Error loading song ${song.id}:`, error);
@@ -89,6 +79,20 @@ function PlaylistView() {
 
     loadPlaylist();
   }, [id]);
+
+  // La lista puede transponer una canción solo para esta ocasión: hay que
+  // mostrarla en la tonalidad elegida, no en la original. Antes se formateaba
+  // sin transponer y la etiqueta decía una tonalidad mientras los acordes
+  // mostraban otra. La notación es la del perfil, como en el resto de la app.
+  const cancionesVista = useMemo(() => songs.map((song) => {
+    if (song.error || isPdfSong(song)) return { ...song, formattedContent: null };
+    const { formatted } = renderSongContent(song.content, {
+      baseKey: song.key,
+      targetKey: song.selectedKey || song.key,
+      notationSystem: notacion
+    });
+    return { ...song, formattedContent: formatted };
+  }), [songs, notacion]);
 
   // Estilos de impresión
   useEffect(() => {
@@ -323,7 +327,7 @@ function PlaylistView() {
                 </h3>
               </div>
               
-              {songs.map((song, index) => (
+              {cancionesVista.map((song, index) => (
                 <div key={song.id}>
                   {/* Item de la canción */}
                   <div className="playlist-song-item">

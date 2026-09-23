@@ -265,7 +265,7 @@ SPA (el orden importa).
 ## Notes
 
 - No TypeScript - pure JavaScript
-- Vitest configured; 1367 tests in `apps/web/src/test/` (run with `npm run test:run`)
+- Vitest configured; 1389 tests in `apps/web/src/test/` (run with `npm run test:run`)
 - Los tests se validan con **mutaciones**: se rompe el código a propósito y se comprueba
   que algún test falla. Ha destapado cuatro tests que pasaban por la razón equivocada,
   y un bug de verdad en `scores.js` (las voces se ordenaban como texto, así que la 10
@@ -304,6 +304,14 @@ SPA (el orden importa).
   una constante fuera del componente o `useMemo`. Si cambian de identidad
   rehace el editor, y como cada tecla provoca un render, se perdía el foco al
   escribir. Lo vigila un test de `SongEditor.test.jsx`.
+- La notación (DO-RE-MI / C-D-E) es **del perfil** (`defaultNotationSystem`)
+  y la usan todas las vistas que muestran notas, con `useNotacionPreferida`:
+  arranca con una copia en el dispositivo (sin parpadeo y sin red), la del
+  perfil manda al llegar, y cambiarla desde un interruptor de la vista la
+  guarda en el perfil. Los invitados de una sesión en vivo solo guardan la
+  copia local. Si una vista guarda la notación por otro camino, que llame a
+  `recordarNotacionEnDispositivo` o la siguiente vista enseñará un instante
+  la vieja. La etiqueta de tonalidad ("MI") sigue en latina en todas partes.
 - Para comparar tonalidades usa `mismaTonalidad` / `identificarTonalidad`
   (`transposition.js`), no el texto: "RE#m" y "MIbm" son la misma, y "RE" y
   "REm" no. El filtro de tonalidad del Dashboard se apoya en eso.
@@ -331,12 +339,6 @@ ahorra volver a buscarlo.
 - **Más de un "versión de".** A veces hay que acreditar a una persona y a un
   grupo, o a dos personas. Ejemplo: *Ebenezer San Francisco, Jorge Jaenz*.
   Hoy `version` es un solo campo de texto.
-
-### Presentación
-
-- **Notación elegida en el perfil y aplicada en toda la app.** Hoy se elige
-  suelta en varias vistas. Se habló de tres opciones: latina, anglosajona, o
-  dejar elegir en cada vista.
 
 ### Música
 

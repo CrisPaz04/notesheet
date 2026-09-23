@@ -36,6 +36,7 @@ import Tuner from "./Tuner";
 import useModal from "../hooks/useModal";
 import useSwipeViews from "../hooks/useSwipeViews";
 import useFontSizePreference from "../hooks/useFontSizePreference";
+import { recordarNotacionEnDispositivo } from "../hooks/useNotacionPreferida";
 import PdfScoreViewer from "../components/PdfScoreViewer";
 
 // Trastes donde se pone la cejilla. Más allá del VII ya no queda mástil para
@@ -304,6 +305,7 @@ function SongView() {
       setNotationSystem(system);
       setShowNotationDropdown(false);
 
+      recordarNotacionEnDispositivo(system);
       if (currentUser) {
         updateUserPreferences(currentUser.uid, { defaultNotationSystem: system })
           .catch((prefError) => console.error("Error saving notation preference:", prefError));

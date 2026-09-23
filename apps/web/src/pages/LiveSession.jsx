@@ -20,6 +20,7 @@ import { useAuth } from "../context/AuthContext";
 import useLiveSession from "../hooks/useLiveSession";
 import useLiveSetlistContent from "../hooks/useLiveSetlistContent";
 import usePreferenciaLocal from "../hooks/usePreferenciaLocal";
+import useNotacionPreferida from "../hooks/useNotacionPreferida";
 import useFontSizePreference from "../hooks/useFontSizePreference";
 import LoadingSpinner from "../components/LoadingSpinner";
 import LiveBar from "../components/live/LiveBar";
@@ -29,7 +30,6 @@ import AddSongToSession from "../components/live/AddSongToSession";
 import GuestGate from "../components/live/GuestGate";
 
 const INSTRUMENTOS = Object.keys(TRANSPOSING_INSTRUMENTS);
-const NOTACIONES = ["latin", "english"];
 const SEGUIR = ["si", "no"];
 
 function LiveSession() {
@@ -43,7 +43,10 @@ function LiveSession() {
     SOURCE_INSTRUMENT,
     INSTRUMENTOS
   );
-  const [notacion, setNotacion] = usePreferenciaLocal("live:notacion", "latin", NOTACIONES);
+  // La del perfil si hay cuenta; los invitados, que entran por el enlace sin
+  // cuenta, la guardan solo en el dispositivo (con la clave de siempre, para
+  // no perder la que ya tenían elegida).
+  const [notacion, setNotacion] = useNotacionPreferida(currentUser, "live:notacion");
 
   /**
    * Si el scroll sigue al director.
