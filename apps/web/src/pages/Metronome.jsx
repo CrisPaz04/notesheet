@@ -10,13 +10,25 @@ import { useAuth } from '../context/AuthContext';
 import { getMetronomePreferences } from '@notesheet/api';
 import useMetronome from '../hooks/useMetronome';
 import useTempoTrainer from '../hooks/useTempoTrainer';
+import { TIME_SIGNATURES } from '@notesheet/core/src/audio/metronomeEngine';
 import MetronomeControls from '../components/metronome/MetronomeControls';
 import MetronomeVisualizer from '../components/metronome/MetronomeVisualizer';
 import TempoPresets from '../components/metronome/TempoPresets';
 import SoundPresetSelector from '../components/metronome/SoundPresetSelector';
 import TempoTrainer from '../components/metronome/TempoTrainer';
 
-function Metronome({ compact = false }) {
+/**
+ * Carga las preferencias y, solo cuando las tiene, monta el metrónomo.
+ *
+ * `useMetronome` toma los valores iniciales con `useState`, así que solo mira
+ * los del primer render. Antes el hook se llamaba aquí mismo, con `{}`,
+ * mientras Firebase aún no había respondido: el metrónomo arrancaba siempre
+ * en 120 y además guardaba ese 120 encima del tempo del usuario.
+ *
+ * `tempoInicial` y `compasInicial` son los de la canción desde la que se abre
+ * (SongView) y mandan sobre los guardados.
+ */
+function Metronome({ compact = false, tempoInicial = null, compasInicial = null }) {
   const { currentUser } = useAuth();
   const [preferencesLoaded, setPreferencesLoaded] = useState(false);
   const [initialPreferences, setInitialPreferences] = useState({});
@@ -57,6 +69,28 @@ function Metronome({ compact = false }) {
     loadPreferences();
   }, [currentUser]);
 
+  if (!preferencesLoaded) {
+    return (
+      <div className={compact ? 'metronome-compact' : 'metronome-container'}>
+        <div className={compact ? '' : 'container'}>
+          <div className="text-center py-5">
+            <div className="spinner-border" role="status" style={{ color: 'var(--color-primary)' }}>
+              <span className="visually-hidden">Cargando...</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const iniciales = { ...initialPreferences };
+  if (Number.isFinite(tempoInicial) && tempoInicial > 0) iniciales.bpm = tempoInicial;
+  if (compasInicial && TIME_SIGNATURES[compasInicial]) iniciales.timeSignature = compasInicial;
+
+  return <MetronomeCuerpo compact={compact} initialPreferences={iniciales} />;
+}
+
+function MetronomeCuerpo({ compact, initialPreferences }) {
   const {
     isPlaying,
     bpm,
@@ -89,20 +123,6 @@ function Metronome({ compact = false }) {
     updateBpm,
     isPlaying
   );
-
-  if (!preferencesLoaded) {
-    return (
-      <div className={compact ? 'metronome-compact' : 'metronome-container'}>
-        <div className={compact ? '' : 'container'}>
-          <div className="text-center py-5">
-            <div className="spinner-border" role="status" style={{ color: 'var(--color-primary)' }}>
-              <span className="visually-hidden">Cargando...</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className={compact ? 'metronome-compact' : 'metronome-container'}>
