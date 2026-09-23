@@ -104,7 +104,7 @@ npm run ios           # iOS build
 
 ```
 apps/web/             # Vite + React web application
-packages/api/         # Firebase services layer (auth, songs, playlists, user, preferences)
+packages/api/         # Firebase services (auth, songs, playlists, sessions, scores, user, preferences) y datos de fuera (datosCanciones)
 packages/core/        # Music theory, audio utilities (metronome, tuner, pitch detection)
 packages/ui/          # Shared UI components (planned)
 ```
@@ -112,9 +112,10 @@ packages/ui/          # Shared UI components (planned)
 ### Web App Structure (apps/web/src/)
 
 - **pages/** - Route-level components (Dashboard, SongEditor, SongView, PlaylistEditor, Metronome, Tuner, etc.)
-- **components/** - Reusable components organized by feature (metronome/, tuner/, Navbar, Modal, ProtectedRoute)
-- **hooks/** - Custom hooks (useMetronome, useTuner, useTheme, useModal, usePitchHistory,
-  useTempoTrainer, useSwipeViews, useFontSizePreference, useSongVoices, useSelectedSongs)
+- **components/** - Reusable components organized by feature (metronome/, tuner/, live/, datos/, Navbar, Modal, ProtectedRoute, selectores de tonalidad, VersionesInput, visor de PDF)
+- **hooks/** - Custom hooks (useMetronome, useTuner, useTheme, useThemeWithAuth, useModal, usePitchHistory,
+  useTempoTrainer, useSwipeViews, useFontSizePreference, useSongVoices, useSelectedSongs,
+  useLiveSession, useLiveSetlistContent, usePdfDocument, useNotacionPreferida, usePreferenciaLocal)
 - **context/** - React Context (AuthContext for user state)
 - **styles/** - Modular CSS (base/, components/, pages/, utilities/)
 
