@@ -90,15 +90,19 @@ export const parseSongSections = (content) => {
   let currentSection = { title: '', content: [] };
 
   contentLines.forEach(line => {
-    // Detectar una nueva sección (## Título)
-    const sectionMatch = line.match(/^##\s+(.+)$/);
+    // Detectar una nueva sección (## Título). Un `##` suelto también abre
+    // una, sin título: es la forma de cerrar la intro sin tener que inventarle
+    // nombre a lo que viene detrás. Sin él, todo lo que seguía a "## Intro"
+    // hasta la siguiente cabecera se pintaba como parte de la intro.
+    // "##Coro", sin espacio, sigue siendo una línea más.
+    const sectionMatch = line.match(/^##(?:\s+(.*))?$/);
     if (sectionMatch) {
       // Guardar la anterior, salvo que sea la implícita y esté vacía
       if (currentSection.title || currentSection.content.some(l => l.trim())) {
         sections.push(currentSection);
       }
       currentSection = {
-        title: sectionMatch[1].trim(),
+        title: (sectionMatch[1] || '').trim(),
         content: []
       };
     } else {

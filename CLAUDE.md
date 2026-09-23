@@ -244,7 +244,7 @@ SPA (el orden importa).
 ## Notes
 
 - No TypeScript - pure JavaScript
-- Vitest configured; 1333 tests in `apps/web/src/test/` (run with `npm run test:run`)
+- Vitest configured; 1339 tests in `apps/web/src/test/` (run with `npm run test:run`)
 - Los tests se validan con **mutaciones**: se rompe el código a propósito y se comprueba
   que algún test falla. Ha destapado cuatro tests que pasaban por la razón equivocada,
   y un bug de verdad en `scores.js` (las voces se ordenaban como texto, así que la 10
@@ -267,6 +267,10 @@ SPA (el orden importa).
   `chords.js` o `transposition.js`, ese test es el que avisa. `KEY_TO_INDEX`
   necesita también las enarmónicas raras (`MI#`, `SI#`, `FAb`): si falta una,
   `transposeNote` devuelve la nota **sin transponer** y en silencio.
+- Secciones (`parseSongSections`, `notation.js`): `## Título` abre una, y un
+  `##` suelto la cierra sin abrir otra con nombre (lo que sigue va en un
+  bloque sin título). Es lo que usa quien quiere que lo que viene tras la
+  intro no se pinte como intro. `##Coro` sin espacio y `###` no son cabeceras.
 - Para comparar tonalidades usa `mismaTonalidad` / `identificarTonalidad`
   (`transposition.js`), no el texto: "RE#m" y "MIbm" son la misma, y "RE" y
   "REm" no. El filtro de tonalidad del Dashboard se apoya en eso.
@@ -294,18 +298,6 @@ ahorra volver a buscarlo.
 - **Más de un "versión de".** A veces hay que acreditar a una persona y a un
   grupo, o a dos personas. Ejemplo: *Ebenezer San Francisco, Jorge Jaenz*.
   Hoy `version` es un solo campo de texto.
-
-### Secciones
-
-- **Lo que va después de la intro y no es intro se queda dentro de la intro.**
-  Debería caer en una sección aparte.
-
-  Sobre la duda de si basta con poner `##` a secas: **no**. `parseSongSections`
-  (`packages/core/src/music/notation.js`) abre sección con `/^##\s+(.+)$/`, que
-  exige un espacio y un título no vacío, así que un `##` suelto se trata como
-  una línea más de la sección en curso. Con título sí funciona aunque no lleve
-  contenido debajo: al cerrar solo se descarta la sección que no tiene **ni**
-  título **ni** contenido.
 
 ### Presentación
 

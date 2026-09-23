@@ -129,6 +129,47 @@ FA DO`);
     expect(secciones[0].title).toBe('Coro');
   });
 
+  it('un ## suelto cierra la intro y lo que sigue va aparte, sin título', () => {
+    const secciones = parseSongSections(`## Intro
+DO SOL
+##
+Cristo vive hoy
+## Coro
+FA DO`);
+    expect(secciones.map((s) => s.title)).toEqual(['Intro', '', 'Coro']);
+    expect(secciones[0].content).toBe('DO SOL');
+    expect(secciones[1].content).toBe('Cristo vive hoy');
+  });
+
+  it('el ## suelto admite espacios detrás', () => {
+    const secciones = parseSongSections('## Intro\nDO SOL\n##   \nletra');
+    expect(secciones.map((s) => s.title)).toEqual(['Intro', '']);
+    expect(secciones[1].content).toBe('letra');
+  });
+
+  it('un ## suelto sin nada debajo no deja una sección vacía', () => {
+    const secciones = parseSongSections('## Intro\nDO SOL\n##\n\n');
+    expect(secciones).toHaveLength(1);
+    expect(secciones[0].title).toBe('Intro');
+  });
+
+  it('dos ## seguidos no inventan secciones', () => {
+    const secciones = parseSongSections('## Intro\nDO SOL\n##\n##\nletra');
+    expect(secciones.map((s) => s.title)).toEqual(['Intro', '']);
+  });
+
+  it('##Coro sin espacio no es una cabecera', () => {
+    const secciones = parseSongSections('## Intro\nDO SOL\n##Coro');
+    expect(secciones).toHaveLength(1);
+    expect(secciones[0].content).toContain('##Coro');
+  });
+
+  it('### no es una cabecera de sección', () => {
+    const secciones = parseSongSections('## Intro\nDO SOL\n### nota');
+    expect(secciones).toHaveLength(1);
+    expect(secciones[0].content).toContain('### nota');
+  });
+
   it('no devuelve nada con contenido vacío', () => {
     expect(parseSongSections('')).toEqual([]);
     expect(parseSongSections(`

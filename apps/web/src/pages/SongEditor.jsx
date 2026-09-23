@@ -920,7 +920,8 @@ function SongEditor() {
             ) : (
               <>
                 <i className="bi bi-info-circle me-2"></i>
-                Escribe las notas para tu instrumento. Usa <code>## Título</code> para crear secciones (Intro, Verso, Coro).
+                Escribe las notas para tu instrumento. Usa <code>## Título</code> para crear secciones (Intro, Verso, Coro)
+                y un <code>##</code> suelto para cerrar una sin empezar otra.
               </>
             )}
           </div>
