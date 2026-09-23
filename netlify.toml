@@ -40,6 +40,12 @@
 
 [build.environment]
   NODE_VERSION = "22"
+  # La clave de GetSongBPM acaba A PROPOSITO en el JavaScript de la web: se
+  # llama a su API desde el navegador y Vite incrusta las VITE_*. El escaneo
+  # de secretos de Netlify la encontraba en el build y lo paraba con
+  # "Exposed secrets detected". Se excluye solo esa variable; el escaneo sigue
+  # activo para todas las demas. (Ver PLAN-ACORDES-Y-DATOS.md.)
+  SECRETS_SCAN_OMIT_KEYS = "VITE_GETSONGBPM_API_KEY"
 
 # Un archivo de /assets que no existe tiene que dar 404, no index.html.
 #
