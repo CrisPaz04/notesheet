@@ -4,7 +4,7 @@ import { useParams, Link } from "react-router-dom";
 import { getPlaylistById, getSongById } from "@notesheet/api";
 import { useAuth } from "../context/AuthContext";
 import useNotacionPreferida from "../hooks/useNotacionPreferida";
-import { renderSongContent, isPdfSong } from "@notesheet/core";
+import { renderSongContent, isPdfSong, nombrarTonalidad } from "@notesheet/core";
 import LoadingSpinner from "../components/LoadingSpinner";
 import StartLiveButton from "../components/live/StartLiveButton";
 
@@ -358,7 +358,7 @@ function PlaylistView() {
                     </div>
                     
                     <div className="playlist-song-key">
-                      {song.selectedKey || song.key || "?"}
+                      {nombrarTonalidad(song.selectedKey || song.key, notacion) || "?"}
                     </div>
                   </div>
                   

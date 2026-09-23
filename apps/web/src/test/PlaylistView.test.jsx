@@ -172,6 +172,15 @@ describe('PlaylistView', () => {
       expect(mockGetSongById).toHaveBeenCalledTimes(2);
     });
 
+    it('con anglosajona, la etiqueta de tonalidad también sale en C-D-E', async () => {
+      mockGetUserPreferences.mockResolvedValue({ defaultNotationSystem: 'english' });
+      await renderLista();
+      await waitFor(() => {
+        const etiquetas = [...document.querySelectorAll('.playlist-song-key')].map((el) => el.textContent.trim());
+        expect(etiquetas).toEqual(['A', 'G']);
+      });
+    });
+
     it('si el perfil llega después que las canciones, las vuelve a pintar', async () => {
       let responder;
       mockGetUserPreferences.mockReturnValue(new Promise((r) => { responder = r; }));

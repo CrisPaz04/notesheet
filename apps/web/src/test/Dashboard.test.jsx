@@ -5,10 +5,13 @@ import userEvent from '@testing-library/user-event';
 // --- Mocks ---
 const mockGetAllSongs = vi.fn();
 const mockDeleteSong = vi.fn();
+const mockGetUserPreferences = vi.fn();
 
 vi.mock('@notesheet/api', () => ({
   getAllSongs: (...a) => mockGetAllSongs(...a),
-  deleteSong: (...a) => mockDeleteSong(...a)
+  deleteSong: (...a) => mockDeleteSong(...a),
+  getUserPreferences: (...a) => mockGetUserPreferences(...a),
+  updateUserPreferences: vi.fn().mockResolvedValue({})
 }));
 
 vi.mock('react-router-dom', () => ({
@@ -81,6 +84,7 @@ beforeEach(() => {
   mockAuth.canEditSongs = () => true;
   mockGetAllSongs.mockResolvedValue(SONGS);
   mockDeleteSong.mockResolvedValue('1');
+  mockGetUserPreferences.mockResolvedValue({});
   vi.stubGlobal('confirm', vi.fn(() => true));
 });
 
@@ -642,6 +646,40 @@ describe('Dashboard', () => {
         expect(visibles).toEqual([...visibles].sort((x, y) => x.localeCompare(y, 'es')));
         expect(visibles.length).toBeGreaterThan(1);
       });
+    });
+  });
+
+  describe('tonalidades en C-D-E', () => {
+    const EN_SIM = { ...SONGS[0], id: '9', title: 'Canción en si menor', key: 'SIm', lyricsOnly: '' };
+
+    it('con anglosajona en el perfil, las tarjetas y el filtro las nombran en C-D-E', async () => {
+      mockGetUserPreferences.mockResolvedValue({ defaultNotationSystem: 'english' });
+      mockGetAllSongs.mockResolvedValue([...SONGS, EN_SIM]);
+      await renderDashboard();
+
+      await waitFor(() => expect(screen.getByText(/^Bm • /)).toBeInTheDocument());
+      const opciones = within(screen.getByRole('combobox', { name: 'Filtrar por tonalidad' }))
+        .getAllByRole('option').map((o) => o.textContent);
+      expect(opciones).toEqual(['Todas las tonalidades', 'C (1)', 'D (1)', 'G (1)', 'Bm (1)']);
+    });
+
+    it('buscar "Bm" encuentra la canción en SIm', async () => {
+      const user = userEvent.setup();
+      mockGetUserPreferences.mockResolvedValue({ defaultNotationSystem: 'english' });
+      mockGetAllSongs.mockResolvedValue([...SONGS, EN_SIM]);
+      await renderDashboard();
+      await waitFor(() => expect(screen.getByText(/^Bm • /)).toBeInTheDocument());
+
+      await user.type(screen.getByPlaceholderText('Buscar canciones...'), 'Bm');
+
+      await waitFor(() => expect(tituloVisibles()).toEqual([]));
+      expect(screen.getByText('Canción en si menor')).toBeInTheDocument();
+    });
+
+    it('en latina siguen como están', async () => {
+      mockGetAllSongs.mockResolvedValue([...SONGS, EN_SIM]);
+      await renderDashboard();
+      expect(screen.getByText(/^SIm • /)).toBeInTheDocument();
     });
   });
 });

@@ -496,6 +496,30 @@ describe('lo mío', () => {
     );
   });
 
+  it('en C-D-E, la tonalidad de la banda y el índice salen en C-D-E', async () => {
+    mockGetUserPreferences.mockResolvedValue({ defaultNotationSystem: 'english' });
+    render(<LiveSession />);
+
+    await waitFor(() => expect(screen.getByLabelText('Notación')).toHaveValue('english'));
+    expect(within(tarjeta('Cristo Vive')).getByRole('button', { name: /^C$/ })).toBeInTheDocument();
+    expect(within(tarjeta('Sublime Gracia')).getByRole('button', { name: /^G$/ })).toBeInTheDocument();
+  });
+
+  it('en C-D-E, el índice y el buscador para añadir también', async () => {
+    mockGetUserPreferences.mockResolvedValue({ defaultNotationSystem: 'english' });
+    mockGetAllSongs.mockResolvedValue([{ id: 's9', title: 'Nueva', key: 'LA' }]);
+    render(<LiveSession />);
+    await waitFor(() => expect(screen.getByLabelText('Notación')).toHaveValue('english'));
+
+    await userEvent.click(screen.getByRole('button', { name: /1 de 2/ }));
+    const indice = document.querySelector('.live-setlist');
+    expect([...indice.querySelectorAll('.live-setlist-key')].map((e) => e.textContent)).toEqual(['C', 'G']);
+
+    await userEvent.click(screen.getByRole('button', { name: /añadir una canción/i }));
+    const nueva = await screen.findByRole('button', { name: /Nueva/ });
+    expect(nueva.querySelector('.live-add-meta')).toHaveTextContent(/^A$/);
+  });
+
   it('un invitado sin cuenta conserva la que eligió en su dispositivo', async () => {
     auth = { currentUser: { uid: 'anon', isAnonymous: true }, loading: false };
     localStorage.setItem('live:notacion', 'english');

@@ -19,6 +19,7 @@ import {
   removeScoreFromMap,
   sugerirTonalidad,
   extractLyricsOnly,
+  nombrarTonalidad,
   leerVersiones,
   limpiarVersiones,
   unirVersiones
@@ -30,6 +31,7 @@ import "easymde/dist/easymde.min.css";
 import TypeSelector from "../components/TypeSelector";
 import ScoreUploader from "../components/ScoreUploader";
 import VersionesInput from "../components/VersionesInput";
+import useNotacionPreferida from "../hooks/useNotacionPreferida";
 import useSongVoices from "../hooks/useSongVoices";
 
 // Instrumentos soportados para voces adicionales
@@ -95,6 +97,8 @@ function SongEditor() {
   const [newVoiceNumber, setNewVoiceNumber] = useState("1");
 
   const { currentUser, canEditSongs } = useAuth();
+  // Solo para mostrar las tonalidades; se guardan en latina
+  const [notacion] = useNotacionPreferida(currentUser);
   const navigate = useNavigate();
   const { id } = useParams();
   const editorRef = useRef(null);
@@ -748,13 +752,14 @@ function SongEditor() {
               <KeySelector
                 value={key}
                 onChange={handleKeyChange}
+                notacion={notacion}
               />
               {/* Solo cambia el selector: no guarda ni transpone. Se da por
                   hecho que las notas están bien y lo que falla es la etiqueta. */}
               {sugerenciaTonalidad && (
                 <div className="key-suggestion" role="status">
                   <i className="bi bi-lightbulb"></i>
-                  <span>Por las notas parece {sugerenciaTonalidad.join(" o ")}</span>
+                  <span>Por las notas parece {sugerenciaTonalidad.map((k) => nombrarTonalidad(k, notacion)).join(" o ")}</span>
                   {sugerenciaTonalidad.map((sugerida) => (
                     <button
                       key={sugerida}
@@ -762,7 +767,7 @@ function SongEditor() {
                       className="key-suggestion-btn"
                       onClick={() => handleKeyChange(sugerida)}
                     >
-                      Usar {sugerida}
+                      Usar {nombrarTonalidad(sugerida, notacion)}
                     </button>
                   ))}
                 </div>

@@ -1,3 +1,5 @@
+import { nombrarTonalidad } from "@notesheet/core";
+
 /**
  * Índice para saltar de una canción a otra sin bajar scrolleando.
  *
@@ -7,7 +9,7 @@
  *
  * Saltar aquí mueve el puntero compartido, así que la banda entera va contigo.
  */
-export default function LiveSetlist({ songs = [], activeSongId, onIr }) {
+export default function LiveSetlist({ songs = [], activeSongId, onIr, notacion = "latin" }) {
   if (songs.length === 0) {
     return <p className="live-setlist-empty">La sesión está vacía.</p>;
   }
@@ -30,7 +32,7 @@ export default function LiveSetlist({ songs = [], activeSongId, onIr }) {
           >
             <span className="live-setlist-number">{index + 1}</span>
             <span className="live-setlist-title">{song.title || "Sin título"}</span>
-            <span className="live-setlist-key">{song.key || song.originalKey || "?"}</span>
+            <span className="live-setlist-key">{nombrarTonalidad(song.key || song.originalKey, notacion) || "?"}</span>
           </button>
         </li>
       ))}

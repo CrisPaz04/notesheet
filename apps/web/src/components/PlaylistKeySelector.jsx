@@ -1,12 +1,14 @@
 // apps/web/src/components/PlaylistKeySelector.jsx
 import { useState, useRef, useEffect } from 'react';
+import { nombrarTonalidad } from "@notesheet/core";
 
 const AVAILABLE_KEYS = [
   "DO", "LAm", "SOL", "MIm", "RE", "SIm", "LA", "FA#m", 
   "MI", "DO#m", "FA", "REm", "SIb", "SOLm", "MIb", "DOm"
 ];
 
-function PlaylistKeySelector({ value, onChange, originalKey }) {
+// `notacion` solo cambia cómo se ven las tonalidades; el valor sigue en latina
+function PlaylistKeySelector({ value, onChange, originalKey, notacion = 'latin' }) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
 
@@ -35,7 +37,7 @@ function PlaylistKeySelector({ value, onChange, originalKey }) {
         className={`playlist-key-dropdown ${isOpen ? 'open' : ''}`}
         onClick={() => setIsOpen(!isOpen)}
       >
-        <span>{value}</span>
+        <span>{nombrarTonalidad(value, notacion)}</span>
         <i className={`bi bi-chevron-${isOpen ? 'up' : 'down'}`}></i>
       </button>
       
@@ -47,7 +49,7 @@ function PlaylistKeySelector({ value, onChange, originalKey }) {
               className={`playlist-key-option ${value === originalKey ? 'active original' : 'original'}`}
               onClick={() => handleKeySelect(originalKey)}
             >
-              Original ({originalKey})
+              Original ({nombrarTonalidad(originalKey, notacion)})
             </button>
             <hr style={{ 
               border: 'none', 
@@ -62,7 +64,7 @@ function PlaylistKeySelector({ value, onChange, originalKey }) {
                 className={`playlist-key-option ${value === key ? 'active' : ''}`}
                 onClick={() => handleKeySelect(key)}
               >
-                {key}
+                {nombrarTonalidad(key, notacion)}
               </button>
             ))}
           </div>

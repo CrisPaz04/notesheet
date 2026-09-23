@@ -1,5 +1,6 @@
 // apps/web/src/components/KeySelector.jsx
 import { useState, useRef, useEffect } from 'react';
+import { nombrarTonalidad } from "@notesheet/core";
 
 const RELATIVE_KEYS = [
   { major: "DO", minor: "LAm" },
@@ -19,7 +20,8 @@ const RELATIVE_KEYS = [
   { major: "DOb", minor: "LAbm" }
 ];
 
-function KeySelector({ value, onChange, label = "Tonalidad" }) {
+// `notacion` solo cambia cómo se ven las tonalidades; el valor sigue en latina
+function KeySelector({ value, onChange, label = "Tonalidad", notacion = "latin" }) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
 
@@ -53,7 +55,7 @@ function KeySelector({ value, onChange, label = "Tonalidad" }) {
           className={`key-dropdown ${isOpen ? 'open' : ''}`}
           onClick={() => setIsOpen(!isOpen)}
         >
-          <span>{value}</span>
+          <span>{nombrarTonalidad(value, notacion)}</span>
           <i className={`bi bi-chevron-${isOpen ? 'up' : 'down'}`}></i>
         </button>
         
@@ -69,14 +71,14 @@ function KeySelector({ value, onChange, label = "Tonalidad" }) {
                       className={`key-option ${value === pair.major ? 'active' : ''}`}
                       onClick={() => handleKeySelect(pair.major)}
                     >
-                      {pair.major}
+                      {nombrarTonalidad(pair.major, notacion)}
                     </button>
                     <button
                       type="button"
                       className={`key-option ${value === pair.minor ? 'active' : ''}`}
                       onClick={() => handleKeySelect(pair.minor)}
                     >
-                      {pair.minor}
+                      {nombrarTonalidad(pair.minor, notacion)}
                     </button>
                   </div>
                   {index < RELATIVE_KEYS.length - 1 && (

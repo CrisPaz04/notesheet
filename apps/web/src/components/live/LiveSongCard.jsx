@@ -1,5 +1,6 @@
 import { forwardRef } from "react";
 import PlaylistKeySelector from "../PlaylistKeySelector";
+import { nombrarTonalidad } from "@notesheet/core";
 
 /**
  * Una canción dentro de la sesión, con sus controles a la vista.
@@ -24,7 +25,8 @@ const LiveSongCard = forwardRef(function LiveSongCard({
   onCambiarTonalidad,
   onQuitar,
   onMover,
-  onElegirVoz
+  onElegirVoz,
+  notacion = "latin"
 }, ref) {
   const tonalidadCompartida = song.key || song.originalKey || "?";
   const tonalidadPropia = song.rendered?.displayKey;
@@ -55,13 +57,14 @@ const LiveSongCard = forwardRef(function LiveSongCard({
               value={tonalidadCompartida}
               originalKey={song.originalKey || song.key || "DO"}
               onChange={(key) => onCambiarTonalidad(song.id, key)}
+              notacion={notacion}
             />
           </div>
 
           {difieren && (
             <div className="live-card-keys">
               <span className="live-control-label">Tú</span>
-              <span className="live-key-badge live-key-mine">{tonalidadPropia}</span>
+              <span className="live-key-badge live-key-mine">{nombrarTonalidad(tonalidadPropia, notacion)}</span>
             </div>
           )}
 

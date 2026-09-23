@@ -9,13 +9,16 @@ const mockCreatePlaylist = vi.fn();
 const mockUpdatePlaylist = vi.fn();
 const mockPublishOwnSongs = vi.fn();
 const mockNavigate = vi.fn();
+const mockGetUserPreferences = vi.fn();
 
 vi.mock('@notesheet/api', () => ({
   getAllSongs: (...a) => mockGetAllSongs(...a),
   getPlaylistById: (...a) => mockGetPlaylistById(...a),
   createPlaylist: (...a) => mockCreatePlaylist(...a),
   updatePlaylist: (...a) => mockUpdatePlaylist(...a),
-  publishOwnSongs: (...a) => mockPublishOwnSongs(...a)
+  publishOwnSongs: (...a) => mockPublishOwnSongs(...a),
+  getUserPreferences: (...a) => mockGetUserPreferences(...a),
+  updateUserPreferences: vi.fn().mockResolvedValue({})
 }));
 
 const routeParams = {};
@@ -65,6 +68,8 @@ beforeEach(() => {
   mockCreatePlaylist.mockResolvedValue({ id: 'p1' });
   mockUpdatePlaylist.mockResolvedValue({ id: 'p1' });
   mockPublishOwnSongs.mockResolvedValue([]);
+  mockGetUserPreferences.mockResolvedValue({});
+  localStorage.clear();
 });
 
 const renderNueva = async () => {
@@ -188,6 +193,18 @@ describe('PlaylistEditor', () => {
 
       await waitFor(() => {
         expect(document.querySelector('.playlist-key-dropdown')).toHaveTextContent('SOL');
+      });
+    });
+
+    it('en C-D-E la muestra en C-D-E', async () => {
+      const user = userEvent.setup();
+      mockGetUserPreferences.mockResolvedValue({ defaultNotationSystem: 'english' });
+      await renderNueva();
+
+      await user.click(botonDisponible('Sublime Gracia'));
+
+      await waitFor(() => {
+        expect(document.querySelector('.playlist-key-dropdown')).toHaveTextContent(/^G$/);
       });
     });
 

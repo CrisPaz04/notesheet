@@ -436,4 +436,15 @@ describe('SongView: notación', () => {
 
     expect(localStorage.getItem('notacion')).toBe('english');
   });
+
+  it('en C-D-E también la tonalidad sale en C-D-E', async () => {
+    const user = userEvent.setup();
+    await renderSongView();
+    expect(screen.getByText(/^Tonalidad: DO$/)).toBeInTheDocument();
+
+    await user.click(screen.getByText('DO-RE-MI').closest('button'));
+    await user.click(screen.getByText('C-D-E (Anglosajona)'));
+
+    expect(screen.getByText(/^Tonalidad: C$/)).toBeInTheDocument();
+  });
 });

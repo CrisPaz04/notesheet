@@ -7,7 +7,8 @@ import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import LoadingSpinner from "../components/LoadingSpinner";
 import PlaylistKeySelector from "../components/PlaylistKeySelector";
 import useSelectedSongs from "../hooks/useSelectedSongs";
-import { emparejarSetlist, isPdfSong } from "@notesheet/core";
+import { emparejarSetlist, isPdfSong, nombrarTonalidad } from "@notesheet/core";
+import useNotacionPreferida from "../hooks/useNotacionPreferida";
 
 function PlaylistEditor() {
   const [name, setName] = useState("");
@@ -23,6 +24,8 @@ function PlaylistEditor() {
   const [resultadoImport, setResultadoImport] = useState(null);
   
   const { currentUser } = useAuth();
+  // Solo para mostrar las tonalidades; se guardan en latina
+  const [notacion] = useNotacionPreferida(currentUser);
   const navigate = useNavigate();
   const { id } = useParams();
 
@@ -469,7 +472,7 @@ function PlaylistEditor() {
                       >
                         <div className="available-song-content">
                           <div className="available-song-title">{song.title || "Sin título"}</div>
-                          <div className="available-song-meta">{song.key || "Sin tonalidad"} • {song.type || "Sin tipo"}</div>
+                          <div className="available-song-meta">{nombrarTonalidad(song.key, notacion) || "Sin tonalidad"} • {song.type || "Sin tipo"}</div>
                         </div>
                         {!selectedSongs.some(s => s.id === song.id) && (
                           <i className="bi bi-plus-circle available-song-add"></i>
@@ -546,7 +549,7 @@ function PlaylistEditor() {
                                           <label className="tonality-label">Tonalidad:</label>
                                           <span className="tonality-fixed">
                                             <i className="bi bi-file-earmark-pdf me-1"></i>
-                                            {song.key || "—"} · partitura
+                                            {nombrarTonalidad(song.key, notacion) || "—"} · partitura
                                           </span>
                                         </>
                                       ) : (
@@ -556,6 +559,7 @@ function PlaylistEditor() {
                                             value={song.key}
                                             onChange={(newKey) => changeKey(song.id, newKey)}
                                             originalKey={song.originalKey}
+                                            notacion={notacion}
                                           />
                                         </>
                                       )}

@@ -12,13 +12,16 @@ const mockUpdateSong = vi.fn();
 const mockAddVoiceToSong = vi.fn();
 const mockRemoveVoiceFromSong = vi.fn();
 const mockNavigate = vi.fn();
+const mockGetUserPreferences = vi.fn();
 
 vi.mock('@notesheet/api', () => ({
   getSongById: (...a) => mockGetSongById(...a),
   createSong: (...a) => mockCreateSong(...a),
   updateSong: (...a) => mockUpdateSong(...a),
   addVoiceToSong: (...a) => mockAddVoiceToSong(...a),
-  removeVoiceFromSong: (...a) => mockRemoveVoiceFromSong(...a)
+  removeVoiceFromSong: (...a) => mockRemoveVoiceFromSong(...a),
+  getUserPreferences: (...a) => mockGetUserPreferences(...a),
+  updateUserPreferences: vi.fn().mockResolvedValue({})
 }));
 
 const routeParams = { id: 'song-1' };
@@ -71,6 +74,8 @@ beforeEach(() => {
   mockAddVoiceToSong.mockResolvedValue({});
   mockRemoveVoiceFromSong.mockResolvedValue({});
   mockUpdateSong.mockResolvedValue({});
+  mockGetUserPreferences.mockResolvedValue({});
+  localStorage.clear();
   // handleRemoveVoice pide confirmación al usuario
   vi.stubGlobal('confirm', vi.fn(() => true));
 });
@@ -332,5 +337,26 @@ describe('SongEditor: varios "versión de"', () => {
     expect(mockUpdateSong.mock.calls.at(-1)[1]).toEqual(expect.objectContaining({
       versiones: [], version: ''
     }));
+  });
+});
+
+describe('SongEditor: tonalidades en C-D-E', () => {
+  const EN_RE = '## Intro\nRE MI FA# SOL LA SI DO# RE\nLA FA# RE MI FA# RE\n\nRE FA# LA RE LA FA# MI RE\n';
+
+  it('el selector y la sugerencia las nombran en C-D-E, y guarda en latina', async () => {
+    const user = userEvent.setup();
+    mockGetUserPreferences.mockResolvedValue({ defaultNotationSystem: 'english' });
+    mockGetSongById.mockResolvedValue({ ...SONG, voices: { bb_trumpet: { 1: EN_RE } } });
+    await renderEditor();
+
+    await waitFor(() => expect(screen.getByRole('button', { name: /^C$/ })).toBeInTheDocument());
+    const usar = screen.getByRole('button', { name: 'Usar D' });
+
+    await user.click(usar);
+    expect(screen.getByRole('button', { name: /^D$/ })).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /^Guardar$/ }));
+    await waitFor(() => expect(mockUpdateSong).toHaveBeenCalled());
+    expect(mockUpdateSong.mock.calls.at(-1)[1].key).toBe('RE');
   });
 });

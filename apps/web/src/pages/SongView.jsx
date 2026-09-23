@@ -10,6 +10,7 @@ import {
 } from "@notesheet/api";
 import {
   detectNotationSystem,
+  nombrarTonalidad,
   getVisualKeyForInstrument,
   transposeKeyBySemitones,
   renderSongContent,
@@ -297,6 +298,10 @@ function SongView() {
     if (targetKey !== baseKey) handleTranspose(baseKey);
   };
 
+  // Las etiquetas de tonalidad, en la notación elegida. Solo para mostrar:
+  // las comparaciones y lo que se transpone siguen en latina.
+  const verTonalidad = (k) => nombrarTonalidad(k, notationSystem);
+
   // Cambiar entre notación latina y anglosajona
   const handleChangeNotation = (system) => {
     if (system === notationSystem || !song) return;
@@ -552,10 +557,10 @@ function SongView() {
                 Tonalidad
               </div>
               <div className="song-meta-value">
-                {esPdf ? (song.key || "—") : displayKey}
+                {esPdf ? (verTonalidad(song.key) || "—") : verTonalidad(displayKey)}
                 {!esPdf && capo > 0 && (
                   <span className="song-meta-nota">
-                    {" "}· capo {TRASTES_ROMANOS[capo]}, suena en {soundingKey}
+                    {" "}· capo {TRASTES_ROMANOS[capo]}, suena en {verTonalidad(soundingKey)}
                   </span>
                 )}
               </div>
@@ -733,7 +738,7 @@ function SongView() {
                           {traste === 0 ? "Sin capo" : `Traste ${TRASTES_ROMANOS[traste]}`}
                           {traste > 0 && (
                             <div style={{ fontSize: '0.8rem', opacity: 0.7 }}>
-                              Se lee en {transposeKeyBySemitones(soundingKey, -traste)}
+                              Se lee en {verTonalidad(transposeKeyBySemitones(soundingKey, -traste))}
                             </div>
                           )}
                         </div>
@@ -755,14 +760,14 @@ function SongView() {
                   }}
                 >
                   <i className="bi bi-key"></i>
-                  <span>Tonalidad: {displayKey}</span>
+                  <span>Tonalidad: {verTonalidad(displayKey)}</span>
                   <i className={`bi bi-chevron-${showKeyDropdown ? 'up' : 'down'}`}></i>
                 </button>
                 
                 {showKeyDropdown && (
                   <div className="dropdown-menu-custom">
                     <div className="dropdown-item-custom" onClick={resetTransposition}>
-                      <strong>Original ({getVisualKeyForInstrument(baseKey, currentInstrument)})</strong>
+                      <strong>Original ({verTonalidad(getVisualKeyForInstrument(baseKey, currentInstrument))})</strong>
                     </div>
                     <hr style={{ margin: '0.5rem 0', border: 'none', height: '1px', background: 'rgba(var(--overlay-rgb), 0.1)' }} />
                     {RELATIVE_KEYS.map((pair, index) => {
@@ -777,7 +782,7 @@ function SongView() {
                               onClick={() => handleTranspose(pair.major)}
                               style={{ flex: 1, margin: 0, padding: '0.5rem' }}
                             >
-                              {majorVisualKey}
+                              {verTonalidad(majorVisualKey)}
                               {pair.major === baseKey && " (Original)"}
                             </div>
                             <div
@@ -785,7 +790,7 @@ function SongView() {
                               onClick={() => handleTranspose(pair.minor)}
                               style={{ flex: 1, margin: 0, padding: '0.5rem' }}
                             >
-                              {minorVisualKey}
+                              {verTonalidad(minorVisualKey)}
                               {pair.minor === baseKey && " (Original)"}
                             </div>
                           </div>

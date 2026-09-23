@@ -389,6 +389,7 @@ function LiveSession() {
           songs={songs}
           activeSongId={activeSongId}
           onIr={(id) => { conScroll(irACancion)(id); setVerIndice(false); }}
+          notacion={notacion}
         />
       )}
 
@@ -413,6 +414,7 @@ function LiveSession() {
             onQuitar={quitarCancion}
             onMover={moverCancion}
             onElegirVoz={elegirVoz}
+            notacion={notacion}
           />
         ))}
       </div>
@@ -421,6 +423,7 @@ function LiveSession() {
         user={currentUser}
         yaEnLaSesion={songs.map((s) => s.id)}
         onAgregar={agregarCancion}
+        notacion={notacion}
       />
     </div>
   );

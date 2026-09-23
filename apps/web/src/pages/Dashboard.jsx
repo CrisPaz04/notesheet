@@ -1,12 +1,13 @@
 import { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { getAllSongs, deleteSong } from "@notesheet/api";
-import { identificarTonalidad } from "@notesheet/core";
+import { identificarTonalidad, nombrarTonalidad } from "@notesheet/core";
 import { useAuth } from "../context/AuthContext";
 import { getUserDisplayName } from "../utils/userHelpers";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { SkeletonGrid } from "../components/SkeletonCard";
 import usePreferenciaLocal from "../hooks/usePreferenciaLocal";
+import useNotacionPreferida from "../hooks/useNotacionPreferida";
 
 const ORDENES = ["nuevas", "az", "za"];
 
@@ -38,6 +39,8 @@ function Dashboard() {
     "dashboardOrden", "nuevas", ORDENES
   );
   const { currentUser, canEditSongs } = useAuth();
+  // Solo para mostrar las tonalidades; se guardan y se comparan en latina
+  const [notacion] = useNotacionPreferida(currentUser);
 
   // Cargar canciones al montar el componente
   useEffect(() => {
@@ -91,6 +94,8 @@ function Dashboard() {
       filtered = filtered.filter(song =>
         normalizarBusqueda(song.title).includes(termino) ||
         normalizarBusqueda(song.key).includes(termino) ||
+        // Quien lee en C-D-E busca "Bm", no "SIm"
+        (notacion === "english" && normalizarBusqueda(nombrarTonalidad(song.key, notacion)).includes(termino)) ||
         normalizarBusqueda(song.type).includes(termino) ||
         normalizarBusqueda(song.version).includes(termino) ||
         normalizarBusqueda(song.album).includes(termino) ||
@@ -143,7 +148,7 @@ function Dashboard() {
     }
 
     return filtered;
-  }, [songs, searchTerm, keyFilter, activeFilter, sortOrder]);
+  }, [songs, searchTerm, keyFilter, activeFilter, sortOrder, notacion]);
 
   const getGreeting = () => {
     const greetings = [
@@ -289,7 +294,7 @@ function Dashboard() {
               <option value="">Todas las tonalidades</option>
               {tonalidades.map((t) => (
                 <option key={t.id} value={t.id}>
-                  {t.etiqueta} ({t.cuantas})
+                  {nombrarTonalidad(t.etiqueta, notacion)} ({t.cuantas})
                 </option>
               ))}
             </select>
@@ -469,7 +474,7 @@ function Dashboard() {
                       </div>
 
                       <div className="recent-item-meta">
-                        {song.key || "Sin tonalidad"} • {song.type || "Sin tipo"}
+                        {nombrarTonalidad(song.key, notacion) || "Sin tonalidad"} • {song.type || "Sin tipo"}
                       </div>
 
                       <div className="recent-item-meta">
@@ -502,7 +507,7 @@ function Dashboard() {
                           {song.title || "Sin título"}
                         </h4>
                         <p className="list-item-meta">
-                          {song.key || "Sin tonalidad"} • {song.type || "Sin tipo"}
+                          {nombrarTonalidad(song.key, notacion) || "Sin tonalidad"} • {song.type || "Sin tipo"}
                           {song.version && ` • Versión de: ${song.version}`}
                         </p>
                       </div>

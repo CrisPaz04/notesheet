@@ -121,6 +121,32 @@ describe('useNotacionPreferida', () => {
   });
 });
 
+describe('varias vistas abiertas a la vez', () => {
+  it('cambiarla en una la cambia en las demás sin recargar', async () => {
+    const a = renderHook(() => useNotacionPreferida(null));
+    const b = renderHook(() => useNotacionPreferida(null));
+
+    act(() => a.result.current[1]('english'));
+
+    expect(b.result.current[0]).toBe('english');
+  });
+
+  it('también cuando la guarda el visor o Preferencias', () => {
+    const { result } = renderHook(() => useNotacionPreferida(null));
+    act(() => recordarNotacionEnDispositivo('english'));
+    expect(result.current[0]).toBe('english');
+  });
+
+  it('no mezcla la de la sesión en vivo con la del resto', () => {
+    const general = renderHook(() => useNotacionPreferida(null));
+    const enVivo = renderHook(() => useNotacionPreferida(null, 'live:notacion'));
+
+    act(() => enVivo.result.current[1]('english'));
+
+    expect(general.result.current[0]).toBe('latin');
+  });
+});
+
 describe('recordarNotacionEnDispositivo', () => {
   it('actualiza la copia que leerá la siguiente vista', () => {
     recordarNotacionEnDispositivo('english');

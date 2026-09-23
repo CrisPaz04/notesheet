@@ -125,6 +125,19 @@ export const parseSongSections = (content) => {
 };
 
 /**
+ * El nombre de una tonalidad en la notación elegida, para mostrarla: "SIm"
+ * pasa a "Bm" y "MIb" a "Eb". Solo sirve para la etiqueta; lo que se guarda y
+ * se compara sigue en latina, que es como está el repertorio.
+ * @param {string} key - La tonalidad ("SIm", "DO#")
+ * @param {string} notationSystem - 'latin' o 'english'
+ * @returns {string}
+ */
+export const nombrarTonalidad = (key, notationSystem = 'latin') => {
+  if (!key || notationSystem !== 'english') return key;
+  return convertNotationSystem(String(key), 'english');
+};
+
+/**
  * Formatea una canción en notación musical para visualización
  * @param {string} content - Contenido de la canción en formato Markdown
  * @param {Object} options - Opciones de formato (notationSystem, etc.)

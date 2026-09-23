@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { nombrarTonalidad } from "@notesheet/core";
 import { getAllSongs } from "@notesheet/api";
 
 /**
@@ -12,7 +13,7 @@ import { getAllSongs } from "@notesheet/api";
  * Añadir una canción se lo cambia a todos, así que esto no es un panel
  * privado: lo que se elija aquí le aparece a la banda entera.
  */
-export default function AddSongToSession({ user, yaEnLaSesion = [], onAgregar }) {
+export default function AddSongToSession({ user, yaEnLaSesion = [], onAgregar, notacion = "latin" }) {
   const [abierto, setAbierto] = useState(false);
   const [repertorio, setRepertorio] = useState([]);
   const [busqueda, setBusqueda] = useState("");
@@ -105,7 +106,7 @@ export default function AddSongToSession({ user, yaEnLaSesion = [], onAgregar })
               }}
             >
               <span className="live-add-title">{song.title || "Sin título"}</span>
-              <span className="live-add-meta">{song.key || "Sin tonalidad"}</span>
+              <span className="live-add-meta">{nombrarTonalidad(song.key, notacion) || "Sin tonalidad"}</span>
               <i className="bi bi-plus-circle" />
             </button>
           </li>

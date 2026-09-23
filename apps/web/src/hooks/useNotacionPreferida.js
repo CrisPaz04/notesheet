@@ -4,6 +4,14 @@ import usePreferenciaLocal from "./usePreferenciaLocal";
 
 export const NOTACIONES = ["latin", "english"];
 
+// Aviso entre las instancias del hook abiertas a la vez: si el visor cambia
+// la notación, las etiquetas de tonalidad que ya están en pantalla en otro
+// componente se enteran sin recargar.
+const EVENTO = "notesheet:notacion";
+const avisar = (claveLocal, notacion) => {
+  window.dispatchEvent(new CustomEvent(EVENTO, { detail: { claveLocal, notacion } }));
+};
+
 /**
  * Actualiza la copia del dispositivo cuando la notación se guarda en el
  * perfil por otro camino (el visor de canciones, la pantalla de
@@ -17,6 +25,7 @@ export const recordarNotacionEnDispositivo = (notacion, claveLocal = "notacion")
   } catch {
     // Almacenamiento bloqueado: la vista esperará al perfil, sin más.
   }
+  avisar(claveLocal, notacion);
 };
 
 /**
@@ -64,10 +73,21 @@ export default function useNotacionPreferida(currentUser, claveLocal = "notacion
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [uid]);
 
+  useEffect(() => {
+    const alAvisar = (e) => {
+      if (e.detail?.claveLocal !== claveLocal) return;
+      if (NOTACIONES.includes(e.detail.notacion)) setLocal(e.detail.notacion);
+    };
+    window.addEventListener(EVENTO, alAvisar);
+    return () => window.removeEventListener(EVENTO, alAvisar);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [claveLocal]);
+
   const cambiar = (nueva) => {
     if (!NOTACIONES.includes(nueva)) return;
     elegidaAqui.current = true;
     setLocal(nueva);
+    avisar(claveLocal, nueva);
 
     if (!uid) return;
     // Best-effort, como el tamaño de letra: si falla, se aplica igual aquí

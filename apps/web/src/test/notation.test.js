@@ -5,6 +5,7 @@ import {
   parseSongSections,
   extractLyricsOnly,
   formatSong,
+  nombrarTonalidad,
 } from '@notesheet/core';
 
 describe('convertNotationSystem', () => {
@@ -280,5 +281,24 @@ DO SOL`;
     const result = formatSong(content, { notationSystem: 'english' });
     expect(result.rawContent).toContain('C');
     expect(result.rawContent).toContain('G');
+  });
+});
+
+describe('nombrarTonalidad', () => {
+  it('en anglosajona pasa la tonalidad a C-D-E', () => {
+    expect(nombrarTonalidad('SIm', 'english')).toBe('Bm');
+    expect(nombrarTonalidad('MIb', 'english')).toBe('Eb');
+    expect(nombrarTonalidad('SOL#m', 'english')).toBe('G#m');
+    expect(nombrarTonalidad('DO', 'english')).toBe('C');
+  });
+
+  it('en latina, o sin notación, la deja como está', () => {
+    expect(nombrarTonalidad('SIm', 'latin')).toBe('SIm');
+    expect(nombrarTonalidad('SIm')).toBe('SIm');
+  });
+
+  it('sin tonalidad no inventa nada', () => {
+    expect(nombrarTonalidad('', 'english')).toBe('');
+    expect(nombrarTonalidad(undefined, 'english')).toBeUndefined();
   });
 });
