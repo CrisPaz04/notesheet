@@ -17,8 +17,15 @@
   animation: fadeIn 0.2s ease;
 }
 
-/* Modal dialog */
+/* Modal dialog
+ *
+ * `modal-dialog` es también una clase de Bootstrap, y Bootstrap le pone
+ * `pointer-events: none` (se lo devuelve solo a su `.modal-content`, que aquí
+ * no se usa). Sin el `auto` de abajo, todo clic dentro del cuadro lo
+ * atravesaba y caía en el fondo, que cierra la ventana: elegir una grabación
+ * en "Buscar datos" o tocar un botón del metrónomo cerraba el modal. */
 .modal-dialog {
+  pointer-events: auto;
   background: var(--bg-dark-secondary);
   border: 2px solid var(--border-light);
   border-radius: var(--radius-xl);
