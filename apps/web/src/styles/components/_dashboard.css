@@ -207,7 +207,23 @@
   .search-section {
     margin-bottom: 2rem;
     display: flex;
+    flex-wrap: wrap;
     justify-content: center;
+    gap: 0.75rem;
+  }
+
+  /* Hereda de .search-input los colores de cada tema; solo cambia la forma */
+  .search-input.key-filter {
+    width: auto;
+    padding-left: 1.25rem;
+    cursor: pointer;
+  }
+
+  /* La lista desplegable la pinta el sistema, con su fondo claro: sin esto,
+     en los temas oscuros las opciones salen blancas sobre blanco. */
+  .key-filter option {
+    color: #212529;
+    background: #fff;
   }
   
   .search-container {

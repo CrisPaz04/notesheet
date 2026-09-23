@@ -232,6 +232,88 @@ describe('Dashboard', () => {
     });
   });
 
+  describe('filtro por tonalidad', () => {
+    const selector = () => screen.getByRole('combobox', { name: 'Filtrar por tonalidad' });
+    const opciones = () => within(selector()).getAllByRole('option').map((o) => o.textContent);
+
+    it('ofrece solo las tonalidades que hay, con cuántas canciones tiene cada una', async () => {
+      mockGetAllSongs.mockResolvedValue([...SONGS, { ...SONGS[0], id: '5', title: 'Otra en Do' }]);
+      await renderDashboard();
+
+      expect(opciones()).toEqual(['Todas las tonalidades', 'DO (2)', 'RE (1)', 'SOL (1)']);
+    });
+
+    it('pone las mayores antes que las menores', async () => {
+      // La menor llega primero a propósito: si el orden no distinguiera el
+      // modo, DOm se quedaría delante de DO por ir antes en la lista.
+      mockGetAllSongs.mockResolvedValue([{ ...SONGS[0], id: '9', title: 'En do menor', key: 'DOm' }, ...SONGS]);
+      render(<Dashboard />);
+      await screen.findByText('En do menor');
+
+      expect(opciones()).toEqual(['Todas las tonalidades', 'DO (1)', 'RE (1)', 'SOL (1)', 'DOm (1)']);
+    });
+
+    it('deja solo las canciones de la tonalidad elegida', async () => {
+      const user = userEvent.setup();
+      await renderDashboard();
+
+      await user.selectOptions(selector(), 'SOL (1)');
+
+      expect(tituloVisibles()).toEqual(['Sublime Gracia']);
+    });
+
+    it('junta las enarmónicas en una sola opción', async () => {
+      const user = userEvent.setup();
+      mockGetAllSongs.mockResolvedValue([
+        ...SONGS,
+        { ...SONGS[0], id: '6', title: 'Con sostenidos', key: 'RE#m' },
+        { ...SONGS[0], id: '7', title: 'Con bemoles', key: 'MIbm' }
+      ]);
+      await renderDashboard();
+
+      expect(opciones()).toContain('RE#m (2)');
+      expect(opciones()).not.toContain('MIbm (1)');
+
+      await user.selectOptions(selector(), 'RE#m (2)');
+      expect(screen.getByText('Con sostenidos')).toBeInTheDocument();
+      expect(screen.getByText('Con bemoles')).toBeInTheDocument();
+      expect(tituloVisibles()).toEqual([]);
+    });
+
+    it('no confunde mayor con menor', async () => {
+      const user = userEvent.setup();
+      mockGetAllSongs.mockResolvedValue([...SONGS, { ...SONGS[0], id: '8', title: 'En menor', key: 'REm' }]);
+      await renderDashboard();
+
+      await user.selectOptions(selector(), 'RE (1)');
+
+      expect(tituloVisibles()).toEqual(['Al Que Está Sentado']);
+      expect(screen.queryByText('En menor')).not.toBeInTheDocument();
+    });
+
+    it('elegir una no esconde las demás opciones', async () => {
+      const user = userEvent.setup();
+      await renderDashboard();
+
+      await user.selectOptions(selector(), 'RE (1)');
+
+      expect(opciones()).toHaveLength(4);
+    });
+
+    it('limpiar filtros también quita la tonalidad', async () => {
+      const user = userEvent.setup();
+      await renderDashboard();
+
+      await user.selectOptions(selector(), 'RE (1)');
+      await user.click(screen.getByRole('button', { name: 'Júbilo' }));
+      await screen.findByText('No se encontraron canciones');
+      await user.click(screen.getByRole('button', { name: 'Limpiar Filtros' }));
+
+      expect(tituloVisibles()).toHaveLength(3);
+      expect(selector()).toHaveValue('');
+    });
+  });
+
   describe('filtros por categoría', () => {
     const clickFiltro = async (user, nombre) => {
       const tabs = document.querySelector('.filter-tabs');

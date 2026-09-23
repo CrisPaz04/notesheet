@@ -74,6 +74,29 @@ const KEY_TO_INDEX = {
 };
 
 /**
+ * Identifica una tonalidad sin depender de cómo esté escrita: "RE#m", "MIbm"
+ * y "D#m" son la misma, y "RE" y "REm" no. Sirve para comparar, no para
+ * mostrar: devuelve algo como "3m", o null si no es una tonalidad.
+ * @param {string} key - La tonalidad, en notación latina o anglosajona
+ * @returns {string|null}
+ */
+export const identificarTonalidad = (key) => {
+  const limpia = (key || '').trim();
+  const indice = KEY_TO_INDEX[limpia];
+  if (indice === undefined) return null;
+  return `${indice}${limpia.endsWith('m') ? 'm' : ''}`;
+};
+
+/**
+ * ¿Son la misma tonalidad? Dos valores que no son tonalidades nunca coinciden,
+ * para que dos canciones sin tonalidad no se den por iguales.
+ */
+export const mismaTonalidad = (a, b) => {
+  const id = identificarTonalidad(a);
+  return id !== null && id === identificarTonalidad(b);
+};
+
+/**
  * Determina si una tonalidad usa sostenidos o bemoles
  * @param {string} key - La tonalidad a evaluar
  * @returns {string} 'sharp', 'flat' o 'natural'

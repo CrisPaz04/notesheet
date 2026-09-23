@@ -244,7 +244,7 @@ SPA (el orden importa).
 ## Notes
 
 - No TypeScript - pure JavaScript
-- Vitest configured; 1320 tests in `apps/web/src/test/` (run with `npm run test:run`)
+- Vitest configured; 1333 tests in `apps/web/src/test/` (run with `npm run test:run`)
 - Los tests se validan con **mutaciones**: se rompe el código a propósito y se comprueba
   que algún test falla. Ha destapado cuatro tests que pasaban por la razón equivocada,
   y un bug de verdad en `scores.js` (las voces se ordenaban como texto, así que la 10
@@ -267,6 +267,9 @@ SPA (el orden importa).
   `chords.js` o `transposition.js`, ese test es el que avisa. `KEY_TO_INDEX`
   necesita también las enarmónicas raras (`MI#`, `SI#`, `FAb`): si falta una,
   `transposeNote` devuelve la nota **sin transponer** y en silencio.
+- Para comparar tonalidades usa `mismaTonalidad` / `identificarTonalidad`
+  (`transposition.js`), no el texto: "RE#m" y "MIbm" son la misma, y "RE" y
+  "REm" no. El filtro de tonalidad del Dashboard se apoya en eso.
 - La lista que el director manda por WhatsApp se interpreta en
   `packages/core/src/music/setlist.js`. Las líneas sueltas tipo "Mi m" son la tonalidad
   del bloque, no canciones; y el director suele nombrar la canción por un fragmento de la
@@ -303,11 +306,6 @@ ahorra volver a buscarlo.
   una línea más de la sección en curso. Con título sí funciona aunque no lleve
   contenido debajo: al cerrar solo se descarta la sección que no tiene **ni**
   título **ni** contenido.
-
-### Búsqueda
-
-- **Filtrar por tonalidad.** Hoy el Dashboard filtra por texto (título, álbum y,
-  a partir de cuatro caracteres, la letra).
 
 ### Presentación
 

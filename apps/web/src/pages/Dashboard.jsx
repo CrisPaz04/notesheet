@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { getAllSongs, deleteSong } from "@notesheet/api";
+import { identificarTonalidad } from "@notesheet/core";
 import { useAuth } from "../context/AuthContext";
 import { getUserDisplayName } from "../utils/userHelpers";
 import LoadingSpinner from "../components/LoadingSpinner";
@@ -26,6 +27,9 @@ function Dashboard() {
   const [error, setError] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [activeFilter, setActiveFilter] = useState("all");
+  // Guarda la tonalidad identificada ("11m"), no el texto: así "RE#m" y
+  // "MIbm" caen en la misma opción aunque cada una se escribiera distinta.
+  const [keyFilter, setKeyFilter] = useState("");
   const [viewMode, setViewMode] = useState("cards");
   // "nuevas" respeta el orden en que llegan de Firestore (createdAt desc).
   // Se recuerda en este dispositivo: quien ordena alfabéticamente lo quiere
@@ -57,6 +61,24 @@ function Dashboard() {
   // término de búsqueda y el filtro activo. Antes se guardaba en su propio
   // useState y se sincronizaba a mano (también al borrar), lo que permitía
   // que ambas listas se desincronizaran.
+  // Las tonalidades que de verdad hay en el repertorio, no las 30 posibles:
+  // nadie quiere elegir entre opciones que devuelven la lista vacía. Salen de
+  // `songs` y no de lo filtrado, para que elegir una no haga desaparecer las
+  // demás. Mayores primero y luego menores, cada grupo en orden cromático.
+  const tonalidades = useMemo(() => {
+    const porId = new Map();
+    for (const song of songs) {
+      const id = identificarTonalidad(song.key);
+      if (!id) continue;
+      const actual = porId.get(id);
+      // Se muestra como la escribe la primera canción que la trae
+      if (actual) actual.cuantas++;
+      else porId.set(id, { id, etiqueta: song.key.trim(), cuantas: 1 });
+    }
+    const orden = (id) => parseInt(id, 10) + (id.endsWith("m") ? 12 : 0);
+    return [...porId.values()].sort((a, b) => orden(a.id) - orden(b.id));
+  }, [songs]);
+
   const filteredSongs = useMemo(() => {
     let filtered = songs;
 
@@ -81,6 +103,10 @@ function Dashboard() {
         // una frase, no una tonalidad.
         (termino.length >= 4 && normalizarBusqueda(song.lyricsOnly).includes(termino))
       );
+    }
+
+    if (keyFilter) {
+      filtered = filtered.filter(song => identificarTonalidad(song.key) === keyFilter);
     }
 
     // Filtrar por categoría
@@ -117,7 +143,7 @@ function Dashboard() {
     }
 
     return filtered;
-  }, [songs, searchTerm, activeFilter, sortOrder]);
+  }, [songs, searchTerm, keyFilter, activeFilter, sortOrder]);
 
   const getGreeting = () => {
     const greetings = [
@@ -252,6 +278,21 @@ function Dashboard() {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
+          {tonalidades.length > 0 && (
+            <select
+              className="search-input key-filter"
+              aria-label="Filtrar por tonalidad"
+              value={keyFilter}
+              onChange={(e) => setKeyFilter(e.target.value)}
+            >
+              <option value="">Todas las tonalidades</option>
+              {tonalidades.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.etiqueta} ({t.cuantas})
+                </option>
+              ))}
+            </select>
+          )}
         </div>
 
         {/* Mis Canciones */}
@@ -388,6 +429,7 @@ function Dashboard() {
               <button 
                 onClick={() => {
                   setSearchTerm('');
+                  setKeyFilter('');
                   setActiveFilter('all');
                 }}
                 className="btn-primary-dashboard btn-animated"

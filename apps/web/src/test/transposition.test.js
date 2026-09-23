@@ -5,6 +5,8 @@ import {
   transposeLine,
   transposeContent,
   detectNotationSystem,
+  identificarTonalidad,
+  mismaTonalidad,
 } from '@notesheet/core';
 
 describe('transposeNote', () => {
@@ -139,5 +141,37 @@ describe('notas enarmónicas de las partituras de la banda', () => {
   it('una línea entera se mueve el mismo intervalo, también la nota rara', () => {
     // "Amigo fiel", tal y como está escrita en la partitura.
     expect(transposeLine('Sol# Mi# Fa# La#', 2, 'latin')).toBe('LA# SOL SOL# DO');
+  });
+});
+
+describe('identificarTonalidad / mismaTonalidad', () => {
+  it('las enarmónicas son la misma tonalidad', () => {
+    expect(mismaTonalidad('RE#m', 'MIbm')).toBe(true);
+    expect(mismaTonalidad('FA#', 'SOLb')).toBe(true);
+  });
+
+  it('da igual la notación', () => {
+    expect(mismaTonalidad('SIm', 'Bm')).toBe(true);
+    expect(mismaTonalidad('DO', 'C')).toBe(true);
+  });
+
+  it('mayor y menor sobre la misma nota no son la misma', () => {
+    expect(mismaTonalidad('RE', 'REm')).toBe(false);
+  });
+
+  it('las relativas tampoco, aunque compartan armadura', () => {
+    expect(mismaTonalidad('DO', 'LAm')).toBe(false);
+  });
+
+  it('tolera espacios alrededor', () => {
+    expect(mismaTonalidad(' MI ', 'MI')).toBe(true);
+  });
+
+  it('lo que no es tonalidad no coincide ni consigo mismo', () => {
+    expect(identificarTonalidad('')).toBeNull();
+    expect(identificarTonalidad(undefined)).toBeNull();
+    expect(identificarTonalidad('Adoración')).toBeNull();
+    expect(mismaTonalidad(undefined, undefined)).toBe(false);
+    expect(mismaTonalidad('xyz', 'xyz')).toBe(false);
   });
 });
