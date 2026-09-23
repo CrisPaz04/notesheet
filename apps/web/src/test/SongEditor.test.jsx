@@ -246,3 +246,28 @@ describe('SongEditor: el editor no pierde el foco al escribir', () => {
     expect(new Set(opcionesRecibidas).size).toBe(1);
   });
 });
+
+describe('SongEditor: letra de una canción que no la tiene guardada', () => {
+  it('la saca sin las notas de la banda y sin comerse palabras', async () => {
+    const user = userEvent.setup();
+    const content = '## Coro\nRe# Mi Fa# Sol#\nA Dios sea la gloria\nE ahí viene el Rey\n';
+    mockGetSongById.mockResolvedValue({
+      ...SONG, content, lyricsOnly: '', voices: { bb_trumpet: { 1: content } }
+    });
+    await renderEditor();
+
+    await user.click(screen.getByRole('button', { name: /Solo Letra/ }));
+
+    expect(screen.getByLabelText('editor')).toHaveValue(
+      // La línea de notas deja un hueco, como en el resto de la app
+      '## Coro\n\nA Dios sea la gloria\nE ahí viene el Rey'
+    );
+  });
+
+  it('ya no ofrece el botón de generarla', async () => {
+    const user = userEvent.setup();
+    await renderEditor();
+    await user.click(screen.getByRole('button', { name: /Solo Letra/ }));
+    expect(screen.queryByRole('button', { name: /Generar letra/ })).not.toBeInTheDocument();
+  });
+});

@@ -17,7 +17,8 @@ import {
   parseVoiceKey,
   setScoreInMap,
   removeScoreFromMap,
-  sugerirTonalidad
+  sugerirTonalidad,
+  extractLyricsOnly
 } from "@notesheet/core";
 import KeySelector from "../components/KeySelector";
 import LoadingSpinner from "../components/LoadingSpinner";
@@ -170,7 +171,12 @@ function SongEditor() {
         // igualmente dejaba dentro la plantilla de secciones de la canción
         // nueva ("## Intro", "## Verso 1"...), y el visor acababa mostrando
         // una vista de letra vacía con esos títulos sueltos.
-        generateLyricsOnly(song.content || "");
+        //
+        // Con la función de core, no con una regex propia: la que había
+        // borraba palabras de la letra ("A Dios" -> " Dios", porque "A" es
+        // una nota) y dejaba pasar las líneas de notas de la banda ("Re# Mi
+        // Fa#"), que solo reconocía en mayúsculas.
+        setLyricsOnly(extractLyricsOnly(song.content || "").trim());
       }
 
       if (song.voices && Object.keys(song.voices).length > 0) {
@@ -218,36 +224,6 @@ function SongEditor() {
     }
   };
 
-  // Generar versión de solo letra
-  const generateLyricsOnly = (contentWithChords) => {
-    const lines = contentWithChords.split('\n');
-    const processedLines = lines.map(line => {
-      if (line.startsWith('#') || line.startsWith('##')) {
-        return line;
-      }
-      
-      return line.replace(/\b(DO|RE|MI|FA|SOL|LA|SI|C|D|E|F|G|A|B)(#|b)?(m)?(?![#b\w])/g, '')
-                 .replace(/\|\s*\|/g, '')
-                 .replace(/\s{2,}/g, ' ')
-                 .trim();
-    });
-    
-    let result = '';
-    let previousLineEmpty = false;
-    
-    processedLines.forEach(line => {
-      const isCurrentLineEmpty = line.trim() === '';
-      
-      if (isCurrentLineEmpty && previousLineEmpty) {
-        return;
-      }
-      
-      result += line + '\n';
-      previousLineEmpty = isCurrentLineEmpty;
-    });
-    
-    setLyricsOnly(result.trim());
-  };
 
 
   // Handlers para cambios de campos
@@ -449,13 +425,6 @@ function SongEditor() {
     } catch (removeError) {
       console.error("Error removing scores of voice:", removeError);
       setError("La voz se quitó, pero sus partituras no: " + removeError.message);
-    }
-  };
-
-  // Función para generar automáticamente la letra
-  const handleGenerateLyrics = () => {
-    if (currentTab === "main") {
-      generateLyricsOnly(content);
     }
   };
 
@@ -894,22 +863,6 @@ function SongEditor() {
             </div>
           )}
           
-          {/* Generar la letra quitando los acordes no tiene de dónde sacarla
-              en un PDF: allí la letra se escribe a mano si se quiere. */}
-          {currentTab === "lyrics" && format === SONG_FORMAT_CHORDS && (
-            <div className="p-3" style={{ background: 'rgba(255, 255, 255, 0.05)', borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>
-              <button 
-                className="btn-editor-secondary"
-                onClick={handleGenerateLyrics}
-              >
-                <i className="bi bi-magic me-2"></i>
-                Generar letra automáticamente
-              </button>
-              <div className="editor-help-text mt-2">
-                Esto extraerá automáticamente la letra desde la pestaña principal, removiendo los acordes.
-              </div>
-            </div>
-          )}
           
           {/* Contenido del editor: el texto, o las dos casillas de PDF de
               esta voz. La pestaña de letra sigue siendo texto en los dos
