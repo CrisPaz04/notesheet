@@ -216,9 +216,9 @@ Las de Storage, en `storage.rules` (`npx firebase-tools deploy --only storage`).
 Estas últimas **leen la canción en Firestore** con las reglas entre servicios
 (`firestore.get`), para que el criterio sea exactamente el mismo que el de
 `songs` y no haya que acordarse de cambiarlo en dos sitios. Dos consecuencias:
-hay un tope de **dos** documentos por evaluación (la canción para leer; la
-canción y el usuario para escribir: justo dos), y el primer despliegue pide
-conceder el permiso entre servicios.
+hay un tope de **dos** documentos por evaluación, y hoy consultan **uno**, la
+canción (antes miraban también el usuario, para el rol, y quedaban justo en el
+límite); y el primer despliegue pide conceder el permiso entre servicios.
 The `role` field on `users/{uid}` is **not** writable by the user — assign roles from the Firebase
 console or the Admin SDK. Client-side `EditorRoute` / `canEditSongs` are UX only; the rules are the
 actual permission boundary.
@@ -347,11 +347,32 @@ ahorra volver a buscarlo.
 
 ### Música
 
-- **Algo parecido a chordify.net** para los instrumentos que no son de viento
-  (piano, guitarra…), para abrir la app a más músicos.
-- **Traer datos de las canciones** desde tunebat, songbpm, secuencias, lacuerda
-  o cifraclub: tonalidad original, tempo, duración, nombre real y de quién es
-  la versión.
+- **Algo parecido a chordify.net** y **traer datos de las canciones**
+  (tonalidad original, tempo, duración, artista). Ya está pensado, sin
+  implementar: el diseño, lo descartado y las preguntas para decidir están en
+  **`PLAN-ACORDES-Y-DATOS.md`**. Lo que hay que saber antes de tocar nada:
+  - Tunebat, songbpm, Cifra Club, LaCuerda y MultiTracks/Secuencias **no tienen
+    API y sus términos prohíben el scraping** (o copiar). Los metadatos salen de
+    MusicBrainz (CC0) y de iTunes; tonalidad y tempo, de GetSongBPM (exige un
+    enlace visible a su web). Esas tres son las elegidas; a las demás solo se
+    **enlaza** ("Ver en Cifra Club…"). Lo importado se **sugiere campo a
+    campo**, nunca se aplica solo.
+  - Las fuentes dan la tonalidad **en concierto**; `key` y `content` están en la
+    referencia de la trompeta en Sib. Un importador que no suba 2 semitonos lo
+    marca todo como discrepante.
+  - La vista tipo Chordify es **para practicar, no para el escenario, y para
+    guitarra y piano, no para los vientos**. Casi toda sale **sin
+    reconocimiento automático**: YouTube embebido con marcas puestas a mano.
+    **Bajar el audio de YouTube está prohibido** por sus términos.
+  - El primer paso útil no es nada de eso: guardar el **tempo** de la canción
+    (hoy no existe el campo) y que el metrónomo arranque con él.
+- **El repertorio está expuesto hoy** (lo destapó la investigación de arriba,
+  pero no depende de ella): el repo de GitHub es **público** y versiona
+  `scripts/repertorio/repertorio.json` con las 118 melodías transcritas, y la
+  lectura de `songs` solo pide `request.auth != null`, que cumple cualquier
+  sesión anónima de las que se abren para las sesiones en vivo. Hay que decidir
+  si se hace privado el repo (sacar el archivo del árbol no lo saca del
+  historial) y si los anónimos leen solo las canciones de su sesión.
 
 ### Acordes: falta el contenido, no el motor
 
