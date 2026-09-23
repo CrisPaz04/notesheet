@@ -83,6 +83,43 @@
     position: relative;
   }
   
+  /* Aviso bajo el selector de tonalidad. Solo variables del tema, para que
+     se vea bien en los seis sin reglas propias por tema. */
+  .key-suggestion {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem 0.6rem;
+    margin-top: var(--spacing-sm);
+    padding: 0.5rem 0.75rem;
+    border: 1px dashed var(--color-primary);
+    border-radius: var(--radius-md);
+    background: var(--color-primary-light);
+    color: var(--text-light-secondary);
+    font-size: 0.85rem;
+  }
+
+  .key-suggestion .bi-lightbulb {
+    color: var(--color-primary);
+  }
+
+  .key-suggestion-btn {
+    border: 1px solid var(--color-primary);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--color-primary);
+    padding: 0.1rem 0.7rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .key-suggestion-btn:hover,
+  .key-suggestion-btn:focus-visible {
+    background: var(--color-primary);
+    color: var(--bg-dark-primary);
+  }
+
   .form-label-modern {
     color: var(--text-light-secondary);
     font-size: 0.9rem;

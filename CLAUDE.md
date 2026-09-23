@@ -244,7 +244,7 @@ SPA (el orden importa).
 ## Notes
 
 - No TypeScript - pure JavaScript
-- Vitest configured; 1339 tests in `apps/web/src/test/` (run with `npm run test:run`)
+- Vitest configured; 1365 tests in `apps/web/src/test/` (run with `npm run test:run`)
 - Los tests se validan con **mutaciones**: se rompe el código a propósito y se comprueba
   que algún test falla. Ha destapado cuatro tests que pasaban por la razón equivocada,
   y un bug de verdad en `scores.js` (las voces se ordenaban como texto, así que la 10
@@ -271,6 +271,18 @@ SPA (el orden importa).
   `##` suelto la cierra sin abrir otra con nombre (lo que sigue va en un
   bloque sin título). Es lo que usa quien quiere que lo que viene tras la
   intro no se pinte como intro. `##Coro` sin espacio y `###` no son cabeceras.
+- El editor sugiere la tonalidad por las notas escritas
+  (`packages/core/src/music/keySuggestion.js`). **No** cuenta alteraciones:
+  se probó y las partes de la banda no son de libro (RE con Do natural, SOLm
+  escrito con RE#), y solo acertaba el par mayor/relativa en 87 de 112. Usa
+  Krumhansl-Schmuckler con perfiles de Aarden y solo avisa si la elegida
+  encaja 0,3 peor que la mejor. `keySuggestion.test.js` fija contra el
+  repertorio las cifras con que se eligió el margen: si tocas el perfil o el
+  margen y empeoran, salta ahí.
+- `SimpleMDE` (`react-simplemde-editor`) necesita `options` **estables**:
+  una constante fuera del componente o `useMemo`. Si cambian de identidad
+  rehace el editor, y como cada tecla provoca un render, se perdía el foco al
+  escribir. Lo vigila un test de `SongEditor.test.jsx`.
 - Para comparar tonalidades usa `mismaTonalidad` / `identificarTonalidad`
   (`transposition.js`), no el texto: "RE#m" y "MIbm" son la misma, y "RE" y
   "REm" no. El filtro de tonalidad del Dashboard se apoya en eso.
@@ -308,12 +320,17 @@ ahorra volver a buscarlo.
   `rainforest-light/dark`, pero seis archivos CSS solo traen correcciones bajo
   `[data-bs-theme="light"]`, y los otros dos temas claros no las heredan:
   `_navbar.css` (24 reglas), `_notfound.css` (13), `_preferences.css` (11),
-  `_footer.css` (7), `_song-viewer.css` (6) y `_theme-toggle.css` (2).
+  `_footer.css` (7), `_song-viewer.css` (6) y `_theme-toggle.css` (2); y
+  también `_animations.css` (10: los spinners y el skeleton) y `_helpers.css` (3).
+
+  No basta con copiar los selectores a los otros dos temas claros: esas
+  reglas llevan el azul de Bootstrap a fuego (`#0d6efd`, `#e9ecef`), que en
+  `newspaper-light` (tinta sobre papel) y `rainforest-light` desentonaría.
+  Hay que reescribirlas con las variables del tema (`--color-primary`,
+  `--bg-dark-*`, `--text-light-*`) y mirarlas pantalla por pantalla.
 
 ### Música
 
-- **Sugerir la tonalidad a partir de las alteraciones** de lo que el usuario
-  escribe, contando los accidentales.
 - **Algo parecido a chordify.net** para los instrumentos que no son de viento
   (piano, guitarra…), para abrir la app a más músicos.
 - **Traer datos de las canciones** desde tunebat, songbpm, secuencias, lacuerda

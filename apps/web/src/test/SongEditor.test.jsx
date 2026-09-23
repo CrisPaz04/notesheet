@@ -166,6 +166,74 @@ describe('SongEditor', () => {
   });
 });
 
+describe('SongEditor: sugerencia de tonalidad', () => {
+  // Una melodía en RE que descansa en RE, con notas de sobra para opinar
+  const EN_RE = '## Intro\nRE MI FA# SOL LA SI DO# RE\nLA FA# RE MI FA# RE\n\nRE FA# LA RE LA FA# MI RE\n';
+  const aviso = () => screen.queryByRole('status');
+
+  it('no aparece si la tonalidad encaja con las notas', async () => {
+    mockGetSongById.mockResolvedValue({ ...SONG, key: 'RE', voices: { bb_trumpet: { 1: EN_RE } } });
+    await renderEditor();
+    expect(aviso()).not.toBeInTheDocument();
+  });
+
+  it('no aparece con pocas notas', async () => {
+    await renderEditor();
+    expect(aviso()).not.toBeInTheDocument();
+  });
+
+  it('aparece si la canción está en DO y las notas dicen RE', async () => {
+    mockGetSongById.mockResolvedValue({ ...SONG, voices: { bb_trumpet: { 1: EN_RE } } });
+    await renderEditor();
+    expect(aviso()).toHaveTextContent('Por las notas parece RE');
+  });
+
+  it('usar la sugerida cambia el selector y el aviso se va, sin guardar', async () => {
+    const user = userEvent.setup();
+    mockGetSongById.mockResolvedValue({ ...SONG, voices: { bb_trumpet: { 1: EN_RE } } });
+    await renderEditor();
+
+    await user.click(screen.getByRole('button', { name: 'Usar RE' }));
+
+    expect(aviso()).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^RE$/ })).toBeInTheDocument();
+    expect(mockUpdateSong).not.toHaveBeenCalled();
+  });
+
+  it('suma las notas de todas las voces, no solo la abierta', async () => {
+    // Ninguna de las dos voces llega sola al mínimo de notas
+    mockGetSongById.mockResolvedValue({
+      ...SONG,
+      voices: {
+        bb_trumpet: {
+          1: 'RE MI FA# SOL LA SI DO# RE\nLA FA# RE MI FA# RE',
+          2: 'RE FA# LA RE LA FA# MI RE'
+        }
+      }
+    });
+    await renderEditor();
+    expect(aviso()).toHaveTextContent('RE');
+  });
+
+  it('se actualiza mientras se escriben las notas', async () => {
+    const user = userEvent.setup();
+    await renderEditor();
+    expect(aviso()).not.toBeInTheDocument();
+
+    const editor = screen.getByLabelText('editor');
+    await user.clear(editor);
+    await user.type(editor, EN_RE);
+
+    expect(aviso()).toHaveTextContent('Por las notas parece RE');
+  });
+
+  it('no aparece en una canción en PDF', async () => {
+    mockGetSongById.mockResolvedValue({ ...SONG, format: 'pdf', voices: { bb_trumpet: { 1: EN_RE } } });
+    await renderEditor();
+    expect(aviso()).not.toBeInTheDocument();
+  });
+});
+
 describe('SongEditor: el editor no pierde el foco al escribir', () => {
   it('le pasa siempre las mismas opciones, tecla tras tecla', async () => {
     const user = userEvent.setup();

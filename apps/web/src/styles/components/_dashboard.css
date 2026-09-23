@@ -212,20 +212,48 @@
     gap: 0.75rem;
   }
 
-  /* Hereda de .search-input los colores de cada tema; solo cambia la forma */
-  .search-input.key-filter {
-    width: auto;
-    padding-left: 1.25rem;
-    cursor: pointer;
+  /* Hereda de .search-input los colores de cada tema; solo cambia la forma.
+     La flecha nativa se quita porque el navegador la pega al borde y no se
+     puede separar; en su lugar va un chevron con el color del tema. */
+  .key-filter-wrap {
+    position: relative;
   }
 
-  /* La lista desplegable la pinta el sistema, con su fondo claro: sin esto,
-     en los temas oscuros las opciones salen blancas sobre blanco. */
-  .key-filter option {
-    color: #212529;
-    background: #fff;
+  .search-input.key-filter {
+    width: auto;
+    padding: 0.75rem 3rem 0.75rem 1.25rem;
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
   }
-  
+
+  .key-filter-chevron {
+    position: absolute;
+    right: 1.25rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-light-secondary);
+    font-size: 0.8rem;
+    pointer-events: none;
+  }
+
+  /* La lista desplegable la pinta el navegador, y por defecto sale blanca
+     con el resaltado azul del sistema. Con estas reglas toma el fondo y el
+     texto del tema. `color-scheme` es lo que hace que Chrome y Edge pinten
+     oscura también la barra de desplazamiento y el marco de la lista. */
+  .key-filter option {
+    background: var(--bg-dark-secondary);
+    color: var(--text-light-primary);
+  }
+
+  [data-bs-theme$="dark"] .key-filter {
+    color-scheme: dark;
+  }
+
+  [data-bs-theme$="light"] .key-filter {
+    color-scheme: light;
+  }
+
   .search-container {
     position: relative;
     max-width: 500px;

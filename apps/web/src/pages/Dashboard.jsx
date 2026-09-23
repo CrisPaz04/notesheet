@@ -279,6 +279,7 @@ function Dashboard() {
             />
           </div>
           {tonalidades.length > 0 && (
+            <div className="key-filter-wrap">
             <select
               className="search-input key-filter"
               aria-label="Filtrar por tonalidad"
@@ -292,6 +293,8 @@ function Dashboard() {
                 </option>
               ))}
             </select>
+            <i className="bi bi-chevron-down key-filter-chevron" aria-hidden="true"></i>
+            </div>
           )}
         </div>
 

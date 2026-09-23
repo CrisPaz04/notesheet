@@ -1,5 +1,5 @@
 // apps/web/src/pages/SongEditor.jsx
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import {
@@ -16,7 +16,8 @@ import {
   getSongFormat,
   parseVoiceKey,
   setScoreInMap,
-  removeScoreFromMap
+  removeScoreFromMap,
+  sugerirTonalidad
 } from "@notesheet/core";
 import KeySelector from "../components/KeySelector";
 import LoadingSpinner from "../components/LoadingSpinner";
@@ -112,6 +113,16 @@ function SongEditor() {
     onError: setError,
     lyrics: { value: lyricsOnly, onChange: setLyricsOnly }
   });
+
+  // Si las notas no encajan con la tonalidad elegida, proponer la que sí.
+  // Se miran todas las voces juntas: están escritas en la misma tonalidad
+  // (la de la trompeta en Sib) y cuantas más notas, mejor acierta. En un PDF
+  // no hay notas que leer.
+  const sugerenciaTonalidad = useMemo(() => {
+    if (format !== SONG_FORMAT_CHORDS) return null;
+    const textos = Object.values(voices || {}).flatMap((porVoz) => Object.values(porVoz || {}));
+    return sugerirTonalidad(textos, key);
+  }, [voices, key, format]);
 
   // Al cargar, verifica si es una canción nueva o existente
   useEffect(() => {
@@ -745,10 +756,30 @@ function SongEditor() {
               </select>
             </div>
 
-            <KeySelector
-              value={key}
-              onChange={handleKeyChange}
-            />
+            <div>
+              <KeySelector
+                value={key}
+                onChange={handleKeyChange}
+              />
+              {/* Solo cambia el selector: no guarda ni transpone. Se da por
+                  hecho que las notas están bien y lo que falla es la etiqueta. */}
+              {sugerenciaTonalidad && (
+                <div className="key-suggestion" role="status">
+                  <i className="bi bi-lightbulb"></i>
+                  <span>Por las notas parece {sugerenciaTonalidad.join(" o ")}</span>
+                  {sugerenciaTonalidad.map((sugerida) => (
+                    <button
+                      key={sugerida}
+                      type="button"
+                      className="key-suggestion-btn"
+                      onClick={() => handleKeyChange(sugerida)}
+                    >
+                      Usar {sugerida}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
 
             <TypeSelector
               value={type}
