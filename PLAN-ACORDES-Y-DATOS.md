@@ -64,6 +64,31 @@ porque explica de dónde salen.
   de la banda** en casi todas las canciones: el botón "Buscar datos" propone
   también el campo `tempo` de F0, y F0 y F2 pueden ir juntas.
 
+### GetSongBPM, ya con clave (2026-09-23)
+
+- **Condiciones confirmadas** en su página de la API: gratis, también para
+  uso comercial, con el enlace a getsongbpm.com obligatorio; 3000 peticiones
+  por hora, y quien las supere queda bloqueado una hora. **Su comprobador lee
+  el HTML sin ejecutar JavaScript**, así que el enlace va también en un
+  `<noscript>` de `index.html`, además del pie (`Footer.jsx`). Un test vigila
+  los dos.
+- **La clave** está en `VITE_GETSONGBPM_API_KEY` (`.env`, fuera de git; hay que
+  añadirla también en las variables de entorno de Netlify).
+- **Cobertura medida: 4 de 14** canciones buscadas por título y artista
+  (`type=both`, `lookup=song:… artist:…`). Están *Renuévame* (Marcos Witt, 59,
+  Re), *Cantaré al Señor por siempre* (Juan Carlos Alvarado, 154, Mi m),
+  *Oceans* (Hillsong United, 63, Re) y *Goodness of God* (Bethel, 63, Sol#).
+  No están *Agnus Dei* (Marco Barrientos), *Al que es digno* (Marcos Witt),
+  *Como en el cielo* (Miel San Marcos), *Tú eres mi todo*, *Fuego*, *In Jesus'
+  Name* (Israel Houghton), *Sublime Gracia*, *Voy a perder la compostura* ni
+  *Way Maker* (Sinach). Los datos que da sí son correctos donde se pudo
+  comparar.
+- **Consecuencia:** GetSongBPM es una fuente más, no la fuente. El recuadro
+  tiene que funcionar bien cuando no encuentra nada (lo normal en la mitad
+  larga del repertorio): lo dice, deja rellenar a mano y ofrece los enlaces
+  "Ver en…". Buscar solo por título no ayuda: con títulos comunes devuelve 30
+  resultados de otros artistas y el bueno puede no estar.
+
 ### La vista tipo Chordify
 
 - Al ser para practicar y tener red, **YouTube embebido deja de ser un
