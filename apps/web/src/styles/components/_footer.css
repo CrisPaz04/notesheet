@@ -61,6 +61,11 @@
     text-decoration: none;
   }
   
+  .footer-credito {
+    font-size: 0.8rem;
+    margin-top: 0.25rem;
+  }
+
   .footer-divider {
     width: 100%;
     height: 1px;

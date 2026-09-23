@@ -40,6 +40,22 @@
           <p className="footer-text">
             &copy; {new Date().getFullYear()} NoteSheet. Hecho con ❤️ para el ministerio de alabanza.
           </p>
+          {/* Obligatorio: la API de GetSongBPM es gratis a cambio de un enlace
+              a su web visible en la app, y si falta suspenden la clave sin
+              avisar. Va aquí porque el pie sale también en la portada pública
+              (/home), que es donde lo pueden comprobar sin iniciar sesión.
+              Sin rel="nofollow": lo que piden es justo un enlace de vuelta. */}
+          <p className="footer-text footer-credito">
+            Datos de tempo y tonalidad:{" "}
+            <a
+              href="https://getsongbpm.com"
+              className="footer-link"
+              target="_blank"
+              rel="noopener"
+            >
+              GetSongBPM
+            </a>
+          </p>
         </div>
       </div>
     </footer>
