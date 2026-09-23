@@ -25,6 +25,15 @@
     <meta name="apple-mobile-web-app-title" content="NoteSheet" />
   </head>
   <body>
+    <!-- Lo que ve quien abre la web sin JavaScript, y el HTML que descargan
+         los comprobadores automáticos. El de GetSongBPM mira aquí, no en la
+         app ya pintada, que su enlace obligatorio esté (ver Footer.jsx): sin
+         él suspenden la clave de su API sin avisar. -->
+    <noscript>
+      <p>NoteSheet necesita JavaScript: es una app para organizar, transponer y
+        compartir las canciones de los músicos de iglesia.</p>
+      <p>Datos de tempo y tonalidad: <a href="https://getsongbpm.com">GetSongBPM</a></p>
+    </noscript>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>

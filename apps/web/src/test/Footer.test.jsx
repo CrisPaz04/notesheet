@@ -12,3 +12,18 @@ describe('Footer', () => {
     expect(enlace.getAttribute('rel') || '').not.toMatch(/nofollow/);
   });
 });
+
+describe('index.html', () => {
+  // El comprobador de GetSongBPM descarga el HTML sin ejecutar JavaScript,
+  // así que el enlace del pie (que pinta React) no le llega: tiene que estar
+  // también en el HTML estático.
+  it('lleva el enlace a getsongbpm.com sin necesitar JavaScript', async () => {
+    const { readFileSync, existsSync } = await import('node:fs');
+    const { resolve } = await import('node:path');
+    const ruta = ['index.html', 'apps/web/index.html']
+      .map((r) => resolve(process.cwd(), r))
+      .find((r) => existsSync(r));
+    const html = readFileSync(ruta, 'utf8');
+    expect(html).toMatch(/<a href="https:\/\/getsongbpm\.com">GetSongBPM<\/a>/);
+  });
+});
