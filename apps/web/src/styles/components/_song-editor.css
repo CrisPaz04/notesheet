@@ -285,8 +285,41 @@
     background: rgba(var(--color-primary-rgb), 0.1);
     border-bottom-color: var(--color-primary);
   }
+
+  /* Una voz es un div con dos botones hermanos, elegir y quitar. El div
+     conserva el relleno y centra en vertical, como hacía el <button> que
+     era antes, así que la pestaña mide lo mismo con o sin la cruz. Para
+     que toda la pestaña siga eligiendo la voz, el botón de elegir la cubre
+     con su ::after, borde de abajo incluido. */
+  div.editor-tab {
+    display: flex;
+    align-items: center;
+  }
+
+  .editor-tab-select {
+    background: none;
+    border: none;
+    color: inherit;
+    padding: 0;
+  }
+
+  .editor-tab-select::after {
+    content: "";
+    position: absolute;
+    inset: 0 0 -3px; /* los 3px del border-bottom de .editor-tab */
+  }
+
+  /* El anillo de foco, alrededor de la pestaña entera como antes */
+  .editor-tab-select:focus-visible {
+    outline: none;
+  }
+
+  .editor-tab-select:focus-visible::after {
+    outline-style: auto;
+  }
   
   .editor-tab .tab-close {
+    position: relative; /* por encima del ::after del botón de elegir */
     background: none;
     border: none;
     color: rgba(220, 53, 69, 0.8);

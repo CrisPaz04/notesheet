@@ -508,36 +508,51 @@ function SongEditor() {
 
     return (
       <div className="editor-tabs">
-        {tabs.map(tab => (
-          <button
-            key={tab.id}
-            className={`editor-tab ${currentTab === tab.id ? 'active' : ''}`}
-            onClick={() => handleTabChange(tab.id)}
-          >
-            <i className={tab.icon}></i>
-            <span className="ms-1">{tab.label}</span>
-            {tab.badge && (
-              <span
-                className={`tab-badge ${tab.badge === '2/2' ? 'tab-badge--completa' : ''}`}
-                title="Partituras subidas de las dos posibles"
-              >
-                {tab.badge}
-              </span>
-            )}
-            {tab.removable && canEditSongs() && (
+        {/* La pestaña es un contenedor con dos botones hermanos, elegir y
+            quitar: un botón dentro de otro es HTML inválido y el de dentro
+            no se alcanza bien con teclado ni con lector de pantalla. Al ser
+            hermanos, quitar ya no pasa por el clic de elegir. */}
+        {tabs.map(tab => {
+          const activa = currentTab === tab.id;
+          const quitable = tab.removable && canEditSongs();
+          return (
+            <div
+              key={tab.id}
+              className={`editor-tab ${activa ? 'active' : ''}`}
+            >
               <button
-                className="tab-close"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  const [instId, voiceNum] = tab.id.split('-');
-                  handleRemoveVoice(instId, voiceNum);
-                }}
+                type="button"
+                className="editor-tab-select"
+                aria-current={activa ? 'true' : undefined}
+                onClick={() => handleTabChange(tab.id)}
               >
-                &times;
+                <i className={tab.icon}></i>
+                <span className="ms-1">{tab.label}</span>
+                {tab.badge && (
+                  <span
+                    className={`tab-badge ${tab.badge === '2/2' ? 'tab-badge--completa' : ''}`}
+                    title="Partituras subidas de las dos posibles"
+                  >
+                    {tab.badge}
+                  </span>
+                )}
               </button>
-            )}
-          </button>
-        ))}
+              {quitable && (
+                <button
+                  type="button"
+                  className="tab-close"
+                  aria-label={`Quitar ${tab.label}`}
+                  onClick={() => {
+                    const [instId, voiceNum] = tab.id.split('-');
+                    handleRemoveVoice(instId, voiceNum);
+                  }}
+                >
+                  &times;
+                </button>
+              )}
+            </div>
+          );
+        })}
         {canEditSongs() && (
           <button
             className="editor-tab"

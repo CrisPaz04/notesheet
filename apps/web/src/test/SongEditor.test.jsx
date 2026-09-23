@@ -80,6 +80,11 @@ const renderEditor = async () => {
   await screen.findByDisplayValue('Cristo Vive');
 };
 
+// Cada pestaña de voz son dos botones hermanos: el que la elige, que se
+// llama como la voz, y el que la quita ("Quitar Trompeta en Sib 2").
+const pestana = (n) => screen.getByRole('button', { name: new RegExp(`^Trompeta.*${n}`) });
+const botonQuitar = (n) => screen.queryByRole('button', { name: new RegExp(`^Quitar Trompeta.*${n}`) });
+
 describe('SongEditor', () => {
   it('carga los datos de una canción existente', async () => {
     await renderEditor();
@@ -89,8 +94,8 @@ describe('SongEditor', () => {
 
   it('muestra una pestaña por voz más la de solo letra', async () => {
     await renderEditor();
-    expect(screen.getByRole('button', { name: /Trompeta.*1/ })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Trompeta.*2/ })).toBeInTheDocument();
+    expect(pestana(1)).toBeInTheDocument();
+    expect(pestana(2)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Solo Letra/ })).toBeInTheDocument();
   });
 
@@ -103,7 +108,7 @@ describe('SongEditor', () => {
     const user = userEvent.setup();
     await renderEditor();
 
-    await user.click(screen.getByRole('button', { name: /Trompeta.*2/ }));
+    await user.click(pestana(2));
 
     await waitFor(() => {
       expect(screen.getByLabelText('editor')).toHaveValue('## Intro\nMI SI\n');
@@ -121,7 +126,7 @@ describe('SongEditor', () => {
     expect(editor).toHaveValue('LA');
 
     // La segunda voz sigue intacta
-    await user.click(screen.getByRole('button', { name: /Trompeta.*2/ }));
+    await user.click(pestana(2));
     await waitFor(() => {
       expect(screen.getByLabelText('editor')).toHaveValue('## Intro\nMI SI\n');
     });
@@ -131,20 +136,18 @@ describe('SongEditor', () => {
     const user = userEvent.setup();
     await renderEditor();
 
-    const tabVoz2 = screen.getByRole('button', { name: /Trompeta.*2/ });
-    const cerrar = tabVoz2.querySelector('.tab-close');
-    await user.click(cerrar);
+    await user.click(botonQuitar(2));
 
     await waitFor(() => {
       expect(mockRemoveVoiceFromSong).toHaveBeenCalledWith('song-1', 'bb_trumpet', '2');
     });
-    expect(screen.queryByRole('button', { name: /Trompeta.*2/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^Trompeta.*2/ })).not.toBeInTheDocument();
   });
 
   it('no ofrece cerrar la voz primaria', async () => {
     await renderEditor();
-    const tabVoz1 = screen.getByRole('button', { name: /Trompeta.*1/ });
-    expect(tabVoz1.querySelector('.tab-close')).toBeNull();
+    expect(botonQuitar(2)).toBeInTheDocument();
+    expect(botonQuitar(1)).not.toBeInTheDocument();
   });
 
   it('respeta la cancelación del usuario al eliminar una voz', async () => {
@@ -152,11 +155,34 @@ describe('SongEditor', () => {
     const user = userEvent.setup();
     await renderEditor();
 
-    const tabVoz2 = screen.getByRole('button', { name: /Trompeta.*2/ });
-    await user.click(tabVoz2.querySelector('.tab-close'));
+    await user.click(botonQuitar(2));
 
     expect(mockRemoveVoiceFromSong).not.toHaveBeenCalled();
-    expect(screen.getByRole('button', { name: /Trompeta.*2/ })).toBeInTheDocument();
+    expect(pestana(2)).toBeInTheDocument();
+  });
+
+  it('quitar una voz no la selecciona', async () => {
+    // Se cancela para que la pestaña siga ahí: si el clic en quitar llegara
+    // también al de elegir, el editor habría saltado a la voz 2.
+    vi.stubGlobal('confirm', vi.fn(() => false));
+    const user = userEvent.setup();
+    await renderEditor();
+    expect(pestana(1)).toHaveAttribute('aria-current', 'true');
+
+    await user.click(botonQuitar(2));
+
+    expect(confirm).toHaveBeenCalled();
+    expect(screen.getByLabelText('editor')).toHaveValue('## Intro\nDO SOL\n');
+    expect(pestana(1)).toHaveAttribute('aria-current', 'true');
+    expect(pestana(2)).not.toHaveAttribute('aria-current');
+  });
+
+  it('el botón de quitar no va dentro del de elegir', async () => {
+    // Un botón dentro de otro es HTML inválido y el de dentro no se
+    // alcanza bien con teclado ni con lector de pantalla.
+    await renderEditor();
+    expect(pestana(2)).not.toContainElement(botonQuitar(2));
+    expect(document.querySelector('button button')).toBeNull();
   });
 
   it('muestra un error si la canción no se puede cargar', async () => {
