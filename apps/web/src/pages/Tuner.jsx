@@ -17,6 +17,14 @@ import ReferenceToneGenerator from '../components/tuner/ReferenceToneGenerator';
 import PitchHistoryGraph from '../components/tuner/PitchHistoryGraph';
 import StringModeSelector from '../components/tuner/StringModeSelector';
 
+/**
+ * Carga las preferencias y, solo cuando las tiene, monta el afinador.
+ *
+ * `useTuner` toma los valores iniciales con `useState`, así que solo mira los
+ * del primer render. Antes el hook se llamaba aquí mismo, con `{}`, mientras
+ * Firebase aún no había respondido: el afinador arrancaba siempre en 440 y con
+ * la trompeta, y además guardaba esos valores encima de los del usuario.
+ */
 function Tuner({ compact = false }) {
   const { currentUser } = useAuth();
   const [preferencesLoaded, setPreferencesLoaded] = useState(false);
@@ -58,6 +66,24 @@ function Tuner({ compact = false }) {
     loadPreferences();
   }, [currentUser]);
 
+  if (!preferencesLoaded) {
+    return (
+      <div className={compact ? 'tuner-compact' : 'tuner-container'}>
+        <div className={compact ? '' : 'container'}>
+          <div className="text-center py-5">
+            <div className="spinner-border" role="status" style={{ color: 'var(--color-primary)' }}>
+              <span className="visually-hidden">Cargando...</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return <TunerCuerpo compact={compact} initialPreferences={initialPreferences} />;
+}
+
+function TunerCuerpo({ compact, initialPreferences }) {
   const {
     isRunning,
     loading,
@@ -106,20 +132,6 @@ function Tuner({ compact = false }) {
       pitchHistory.clearHistory();
     }
   }, [isRunning, pitchHistory.clearHistory]);
-
-  if (!preferencesLoaded) {
-    return (
-      <div className={compact ? 'tuner-compact' : 'tuner-container'}>
-        <div className={compact ? '' : 'container'}>
-          <div className="text-center py-5">
-            <div className="spinner-border" role="status" style={{ color: 'var(--color-primary)' }}>
-              <span className="visually-hidden">Cargando...</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className={compact ? 'tuner-compact' : 'tuner-container'}>
