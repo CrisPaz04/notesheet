@@ -8,7 +8,7 @@
   }
   
   .playlists-header {
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(var(--overlay-rgb), 0.05);
     border: 1px solid var(--border-light);
     border-radius: var(--radius-xl);
     padding: 2rem;
@@ -38,7 +38,7 @@
   }
   
   .playlist-card {
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(var(--overlay-rgb), 0.05);
     border: 1px solid var(--border-light);
     border-radius: var(--radius-xl);
     overflow: hidden;
@@ -47,14 +47,14 @@
   }
   
   .playlist-card:hover {
-    background: rgba(255, 255, 255, 0.08);
-    border-color: rgba(100, 255, 218, 0.3);
+    background: rgba(var(--overlay-rgb), 0.08);
+    border-color: rgba(var(--color-primary-rgb), 0.3);
     transform: translateY(-8px);
     box-shadow: var(--shadow-medium);
   }
   
   .playlist-card-header {
-    background: rgba(255, 255, 255, 0.03);
+    background: rgba(var(--overlay-rgb), 0.03);
     border-bottom: 1px solid var(--border-light);
     padding: 1.5rem;
   }
@@ -103,7 +103,7 @@
   }
   
   .playlist-card-footer {
-    background: rgba(255, 255, 255, 0.03);
+    background: rgba(var(--overlay-rgb), 0.03);
     border-top: 1px solid var(--border-light);
     padding: 1rem 1.5rem;
     display: flex;
@@ -138,7 +138,7 @@
   }
   
   .btn-playlist-action {
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(var(--overlay-rgb), 0.05);
     border: 1px solid var(--border-light);
     border-radius: var(--radius-md);
     color: var(--text-light-primary);
@@ -153,7 +153,7 @@
   }
   
   .btn-playlist-action:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(var(--overlay-rgb), 0.1);
     border-color: var(--border-light-hover);
     color: var(--text-light-primary);
     text-decoration: none;
@@ -168,7 +168,7 @@
   
   .btn-playlist-primary:hover {
     color: var(--bg-dark-primary);
-    box-shadow: 0 5px 15px rgba(100, 255, 218, 0.3);
+    box-shadow: 0 5px 15px rgba(var(--color-primary-rgb), 0.3);
   }
   
   .btn-playlist-danger {
@@ -186,7 +186,7 @@
   .empty-playlists-state {
     text-align: center;
     padding: 4rem 2rem;
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(var(--overlay-rgb), 0.05);
     border: 1px solid var(--border-light);
     border-radius: var(--radius-xl);
     backdrop-filter: blur(10px);
@@ -194,7 +194,7 @@
   
   .empty-playlists-icon {
     font-size: 4rem;
-    color: rgba(255, 255, 255, 0.3);
+    color: rgba(var(--overlay-rgb), 0.3);
     margin-bottom: 1.5rem;
   }
   
@@ -215,7 +215,7 @@
   
   /* Playlist View Styles */
   .playlist-view-header {
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(var(--overlay-rgb), 0.05);
     border: 1px solid var(--border-light);
     border-radius: var(--radius-xl);
     padding: 2rem;
@@ -242,7 +242,7 @@
   }
   
   .playlist-songs-section {
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(var(--overlay-rgb), 0.05);
     border: 1px solid var(--border-light);
     border-radius: var(--radius-xl);
     overflow: hidden;
@@ -250,7 +250,7 @@
   }
   
   .playlist-songs-header {
-    background: rgba(255, 255, 255, 0.03);
+    background: rgba(var(--overlay-rgb), 0.03);
     border-bottom: 1px solid var(--border-light);
     padding: 1.5rem;
     text-align: center;
@@ -260,7 +260,7 @@
     display: flex;
     align-items: center;
     padding: 1rem 1.5rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    border-bottom: 1px solid rgba(var(--overlay-rgb), 0.05);
     transition: var(--transition-fast);
   }
   
@@ -269,11 +269,11 @@
   }
   
   .playlist-song-item:hover {
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(var(--overlay-rgb), 0.05);
   }
   
   .playlist-song-number {
-    background: rgba(100, 255, 218, 0.2);
+    background: rgba(var(--color-primary-rgb), 0.2);
     color: var(--color-primary);
     width: 32px;
     height: 32px;
@@ -304,7 +304,7 @@
   }
   
   .playlist-song-key {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(var(--overlay-rgb), 0.1);
     color: var(--text-light-primary);
     padding: 0.25rem 0.75rem;
     border-radius: var(--radius-lg);
@@ -333,7 +333,7 @@
   }
   
   .playlist-editor-card {
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(var(--overlay-rgb), 0.05);
     border: 1px solid var(--border-light);
     border-radius: var(--radius-xl);
     overflow: hidden;
@@ -341,7 +341,7 @@
   }
   
   .playlist-editor-card-header {
-    background: rgba(255, 255, 255, 0.03);
+    background: rgba(var(--overlay-rgb), 0.03);
     border-bottom: 1px solid var(--border-light);
     padding: 1rem 1.5rem;
     color: var(--text-light-primary);
@@ -379,20 +379,20 @@
     gap: var(--spacing-sm);
     cursor: pointer;
     padding: 0.75rem 1rem;
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(var(--overlay-rgb), 0.05);
     border: 2px solid var(--border-light);
     border-radius: var(--radius-lg);
     transition: var(--transition-fast);
   }
   
   .form-check-input-modern:checked + .form-check-label-modern {
-    background: rgba(100, 255, 218, 0.1);
-    border-color: rgba(100, 255, 218, 0.3);
+    background: rgba(var(--color-primary-rgb), 0.1);
+    border-color: rgba(var(--color-primary-rgb), 0.3);
     color: var(--color-primary);
   }
   
   .form-check-label-modern:hover {
-    background: rgba(255, 255, 255, 0.08);
+    background: rgba(var(--overlay-rgb), 0.08);
     border-color: var(--border-light-hover);
   }
   
@@ -415,7 +415,7 @@
     padding: 1rem 1.5rem;
     background: transparent;
     border: none;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    border-bottom: 1px solid rgba(var(--overlay-rgb), 0.05);
     color: var(--text-light-primary);
     width: 100%;
     text-align: left;
@@ -424,7 +424,7 @@
   }
   
   .available-song-item:hover:not(.disabled) {
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(var(--overlay-rgb), 0.05);
   }
   
   .available-song-item.disabled {
@@ -474,24 +474,24 @@
     display: flex;
     align-items: center;
     padding: 1rem 1.5rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-    background: rgba(255, 255, 255, 0.02);
+    border-bottom: 1px solid rgba(var(--overlay-rgb), 0.05);
+    background: rgba(var(--overlay-rgb), 0.02);
     transition: var(--transition-fast);
   }
   
   .selected-song-item:hover {
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(var(--overlay-rgb), 0.05);
   }
   
   .selected-song-item.dragging {
-    background: rgba(100, 255, 218, 0.1);
-    border-color: rgba(100, 255, 218, 0.3);
+    background: rgba(var(--color-primary-rgb), 0.1);
+    border-color: rgba(var(--color-primary-rgb), 0.3);
     transform: rotate(2deg);
     box-shadow: var(--shadow-medium);
   }
   
   .selected-song-drag {
-    color: rgba(255, 255, 255, 0.5);
+    color: rgba(var(--overlay-rgb), 0.5);
     margin-right: 1rem;
     cursor: grab;
     font-size: 1.2rem;
@@ -502,7 +502,7 @@
   }
   
   .selected-song-number {
-    background: rgba(100, 255, 218, 0.2);
+    background: rgba(var(--color-primary-rgb), 0.2);
     color: var(--color-primary);
     width: 32px;
     height: 32px;
@@ -540,7 +540,7 @@
   }
   
   .tonality-select {
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(var(--overlay-rgb), 0.05);
     border: 1px solid var(--border-light-hover);
     border-radius: var(--radius-sm);
     color: var(--text-light-primary);
@@ -550,8 +550,8 @@
   }
   
   .tonality-select:focus {
-    background: rgba(255, 255, 255, 0.08);
-    border-color: rgba(100, 255, 218, 0.5);
+    background: rgba(var(--overlay-rgb), 0.08);
+    border-color: rgba(var(--color-primary-rgb), 0.5);
     outline: none;
   }
   

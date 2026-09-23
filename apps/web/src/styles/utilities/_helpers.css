@@ -10,13 +10,13 @@
   
   .song-notation {
     font-family: monospace;
-    background-color: #f8f9fa;
+    background-color: var(--surface-raised);
     padding: 0.125rem 0.25rem;
     border-radius: var(--radius-sm);
   }
   
   .song-section {
-    border-left: 4px solid #0d6efd;
+    border-left: 4px solid var(--color-primary);
     padding-left: 1rem;
     margin: 1rem 0;
     position: relative;
@@ -56,14 +56,14 @@
   }
   
   /* Light theme overrides for helpers */
-  [data-bs-theme="light"] .song-section {
-    border-left-color: #0d6efd;
+  :where([data-bs-theme$="light"]) .song-section {
+    border-left-color: var(--color-primary);
   }
   
-  [data-bs-theme="light"] .song-notation {
-    background-color: #f8f9fa;
+  :where([data-bs-theme$="light"]) .song-notation {
+    background-color: var(--surface-raised);
   }
   
-  [data-bs-theme="light"] .editor-wrapper {
+  :where([data-bs-theme$="light"]) .editor-wrapper {
     background-color: white;
   }

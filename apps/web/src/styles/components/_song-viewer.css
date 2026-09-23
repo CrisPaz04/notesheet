@@ -8,7 +8,7 @@
   }
   
   .song-header {
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(var(--overlay-rgb), 0.05);
     border: 1px solid var(--border-light);
     border-radius: var(--radius-xl);
     padding: 2rem;
@@ -32,7 +32,7 @@
   }
   
   .song-meta-item {
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(var(--overlay-rgb), 0.05);
     border: 1px solid var(--border-light);
     border-radius: var(--radius-lg);
     padding: 1rem;
@@ -64,7 +64,7 @@
   }
   
   .controls-toolbar {
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(var(--overlay-rgb), 0.05);
     border: 1px solid var(--border-light);
     border-radius: var(--radius-xl);
     padding: 1.5rem;
@@ -93,7 +93,7 @@
   }
   
   .dropdown-button {
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(var(--overlay-rgb), 0.05);
     border: 2px solid var(--border-light);
     border-radius: var(--radius-lg);
     color: var(--text-light-primary);
@@ -110,13 +110,13 @@
   }
   
   .dropdown-button:hover {
-    background: rgba(255, 255, 255, 0.08);
-    border-color: rgba(100, 255, 218, 0.3);
+    background: rgba(var(--overlay-rgb), 0.08);
+    border-color: rgba(var(--color-primary-rgb), 0.3);
   }
   
   .dropdown-button.active {
-    border-color: rgba(100, 255, 218, 0.5);
-    background: rgba(100, 255, 218, 0.1);
+    border-color: rgba(var(--color-primary-rgb), 0.5);
+    background: rgba(var(--color-primary-rgb), 0.1);
   }
   
   .dropdown-menu-custom {
@@ -124,9 +124,9 @@
     top: 100%;
     left: 0;
     right: 0;
-    background: rgba(30, 30, 30, 0.95);
+    background: var(--surface-raised);
     backdrop-filter: blur(10px);
-    border: 2px solid rgba(100, 255, 218, 0.3);
+    border: 2px solid rgba(var(--color-primary-rgb), 0.3);
     border-top: none;
     border-radius: 0 0 var(--radius-lg) var(--radius-lg);
     max-height: 300px;
@@ -140,24 +140,24 @@
     color: var(--text-light-secondary);
     cursor: pointer;
     transition: var(--transition-fast);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    border-bottom: 1px solid rgba(var(--overlay-rgb), 0.05);
     font-size: 0.9rem;
   }
   
   .dropdown-item-custom:hover {
-    background: rgba(100, 255, 218, 0.1);
+    background: rgba(var(--color-primary-rgb), 0.1);
     color: var(--color-primary);
   }
   
   .dropdown-item-custom.active {
-    background: rgba(100, 255, 218, 0.2);
+    background: rgba(var(--color-primary-rgb), 0.2);
     color: var(--color-primary);
     font-weight: 600;
   }
   
   .font-controls {
     display: flex;
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(var(--overlay-rgb), 0.05);
     border: 1px solid var(--border-light);
     border-radius: var(--radius-lg);
     overflow: hidden;
@@ -166,7 +166,7 @@
   .font-control-btn {
     background: transparent;
     border: none;
-    color: rgba(255, 255, 255, 0.7);
+    color: rgba(var(--overlay-rgb), 0.7);
     padding: 0.75rem;
     cursor: pointer;
     transition: var(--transition-fast);
@@ -179,12 +179,12 @@
   }
   
   .font-control-btn:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(var(--overlay-rgb), 0.1);
     color: var(--text-light-primary);
   }
   
   .font-control-btn:active {
-    background: rgba(100, 255, 218, 0.2);
+    background: rgba(var(--color-primary-rgb), 0.2);
     color: var(--color-primary);
   }
   
@@ -194,7 +194,7 @@
   
   .view-toggle-controls {
     display: flex;
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(var(--overlay-rgb), 0.05);
     border: 1px solid var(--border-light);
     border-radius: var(--radius-lg);
     overflow: hidden;
@@ -203,7 +203,7 @@
   .view-toggle-btn-song {
     background: transparent;
     border: none;
-    color: rgba(255, 255, 255, 0.7);
+    color: rgba(var(--overlay-rgb), 0.7);
     padding: 0.75rem 1rem;
     cursor: pointer;
     transition: var(--transition-fast);
@@ -215,12 +215,12 @@
   }
   
   .view-toggle-btn-song:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(var(--overlay-rgb), 0.1);
     color: var(--text-light-primary);
   }
   
   .view-toggle-btn-song.active {
-    background: rgba(100, 255, 218, 0.2);
+    background: rgba(var(--color-primary-rgb), 0.2);
     color: var(--color-primary);
   }
   
@@ -234,7 +234,7 @@
   }
   
   .btn-song-action {
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(var(--overlay-rgb), 0.05);
     border: 2px solid var(--border-light);
     border-radius: var(--radius-lg);
     color: var(--text-light-primary);
@@ -250,7 +250,7 @@
   }
   
   .btn-song-action:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(var(--overlay-rgb), 0.1);
     border-color: var(--border-light-hover);
     color: var(--text-light-primary);
     text-decoration: none;
@@ -265,11 +265,11 @@
   
   .btn-song-primary:hover {
     color: var(--bg-dark-primary);
-    box-shadow: 0 8px 20px rgba(100, 255, 218, 0.3);
+    box-shadow: 0 8px 20px rgba(var(--color-primary-rgb), 0.3);
   }
   
   .song-content {
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(var(--overlay-rgb), 0.05);
     border: 1px solid var(--border-light);
     border-radius: var(--radius-xl);
     overflow: hidden;
@@ -279,7 +279,7 @@
   }
   
   .view-indicator {
-    background: rgba(255, 255, 255, 0.03);
+    background: rgba(var(--overlay-rgb), 0.03);
     border-bottom: 1px solid var(--border-light);
     padding: 1rem;
     text-align: center;
@@ -296,7 +296,7 @@
     width: 12px;
     height: 12px;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(var(--overlay-rgb), 0.2);
     cursor: pointer;
     transition: var(--transition-fast);
   }
@@ -407,32 +407,32 @@
   }
 
   /* Light theme overrides for additional styles */
-[data-bs-theme="light"] .dropdown-item-custom {
-  color: rgba(33, 37, 41, 0.8);
+:where([data-bs-theme$="light"]) .dropdown-item-custom {
+  color: rgba(var(--overlay-rgb), 0.8);
 }
 
-[data-bs-theme="light"] .dropdown-item-custom:hover {
-  background: rgba(13, 110, 253, 0.1);
-  color: #0d6efd;
+:where([data-bs-theme$="light"]) .dropdown-item-custom:hover {
+  background: rgba(var(--color-primary-rgb), 0.1);
+  color: var(--color-primary);
 }
 
-[data-bs-theme="light"] .dropdown-item-custom.active {
-  background: rgba(13, 110, 253, 0.2);
-  color: #0d6efd;
+:where([data-bs-theme$="light"]) .dropdown-item-custom.active {
+  background: rgba(var(--color-primary-rgb), 0.2);
+  color: var(--color-primary);
 }
 
-[data-bs-theme="light"] .view-hint {
-  color: #6c757d;
+:where([data-bs-theme$="light"]) .view-hint {
+  color: var(--text-light-muted);
 }
 
-[data-bs-theme="light"] .song-section-title {
-  color: #0d6efd;
+:where([data-bs-theme$="light"]) .song-section-title {
+  color: var(--color-primary);
 }
 
-[data-bs-theme="light"] .song-section-content {
+:where([data-bs-theme$="light"]) .song-section-content {
   background: rgba(0, 0, 0, 0.05);
-  color: #212529;
-  border-left-color: #0d6efd;
+  color: var(--text-light-primary);
+  border-left-color: var(--color-primary);
 }
 /* Álbum de la canción y enlaces a sus hermanas */
 .song-album-line {

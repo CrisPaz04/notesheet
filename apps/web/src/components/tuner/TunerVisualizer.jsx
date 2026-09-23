@@ -30,7 +30,9 @@ function TunerVisualizer({
       case 'sharp':
         return Math.abs(centsDeviation) > 15 ? '#f44336' : '#ffc107'; // Red or Yellow
       default:
-        return 'rgba(255, 255, 255, 0.3)'; // Gray
+        // Blanco en los temas oscuros y negro en los claros: con blanco fijo
+        // desaparecía sobre los fondos claros
+        return 'rgba(var(--overlay-rgb), 0.3)'; // Gray
     }
   };
 
@@ -104,7 +106,7 @@ function TunerVisualizer({
           <path
             d="M 20 100 A 80 80 0 0 1 180 100"
             fill="none"
-            stroke="rgba(255, 255, 255, 0.1)"
+            style={{ stroke: 'rgba(var(--overlay-rgb), 0.1)' }}
             strokeWidth="8"
             strokeLinecap="round"
           />
@@ -146,7 +148,7 @@ function TunerVisualizer({
                 y1={y1}
                 x2={x2}
                 y2={y2}
-                stroke="rgba(255, 255, 255, 0.3)"
+                style={{ stroke: 'rgba(var(--overlay-rgb), 0.3)' }}
                 strokeWidth="2"
                 strokeLinecap="round"
               />
@@ -161,7 +163,7 @@ function TunerVisualizer({
                 y1="100"
                 x2="100"
                 y2="30"
-                stroke={getStatusColor()}
+                style={{ stroke: getStatusColor() }}
                 strokeWidth="3"
                 strokeLinecap="round"
               />
@@ -169,7 +171,7 @@ function TunerVisualizer({
                 cx="100"
                 cy="100"
                 r="5"
-                fill={getStatusColor()}
+                style={{ fill: getStatusColor() }}
               />
             </g>
           )}

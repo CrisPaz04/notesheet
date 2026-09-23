@@ -43,6 +43,25 @@
   --radius-md: 8px;
   --radius-lg: 12px;
   --radius-xl: 16px;
+  
+  /* Superficies y acentos compartidos por los componentes. Existen para
+     que las reglas no lleven colores de un tema escritos a mano: con ellos,
+     el menú del usuario o el hover de un desplegable salen del color de
+     cada tema en vez del azul de Bootstrap o el turquesa del oscuro. */
+  --surface-raised: #2a2a3e;
+  --surface-hover: #343448;
+  --border-strong: #3a3a5e;
+  --color-primary-rgb: 100, 255, 218;
+  --on-primary: #1a1a2e;
+  --color-danger: #ff6b6b;
+  /* Blanco en los temas oscuros y negro en los claros: para fondos y
+     textos translúcidos, `rgba(var(--overlay-rgb), 0.05)`. */
+  --overlay-rgb: 255, 255, 255;
+  /* El acento del tema en su versión clara, para lo que va sobre una
+     tarjeta que es oscura en todos los temas (el login, la demo de la
+     portada). `--color-primary` no sirve ahí: en los temas claros es
+     oscuro y no se leería. */
+  --accent-on-dark: #64ffda;
 }
 
 /* Light Theme Variables */
@@ -70,6 +89,15 @@
   --shadow-light: 0 4px 6px rgba(0, 0, 0, 0.1);
   --shadow-medium: 0 8px 25px rgba(0, 0, 0, 0.15);
   --shadow-heavy: 0 15px 35px rgba(0, 0, 0, 0.2);
+  
+  --surface-raised: #f8f9fa;
+  --surface-hover: #e9ecef;
+  --border-strong: #dee2e6;
+  --color-primary-rgb: 13, 110, 253;
+  --on-primary: #ffffff;
+  --color-danger: #dc3545;
+  --overlay-rgb: 0, 0, 0;
+  --accent-on-dark: #6ea8fe;
 }
 
 /* Dark Theme Variables (Default) */
@@ -97,6 +125,15 @@
   --shadow-light: 0 4px 6px rgba(0, 0, 0, 0.1);
   --shadow-medium: 0 8px 25px rgba(0, 0, 0, 0.2);
   --shadow-heavy: 0 15px 35px rgba(0, 0, 0, 0.3);
+  
+  --surface-raised: #2a2a3e;
+  --surface-hover: #343448;
+  --border-strong: #3a3a5e;
+  --color-primary-rgb: 100, 255, 218;
+  --on-primary: #1a1a2e;
+  --color-danger: #ff6b6b;
+  --overlay-rgb: 255, 255, 255;
+  --accent-on-dark: #64ffda;
 }
 
 /* Rainforest Light Theme - Basado en el dark mejorado */
@@ -124,6 +161,15 @@
   --shadow-light: 0 4px 6px rgba(30, 34, 32, 0.1);
   --shadow-medium: 0 8px 25px rgba(30, 34, 32, 0.15);
   --shadow-heavy: 0 15px 35px rgba(30, 34, 32, 0.2);
+  
+  --surface-raised: #f2f5ed;
+  --surface-hover: #eaf0e3;
+  --border-strong: rgba(62, 70, 41, 0.3);
+  --color-primary-rgb: 62, 70, 41;
+  --on-primary: #f8faf6;
+  --color-danger: #b3261e;
+  --overlay-rgb: 0, 0, 0;
+  --accent-on-dark: #a6af92;
 }
 
 /* Rainforest Dark Theme - Nuevos colores */
@@ -151,6 +197,15 @@
   --shadow-light: 0 4px 6px rgba(0, 0, 0, 0.2);
   --shadow-medium: 0 8px 25px rgba(0, 0, 0, 0.3);
   --shadow-heavy: 0 15px 35px rgba(0, 0, 0, 0.4);
+  
+  --surface-raised: #2a2f2b;
+  --surface-hover: #363c37;
+  --border-strong: rgba(166, 175, 146, 0.3);
+  --color-primary-rgb: 166, 175, 146;
+  --on-primary: #1e2220;
+  --color-danger: #e57373;
+  --overlay-rgb: 255, 255, 255;
+  --accent-on-dark: #a6af92;
 }
 
 /* Newspaper Light Theme - Papel amarillento */
@@ -178,6 +233,15 @@
   --shadow-light: 0 4px 6px rgba(26, 26, 26, 0.1);
   --shadow-medium: 0 8px 25px rgba(26, 26, 26, 0.15);
   --shadow-heavy: 0 15px 35px rgba(26, 26, 26, 0.2);
+  
+  --surface-raised: #f2ede0;
+  --surface-hover: #ede7d7;
+  --border-strong: rgba(26, 26, 26, 0.25);
+  --color-primary-rgb: 44, 44, 44;
+  --on-primary: #f7f3e9;
+  --color-danger: #a4161a;
+  --overlay-rgb: 0, 0, 0;
+  --accent-on-dark: #e6d690;
 }
 
 /* Newspaper Dark Theme */
@@ -205,6 +269,15 @@
   --shadow-light: 0 4px 6px rgba(0, 0, 0, 0.2);
   --shadow-medium: 0 8px 25px rgba(0, 0, 0, 0.3);
   --shadow-heavy: 0 15px 35px rgba(0, 0, 0, 0.4);
+  
+  --surface-raised: #3a3832;
+  --surface-hover: #46443c;
+  --border-strong: rgba(230, 214, 144, 0.3);
+  --color-primary-rgb: 230, 214, 144;
+  --on-primary: #2e2d28;
+  --color-danger: #e57373;
+  --overlay-rgb: 255, 255, 255;
+  --accent-on-dark: #e6d690;
 }
 
 /* Eliminar todos los gradientes - Navbar */

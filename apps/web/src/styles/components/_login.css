@@ -130,14 +130,16 @@
   }
   
   /* No se usa --color-primary: en tema claro es #0d6efd y sobre la tarjeta
-     oscura da 3.7:1, por debajo del 4.5:1 que pide WCAG. */
+     oscura da 3.7:1, por debajo del 4.5:1 que pide WCAG. `--accent-on-dark`
+     es el acento de cada tema en su versión clara. */
   .login-footer a {
-    color: #6ea8fe !important;
+    color: var(--accent-on-dark) !important;
   }
 
   .login-footer a:hover,
   .login-footer a:focus {
-    color: #8bb9fe !important;
+    color: var(--accent-on-dark) !important;
+    text-decoration: underline;
   }
   
   .alert-danger {
@@ -158,7 +160,9 @@
   
   .shape {
     position: absolute;
-    background: rgba(100, 255, 218, 0.1);
+    /* Van sobre el fondo de la página, que sí sigue el tema (no sobre la
+       tarjeta, que es oscura siempre): toman el acento de cada tema. */
+    background: rgba(var(--color-primary-rgb), 0.1);
     border-radius: 50%;
     animation: float 6s ease-in-out infinite;
   }

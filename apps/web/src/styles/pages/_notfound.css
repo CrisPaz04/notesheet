@@ -48,7 +48,7 @@
     position: absolute;
     top: 0;
     left: 0;
-    color: rgba(100, 255, 218, 0.1);
+    color: rgba(var(--color-primary-rgb), 0.1);
     animation: glitch 2s infinite;
   }
   
@@ -57,7 +57,7 @@
     position: absolute;
     top: 0;
     left: 0;
-    color: rgba(100, 255, 218, 0.1);
+    color: rgba(var(--color-primary-rgb), 0.1);
     animation: glitch 2s infinite 0.5s;
   }
   
@@ -95,7 +95,7 @@
   .music-note {
     position: absolute;
     font-size: 2rem;
-    color: rgba(100, 255, 218, 0.3);
+    color: rgba(var(--color-primary-rgb), 0.3);
     animation: float-note 6s infinite ease-in-out;
   }
   
@@ -167,7 +167,7 @@
     left: -100%;
     width: 100%;
     height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    background: linear-gradient(90deg, transparent, rgba(var(--overlay-rgb), 0.2), transparent);
     transition: left 0.5s;
   }
   
@@ -177,7 +177,7 @@
   
   .btn-notfound-primary:hover {
     transform: translateY(-3px);
-    box-shadow: 0 10px 25px rgba(100, 255, 218, 0.4);
+    box-shadow: 0 10px 25px rgba(var(--color-primary-rgb), 0.4);
     text-decoration: none;
     color: var(--bg-dark-primary);
   }
@@ -231,7 +231,7 @@
     align-items: center;
     gap: var(--spacing-sm);
     padding: 1rem;
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(var(--overlay-rgb), 0.05);
     border: 1px solid var(--border-light);
     border-radius: var(--radius-lg);
     color: var(--text-light-secondary);
@@ -241,8 +241,8 @@
   }
   
   .suggestion-item:hover {
-    background: rgba(255, 255, 255, 0.1);
-    border-color: rgba(100, 255, 218, 0.3);
+    background: rgba(var(--overlay-rgb), 0.1);
+    border-color: rgba(var(--color-primary-rgb), 0.3);
     color: var(--color-primary);
     text-decoration: none;
     transform: translateY(-2px);
@@ -394,64 +394,64 @@
   }
   
   /* Light theme overrides */
-  [data-bs-theme="light"] .notfound-container {
-    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 50%, #dee2e6 100%);
+  :where([data-bs-theme$="light"]) .notfound-container {
+    background: linear-gradient(135deg, var(--surface-raised) 0%, var(--surface-hover) 50%, var(--border-strong) 100%);
   }
   
-  [data-bs-theme="light"] .notfound-title {
-    color: #212529;
+  :where([data-bs-theme$="light"]) .notfound-title {
+    color: var(--text-light-primary);
     /* La sombra oscura está pensada para el fondo oscuro; sobre el claro y
        con texto ya oscuro, deja un halo sucio alrededor de las letras. */
     text-shadow: none;
   }
   
-  [data-bs-theme="light"] .notfound-description {
-    color: #6c757d;
+  :where([data-bs-theme$="light"]) .notfound-description {
+    color: var(--text-light-muted);
   }
 
   /* Mismo caso que el halo del número: las notas y las copias del glitch iban
      en menta fija, y sobre el fondo claro se veían como manchas verdosas. */
-  [data-bs-theme="light"] .music-note {
-    color: rgba(13, 110, 253, 0.25);
+  :where([data-bs-theme$="light"]) .music-note {
+    color: rgba(var(--color-primary-rgb), 0.25);
   }
 
-  [data-bs-theme="light"] .number-4::before,
-  [data-bs-theme="light"] .number-4-2::before,
-  [data-bs-theme="light"] .number-0::before {
-    color: rgba(13, 110, 253, 0.1);
+  :where([data-bs-theme$="light"]) .number-4::before,
+  :where([data-bs-theme$="light"]) .number-4-2::before,
+  :where([data-bs-theme$="light"]) .number-0::before {
+    color: rgba(var(--color-primary-rgb), 0.1);
   }
   
-  [data-bs-theme="light"] .suggestion-item {
+  :where([data-bs-theme$="light"]) .suggestion-item {
     background: rgba(0, 0, 0, 0.05);
     border-color: rgba(0, 0, 0, 0.1);
-    color: #6c757d;
+    color: var(--text-light-muted);
   }
   
-  [data-bs-theme="light"] .suggestion-item:hover {
+  :where([data-bs-theme$="light"]) .suggestion-item:hover {
     background: rgba(0, 0, 0, 0.1);
-    border-color: rgba(13, 110, 253, 0.3);
-    color: #0d6efd;
+    border-color: rgba(var(--color-primary-rgb), 0.3);
+    color: var(--color-primary);
   }
   
-  [data-bs-theme="light"] .btn-notfound-primary {
-    background: linear-gradient(135deg, #0d6efd 0%, #0b5ed7 100%);
+  :where([data-bs-theme$="light"]) .btn-notfound-primary {
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
     color: white;
   }
   
-  [data-bs-theme="light"] .btn-notfound-primary:hover {
+  :where([data-bs-theme$="light"]) .btn-notfound-primary:hover {
     color: white;
   }
   
   /* El secundario iba en gris y su borde solo se volvía azul al pasar el
      ratón: parecía desactivado al lado del primario. Como es un "outline",
      el borde y el texto van del color de la marca desde el principio. */
-  [data-bs-theme="light"] .btn-notfound-secondary {
-    border-color: #0d6efd;
-    color: #0d6efd;
+  :where([data-bs-theme$="light"]) .btn-notfound-secondary {
+    border-color: var(--color-primary);
+    color: var(--color-primary);
   }
   
-  [data-bs-theme="light"] .btn-notfound-secondary:hover {
-    background: #0d6efd;
-    border-color: #0d6efd;
-    color: #ffffff;
+  :where([data-bs-theme$="light"]) .btn-notfound-secondary:hover {
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+    color: var(--on-primary);
   }

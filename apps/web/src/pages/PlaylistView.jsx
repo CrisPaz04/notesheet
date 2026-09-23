@@ -391,7 +391,7 @@ function PlaylistView() {
                     <hr style={{ 
                       border: 'none', 
                       height: '2px', 
-                      background: 'rgba(255, 255, 255, 0.1)', 
+                      background: 'rgba(var(--overlay-rgb), 0.1)', 
                       margin: '2rem 0' 
                     }} />
                   )}

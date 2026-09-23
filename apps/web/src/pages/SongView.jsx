@@ -762,7 +762,7 @@ function SongView() {
                     <div className="dropdown-item-custom" onClick={resetTransposition}>
                       <strong>Original ({getVisualKeyForInstrument(baseKey, currentInstrument)})</strong>
                     </div>
-                    <hr style={{ margin: '0.5rem 0', border: 'none', height: '1px', background: 'rgba(255,255,255,0.1)' }} />
+                    <hr style={{ margin: '0.5rem 0', border: 'none', height: '1px', background: 'rgba(var(--overlay-rgb), 0.1)' }} />
                     {RELATIVE_KEYS.map((pair, index) => {
                       const majorVisualKey = getVisualKeyForInstrument(pair.major, currentInstrument);
                       const minorVisualKey = getVisualKeyForInstrument(pair.minor, currentInstrument);
@@ -788,7 +788,7 @@ function SongView() {
                             </div>
                           </div>
                           {index < RELATIVE_KEYS.length - 1 && (
-                            <hr style={{ margin: '0.25rem 0', border: 'none', height: '1px', background: 'rgba(255,255,255,0.05)' }} />
+                            <hr style={{ margin: '0.25rem 0', border: 'none', height: '1px', background: 'rgba(var(--overlay-rgb), 0.05)' }} />
                           )}
                         </div>
                       );
@@ -1022,7 +1022,7 @@ function SongView() {
                     ))}
 
                     {(!formattedSong || formattedSong.sections.length === 0) && (
-                      <div className="text-center" style={{ color: 'rgba(255, 255, 255, 0.6)', padding: '3rem' }}>
+                      <div className="text-center" style={{ color: 'rgba(var(--overlay-rgb), 0.6)', padding: '3rem' }}>
                         <i className="bi bi-music-note-list" style={{ fontSize: '3rem', marginBottom: '1rem' }}></i>
                         <p>No hay contenido disponible para esta canción.</p>
                       </div>
@@ -1048,7 +1048,7 @@ function SongView() {
                 ))}
                 
                 {(!formattedLyricsOnly || formattedLyricsOnly.sections.length === 0) && (
-                  <div className="text-center" style={{ color: 'rgba(255, 255, 255, 0.6)', padding: '3rem' }}>
+                  <div className="text-center" style={{ color: 'rgba(var(--overlay-rgb), 0.6)', padding: '3rem' }}>
                     <i className="bi bi-card-text" style={{ fontSize: '3rem', marginBottom: '1rem' }}></i>
                    <p>No hay contenido de letra disponible para esta canción.</p>
                  </div>

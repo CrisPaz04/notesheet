@@ -128,6 +128,27 @@ packages/ui/          # Shared UI components (planned)
 
 **Styling:** Bootstrap 5.3 base + custom CSS organized in modules. CSS variables for light/dark theming.
 
+**Temas.** Hay seis (`light`, `dark`, `rainforest-light/dark`, `newspaper-light/dark`)
+y cada uno define las mismas variables en `base/_variables.css`. **No escribas
+colores a mano** en una regla general: el turquesa del oscuro o el azul de
+Bootstrap acaban saliendo en los seis. Usa las variables:
+- `--color-primary`, `--color-primary-dark` y `rgba(var(--color-primary-rgb), a)`
+  para el acento; `--on-primary` para el texto que va encima.
+- `rgba(var(--overlay-rgb), a)` para fondos y textos translúcidos: es blanco
+  en los temas oscuros y negro en los claros.
+- `--surface-raised` / `--surface-hover` / `--border-strong` para menús y
+  desplegables; `--color-danger` para borrar o salir.
+- `--accent-on-dark` para lo que va sobre las dos tarjetas que son oscuras en
+  todos los temas (el login y la demo de la portada).
+- Una corrección solo para temas claros va con
+  `:where([data-bs-theme$="light"])`, que cubre los tres y no pisa los ajustes
+  propios de `newspaper-light` o `rainforest-light` en `_variables.css`.
+- `base/_bootstrap-theme.css` conecta Bootstrap (`.dropdown-menu`,
+  `.btn-primary`, el foco, interruptores y deslizadores) con el tema.
+- Las miniaturas de Preferencias sí llevan colores fijos: enseñan cada tema
+  aunque esté puesto otro. Si cambias una paleta, cámbiala también allí.
+- Un `var()` no funciona en un atributo SVG (`stroke="..."`): va en `style`.
+
 **Audio:** Web Audio API via `packages/core/src/audio/` for metronome synthesis and pitch detection.
 
 ## Modelo de datos
@@ -244,7 +265,7 @@ SPA (el orden importa).
 ## Notes
 
 - No TypeScript - pure JavaScript
-- Vitest configured; 1365 tests in `apps/web/src/test/` (run with `npm run test:run`)
+- Vitest configured; 1367 tests in `apps/web/src/test/` (run with `npm run test:run`)
 - Los tests se validan con **mutaciones**: se rompe el código a propósito y se comprueba
   que algún test falla. Ha destapado cuatro tests que pasaban por la razón equivocada,
   y un bug de verdad en `scores.js` (las voces se ordenaban como texto, así que la 10
@@ -316,18 +337,6 @@ ahorra volver a buscarlo.
 - **Notación elegida en el perfil y aplicada en toda la app.** Hoy se elige
   suelta en varias vistas. Se habló de tres opciones: latina, anglosajona, o
   dejar elegir en cada vista.
-- **Revisar los seis temas.** Hay `light`, `dark`, `newspaper-light/dark` y
-  `rainforest-light/dark`, pero seis archivos CSS solo traen correcciones bajo
-  `[data-bs-theme="light"]`, y los otros dos temas claros no las heredan:
-  `_navbar.css` (24 reglas), `_notfound.css` (13), `_preferences.css` (11),
-  `_footer.css` (7), `_song-viewer.css` (6) y `_theme-toggle.css` (2); y
-  también `_animations.css` (10: los spinners y el skeleton) y `_helpers.css` (3).
-
-  No basta con copiar los selectores a los otros dos temas claros: esas
-  reglas llevan el azul de Bootstrap a fuego (`#0d6efd`, `#e9ecef`), que en
-  `newspaper-light` (tinta sobre papel) y `rainforest-light` desentonaría.
-  Hay que reescribirlas con las variables del tema (`--color-primary`,
-  `--bg-dark-*`, `--text-light-*`) y mirarlas pantalla por pantalla.
 
 ### Música
 

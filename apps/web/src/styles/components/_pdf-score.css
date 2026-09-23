@@ -31,7 +31,7 @@
 }
 
 .pdf-score-pagecount {
-  color: var(--text-secondary, rgba(255, 255, 255, 0.6));
+  color: var(--text-secondary, rgba(var(--overlay-rgb), 0.6));
   font-size: 0.85rem;
   margin-left: auto;
 }
@@ -76,7 +76,7 @@
 .pdf-score-empty {
   text-align: center;
   padding: 3rem 1rem;
-  color: var(--text-secondary, rgba(255, 255, 255, 0.6));
+  color: var(--text-secondary, rgba(var(--overlay-rgb), 0.6));
 }
 
 .pdf-score-empty i {

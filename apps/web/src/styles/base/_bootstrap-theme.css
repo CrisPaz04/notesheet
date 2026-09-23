@@ -1,0 +1,102 @@
+/* src/styles/base/_bootstrap-theme.css
+ *
+ * Bootstrap trae su azul (#0d6efd) escrito a mano en muchos componentes: el
+ * elemento activo de un .dropdown-menu, el foco de los campos, los
+ * interruptores y checkbox marcados, el pulgar de los deslizadores, el
+ * .btn-primary. Como los temas de la app no son los de Bootstrap, ese azul
+ * salía igual en los seis. Aquí se conectan esos puntos con las variables
+ * del tema (`_variables.css`), para que cada uno tome su propio acento.
+ *
+ * Va después de bootstrap.min.css (se importa antes, en main.jsx) y con la
+ * misma especificidad que las reglas que corrige, así que gana por orden.
+ */
+
+:root,
+[data-bs-theme] {
+  --bs-primary: var(--color-primary);
+  --bs-primary-rgb: var(--color-primary-rgb);
+  --bs-link-color: var(--color-primary);
+  --bs-link-color-rgb: var(--color-primary-rgb);
+  --bs-link-hover-color: var(--color-primary-dark);
+  --bs-focus-ring-color: rgba(var(--color-primary-rgb), 0.25);
+}
+
+/* Menús desplegables de Bootstrap (el selector de instrumento) */
+.dropdown-menu {
+  --bs-dropdown-bg: var(--surface-raised);
+  --bs-dropdown-color: var(--text-light-primary);
+  --bs-dropdown-border-color: var(--border-strong);
+  --bs-dropdown-divider-bg: var(--border-strong);
+  --bs-dropdown-link-color: var(--text-light-primary);
+  --bs-dropdown-link-hover-color: var(--text-light-primary);
+  --bs-dropdown-link-hover-bg: var(--surface-hover);
+  --bs-dropdown-link-active-color: var(--on-primary);
+  --bs-dropdown-link-active-bg: var(--color-primary);
+  --bs-dropdown-header-color: var(--text-light-muted);
+}
+
+.btn-primary {
+  --bs-btn-color: var(--on-primary);
+  --bs-btn-bg: var(--color-primary);
+  --bs-btn-border-color: var(--color-primary);
+  --bs-btn-hover-color: var(--on-primary);
+  --bs-btn-hover-bg: var(--color-primary-dark);
+  --bs-btn-hover-border-color: var(--color-primary-dark);
+  --bs-btn-focus-shadow-rgb: var(--color-primary-rgb);
+  --bs-btn-active-color: var(--on-primary);
+  --bs-btn-active-bg: var(--color-primary-dark);
+  --bs-btn-active-border-color: var(--color-primary-dark);
+  --bs-btn-disabled-color: var(--on-primary);
+  --bs-btn-disabled-bg: var(--color-primary);
+  --bs-btn-disabled-border-color: var(--color-primary);
+}
+
+/* El texto de .bg-primary es blanco fijo; con acentos claros (el menta del
+   oscuro, el amarillo del newspaper-dark) no se leía. */
+.badge.bg-primary {
+  color: var(--on-primary);
+}
+
+.form-control:focus,
+.form-select:focus,
+.form-check-input:focus {
+  border-color: rgba(var(--color-primary-rgb), 0.5);
+  box-shadow: 0 0 0 0.25rem rgba(var(--color-primary-rgb), 0.25);
+}
+
+.form-check-input:checked {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+/* El círculo del interruptor con foco es un SVG azul; sin foco, el gris de
+   Bootstrap sirve para todos los temas. */
+.form-switch .form-check-input:focus:not(:checked) {
+  --bs-form-switch-bg: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='rgba%280, 0, 0, 0.25%29'/%3e%3c/svg%3e");
+}
+
+.form-range::-webkit-slider-thumb {
+  background-color: var(--color-primary);
+}
+
+.form-range::-moz-range-thumb {
+  background-color: var(--color-primary);
+}
+
+/* Cada pseudoelemento en su regla: un navegador descarta la regla entera si
+   no entiende uno de los selectores de la lista. */
+.form-range::-webkit-slider-thumb:active {
+  background-color: var(--color-primary-dark);
+}
+
+.form-range::-moz-range-thumb:active {
+  background-color: var(--color-primary-dark);
+}
+
+.form-range:focus::-webkit-slider-thumb {
+  box-shadow: 0 0 0 1px var(--bg-dark-primary), 0 0 0 0.25rem rgba(var(--color-primary-rgb), 0.25);
+}
+
+.form-range:focus::-moz-range-thumb {
+  box-shadow: 0 0 0 1px var(--bg-dark-primary), 0 0 0 0.25rem rgba(var(--color-primary-rgb), 0.25);
+}

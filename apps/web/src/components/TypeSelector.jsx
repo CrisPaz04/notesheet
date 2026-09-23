@@ -61,7 +61,7 @@ function TypeSelector({ value, onChange, label = "Tipo" }) {
                     <hr style={{ 
                       border: 'none', 
                       height: '1px', 
-                      background: 'rgba(255, 255, 255, 0.1)', 
+                      background: 'rgba(var(--overlay-rgb), 0.1)', 
                       margin: '0.5rem 0' 
                     }} />
                   )}

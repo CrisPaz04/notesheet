@@ -27,13 +27,13 @@
   }
   
   /* Light theme overrides */
-  [data-bs-theme="light"] .theme-toggle {
-    background: linear-gradient(135deg, #0d6efd 0%, #0b5ed7 100%);
+  :where([data-bs-theme$="light"]) .theme-toggle {
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
     color: white;
   }
   
-  [data-bs-theme="light"] .theme-toggle:hover {
-    box-shadow: 0 12px 35px rgba(13, 110, 253, 0.3);
+  :where([data-bs-theme$="light"]) .theme-toggle:hover {
+    box-shadow: 0 12px 35px rgba(var(--color-primary-rgb), 0.3);
   }
   
   /* Responsive Design */

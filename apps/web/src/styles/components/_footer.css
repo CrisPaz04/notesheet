@@ -3,7 +3,7 @@
 /* Footer Styles - Dark Theme */
 .footer-dark-custom {
     background: linear-gradient(135deg, var(--bg-dark-secondary) 0%, var(--bg-dark-tertiary) 100%);
-    border-top: 1px solid rgba(100, 255, 218, 0.1);
+    border-top: 1px solid rgba(var(--color-primary-rgb), 0.1);
     padding: 2rem 0 1rem 0;
     margin-top: auto;
   }
@@ -82,34 +82,34 @@
   }
   
   /* Light theme overrides */
-  [data-bs-theme="light"] .footer-dark-custom {
-    background: linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%);
+  :where([data-bs-theme$="light"]) .footer-dark-custom {
+    background: linear-gradient(135deg, var(--surface-hover) 0%, var(--border-strong) 100%);
     border-top-color: rgba(0, 0, 0, 0.1);
   }
   
-  [data-bs-theme="light"] .footer-brand-name {
-    background: linear-gradient(135deg, #0d6efd 0%, #0b5ed7 100%);
+  :where([data-bs-theme$="light"]) .footer-brand-name {
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
   
-  [data-bs-theme="light"] .footer-brand-icon {
-    color: #0d6efd;
+  :where([data-bs-theme$="light"]) .footer-brand-icon {
+    color: var(--color-primary);
   }
   
-  [data-bs-theme="light"] .footer-text {
-    color: #6c757d;
+  :where([data-bs-theme$="light"]) .footer-text {
+    color: var(--text-light-muted);
   }
   
-  [data-bs-theme="light"] .footer-link {
-    color: #495057;
+  :where([data-bs-theme$="light"]) .footer-link {
+    color: var(--text-light-secondary);
   }
   
-  [data-bs-theme="light"] .footer-link:hover {
-    color: #0d6efd;
+  :where([data-bs-theme$="light"]) .footer-link:hover {
+    color: var(--color-primary);
   }
   
-  [data-bs-theme="light"] .footer-divider {
+  :where([data-bs-theme$="light"]) .footer-divider {
     background: rgba(0, 0, 0, 0.1);
   }

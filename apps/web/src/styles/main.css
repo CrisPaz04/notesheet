@@ -2,6 +2,7 @@
 
 /* Base Styles */
 @import './base/_variables.css';
+@import './base/_bootstrap-theme.css';
 @import './base/_reset.css';
 @import './base/_typography.css';
 

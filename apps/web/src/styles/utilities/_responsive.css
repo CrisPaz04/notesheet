@@ -53,7 +53,7 @@
   
     /* Navbar responsive */
     .navbar-nav-custom {
-      background: rgba(26, 26, 46, 0.95);
+      background: var(--bg-dark-primary);
       backdrop-filter: blur(10px);
       border-radius: var(--radius-lg);
       padding: var(--spacing-md);
@@ -64,7 +64,7 @@
     .user-indicator {
       justify-content: center;
       margin: var(--spacing-sm) 0;
-      background: rgba(26, 26, 46, 0.95);
+      background: var(--bg-dark-primary);
       backdrop-filter: blur(10px);
     }
     
