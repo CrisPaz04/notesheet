@@ -590,3 +590,20 @@ describe('SongView: acordes', () => {
   });
 });
 
+
+describe('SongView: la voz que le toca', () => {
+  it('la trompeta 2 (elegida en la lista o en vivo) abre la segunda voz', async () => {
+    localStorage.setItem('numeroDeVoz', '2');
+    await renderSongView();
+    expect(screen.getAllByText(/Segunda voz/).length).toBeGreaterThan(0);
+    expect(screen.queryAllByText(/Cristo vive hoy/)).toHaveLength(0);
+    localStorage.removeItem('numeroDeVoz');
+  });
+
+  it('la trompeta 4 abre la más alta que hay, la 2', async () => {
+    localStorage.setItem('numeroDeVoz', '4');
+    await renderSongView();
+    expect(screen.getAllByText(/Segunda voz/).length).toBeGreaterThan(0);
+    localStorage.removeItem('numeroDeVoz');
+  });
+});

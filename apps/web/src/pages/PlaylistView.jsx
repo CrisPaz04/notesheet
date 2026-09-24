@@ -10,6 +10,8 @@ import {
   formatLyrics,
   elegirVista,
   vistaPreferida,
+  resolveVoiceForMusician,
+  NUMEROS_DE_VOZ,
   isPdfSong,
   nombrarTonalidad,
   resolveScore,
@@ -20,6 +22,8 @@ import StartLiveButton from "../components/live/StartLiveButton";
 import PdfEnLista from "../components/PdfEnLista";
 import AlineacionTexto from "../components/AlineacionTexto";
 import SelectorVista from "../components/SelectorVista";
+import Desplegable from "../components/Desplegable";
+import useNumeroDeVoz from "../hooks/useNumeroDeVoz";
 import { SeccionesCancion, AvisoVista } from "../components/SeccionesCancion";
 import useAlineacionTexto from "../hooks/useAlineacionTexto";
 import HerramientasFlotantes from "../components/herramientas/HerramientasFlotantes";
@@ -41,6 +45,10 @@ function PlaylistView() {
   // guitarra en los acordes...); una canción que no tenga la elegida enseña
   // sus notas con un aviso (`elegirVista`).
   const [vista, setVista] = useState("principal");
+
+  // Qué número es en su sección ("soy la trompeta 2"): cada canción se abre
+  // en la voz que le toca según las que tenga (`vozParaMusico`, en core).
+  const [numeroVoz, setNumeroVoz] = useNumeroDeVoz();
 
   // Con qué voz se abre cada partitura: la del instrumento del músico, como
   // en la vista de la canción. Sin preferencias, la voz principal.
@@ -159,14 +167,15 @@ function PlaylistView() {
       };
     }
 
-    const { formatted, lyricsOnly, displayKey } = renderSongContent(song.content, opciones);
+    const { content } = resolveVoiceForMusician(song, { instrument: instrumento, voiceNumber: numeroVoz });
+    const { formatted, lyricsOnly, displayKey } = renderSongContent(content, opciones);
     return {
       ...song,
       formattedContent: formatted,
       displayKey,
       vistas: { letra: lyricsOnly, acordes: renderChordChart(song.acordes, opciones) }
     };
-  }), [songs, notacion, instrumento]);
+  }), [songs, notacion, instrumento, numeroVoz]);
 
   // Qué se enseña de cada una: lo elegido o, si no lo tiene, la principal
   const cancionesConVista = useMemo(() => cancionesVista.map((song) => ({
@@ -349,6 +358,17 @@ function PlaylistView() {
               <AlineacionTexto alineacion={alineacion} onCambiar={setAlineacion} />
 
               <SelectorVista vista={vista} onCambiar={setVista} />
+
+              <div className="mi-voz">
+                <label htmlFor="lista-mi-voz">Mi voz</label>
+                <Desplegable
+                  id="lista-mi-voz"
+                  className="desplegable--compacto"
+                  value={numeroVoz}
+                  onChange={setNumeroVoz}
+                  opciones={NUMEROS_DE_VOZ.map((n) => ({ value: n, label: `${n}ª` }))}
+                />
+              </div>
               
               {/* Botones de acción */}
               <div className="action-buttons-song">
@@ -479,7 +499,7 @@ function PlaylistView() {
                     <div className="song-content-section">
                       {preferenciasListas && (
                         <PdfEnLista
-                          path={resolveScore(song, preferenciasPdf).path}
+                          path={resolveScore(song, { ...preferenciasPdf, voiceNumber: numeroVoz }).path}
                           title={song.title}
                         />
                       )}

@@ -663,10 +663,10 @@ describe('lo mío', () => {
     expect(localStorage.getItem('live:notacion')).toBe('latin');
   });
 
-  it('anuncia a los demás qué instrumento toco', async () => {
+  it('anuncia a los demás qué instrumento toco y qué voz', async () => {
     render(<LiveSession />);
     await waitFor(() =>
-      expect(acciones.anunciarInstrumento).toHaveBeenCalledWith('bb_trumpet', null)
+      expect(acciones.anunciarInstrumento).toHaveBeenCalledWith('bb_trumpet', '1')
     );
   });
 });
@@ -752,3 +752,63 @@ describe('qué se ve de cada canción', () => {
     expect(screen.queryByText('Acordes de Cristo Vive')).toBeNull();
   });
 });
+
+// Cada músico dice qué número es en su sección; cada canción le da la voz
+// que le toca (la regla vive en core: `vozParaMusico`).
+describe('mi voz en la sección', () => {
+  it('se elige junto al instrumento, se anuncia y llega al contenido', async () => {
+    render(<LiveSession />);
+    await elegirEnDesplegable(userEvent, screen.getByLabelText('Mi voz'), '3');
+
+    expect(argsLista.voiceNumber).toBe('3');
+    await waitFor(() =>
+      expect(acciones.anunciarInstrumento).toHaveBeenLastCalledWith('bb_trumpet', '3')
+    );
+  });
+
+  it('se recuerda en el dispositivo', async () => {
+    localStorage.setItem('numeroDeVoz', '2');
+    render(<LiveSession />);
+    expect(valorDe(screen.getByLabelText('Mi voz'))).toBe('2');
+    expect(argsLista.voiceNumber).toBe('2');
+  });
+
+  it('cambiarla suelta las voces elegidas a mano', async () => {
+    const VOCES = [
+      { id: 'bb_trumpet-1', label: 'Trompeta 1' },
+      { id: 'bb_trumpet-2', label: 'Trompeta 2' }
+    ];
+    estadoLista = listaCargada({
+      canciones: SONGS.map((s) => cancion(s, { voices: VOCES, voiceKey: 'bb_trumpet-1' }))
+    });
+    render(<LiveSession />);
+
+    await elegirEnDesplegable(userEvent, screen.getByLabelText(/Voz para Cristo Vive/), 'bb_trumpet-2');
+    expect(argsLista.voiceKeys).toEqual({ s1: 'bb_trumpet-2' });
+
+    await elegirEnDesplegable(userEvent, screen.getByLabelText('Mi voz'), '2');
+    expect(argsLista.voiceKeys).toEqual({});
+  });
+
+  it('avisa si otro de mi instrumento dice tener mi número', () => {
+    estadoSesion = sesionEnVivo({
+      participants: [
+        { uid: 'u1', name: 'Cristhian', isOnline: true, instrumentId: 'bb_trumpet', voiceNumber: '1' },
+        { uid: 'u2', name: 'Ana', isOnline: true, instrumentId: 'bb_trumpet', voiceNumber: '1' },
+        { uid: 'u3', name: 'Luis', isOnline: true, instrumentId: 'bb_trumpet', voiceNumber: '2' },
+        { uid: 'u4', name: 'Eva', isOnline: false, instrumentId: 'bb_trumpet', voiceNumber: '1' }
+      ]
+    });
+    render(<LiveSession />);
+    const aviso = screen.getByText(/también es Trompeta en Sib 1/);
+    expect(aviso).toHaveTextContent('Ana');
+    expect(aviso).not.toHaveTextContent('Luis');
+    expect(aviso).not.toHaveTextContent('Eva');
+  });
+
+  it('sin choque, no avisa', () => {
+    render(<LiveSession />);
+    expect(screen.queryByText(/Revisen quién toca cada voz/)).toBeNull();
+  });
+});
+

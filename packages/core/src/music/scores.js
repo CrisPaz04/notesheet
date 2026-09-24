@@ -22,6 +22,8 @@
 // Aqui no se toca Firebase ni React: solo se decide que archivo toca. Asi se
 // puede probar de verdad.
 
+import { vozParaMusico } from './voces';
+
 /**
  * Variantes de una misma voz, en el orden en que se ofrecen.
  * `partitura` es la normal; `conNotas` lleva los nombres encima.
@@ -131,6 +133,8 @@ export const buildScoreVoicesList = (pdfs, instrumentCatalog = {}) => {
  *
  * El orden de preferencia para la voz:
  *   1. La que ya estaba seleccionada, si sigue existiendo.
+ *   1b. Si el musico dijo que numero es en la seccion (`voiceNumber`), la que
+ *      le toca por ese numero (`vozParaMusico`, en voces.js).
  *   2. La del instrumento del musico (`instrument`). En una cancion de texto
  *      esa preferencia sirve para transponer; en un PDF no hay nada que
  *      transponer, asi que lo que hace es elegir el archivo. Es justo lo que
@@ -146,13 +150,15 @@ export const buildScoreVoicesList = (pdfs, instrumentCatalog = {}) => {
  * @param {string|null} [options.voiceKey] - Voz ya seleccionada ("bb_trumpet-1")
  * @param {string} [options.variant] - Variante preferida del musico
  * @param {string|null} [options.instrument] - Instrumento preferido del musico
+ * @param {string|null} [options.voiceNumber] - Que numero es en la seccion ("2")
  * @returns {{path: string|null, voiceKey: string|null, variant: string|null,
  *            requestedVariant: string, variantFallback: boolean}}
  */
 export const resolveScore = (song, {
   voiceKey = null,
   variant = DEFAULT_SCORE_VARIANT,
-  instrument = null
+  instrument = null,
+  voiceNumber = null
 } = {}) => {
   const requestedVariant = SCORE_VARIANTS.includes(variant)
     ? variant
@@ -176,6 +182,15 @@ export const resolveScore = (song, {
 
   // 1. La voz que ya estaba seleccionada
   let elegida = voiceKey ? buscar(voiceKey) : null;
+
+  // 1b. La que le toca por su numero en la seccion
+  if (!elegida) {
+    elegida = vozParaMusico(disponibles, {
+      instrument,
+      voiceNumber,
+      primaryInstrument: song.primaryInstrument
+    });
+  }
 
   // 2. El instrumento del musico: su voz principal si la cancion la declara
   //    para ese instrumento, y si no la primera que tenga

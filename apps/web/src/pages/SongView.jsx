@@ -19,7 +19,7 @@ import {
   formatLyrics,
   buildVoicesList,
   parseVoiceKey,
-  resolveInitialVoice,
+  resolveVoiceForMusician,
   isPdfSong,
   readsChordChart,
   vistaPreferida,
@@ -42,6 +42,7 @@ import { recordarNotacionEnDispositivo } from "../hooks/useNotacionPreferida";
 import PdfScoreViewer from "../components/PdfScoreViewer";
 import AlineacionTexto from "../components/AlineacionTexto";
 import useAlineacionTexto from "../hooks/useAlineacionTexto";
+import useNumeroDeVoz from "../hooks/useNumeroDeVoz";
 import DatosGrabacion from "../components/datos/DatosGrabacion";
 
 // Trastes donde se pone la cejilla. Más allá del VII ya no queda mástil para
@@ -159,6 +160,9 @@ function SongView() {
     resetFontSize
   } = useFontSizePreference(currentUser);
   const [alineacion, setAlineacion] = useAlineacionTexto();
+  // Qué número es en su sección (se elige en la lista o en la sesión en
+  // vivo): la canción abre en la voz que le toca
+  const [numeroVoz] = useNumeroDeVoz();
 
   const {
     activeView,
@@ -266,7 +270,8 @@ function SongView() {
           const elegida = resolveScore(loadedSong, {
             voiceKey: selectedVoiceKey,
             variant,
-            instrument
+            instrument,
+            voiceNumber: numeroVoz
           });
 
           setScoreVoicesList(lista);
@@ -290,7 +295,11 @@ function SongView() {
           setScoreVoicesList([]);
           setAvailableVoicesList(buildVoicesList(loadedSong.voices, TRANSPOSING_INSTRUMENTS));
 
-          const { content, voiceKey } = resolveInitialVoice(loadedSong, selectedVoiceKey);
+          const { content, voiceKey } = resolveVoiceForMusician(loadedSong, {
+            voiceKey: selectedVoiceKey,
+            instrument,
+            voiceNumber: numeroVoz
+          });
           setSelectedVoiceKey(voiceKey);
           setOriginalContent(content);
 

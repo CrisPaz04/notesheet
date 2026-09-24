@@ -17,6 +17,7 @@ import {
   getVisualKeyForInstrument
 } from './transposition-helper';
 import { splitChordSegment } from './chords';
+import { vozParaMusico } from './voces';
 
 // Las voces se escriben siempre en la tonalidad de trompeta en Sib; el resto
 // de instrumentos se obtiene transponiendo desde esa referencia.
@@ -314,4 +315,49 @@ export const resolveInitialVoice = (song, preferredVoiceKey = null) => {
   }
 
   return { content: song?.content || '', voiceKey: null };
+};
+
+/**
+ * La voz de una canción de texto que lee un músico, con su contenido.
+ *
+ * En este orden:
+ *   1. La que eligió a mano para esta canción (`voiceKey`), si existe.
+ *   2. La que le toca por su número en la sección (`voiceNumber`, ver
+ *      `vozParaMusico`): la trompeta 3 en una canción a dos voces lee la 2.
+ *   3. La primera escrita para su instrumento: un saxo alto no quiere leer el
+ *      papel de trompeta transpuesto si tiene el suyo.
+ *   4. La principal de la canción (`resolveInitialVoice`).
+ *
+ * @param {Object} song - Canción cargada
+ * @param {Object} musico
+ * @param {string|null} [musico.voiceKey]
+ * @param {string|null} [musico.instrument]
+ * @param {string|null} [musico.voiceNumber]
+ * @returns {{content: string, voiceKey: string|null}}
+ */
+export const resolveVoiceForMusician = (song, { voiceKey = null, instrument = null, voiceNumber = null } = {}) => {
+  const contenidoDe = (clave) => {
+    const parsed = parseVoiceKey(clave);
+    return parsed ? song?.voices?.[parsed.instrumentId]?.[parsed.voiceNumber] : undefined;
+  };
+
+  if (voiceKey && contenidoDe(voiceKey)) return { content: contenidoDe(voiceKey), voiceKey };
+
+  const voces = buildVoicesList(song?.voices);
+
+  const porNumero = vozParaMusico(voces, {
+    instrument,
+    voiceNumber,
+    primaryInstrument: song?.primaryInstrument
+  });
+  if (porNumero && contenidoDe(porNumero.id)) {
+    return { content: contenidoDe(porNumero.id), voiceKey: porNumero.id };
+  }
+
+  const delInstrumento = voces.find((v) => v.instrumentId === instrument);
+  if (delInstrumento && contenidoDe(delInstrumento.id)) {
+    return { content: contenidoDe(delInstrumento.id), voiceKey: delInstrumento.id };
+  }
+
+  return resolveInitialVoice(song, null);
 };

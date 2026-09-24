@@ -14,7 +14,13 @@
 // `usePreferenciaLocal` es de este dispositivo y no viaja a ningún sitio.
 import { useEffect, useMemo, useState, useRef, useCallback } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { TRANSPOSING_INSTRUMENTS, INSTRUMENT_GROUPS, SOURCE_INSTRUMENT, vistaPreferida } from "@notesheet/core";
+import {
+  TRANSPOSING_INSTRUMENTS,
+  INSTRUMENT_GROUPS,
+  SOURCE_INSTRUMENT,
+  NUMEROS_DE_VOZ,
+  vistaPreferida
+} from "@notesheet/core";
 import { getUserPreferences } from "@notesheet/api";
 import { useAuth } from "../context/AuthContext";
 import useLiveSession from "../hooks/useLiveSession";
@@ -27,6 +33,7 @@ import useLiveSetlistContent from "../hooks/useLiveSetlistContent";
 import usePreferenciaLocal from "../hooks/usePreferenciaLocal";
 import useNotacionPreferida from "../hooks/useNotacionPreferida";
 import useFontSizePreference from "../hooks/useFontSizePreference";
+import useNumeroDeVoz from "../hooks/useNumeroDeVoz";
 import LoadingSpinner from "../components/LoadingSpinner";
 import LiveBar from "../components/live/LiveBar";
 import LiveSetlist from "../components/live/LiveSetlist";
@@ -79,6 +86,10 @@ function LiveSession() {
   const [verAjustes, setVerAjustes] = usePreferenciaLocal("live:ajustes", "si", SEGUIR);
 
   const [voiceKeys, setVoiceKeys] = useState({});
+
+  // Qué número es en su sección hoy ("soy la trompeta 2"). Lo elige cada uno;
+  // cada canción le da la voz que le toca según las que tenga.
+  const [numeroVoz, setNumeroVoz] = useNumeroDeVoz();
   const [verIndice, setVerIndice] = useState(false);
 
   const { fontSize, setFontSize, increaseFontSize, decreaseFontSize } =
@@ -113,7 +124,8 @@ function LiveSession() {
     songs: puedeLeer ? songs : SIN_CANCIONES,
     instrument: instrumento,
     notationSystem: notacion,
-    voiceKeys
+    voiceKeys,
+    voiceNumber: numeroVoz
   });
 
   const propiaPorId = useMemo(
@@ -308,8 +320,8 @@ function LiveSession() {
   // Que el resto vea qué toco.
   useEffect(() => {
     if (estado !== "live") return;
-    anunciarInstrumento(instrumento, null);
-  }, [estado, instrumento, anunciarInstrumento]);
+    anunciarInstrumento(instrumento, numeroVoz);
+  }, [estado, instrumento, numeroVoz, anunciarInstrumento]);
 
   const cambiarInstrumento = (id) => {
     setInstrumento(id);
@@ -317,6 +329,21 @@ function LiveSession() {
     // deja que cada canción elija la del instrumento nuevo si la tiene.
     setVoiceKeys({});
   };
+
+  const cambiarNumeroVoz = (numero) => {
+    setNumeroVoz(numero);
+    // Igual que al cambiar de instrumento: las elegidas a mano eran para el
+    // número anterior
+    setVoiceKeys({});
+  };
+
+  // Otro de mi instrumento con mi mismo número: uno de los dos se equivocó
+  const mismaVoz = participants.filter((p) =>
+    p.uid !== currentUser?.uid
+    && p.isOnline
+    && p.instrumentId === instrumento
+    && String(p.voiceNumber) === numeroVoz
+  );
 
   const elegirVoz = (songId, voiceKey) =>
     setVoiceKeys((prev) => ({ ...prev, [songId]: voiceKey }));
@@ -410,6 +437,14 @@ function LiveSession() {
         </div>
       )}
 
+      {mismaVoz.length > 0 && (
+        <div className="live-warning no-print" role="status">
+          <i className="bi bi-people me-2" />
+          {mismaVoz.map((p) => p.name).join(", ")} también {mismaVoz.length === 1 ? "es" : "son"}{" "}
+          {TRANSPOSING_INSTRUMENTS[instrumento]?.name} {numeroVoz}. Revisen quién toca cada voz.
+        </div>
+      )}
+
       {/* Controles propios: nada de esto viaja a los demás */}
       <button
         type="button"
@@ -420,7 +455,7 @@ function LiveSession() {
         <i className={`bi bi-chevron-${verAjustes === "si" ? "up" : "down"} me-2`} />
         Mis ajustes
         <span className="live-ajustes-resumen">
-          {TRANSPOSING_INSTRUMENTS[instrumento]?.name}
+          {TRANSPOSING_INSTRUMENTS[instrumento]?.name} {numeroVoz}
           {notacion === "latin" ? " · DO-RE-MI" : " · C-D-E"}
         </span>
       </button>
@@ -439,6 +474,17 @@ function LiveSession() {
               label: grupo.name,
               opciones: grupo.instruments.map((id) => ({ value: id, label: TRANSPOSING_INSTRUMENTS[id].name }))
             }))}
+          />
+        </div>
+
+        <div className="live-control-group">
+          <label className="live-control-label" htmlFor="live-voz">Mi voz</label>
+          <Desplegable
+            id="live-voz"
+            className="desplegable--live"
+            value={numeroVoz}
+            onChange={cambiarNumeroVoz}
+            opciones={NUMEROS_DE_VOZ.map((n) => ({ value: n, label: `${n}ª` }))}
           />
         </div>
 

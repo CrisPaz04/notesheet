@@ -5,8 +5,7 @@ import {
   renderChordChart,
   formatLyrics,
   buildVoicesList,
-  resolveInitialVoice,
-  parseVoiceKey,
+  resolveVoiceForMusician,
   TRANSPOSING_INSTRUMENTS,
   isPdfSong,
   resolveScore,
@@ -34,12 +33,14 @@ import {
  * @param {string} options.instrument - Instrumento del músico
  * @param {string} options.notationSystem - 'latin' o 'english'
  * @param {Object} options.voiceKeys - Voz elegida a mano por canción
+ * @param {string|null} [options.voiceNumber] - Qué número es en su sección
  */
 export default function useLiveSetlistContent({
   songs = [],
   instrument,
   notationSystem = "latin",
-  voiceKeys = {}
+  voiceKeys = {},
+  voiceNumber = null
 } = {}) {
   const [cargadas, setCargadas] = useState({});
   const [errores, setErrores] = useState({});
@@ -126,7 +127,7 @@ export default function useLiveSetlistContent({
     // transponer. Lo que hace el instrumento es elegir el archivo, como en la
     // vista de la canción, y la voz elegida a mano manda sobre él.
     if (isPdfSong(doc)) {
-      const score = resolveScore(doc, { voiceKey: voiceKeys[entrada.id] || null, instrument });
+      const score = resolveScore(doc, { voiceKey: voiceKeys[entrada.id] || null, instrument, voiceNumber });
       return {
         ...entrada,
         cargada: doc,
@@ -150,20 +151,14 @@ export default function useLiveSetlistContent({
 
     const voices = buildVoicesList(doc.voices, TRANSPOSING_INSTRUMENTS);
 
-    // Se prefiere la voz que eligió a mano para esta canción; si no hay, la
-    // escrita para su instrumento; si tampoco, la principal. Un saxo alto no
-    // quiere leer el papel de trompeta transpuesto si tiene el suyo.
-    const elegida = voiceKeys[entrada.id];
-    let voiceKey = null;
-
-    if (elegida && parseVoiceKey(elegida)) {
-      voiceKey = elegida;
-    } else {
-      const delInstrumento = voices.find((v) => v.instrumentId === instrument);
-      voiceKey = delInstrumento ? delInstrumento.id : resolveInitialVoice(doc, null).voiceKey;
-    }
-
-    const { content } = resolveInitialVoice(doc, voiceKey);
+    // La que eligió a mano para esta canción; si no, la que le toca por su
+    // número en la sección (la trompeta 3 en una canción a dos voces lee la
+    // 2); si no, la de su instrumento; si no, la principal.
+    const { content, voiceKey } = resolveVoiceForMusician(doc, {
+      voiceKey: voiceKeys[entrada.id] || null,
+      instrument,
+      voiceNumber
+    });
 
     // El pipeline en su orden: tonalidad, instrumento, notación. `baseKey` es
     // la de la canción del repertorio y `targetKey` la que decidió la sesión.
@@ -182,7 +177,7 @@ export default function useLiveSetlistContent({
     };
 
     return { ...entrada, cargada: doc, rendered, vistas, voices, voiceKey, error: null };
-  }), [songs, cargadas, errores, instrument, notationSystem, voiceKeys]);
+  }), [songs, cargadas, errores, instrument, notationSystem, voiceKeys, voiceNumber]);
 
   return { canciones: preparadas, loading };
 }

@@ -255,3 +255,41 @@ describe('PlaylistView: qué se ve de cada canción', () => {
     expect(contenidoDeCancion(0)).toBe('LA MI FA#m RE');
   });
 });
+
+describe('PlaylistView: la voz de cada músico', () => {
+  const A_DOS_VOCES = {
+    ...CANCIONES.s1,
+    primaryInstrument: 'bb_trumpet',
+    primaryVoiceNumber: '1',
+    voices: {
+      bb_trumpet: {
+        1: '## Verso\nDO SOL\nPrimera voz',
+        2: '## Verso\nMI SI\nSegunda voz'
+      }
+    }
+  };
+
+  beforeEach(() => {
+    mockGetSongById.mockImplementation(async (id) => (id === 's1' ? A_DOS_VOCES : CANCIONES[id]));
+  });
+
+  it('la trompeta 1 lee la primera voz', async () => {
+    await renderLista();
+    expect(contenidoDeCancion(0)).toMatch(/Primera voz/);
+  });
+
+  it('la trompeta 3 lee la segunda, la más alta que tiene la canción', async () => {
+    localStorage.setItem('numeroDeVoz', '3');
+    await renderLista();
+    expect(contenidoDeCancion(0)).toMatch(/Segunda voz/);
+  });
+
+  it('se cambia desde "Mi voz" y se recuerda', async () => {
+    await renderLista();
+    fireEvent.click(screen.getByRole('combobox', { name: 'Mi voz' }));
+    fireEvent.mouseDown(screen.getByRole('option', { name: '2ª' }));
+
+    await waitFor(() => expect(contenidoDeCancion(0)).toMatch(/Segunda voz/));
+    expect(localStorage.getItem('numeroDeVoz')).toBe('2');
+  });
+});

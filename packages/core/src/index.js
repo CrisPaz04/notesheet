@@ -11,6 +11,7 @@ export * from './music/stringTunings';
 export * from './music/songRendering';
 export * from './music/setlist';
 export * from './music/scores';
+export * from './music/voces';
 export * from './music/keySuggestion';
 export * from './music/versiones';
 export * from './music/datosCancion';

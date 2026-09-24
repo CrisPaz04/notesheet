@@ -547,3 +547,12 @@
   text-align: center;
   color: var(--text-light-secondary);
 }
+
+/* "Mi voz" en la barra de la lista */
+.mi-voz {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-light-secondary);
+  font-size: 0.9rem;
+}

@@ -230,6 +230,18 @@ en Storage, nunca la URL de descarga).
   `AvisoVista`). La lista pinta ya **en el instrumento del músico**, como la canción y
   la sesión (antes las notas iban siempre en la referencia de Sib y la etiqueta de
   tonalidad no casaba con los acordes en concierto).
+- **Qué voz lee cada músico.** Cada uno dice qué número es en su sección ("soy la
+  trompeta 2") en "Mi voz", en la sesión en vivo y en la lista; se guarda en el
+  dispositivo (`useNumeroDeVoz`, clave `numeroDeVoz`) porque cambia de un servicio a
+  otro, y la canción suelta lo usa igual. Cada canción se ajusta a las voces que tiene
+  (`numeroDeVozAsignado` / `vozParaMusico`, `packages/core/src/music/voces.js`): si tu
+  número no está, la más alta por debajo (tres trompetas y dos voces: 1, 2, 2; cuatro y
+  tres: 1, 2, 3, 3). Si tu instrumento no tiene voces escritas, el número se aplica a
+  las del instrumento principal, que se te transponen. La voz elegida a mano en una
+  canción manda sobre el número. Vale igual para los PDF (`resolveScore`, opción
+  `voiceNumber`) y para el texto (`resolveVoiceForMusician`). En vivo el número viaja a
+  la presencia (`voiceNumber` del participante) y se avisa si otro de tu instrumento
+  dice tener el tuyo.
 - `getAllSongs(userId)` devuelve las propias **más** las públicas de otros, y marca cada
   una con `isOwn`. Son dos consultas porque Firestore no hace OR entre campos distintos.
 - La interfaz solo debe ofrecer editar o borrar cuando `isOwn`; las reglas lo imponen
@@ -389,7 +401,7 @@ SPA (el orden importa).
 ## Notes
 
 - No TypeScript - pure JavaScript
-- Vitest configured; 1665 tests in `apps/web/src/test/` (run with `npm run test:run`)
+- Vitest configured; 1696 tests in `apps/web/src/test/` (run with `npm run test:run`)
 - Los tests se validan con **mutaciones**: se rompe el código a propósito y se comprueba
   que algún test falla. Ha destapado cuatro tests que pasaban por la razón equivocada,
   y un bug de verdad en `scores.js` (las voces se ordenaban como texto, así que la 10

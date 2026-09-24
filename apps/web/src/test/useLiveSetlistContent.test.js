@@ -292,3 +292,24 @@ describe('letra y acordes de cada canción', () => {
     expect(textoDe(result.current.canciones[1].vistas.acordes)).toBe('SOL RE');
   });
 });
+
+describe('la voz que le toca por su número', () => {
+  it('la trompeta 3, en una canción a dos voces, lee la 2', async () => {
+    const { result } = montar({ voiceNumber: '3' });
+    await waitFor(() => expect(result.current.canciones[0].rendered).toBeTruthy());
+    expect(result.current.canciones[0].voiceKey).toBe('bb_trumpet-2');
+    expect(texto(result.current.canciones[0])).toMatch(/Voz de trompeta 2/);
+  });
+
+  it('elegida a mano manda sobre el número', async () => {
+    const { result } = montar({ voiceNumber: '2', voiceKeys: { s1: 'bb_trumpet-1' } });
+    await waitFor(() => expect(result.current.canciones[0].rendered).toBeTruthy());
+    expect(texto(result.current.canciones[0])).toMatch(/Voz de trompeta 1/);
+  });
+
+  it('el saxo alto 2 lee su única voz, la 1', async () => {
+    const { result } = montar({ instrument: 'eb_alto_sax', voiceNumber: '2' });
+    await waitFor(() => expect(result.current.canciones[0].rendered).toBeTruthy());
+    expect(texto(result.current.canciones[0])).toMatch(/Voz de saxo alto/);
+  });
+});
