@@ -41,7 +41,9 @@ publicado y no lo privado. Ese fallo no lo ve el dueño de la canción.
   canvas a tamaño completo; un popurrí largo pintado entero tumba la tablet más
   barata de la sección. En una lista el PDF se despliega en la voz del músico,
   pero `PdfEnLista` solo monta el visor mientras la canción está cerca de la
-  pantalla, y al alejarse lo desmonta dejando reservado su alto. En la sesión en
+  pantalla, y al alejarse lo desmonta dejando reservado su alto y guardando el
+  zoom (si no, volvía al 100%). La lista espera a las preferencias para elegir
+  la voz: si no, bajaba la principal y luego otra vez la del instrumento. En la sesión en
   vivo igual: `useLiveSetlistContent` no pasa un PDF por el pipeline de texto
   (saldrían los títulos de sección vacíos), elige el archivo con `resolveScore`
   por la voz elegida o el instrumento, y la tarjeta enseña la tonalidad como
@@ -170,7 +172,10 @@ Bootstrap acaban saliendo en los seis. Usa las variables:
 - **No uses `<select>` nativo**: su lista abierta la pinta el sistema y en Windows
   marca la opción en azul en todos los temas. Usa `components/Desplegable.jsx`
   (combobox ARIA, teclado, grupos como `<optgroup>`, se abre hacia arriba si no
-  cabe). Variantes de tamaño: `desplegable--compacto`, `--pildora`, `--live`,
+  cabe). La lista abierta va en un **portal en `body`** con posición fija: dentro
+  de un contenedor con scroll (el panel del metrónomo) quedaba recortada, y un
+  `position: fixed` sin portal lo descoloca cualquier antepasado con `transform`
+  (las animaciones de entrada del Dashboard). Variantes de tamaño: `desplegable--compacto`, `--pildora`, `--live`,
   `--ancho`. En los tests, `test/utils/desplegable.js` (`elegirEnDesplegable`,
   `valorDe`, `opcionesDe`) sustituye a `selectOptions` / `toHaveValue`.
 - Los deslizadores (`.form-range`) pintan la barra con el tema en
@@ -347,7 +352,7 @@ SPA (el orden importa).
 ## Notes
 
 - No TypeScript - pure JavaScript
-- Vitest configured; 1610 tests in `apps/web/src/test/` (run with `npm run test:run`)
+- Vitest configured; 1620 tests in `apps/web/src/test/` (run with `npm run test:run`)
 - Los tests se validan con **mutaciones**: se rompe el código a propósito y se comprueba
   que algún test falla. Ha destapado cuatro tests que pasaban por la razón equivocada,
   y un bug de verdad en `scores.js` (las voces se ordenaban como texto, así que la 10
@@ -415,6 +420,8 @@ SPA (el orden importa).
   valores iniciales con `useState`. Antes arrancaban siempre con los valores por
   defecto (120 BPM; 440 Hz y trompeta) y los guardaban encima de los del usuario.
   Si añades otra herramienta con preferencias, sigue el mismo patrón.
+  `useMetronome` **no guarda al montar**, solo cuando algo cambia: abierto desde
+  una canción, guardaba el tempo de la canción como el preferido del músico.
 - Para comparar tonalidades usa `mismaTonalidad` / `identificarTonalidad`
   (`transposition.js`), no el texto: "RE#m" y "MIbm" son la misma, y "RE" y
   "REm" no. El filtro de tonalidad del Dashboard se apoya en eso.
@@ -431,11 +438,14 @@ SPA (el orden importa).
   modales**: no tapan ni bloquean el scroll. Cada uno va pegado a un lado y a una altura
   (se recuerdan por dispositivo), se arrastran por la cabecera y al soltar se pegan al
   lado más cercano; si pisan a otro, se aparta el otro (`colocarPaneles.js`, puro y con
-  tests). En un móvil sale uno cada vez, abajo, sin arrastre. El afinador y el metrónomo
+  tests). Si la ventana encoge (girar la tablet), se vuelven a meter dentro. En un
+  móvil sale uno cada vez, abajo, sin arrastre. El afinador y el metrónomo
   del panel son **versiones simplificadas** (`mini` en `Tuner.jsx` / `Metronome.jsx`, con
   el mismo motor y preferencias). El círculo de quintas es solo una imagen de referencia,
   sin interacción. En la sesión en vivo, tocar una canción del panel mueve **solo** la
-  pantalla de ese músico; el índice de arriba es el que mueve a la banda.
+  pantalla de ese músico; el índice de arriba es el que mueve a la banda. Ahí el
+  panel enseña la tonalidad **en la que lee ese músico** (la "Tú" de la tarjeta),
+  no la de la banda.
 - Offline: Firestore usa `persistentLocalCache` y la app es una PWA instalable
   (`vite-plugin-pwa`). El service worker **no** debe interceptar Firebase: Firestore ya
   tiene su caché y la autenticación necesita red.

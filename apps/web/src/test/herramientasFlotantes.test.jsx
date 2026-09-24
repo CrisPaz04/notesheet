@@ -195,6 +195,24 @@ describe('Mover los paneles', () => {
     expect(panel.style.right).toBe('1rem');
   });
 
+  it('si la ventana encoge (girar la tablet), el panel vuelve a quedar dentro', async () => {
+    localStorage.setItem('herramientas:posiciones', JSON.stringify({ afinador: { lado: 'izquierda', top: 600 } }));
+    render(<HerramientasFlotantes />);
+    abrir('Afinador');
+    await screen.findByTestId('afinador');
+
+    const panel = screen.getByLabelText('Afinador');
+    Object.defineProperty(panel, 'offsetHeight', { configurable: true, value: 200 });
+    expect(panel.style.top).toBe('600px');
+
+    // De vertical a horizontal: 800 → 500 de alto
+    Object.defineProperty(window, 'innerHeight', { configurable: true, value: 500 });
+    fireEvent(window, new Event('resize'));
+
+    // 500 - 76 (la barra) - 200 de alto
+    expect(panel.style.top).toBe('224px');
+  });
+
   it('pulsar los botones de la cabecera no empieza un arrastre', async () => {
     render(<HerramientasFlotantes />);
     abrir('Afinador');

@@ -17,7 +17,8 @@ const MARGEN = "150% 0px";
  *
  * Al desmontarse deja reservado el alto que tenía. Si no, la lista se
  * encogería por encima de lo que se está leyendo y el texto saltaría bajo el
- * dedo.
+ * dedo. Y guarda el zoom: si no, al volver a una partitura ampliada
+ * aparecía otra vez al 100%.
  *
  * @param {Object} props
  * @param {string|null} props.path - Ruta en Storage
@@ -28,6 +29,7 @@ function PdfEnLista({ path, title }) {
     () => typeof IntersectionObserver === "undefined"
   );
   const [alto, setAlto] = useState(null);
+  const [zoom, setZoom] = useState(1);
   const ref = useRef(null);
 
   useEffect(() => {
@@ -50,7 +52,7 @@ function PdfEnLista({ path, title }) {
       className="playlist-pdf"
       style={alto ? { minHeight: alto } : undefined}
     >
-      {cerca && <PdfScoreViewer path={path} title={title} />}
+      {cerca && <PdfScoreViewer path={path} title={title} zoomInicial={zoom} onZoom={setZoom} />}
     </div>
   );
 }

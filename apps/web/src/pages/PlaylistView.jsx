@@ -30,6 +30,9 @@ function PlaylistView() {
     instrument: null,
     variant: DEFAULT_SCORE_VARIANT
   });
+  // Los PDF esperan a saber la voz: si no, se bajaba la principal y, al
+  // llegar las preferencias, otra vez la del instrumento.
+  const [preferenciasListas, setPreferenciasListas] = useState(false);
 
   useEffect(() => {
     if (!currentUser) return undefined;
@@ -42,7 +45,8 @@ function PlaylistView() {
           variant: prefs?.defaultScoreVariant || DEFAULT_SCORE_VARIANT
         });
       })
-      .catch((prefsError) => console.error("Error loading user preferences:", prefsError));
+      .catch((prefsError) => console.error("Error loading user preferences:", prefsError))
+      .finally(() => { if (vigente) setPreferenciasListas(true); });
     return () => { vigente = false; };
   }, [currentUser]);
 
@@ -405,10 +409,12 @@ function PlaylistView() {
                       otra voz está la pantalla de la canción. */}
                   {!song.error && isPdfSong(song) && (
                     <div className="song-content-section">
-                      <PdfEnLista
-                        path={resolveScore(song, preferenciasPdf).path}
-                        title={song.title}
-                      />
+                      {preferenciasListas && (
+                        <PdfEnLista
+                          path={resolveScore(song, preferenciasPdf).path}
+                          title={song.title}
+                        />
+                      )}
                       <Link to={`/songs/${song.id}`} className="playlist-song-pdf-otra-voz no-print">
                         <i className="bi bi-file-earmark-music me-1"></i>
                         Ver en otra voz

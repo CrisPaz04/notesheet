@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, act } from '@testing-library/react';
 
 // Una partitura en PDF entra en una lista como una canción más, en cualquier
 // posición. Lo que cambia es que no se transpone: aquí se comprueba que el
@@ -158,6 +158,27 @@ describe('PlaylistView con una partitura en PDF', () => {
       expect(screen.getByTestId('visor-pdf'))
         .toHaveAttribute('data-path', 'partituras/s2/bb_trombone-1-partitura.pdf');
     });
+  });
+
+  it('no baja la voz principal mientras llegan las preferencias (se bajaría dos veces)', async () => {
+    let responder;
+    mockGetUserPreferences.mockReturnValue(new Promise((r) => { responder = r; }));
+    render(<PlaylistView />);
+    await screen.findByText('Popurrí de Navidad');
+    expect(screen.queryByTestId('visor-pdf')).toBeNull();
+
+    await act(async () => responder({ defaultInstrument: 'bb_trombone' }));
+    expect(screen.getByTestId('visor-pdf'))
+      .toHaveAttribute('data-path', 'partituras/s2/bb_trombone-1-partitura.pdf');
+  });
+
+  it('si las preferencias fallan, la abre igual en la voz principal', async () => {
+    mockGetUserPreferences.mockRejectedValue(new Error('sin red'));
+    const silencio = vi.spyOn(console, 'error').mockImplementation(() => {});
+    render(<PlaylistView />);
+    expect(await screen.findByTestId('visor-pdf'))
+      .toHaveAttribute('data-path', 'partituras/s2/bb_trumpet-1-partitura.pdf');
+    silencio.mockRestore();
   });
 
   it('deja un enlace para leerla en otra voz, y el resto de la lista sigue ahí', async () => {

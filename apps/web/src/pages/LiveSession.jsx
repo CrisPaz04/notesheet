@@ -12,7 +12,7 @@
 // La otra división, la de siempre: lo que sale de `useLiveSession` es
 // compartido y lo que cambie aquí le cambia a los doce; lo que sale de
 // `usePreferenciaLocal` es de este dispositivo y no viaja a ningún sitio.
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useMemo, useState, useRef, useCallback } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { TRANSPOSING_INSTRUMENTS, INSTRUMENT_GROUPS, SOURCE_INSTRUMENT } from "@notesheet/core";
 import { getUserPreferences } from "@notesheet/api";
@@ -94,6 +94,11 @@ function LiveSession() {
     notationSystem: notacion,
     voiceKeys
   });
+
+  const propiaPorId = useMemo(
+    () => new Map(canciones.map((c) => [c.id, c.rendered?.displayKey]).filter(([, k]) => k)),
+    [canciones]
+  );
 
   // --- Scroll hacia la canción activa ---
   const refsCanciones = useRef({});
@@ -537,7 +542,14 @@ function LiveSession() {
         notacion={notacion}
         lista={{
           mensaje: session?.mensajeDirector || null,
-          canciones: songs.map((s) => ({ id: s.id, title: s.title, key: s.key || s.originalKey })),
+          // La tonalidad en la que lee este músico (la "Tú" de la tarjeta),
+          // no la de la banda: al saxo le sirve la suya. Un PDF no se
+          // transpone, y mientras carga el contenido, la de la banda.
+          canciones: songs.map((s) => ({
+            id: s.id,
+            title: s.title,
+            key: propiaPorId.get(s.id) || s.key || s.originalKey
+          })),
           activaId: activeSongId,
           onIr: (songId) => refsCanciones.current[songId]?.scrollIntoView({ behavior: "smooth", block: "start" })
         }}

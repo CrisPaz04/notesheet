@@ -368,6 +368,17 @@ describe('useMetronome', () => {
       expect(guardado.bpm).toBe(144);
     });
 
+    it('al montar no guarda nada: los valores con que arranca no son un cambio', () => {
+      vi.useFakeTimers();
+      mockAuth.currentUser = { uid: 'user-1' };
+      // Abierto desde una canción a 72: ese tempo es de la canción, no del músico
+      renderHook(() => useMetronome({ bpm: 72, timeSignature: '6/8' }));
+      act(() => { vi.advanceTimersByTime(1000); });
+
+      expect(mockSavePrefs).not.toHaveBeenCalled();
+      expect(localStorage.getItem('metronomePreferences')).toBeNull();
+    });
+
     it('no escribe en Firebase sin usuario', () => {
       vi.useFakeTimers();
       const { result } = renderHook(() => useMetronome());

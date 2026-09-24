@@ -5,7 +5,11 @@ import { render, screen, act } from '@testing-library/react';
 // existe mientras la canción está cerca de la pantalla.
 
 vi.mock('../components/PdfScoreViewer', () => ({
-  default: ({ path }) => <div data-testid="visor-pdf" data-path={path} />
+  default: ({ path, zoomInicial, onZoom }) => (
+    <div data-testid="visor-pdf" data-path={path} data-zoom={zoomInicial}>
+      <button type="button" onClick={() => onZoom(1.15)}>ampliar</button>
+    </div>
+  )
 }));
 
 const { default: PdfEnLista } = await import('../components/PdfEnLista');
@@ -52,6 +56,18 @@ describe('PdfEnLista', () => {
     expect(screen.queryByTestId('visor-pdf')).toBeNull();
     // Sin esto la lista se encogería por encima de lo que se está leyendo
     expect(hueco.style.minHeight).toBe('900px');
+  });
+
+  it('al volver, la partitura sigue con el zoom que tenía', () => {
+    render(<PdfEnLista path="partituras/a.pdf" />);
+    act(() => observador.cambiar(true));
+    expect(screen.getByTestId('visor-pdf')).toHaveAttribute('data-zoom', '1');
+
+    act(() => screen.getByRole('button', { name: 'ampliar' }).click());
+    act(() => observador.cambiar(false));
+    act(() => observador.cambiar(true));
+
+    expect(screen.getByTestId('visor-pdf')).toHaveAttribute('data-zoom', '1.15');
   });
 
   it('sin IntersectionObserver lo abre directamente', () => {

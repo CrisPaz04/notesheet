@@ -1,4 +1,5 @@
 import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 /**
  * Un desplegable con los colores del tema, en lugar del `<select>` nativo.
@@ -11,6 +12,13 @@ import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
  * `combobox`, la lista `listbox` y cada opción `option`. Con el teclado:
  * flechas para moverse (abren la lista si está cerrada), Enter o espacio
  * para elegir, Esc para cerrar, Inicio/Fin para ir a los extremos.
+ *
+ * La lista abierta se pinta en `body` (un portal) con posición fija junto al
+ * botón. Dentro del botón quedaba recortada por cualquier contenedor con
+ * scroll: en el panel del metrónomo, el compás se abría "dentro" del panel y
+ * había que desplazarlo para ver las opciones. Tampoco vale `position: fixed`
+ * sin portal: un antepasado con `transform` (las animaciones de entrada del
+ * Dashboard) la recoloca respecto a él.
  *
  * El valor elegido también va en `data-valor` del botón, para los tests.
  *
@@ -40,6 +48,7 @@ function Desplegable({
   const [abierto, setAbierto] = useState(false);
   const [activo, setActivo] = useState(-1); // índice en la lista plana
   const [haciaArriba, setHaciaArriba] = useState(false);
+  const [posicion, setPosicion] = useState(null); // estilo fijo de la lista
 
   const raizRef = useRef(null);
   const botonRef = useRef(null);
@@ -75,7 +84,10 @@ function Desplegable({
   useEffect(() => {
     if (!abierto) return undefined;
     const fuera = (e) => {
-      if (!raizRef.current?.contains(e.target)) cerrar(false);
+      // La lista está en un portal, fuera de la raíz
+      if (!raizRef.current?.contains(e.target) && !listaRef.current?.contains(e.target)) {
+        cerrar(false);
+      }
     };
     document.addEventListener("mousedown", fuera);
     document.addEventListener("touchstart", fuera);
@@ -85,14 +97,38 @@ function Desplegable({
     };
   }, [abierto]);
 
-  // Si no cabe debajo (al pie de la pantalla, o en un panel flotante), se
-  // abre hacia arriba
+  // La lista va pegada al botón. Si no cabe debajo (al pie de la pantalla,
+  // o en un panel flotante) se abre hacia arriba, y no se sale por la
+  // derecha. Sigue al botón si la página o un panel se desplazan.
   useLayoutEffect(() => {
-    if (!abierto || !botonRef.current) return;
-    const caja = botonRef.current.getBoundingClientRect();
-    const alto = Math.min(listaRef.current?.scrollHeight || 0, 280);
-    const debajo = window.innerHeight - caja.bottom;
-    setHaciaArriba(debajo < alto + 8 && caja.top > debajo);
+    if (!abierto) {
+      setPosicion(null);
+      return undefined;
+    }
+    const colocar = () => {
+      if (!botonRef.current) return;
+      const caja = botonRef.current.getBoundingClientRect();
+      const lista = listaRef.current;
+      const alto = Math.min(lista?.scrollHeight || 0, 280);
+      const ancho = Math.max(lista?.offsetWidth || 0, caja.width);
+      const debajo = window.innerHeight - caja.bottom;
+      const arriba = debajo < alto + 8 && caja.top > debajo;
+      setHaciaArriba(arriba);
+      setPosicion({
+        left: Math.max(8, Math.min(caja.left, window.innerWidth - ancho - 8)),
+        minWidth: caja.width,
+        ...(arriba
+          ? { bottom: window.innerHeight - caja.top + 4 }
+          : { top: caja.bottom + 4 })
+      });
+    };
+    colocar();
+    window.addEventListener("scroll", colocar, true);
+    window.addEventListener("resize", colocar);
+    return () => {
+      window.removeEventListener("scroll", colocar, true);
+      window.removeEventListener("resize", colocar);
+    };
   }, [abierto]);
 
   // La opción activa siempre a la vista al moverse con el teclado
@@ -175,8 +211,16 @@ function Desplegable({
         <i className="bi bi-chevron-down desplegable-flecha" aria-hidden="true"></i>
       </button>
 
-      {abierto && (
-        <ul ref={listaRef} id={idLista} role="listbox" className="desplegable-lista" aria-label={ariaLabel}>
+      {abierto && createPortal(
+        <ul
+          ref={listaRef}
+          id={idLista}
+          role="listbox"
+          className="desplegable-lista"
+          aria-label={ariaLabel}
+          // Hasta medir, invisible: así no asoma un instante en otro sitio
+          style={posicion || { visibility: "hidden" }}
+        >
           {secciones.map((g, gi) => {
             const items = g.opciones.map((o) => {
               indice += 1;
@@ -209,7 +253,8 @@ function Desplegable({
               </li>
             );
           })}
-        </ul>
+        </ul>,
+        document.body
       )}
     </div>
   );

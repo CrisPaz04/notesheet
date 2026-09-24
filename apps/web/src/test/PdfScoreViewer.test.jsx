@@ -185,4 +185,13 @@ describe('PdfScoreViewer', () => {
     expect(screen.getByTitle('Ajustar al ancho')).toHaveTextContent('300%');
     expect(acercar).toBeDisabled();
   });
+
+  it('arranca con el zoom que le dan y avisa de cada cambio (PdfEnLista lo guarda)', () => {
+    const onZoom = vi.fn();
+    render(<PdfScoreViewer path="partituras/x.pdf" zoomInicial={1.2} onZoom={onZoom} />);
+    expect(screen.getByTitle('Ajustar al ancho')).toHaveTextContent('120%');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Acercar' }));
+    expect(onZoom).toHaveBeenLastCalledWith(1.25);
+  });
 });

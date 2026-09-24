@@ -35,11 +35,17 @@ const redondearZoom = (z) => Math.round(z * 100) / 100;
  * @param {Object} props
  * @param {string|null} props.path - Ruta en Storage de la partitura
  * @param {string} [props.title] - Para el texto de descarga
+ * @param {number} [props.zoomInicial] - Con el que arranca
+ * @param {(zoom: number) => void} [props.onZoom] - Avisa de cada cambio, para
+ *   que quien lo desmonta (`PdfEnLista`) pueda devolvérselo al volver
  */
-function PdfScoreViewer({ path, title = "partitura" }) {
+function PdfScoreViewer({ path, title = "partitura", zoomInicial = 1, onZoom }) {
   const { doc, pages, loading, error } = usePdfDocument(path);
 
-  const [zoom, setZoom] = useState(1);
+  const [zoom, setZoom] = useState(zoomInicial);
+  const onZoomRef = useRef(onZoom);
+  onZoomRef.current = onZoom;
+  useEffect(() => { onZoomRef.current?.(zoom); }, [zoom]);
   const [anchoDisponible, setAnchoDisponible] = useState(0);
   const [visibles, setVisibles] = useState(() => new Set([0]));
 

@@ -197,6 +197,35 @@ function HerramientasFlotantes({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visibles.join(","), estrecha]);
 
+  // Si la ventana encoge (girar la tablet a horizontal, abrir el teclado),
+  // un panel colocado abajo quedaría fuera de la pantalla: se meten dentro
+  // otra vez, cada lado de una pasada para que no se pisen entre ellos.
+  const reacomodarRef = useRef(null);
+  reacomodarRef.current = () => {
+    if (arrastre) return;
+    const lim = limites();
+    const cambios = {};
+    ["izquierda", "derecha"].forEach((lado) => {
+      const delLado = visibles
+        .filter((id) => ladoDe(id) === lado && Number.isFinite(posiciones[id]?.top))
+        .map((id) => ({ id, alto: altoDe(id), top: acotar(posiciones[id].top, altoDe(id), lim) }))
+        .sort((a, b) => a.top - b.top);
+      if (delLado.length === 0) return;
+      const tops = separar(delLado, delLado[0].id, lim);
+      Object.entries(tops).forEach(([pid, top]) => {
+        if (top !== posiciones[pid].top) cambios[pid] = { lado, top };
+      });
+    });
+    if (Object.keys(cambios).length > 0) colocar(cambios);
+  };
+
+  useEffect(() => {
+    if (estrecha) return undefined;
+    const alCambiar = () => reacomodarRef.current();
+    window.addEventListener("resize", alCambiar);
+    return () => window.removeEventListener("resize", alCambiar);
+  }, [estrecha]);
+
   const cabeceraProps = (id) => ({
     onPointerDown: (e) => {
       // Los botones de la cabecera (cerrar, cambiar de lado) no arrastran

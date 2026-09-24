@@ -5,7 +5,7 @@
 // dispositivo. Dos, que se vean TODAS las canciones a la vez: en los enlaces
 // rápidos hace falta el final de una y el principio de la siguiente.
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { render, screen, waitFor, within, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { elegirEnDesplegable, valorDe } from './utils/desplegable';
 
@@ -476,6 +476,27 @@ describe('controles a la vista', () => {
     expect(within(card).getByText('Banda')).toBeInTheDocument();
     expect(within(card).getByText('Tú')).toBeInTheDocument();
     expect(within(card).getByText('MI')).toBeInTheDocument();
+  });
+
+  it('el panel "Lista" enseña la tonalidad en la que lee este músico', () => {
+    estadoLista = listaCargada({
+      canciones: [
+        cancion(SONGS[0], {
+          rendered: {
+            displayKey: 'MI',
+            formatted: { sections: [{ title: 'Verso', content: 'x' }] }
+          }
+        }),
+        cancion(SONGS[1])
+      ]
+    });
+    render(<LiveSession />);
+    fireEvent.click(screen.getByRole('button', { name: 'Lista' }));
+
+    const panel = screen.getByLabelText('Lista', { selector: 'section' });
+    const fila = within(panel).getByText('Cristo Vive').closest('li');
+    expect(within(fila).getByText('MI')).toBeInTheDocument();
+    expect(within(fila).queryByText(SONGS[0].key)).toBeNull();
   });
 
   it('no pinta la insignia propia cuando coincide', () => {

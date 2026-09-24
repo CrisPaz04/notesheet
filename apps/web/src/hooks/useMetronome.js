@@ -26,6 +26,11 @@ function useMetronome(initialPreferences = {}) {
   const [error, setError] = useState(null);
 
   const engineRef = useRef(null);
+  // Lo último que se guardó (o con lo que arrancó). Sin esto el efecto de
+  // guardar corría también al montar: abrir el metrónomo desde una canción
+  // escribía su tempo (el de la canción, no el del músico) como preferido, y
+  // cada visita a la página hacía una escritura en Firebase sin cambiar nada.
+  const ultimoGuardadoRef = useRef(null);
   const tapTimesRef = useRef([]);
   const tapTimeoutRef = useRef(null);
 
@@ -258,8 +263,19 @@ function useMetronome(initialPreferences = {}) {
       volume
     };
 
+    const texto = JSON.stringify(preferences);
+    if (ultimoGuardadoRef.current === null || ultimoGuardadoRef.current === texto) {
+      ultimoGuardadoRef.current = texto;
+      return undefined;
+    }
+    ultimoGuardadoRef.current = texto;
+
     // Save to localStorage immediately (optimistic update)
-    localStorage.setItem('metronomePreferences', JSON.stringify(preferences));
+    try {
+      localStorage.setItem('metronomePreferences', texto);
+    } catch {
+      // Sin almacenamiento (incógnito) queda Firebase
+    }
 
     // Debounce Firebase save to avoid too many writes
     const timeoutId = setTimeout(async () => {

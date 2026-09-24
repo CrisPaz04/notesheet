@@ -91,6 +91,22 @@ describe('Desplegable', () => {
     expect(onChange).toHaveBeenCalledWith('eb_alto_sax');
   });
 
+  it('la lista va en un portal en body: un contenedor con scroll no la recorta', async () => {
+    render(
+      <div data-testid="panel" style={{ overflow: 'auto', height: 50 }}>
+        <Desplegable ariaLabel="Compás" value="latin" onChange={() => {}} opciones={OPCIONES} />
+      </div>
+    );
+    await userEvent.click(screen.getByRole('combobox', { name: 'Compás' }));
+
+    const lista = screen.getByRole('listbox');
+    expect(screen.getByTestId('panel')).not.toContainElement(lista);
+    expect(lista.parentElement).toBe(document.body);
+    // Y tocarla no cuenta como tocar fuera
+    fireEvent.mouseDown(lista);
+    expect(screen.getByRole('listbox')).toBeInTheDocument();
+  });
+
   it('desactivado no se abre', async () => {
     const { boton } = montar({ disabled: true });
     await userEvent.click(boton);

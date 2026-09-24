@@ -63,12 +63,12 @@
   transform: rotate(180deg);
 }
 
+/* Va en un portal en `body`, con posición fija calculada junto al botón
+   (ver Desplegable.jsx): por encima de todo, paneles flotantes incluidos. */
 .desplegable-lista {
-  position: absolute;
-  top: calc(100% + 4px);
-  left: 0;
-  z-index: 1060;
-  min-width: 100%;
+  position: fixed;
+  z-index: 1080;
+  max-width: calc(100vw - 16px);
   max-height: 280px;
   margin: 0;
   padding: 0.3rem;
@@ -78,11 +78,6 @@
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-medium);
-}
-
-.desplegable.hacia-arriba .desplegable-lista {
-  top: auto;
-  bottom: calc(100% + 4px);
 }
 
 .desplegable-sublista {
