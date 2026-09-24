@@ -68,3 +68,9 @@ __pycache__/
 # Importador generado con el repertorio dentro (scripts/generar-importador-servido.mjs).
 # Se genera cuando hace falta y se borra al terminar: no debe acabar en el deploy.
 apps/web/public/importar-repertorio.js
+
+# Emuladores de Firebase (npm run test:reglas)
+firestore-debug.log
+storage-debug.log
+firebase-debug.log
+ui-debug.log

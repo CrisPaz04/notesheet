@@ -61,6 +61,22 @@ service firebase.storage {
         return song().get('public', false) == true;
       }
 
+      // Un invitado (sesion anonima) solo abre las partituras de la sesion en
+      // la que entro, como en `firestore.rules`. Aqui el tope es de DOS
+      // documentos por evaluacion: el invitado y su sesion. Por eso no se
+      // mira ademas la cancion; que este en la sesion ya lo exige Firestore
+      // al leerla.
+      function esAnonimo() {
+        return request.auth.token.get('firebase', {}).get('sign_in_provider', '') == 'anonymous';
+      }
+
+      function invitadoLaTiene() {
+        let invitado = firestore.get(/databases/(default)/documents/invitados/$(request.auth.uid));
+        return invitado != null
+          && songId in firestore.get(/databases/(default)/documents/sessions/$(invitado.data.sesion))
+                         .data.get('songIds', []);
+      }
+
       // Aqui NO se mira el rol de editor, a proposito. Seria un segundo
       // documento de Firestore por evaluacion, y es redundante: para ser
       // dueno de una cancion hay que haberla creado, y `firestore.rules` solo
@@ -72,11 +88,13 @@ service firebase.storage {
       // no pueda tocar su texto. Se asume, a cambio de dejar sitio de sobra
       // bajo el limite de dos documentos.
 
-      allow read: if isSignedIn() && songExists() && (isOwner() || isPublished());
+      allow read: if isSignedIn() && (esAnonimo()
+                    ? invitadoLaTiene()
+                    : songExists() && (isOwner() || isPublished()));
 
       // Solo PDF y con tope de tamano: una partitura escaneada a lo bestia
       // tumbaria la tablet mas barata de la seccion antes de llegar a verse.
-      allow create, update: if isSignedIn()
+      allow create, update: if isSignedIn() && !esAnonimo()
                             && songExists()
                             && isOwner()
                             && request.resource.contentType == 'application/pdf'

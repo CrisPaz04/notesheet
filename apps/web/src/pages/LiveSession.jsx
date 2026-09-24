@@ -35,6 +35,7 @@ import GuestGate from "../components/live/GuestGate";
 
 const INSTRUMENTOS = Object.keys(TRANSPOSING_INSTRUMENTS);
 const SEGUIR = ["si", "no"];
+const SIN_CANCIONES = [];
 
 function LiveSession() {
   const { code } = useParams();
@@ -85,11 +86,17 @@ function LiveSession() {
     estado, error, sinRed, participants, isHost,
     irACancion, cambiarTonalidad,
     moverCancion, agregarCancion, quitarCancion, cerrarSesion, salir,
-    anunciarInstrumento
+    anunciarInstrumento, entrado
   } = useLiveSession(code, { user: currentUser });
 
+  // Un invitado (sin cuenta) solo puede leer las canciones de la sesión en la
+  // que entró, y eso lo apunta `joinSession`. Hasta entonces las reglas se
+  // las negarían, y el aviso de "no disponible" se quedaría puesto.
+  const esInvitado = Boolean(currentUser?.isAnonymous);
+  const puedeLeer = !esInvitado || entrado;
+
   const { canciones } = useLiveSetlistContent({
-    songs,
+    songs: puedeLeer ? songs : SIN_CANCIONES,
     instrument: instrumento,
     notationSystem: notacion,
     voiceKeys
@@ -529,12 +536,16 @@ function LiveSession() {
         ))}
       </div>
 
-      <AddSongToSession
-        user={currentUser}
-        yaEnLaSesion={songs.map((s) => s.id)}
-        onAgregar={agregarCancion}
-        notacion={notacion}
-      />
+      {/* Añadir busca en el repertorio, y un invitado no puede leerlo: solo
+          las canciones de su sesión. */}
+      {!esInvitado && (
+        <AddSongToSession
+          user={currentUser}
+          yaEnLaSesion={songs.map((s) => s.id)}
+          onAgregar={agregarCancion}
+          notacion={notacion}
+        />
+      )}
 
       {/* El panel "Lista" solo mueve la pantalla de este músico. Para llevar
           a la banda entera a otra canción está el índice de arriba. */}

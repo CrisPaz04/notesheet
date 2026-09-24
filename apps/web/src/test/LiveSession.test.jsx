@@ -505,6 +505,30 @@ describe('controles a la vista', () => {
   });
 });
 
+describe('invitados sin cuenta', () => {
+  // Las reglas solo le dejan leer las canciones de la sesión que apunta al
+  // entrar. Pedirlas antes fallaría y el aviso de "no disponible" se quedaría.
+  it('no pide las canciones hasta haber entrado', () => {
+    auth = { currentUser: { uid: 'anon', isAnonymous: true }, loading: false };
+    estadoSesion = sesionEnVivo({ entrado: false });
+    render(<LiveSession />);
+    expect(argsLista.songs).toEqual([]);
+  });
+
+  it('en cuanto entra, sí', () => {
+    auth = { currentUser: { uid: 'anon', isAnonymous: true }, loading: false };
+    estadoSesion = sesionEnVivo({ entrado: true });
+    render(<LiveSession />);
+    expect(argsLista.songs).toBe(SONGS);
+  });
+
+  it('con cuenta no hace falta esperar', () => {
+    estadoSesion = sesionEnVivo({ entrado: false });
+    render(<LiveSession />);
+    expect(argsLista.songs).toBe(SONGS);
+  });
+});
+
 describe('añadir canciones en vivo', () => {
   // No existía: la acción estaba en el hook y no había nada en pantalla que
   // la llamara.
@@ -516,6 +540,14 @@ describe('añadir canciones en vivo', () => {
 
     await userEvent.click(screen.getByRole('button', { name: /añadir una canción/i }));
     await waitFor(() => expect(mockGetAllSongs).toHaveBeenCalledWith('u1'));
+  });
+
+  // Añadir busca en el repertorio, y las reglas no dejan a un invitado
+  // leerlo: solo las canciones de su sesión.
+  it('un invitado no ve el botón de añadir', () => {
+    auth = { currentUser: { uid: 'anon', isAnonymous: true }, loading: false };
+    render(<LiveSession />);
+    expect(screen.queryByRole('button', { name: /añadir una canción/i })).toBeNull();
   });
 
   it('añade la canción elegida a la sesión', async () => {

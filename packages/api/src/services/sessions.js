@@ -44,6 +44,7 @@ import { publishOwnSongs } from './songs';
 
 const SESSIONS = 'sessions';
 const PARTICIPANTS = 'participants';
+const INVITADOS = 'invitados';
 
 /**
  * Alfabeto Crockford base32: sin I, L, O ni U.
@@ -154,6 +155,16 @@ const sanitizeSong = (song) => ({
 const sanitizeSongs = (songs) =>
   (Array.isArray(songs) ? songs : []).filter((s) => s?.id).map(sanitizeSong);
 
+/**
+ * Los ids de las canciones, aparte, en `songIds`.
+ *
+ * Es lo que miran las reglas para dejar a un invitado (sesión anónima, sin
+ * cuenta) leer una canción: solo las de su sesión, no el repertorio entero.
+ * Las reglas no pueden sacar los ids de una lista de objetos, por eso van
+ * sueltos. Se escriben siempre junto con `songs`.
+ */
+const conSongIds = (songs) => ({ songs, songIds: songs.map((s) => s.id) });
+
 /** Quién hizo el último cambio, para poder mostrarlo en pantalla. */
 const actorFrom = (user) => ({
   uid: user?.uid || null,
@@ -195,7 +206,7 @@ export const createSession = async ({ playlist, host, ttlMs = SESSION_TTL_MS }) 
       playlistId: playlist?.id || null,
       name: playlist?.name || 'Sesión en vivo',
       hostId: host.uid,
-      songs,
+      ...conSongIds(songs),
       // El mensaje del director con el que se armó la lista, para el panel
       // "Lista" de la sesión. Viaja copiado, como las canciones.
       mensajeDirector: limpiarMensajeDirector(playlist?.mensajeDirector),
@@ -327,7 +338,7 @@ export const setSongKey = (code, { songs, songId, key, expectedVersion, user }) 
   const actualizadas = sanitizeSongs(songs).map((song) =>
     song.id === songId ? { ...song, key } : song
   );
-  return applySessionChange(code, expectedVersion, { songs: actualizadas }, user);
+  return applySessionChange(code, expectedVersion, conSongIds(actualizadas), user);
 };
 
 /**
@@ -345,7 +356,7 @@ export const setSessionSongs = (code, { songs, activeSongId, expectedVersion, us
     code,
     expectedVersion,
     {
-      songs: actualizadas,
+      ...conSongIds(actualizadas),
       activeSongId: sigueEstando ? activeSongId : actualizadas[0]?.id || null
     },
     user
@@ -389,6 +400,21 @@ export const joinSession = async (code, {
     // documentos quedan huérfanos para siempre.
     expiresAt: Timestamp.fromMillis(Date.now() + Math.min(ttlMs, SESSION_MAX_TTL_MS))
   };
+
+  // Un invitado apunta en qué sesión está: con eso las reglas le dejan leer
+  // las canciones de esta sesión y ninguna más. Va antes que el participante
+  // para que, cuando la pantalla empiece a pedir canciones, ya esté.
+  //
+  // Si falla no se impide entrar: con las reglas anteriores la colección no
+  // existía y el invitado leía igual; con las nuevas, verá el aviso de
+  // "canción no disponible" en cada una, que es el fallo honesto.
+  if (user.isAnonymous) {
+    try {
+      await setDoc(doc(db, INVITADOS, user.uid), { sesion: code, expiresAt: data.expiresAt });
+    } catch (error) {
+      console.error('No se pudo apuntar al invitado en la sesión:', error);
+    }
+  }
 
   await setDoc(participantRef(code, user.uid), data, { merge: true });
   return data;

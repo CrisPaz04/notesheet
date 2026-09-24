@@ -103,6 +103,7 @@ falla con "term not recognized".
 npm install                   # Install all dependencies (npm workspaces)
 npm run web                   # Start web dev server (localhost:5173)
 npm run test:run              # Run the test suite
+npm run test:reglas           # Reglas de Firestore y Storage contra los emuladores (pide Java)
 npm run lint --workspace=web  # ESLint check
 
 # From apps/web/
@@ -301,6 +302,22 @@ actual permission boundary.
 Lectura de `songs`: solo las propias o las publicadas. Si cambias esto, revisa antes qué
 listas compartidas dependen de ello.
 
+**Los invitados** (sesión anónima, la de los enlaces de las sesiones en vivo) no cuentan
+como una cuenta: la sesión anónima la abre cualquiera con la clave pública que va en el
+JavaScript de la web. Un invitado solo lee las canciones **publicadas que están en su
+sesión** (y sus partituras): al entrar, `joinSession` escribe `invitados/{uid}` con el
+código, y las reglas miran `songIds` de esa sesión (`invitadoLaTiene`). No lee listas, no
+abre sesiones y no puede **añadir** ids a `songIds` (sí quitar); por eso la pantalla le
+esconde "Añadir canción" y no pide las canciones hasta haber entrado. `songIds` va siempre
+junto con `songs` (`conSongIds` en `sessions.js`): las reglas no pueden sacar ids de una
+lista de objetos. En Storage el tope de dos documentos lo ocupan justo el invitado y su
+sesión, así que ahí no se mira además la canción.
+
+Las reglas se prueban con **`npm run test:reglas`** (`scripts/reglas/reglas.test.mjs`,
+`@firebase/rules-unit-testing` 4, que es la que casa con `firebase` 11: la 5 trae la 12
+y duplica el SDK). Validado con mutaciones: quitar cualquiera de los guardias rompe algún
+test. Opcional: una política TTL sobre `expiresAt` en `invitados`.
+
 Los índices compuestos viven en `firestore.indexes.json` y hay que desplegarlos **antes**
 de subir código que dependa de una consulta nueva, o la app falla al cargar.
 
@@ -352,7 +369,7 @@ SPA (el orden importa).
 ## Notes
 
 - No TypeScript - pure JavaScript
-- Vitest configured; 1620 tests in `apps/web/src/test/` (run with `npm run test:run`)
+- Vitest configured; 1628 tests in `apps/web/src/test/` (run with `npm run test:run`)
 - Los tests se validan con **mutaciones**: se rompe el código a propósito y se comprueba
   que algún test falla. Ha destapado cuatro tests que pasaban por la razón equivocada,
   y un bug de verdad en `scores.js` (las voces se ordenaban como texto, así que la 10
@@ -489,13 +506,11 @@ ahorra volver a buscarlo.
     ellos), "Buscar datos" en el editor, el recuadro "Datos de la grabación
     original" en el visor y los enlaces "Ver en…". Sigue el paso 2 (YouTube para
     practicar).
-- **El repertorio está expuesto hoy** (lo destapó la investigación de arriba,
-  pero no depende de ella): el repo de GitHub es **público** y versiona
-  `scripts/repertorio/repertorio.json` con las 118 melodías transcritas, y la
-  lectura de `songs` solo pide `request.auth != null`, que cumple cualquier
-  sesión anónima de las que se abren para las sesiones en vivo. Hay que decidir
-  si se hace privado el repo (sacar el archivo del árbol no lo saca del
-  historial) y si los anónimos leen solo las canciones de su sesión.
+- **El repertorio en GitHub**: el repo es **público a propósito** (portafolio) y
+  versiona `scripts/repertorio/repertorio.json` con las 118 melodías. En la app ya
+  está cerrado (los invitados solo leen su sesión, ver Security Rules). Queda
+  decidir si se saca el archivo del repo; sacarlo del árbol no lo saca del
+  historial.
 
 ### Acordes: falta el contenido, no el motor
 

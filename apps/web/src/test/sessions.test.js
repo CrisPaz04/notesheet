@@ -238,6 +238,12 @@ describe('createSession', () => {
     expect(mockSetDoc).not.toHaveBeenCalled();
   });
 
+  // Es lo que deja a los invitados leer estas canciones y ninguna más
+  it('guarda los ids de las canciones aparte, para las reglas', async () => {
+    const sesion = await createSession({ playlist: LISTA, host: HOST });
+    expect(sesion.songIds).toEqual(['s1', 's2']);
+  });
+
   it('entra como participante al crearla', async () => {
     const sesion = await createSession({ playlist: LISTA, host: HOST });
 
@@ -361,6 +367,8 @@ describe('cambios sobre el estado compartido', () => {
 
       const datos = ultimaEscritura(mockUpdateDoc);
       expect(datos.songs.map((s) => s.id)).toEqual(['s2', 's1']);
+      // Los ids sueltos van siempre a la par: las reglas miran estos
+      expect(datos.songIds).toEqual(['s2', 's1']);
       expect(datos.activeSongId).toBe('s2');
     });
 
@@ -428,6 +436,29 @@ describe('participantes', () => {
     const { expiresAt } = ultimaEscritura(mockSetDoc);
     expect(expiresAt.millis).toBeGreaterThan(antes);
     expect(expiresAt.millis).toBeLessThanOrEqual(antes + SESSION_MAX_TTL_MS + 1000);
+  });
+
+  // Un invitado solo lee las canciones de la sesión que apunta aquí
+  // (`firestore.rules`, `invitadoLaTiene`).
+  it('un invitado apunta en qué sesión está, antes que su presencia', async () => {
+    await joinSession('ABC123', { user: { uid: 'g1', isAnonymous: true } });
+
+    expect(mockSetDoc.mock.calls[0][0].path).toBe('invitados/g1');
+    expect(mockSetDoc.mock.calls[0][1]).toMatchObject({ sesion: 'ABC123' });
+    expect(ultimaRuta(mockSetDoc)).toBe('sessions/ABC123/participants/g1');
+  });
+
+  it('con cuenta no apunta nada', async () => {
+    await joinSession('ABC123', { user: HOST });
+    expect(mockSetDoc).toHaveBeenCalledTimes(1);
+  });
+
+  it('si no se puede apuntar, entra igual (reglas aún sin desplegar)', async () => {
+    const silencio = vi.spyOn(console, 'error').mockImplementation(() => {});
+    mockSetDoc.mockRejectedValueOnce(denegado());
+    await joinSession('ABC123', { user: { uid: 'g1', isAnonymous: true } });
+    expect(ultimaRuta(mockSetDoc)).toBe('sessions/ABC123/participants/g1');
+    silencio.mockRestore();
   });
 
   it('salir borra solo tu presencia', async () => {

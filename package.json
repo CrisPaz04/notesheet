@@ -16,7 +16,8 @@
     "android": "cd apps/mobile && npm run android",
     "ios": "cd apps/mobile && npm run ios",
     "test": "cd apps/web && npm run test",
-    "test:run": "cd apps/web && npm run test:run"
+    "test:run": "cd apps/web && npm run test:run",
+    "test:reglas": "npx firebase-tools emulators:exec --only firestore,storage --project demo-notesheet \"node --test scripts/reglas/reglas.test.mjs\""
   },
   "keywords": [
     "music",
@@ -26,5 +27,8 @@
     "vite"
   ],
   "author": "",
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "@firebase/rules-unit-testing": "^4.0.1"
+  }
 }

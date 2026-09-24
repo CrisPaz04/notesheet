@@ -7,10 +7,12 @@ rules_version = '2';
 //                     pero NO puede modificar su propio campo `role`.
 //                     El rol se asigna desde la consola de Firebase o con
 //                     el Admin SDK, nunca desde el cliente.
-//   - songs/{id}    : lectura para cualquier usuario autenticado (las listas
-//                     publicas referencian canciones de otros usuarios).
-//                     Escritura solo para usuarios con rol `editor` que
-//                     ademas sean dueños de la cancion.
+//   - songs/{id}    : lectura de las propias y las publicadas, para quien
+//                     tiene cuenta. Un invitado (sesion anonima, la de los
+//                     enlaces de las sesiones en vivo) solo lee las de la
+//                     sesion en la que entro. Escritura solo para usuarios
+//                     con rol `editor` que ademas sean dueños de la cancion.
+//   - invitados/{uid}: en que sesion esta cada invitado.
 //   - playlists/{id}: lectura para el creador o si la lista es publica.
 //                     Escritura solo para el creador.
 //   - sessions/{code}: sesion en vivo. El codigo del documento es la llave:
@@ -22,6 +24,12 @@ service cloud.firestore {
 
     function isSignedIn() {
       return request.auth != null;
+    }
+
+    // Una sesion anonima: la abre cualquiera con la clave publica de la web,
+    // que va en el JavaScript. Por eso no puede valer lo mismo que una cuenta.
+    function esAnonimo() {
+      return request.auth.token.get('firebase', {}).get('sign_in_provider', '') == 'anonymous';
     }
 
     function isSelf(userId) {
@@ -58,8 +66,13 @@ service cloud.firestore {
       // privada no la lee nadie mas, ni siquiera desde una lista compartida:
       // por eso al hacer publica una lista se publican tambien sus canciones
       // (ver handleSave en PlaylistEditor).
-      allow read: if isSignedIn()
-                  && (resource.data.userId == request.auth.uid
+      //
+      // Un invitado, solo las publicadas que estan en SU sesion (la que apunto
+      // al entrar en `invitados`). Antes leia el repertorio entero: bastaba la
+      // clave publica de la web para abrir una sesion anonima.
+      allow read: if isSignedIn() && (esAnonimo()
+                    ? resource.data.get('public', false) == true && invitadoLaTiene(songId)
+                    : resource.data.userId == request.auth.uid
                       || resource.data.get('public', false) == true);
       allow create: if isEditor()
                     && request.resource.data.userId == request.auth.uid;
@@ -69,8 +82,30 @@ service cloud.firestore {
       allow delete: if isEditor() && resource.data.userId == request.auth.uid;
     }
 
+    // La cancion esta en la sesion de este invitado. Tres lecturas (de diez).
+    function invitadoLaTiene(songId) {
+      let invitado = /databases/$(database)/documents/invitados/$(request.auth.uid);
+      return exists(invitado)
+        && songId in get(/databases/$(database)/documents/sessions/$(get(invitado).data.sesion))
+                       .data.get('songIds', []);
+    }
+
+    // En que sesion esta cada invitado. Lo escribe el propio invitado al
+    // entrar, y solo con el codigo de una sesion que existe: el codigo es la
+    // llave, asi que quien lo tiene ya podia entrar.
+    match /invitados/{uid} {
+      allow get: if isSelf(uid);
+      allow create, update: if isSelf(uid)
+                            && esAnonimo()
+                            && request.resource.data.keys().hasOnly(['sesion', 'expiresAt'])
+                            && request.resource.data.sesion is string
+                            && exists(/databases/$(database)/documents/sessions/$(request.resource.data.sesion));
+      allow delete: if isSelf(uid);
+    }
+
     match /playlists/{playlistId} {
-      allow read: if isSignedIn()
+      // Los invitados no tienen nada que hacer aqui: la sesion copia la lista.
+      allow read: if isSignedIn() && !esAnonimo()
                   && (resource.data.creatorId == request.auth.uid
                       || resource.data.get('public', false) == true);
       allow create: if isSignedIn()
@@ -119,11 +154,22 @@ service cloud.firestore {
         && request.resource.data.expiresAt < request.time + duration.value(24, 'h');
     }
 
+    // Un invitado puede quitar y reordenar canciones, pero no traer ninguna
+    // nueva: `songIds` es lo que le da permiso de lectura.
+    function songIdsSinAmpliar() {
+      return !esAnonimo()
+        || !request.resource.data.diff(resource.data).affectedKeys().hasAny(['songIds'])
+        || resource.data.get('songIds', []).toSet()
+             .hasAll(request.resource.data.get('songIds', []));
+    }
+
     match /sessions/{code} {
       allow get: if isSignedIn();
       allow list: if false;
 
-      allow create: if isSignedIn()
+      // Un invitado no abre sesiones: podria meter en `songIds` lo que
+      // quisiera y leer asi cualquier cancion.
+      allow create: if isSignedIn() && !esAnonimo()
                     && request.resource.data.hostId == request.auth.uid
                     && request.resource.data.version == 0
                     && request.resource.data.status == 'live'
@@ -141,7 +187,8 @@ service cloud.firestore {
       allow update: if isParticipant(code)
                     && versionAvanzaUno()
                     && request.resource.data.hostId == resource.data.hostId
-                    && request.resource.data.expiresAt == resource.data.expiresAt;
+                    && request.resource.data.expiresAt == resource.data.expiresAt
+                    && songIdsSinAmpliar();
 
       allow delete: if isSignedIn() && resource.data.hostId == request.auth.uid;
 
