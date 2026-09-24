@@ -216,6 +216,31 @@ export const renderChordChart = (acordes, {
   return formatSong(convertNotationSystem(processed, notationSystem));
 };
 
+const tieneTexto = (formatted) =>
+  Boolean(formatted?.sections?.some((s) => (s.content || '').trim()));
+
+/**
+ * Qué vista mostrar de una canción dentro de una lista o de la sesión en vivo,
+ * donde se leen todas seguidas con una sola vista elegida para todas.
+ *
+ * Si la canción no tiene la pedida (una sin acordes, un PDF sin letra) se
+ * muestra la principal —las notas o la partitura— y se dice qué faltaba. En
+ * la vista de una canción sí se enseña la pestaña vacía con su aviso; aquí
+ * sería un hueco en mitad de la lista.
+ *
+ * @param {'principal'|'letra'|'acordes'} pedida
+ * @param {{letra?: Object|null, acordes?: Object|null}} vistas - Las de `formatSong`
+ * @returns {{vista: 'principal'|'letra'|'acordes', faltaba: 'letra'|'acordes'|null}}
+ */
+export const elegirVista = (pedida, { letra = null, acordes = null } = {}) => {
+  if (pedida === 'letra' && tieneTexto(letra)) return { vista: 'letra', faltaba: null };
+  if (pedida === 'acordes' && tieneTexto(acordes)) return { vista: 'acordes', faltaba: null };
+  return {
+    vista: 'principal',
+    faltaba: pedida === 'letra' || pedida === 'acordes' ? pedida : null
+  };
+};
+
 /**
  * Construye la lista plana de voces disponibles de una canción a partir de
  * `song.voices`, ordenada por instrumento y número de voz.

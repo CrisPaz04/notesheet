@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 
 // --- Mocks ---
 const mockGetPlaylistById = vi.fn();
@@ -192,5 +192,66 @@ describe('PlaylistView', () => {
       await waitFor(() => expect(contenidoDeCancion(0)).toMatch(/A\s+E\s+F#m\s+D/));
       expect(mockGetSongById).toHaveBeenCalledTimes(2);
     });
+  });
+});
+
+// Notas, letra o acordes de todas las canciones a la vez, con la vista del
+// instrumento de las preferencias al entrar.
+describe('PlaylistView: qué se ve de cada canción', () => {
+  // En la referencia de Sib la canción está en DO (SIb en concierto) y la
+  // lista la sube a LA (SOL en concierto). Los acordes van en concierto.
+  const CON_ACORDES = { ...CANCIONES.s1, acordes: 'SIb FA SOLm MIb' };
+
+  beforeEach(() => {
+    mockGetSongById.mockImplementation(async (id) => {
+      if (id === 's1') return CON_ACORDES;
+      return CANCIONES[id];
+    });
+  });
+
+  const boton = (nombre) => screen.getByRole('button', { name: nombre });
+  const textoDeLaLista = () => document.querySelector('#playlist-content')?.textContent
+    ?? document.body.textContent;
+
+  it('sin preferencias, las notas', async () => {
+    await renderLista();
+    expect(boton('Notas')).toHaveAttribute('aria-pressed', 'true');
+    expect(contenidoDeCancion(0)).toMatch(/Cristo vive hoy/);
+  });
+
+  it('quien toca guitarra entra en los acordes, en concierto y transpuestos con la lista', async () => {
+    mockGetUserPreferences.mockResolvedValue({ defaultInstrument: 'c_guitar' });
+    await renderLista();
+
+    await waitFor(() => expect(boton('Acordes')).toHaveAttribute('aria-pressed', 'true'));
+    expect(contenidoDeCancion(0)).toBe('SOL RE MIm DO');
+    // Y la tonalidad de la etiqueta es la que lee: SOL, no el LA de Sib
+    expect(document.querySelectorAll('.playlist-song-key')[0]).toHaveTextContent('SOL');
+  });
+
+  it('una canción sin acordes enseña sus notas y lo dice', async () => {
+    mockGetUserPreferences.mockResolvedValue({ defaultInstrument: 'c_guitar' });
+    await renderLista();
+
+    expect(await screen.findByText(/aún no tiene acordes: se muestran las notas/)).toBeInTheDocument();
+    expect(textoDeLaLista()).toMatch(/Sublime gracia/);
+  });
+
+  it('quien canta entra en la letra, sin líneas de notas', async () => {
+    mockGetUserPreferences.mockResolvedValue({ defaultInstrument: 'c_voice' });
+    await renderLista();
+
+    await waitFor(() => expect(boton('Letra')).toHaveAttribute('aria-pressed', 'true'));
+    expect(contenidoDeCancion(0)).toMatch(/Cristo vive hoy/);
+    expect(contenidoDeCancion(0)).not.toMatch(/SOL/);
+  });
+
+  it('se cambia para todas desde el selector', async () => {
+    await renderLista();
+    fireEvent.click(boton('Acordes'));
+
+    expect(boton('Acordes')).toHaveAttribute('aria-pressed', 'true');
+    // Para la trompeta, un tono arriba del concierto (SOL -> LA)
+    expect(contenidoDeCancion(0)).toBe('LA MI FA#m RE');
   });
 });

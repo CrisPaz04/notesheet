@@ -223,7 +223,13 @@ en Storage, nunca la URL de descarga).
   abre en la vista del instrumento de las preferencias (`vistaPreferida`, en
   `instruments.js`): los vientos en Notas, la voz en Letra, guitarra, piano y bajo en
   Acordes; nunca en una vista vacía. En el editor, pestaña "Acordes" junto a "Solo Letra".
-  Todavía **no** se muestran en la lista ni en la sesión en vivo.
+- En la **lista** y la **sesión en vivo** se leen todas seguidas, así que ahí la vista
+  es una para todas: un selector Notas · Letra · Acordes (`SelectorVista`) que arranca
+  en la del instrumento. La canción que no tenga la elegida enseña sus notas (o su
+  partitura) con una línea que lo dice, en vez de un hueco (`elegirVista`,
+  `AvisoVista`). La lista pinta ya **en el instrumento del músico**, como la canción y
+  la sesión (antes las notas iban siempre en la referencia de Sib y la etiqueta de
+  tonalidad no casaba con los acordes en concierto).
 - `getAllSongs(userId)` devuelve las propias **más** las públicas de otros, y marca cada
   una con `isOwn`. Son dos consultas porque Firestore no hace OR entre campos distintos.
 - La interfaz solo debe ofrecer editar o borrar cuando `isOwn`; las reglas lo imponen
@@ -383,7 +389,7 @@ SPA (el orden importa).
 ## Notes
 
 - No TypeScript - pure JavaScript
-- Vitest configured; 1653 tests in `apps/web/src/test/` (run with `npm run test:run`)
+- Vitest configured; 1665 tests in `apps/web/src/test/` (run with `npm run test:run`)
 - Los tests se validan con **mutaciones**: se rompe el código a propósito y se comprueba
   que algún test falla. Ha destapado cuatro tests que pasaban por la razón equivocada,
   y un bug de verdad en `scores.js` (las voces se ordenaban como texto, así que la 10
@@ -531,6 +537,4 @@ ahorra volver a buscarlo.
 Las canciones ya pueden llevar su hoja de acordes (`acordes`, ver Modelo de datos),
 que escribe la banda de oído en concierto. Pero **ninguna de las 118 canciones del
 repertorio tiene todavía**: su `content` son líneas de notas sueltas ("Re# Mi Fa#
-Sol# La# Si"), la melodía del viento. Queda:
-- escribirlos, canción por canción;
-- enseñarlos también en la lista y en la sesión en vivo, que hoy solo enseñan notas.
+Sol# La# Si"), la melodía del viento. Queda escribirlos, canción por canción.

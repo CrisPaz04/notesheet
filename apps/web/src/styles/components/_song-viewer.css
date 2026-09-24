@@ -537,3 +537,13 @@
 .datos-grabacion-fuentes a {
   color: var(--color-primary);
 }
+
+/* En la lista y la sesión en vivo: esta canción no tiene la vista elegida
+   (letra o acordes) y se enseñan sus notas (`AvisoVista`) */
+.vista-aviso {
+  margin: 0.5rem 0 1rem;
+  font-size: 0.85rem;
+  font-style: italic;
+  text-align: center;
+  color: var(--text-light-secondary);
+}

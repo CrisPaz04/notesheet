@@ -712,3 +712,43 @@ describe('estados de la sesión', () => {
     expect(acciones.cerrarSesion).toHaveBeenCalled();
   });
 });
+
+describe('qué se ve de cada canción', () => {
+  const secciones = (texto) => ({ sections: [{ title: '', content: texto }] });
+
+  beforeEach(() => {
+    estadoLista = listaCargada({
+      canciones: [
+        cancion(SONGS[0], { vistas: { letra: secciones('Cristo vive hoy'), acordes: secciones('DO SOL LAm FA') } }),
+        cancion(SONGS[1], { vistas: { letra: secciones('Sublime gracia'), acordes: null } })
+      ]
+    });
+  });
+
+  const selector = () => screen.getByRole('group', { name: 'Qué ver de cada canción' });
+
+  it('la trompeta entra en las notas', () => {
+    render(<LiveSession />);
+    expect(within(selector()).getByRole('button', { name: 'Notas' })).toHaveAttribute('aria-pressed', 'true');
+    expect(within(tarjeta('Cristo Vive')).getByText('Acordes de Cristo Vive')).toBeInTheDocument();
+  });
+
+  it('quien elige guitarra pasa a los acordes; la que no los tiene enseña sus notas y avisa', async () => {
+    render(<LiveSession />);
+    await elegirEnDesplegable(userEvent, screen.getByLabelText('Mi instrumento'), 'c_guitar');
+
+    expect(within(selector()).getByRole('button', { name: 'Acordes' })).toHaveAttribute('aria-pressed', 'true');
+    expect(within(tarjeta('Cristo Vive')).getByText('DO SOL LAm FA')).toBeInTheDocument();
+    expect(within(tarjeta('Sublime Gracia')).getByText(/aún no tiene acordes: se muestran las notas/)).toBeInTheDocument();
+    expect(within(tarjeta('Sublime Gracia')).getByText('Acordes de Sublime Gracia')).toBeInTheDocument();
+  });
+
+  it('la letra se elige para todas desde el selector', async () => {
+    render(<LiveSession />);
+    await userEvent.click(within(selector()).getByRole('button', { name: 'Letra' }));
+
+    expect(within(tarjeta('Cristo Vive')).getByText('Cristo vive hoy')).toBeInTheDocument();
+    expect(within(tarjeta('Sublime Gracia')).getByText('Sublime gracia')).toBeInTheDocument();
+    expect(screen.queryByText('Acordes de Cristo Vive')).toBeNull();
+  });
+});

@@ -263,3 +263,32 @@ describe('partituras en PDF', () => {
     expect(result.current.canciones[2].pdf.path).toBe('partituras/s3/bb_trumpet-1-partitura.pdf');
   });
 });
+
+describe('letra y acordes de cada canción', () => {
+  const textoDe = (formatted) => (formatted?.sections || []).map((s) => s.content).join('\n');
+
+  it('prepara la letra y los acordes con el instrumento del músico', async () => {
+    mockGetSongById.mockImplementation(async (id) => (
+      id === 's2' ? { ...REPERTORIO.s2, acordes: 'FA DO' } : REPERTORIO[id]
+    ));
+    const { result } = montar({ instrument: 'c_guitar' });
+
+    await waitFor(() => expect(result.current.canciones[1].vistas).toBeTruthy());
+    const s2 = result.current.canciones[1];
+    expect(textoDe(s2.vistas.letra)).toMatch(/Sublime gracia/);
+    expect(textoDe(s2.vistas.letra)).not.toMatch(/SOL RE/);
+    // En concierto, como los escribió el guitarrista
+    expect(textoDe(s2.vistas.acordes)).toBe('FA DO');
+    // Sin acordes, nada que enseñar
+    expect(result.current.canciones[0].vistas.acordes).toBeNull();
+  });
+
+  it('para la trompeta, los acordes suben un tono', async () => {
+    mockGetSongById.mockImplementation(async (id) => (
+      id === 's2' ? { ...REPERTORIO.s2, acordes: 'FA DO' } : REPERTORIO[id]
+    ));
+    const { result } = montar();
+    await waitFor(() => expect(result.current.canciones[1].vistas).toBeTruthy());
+    expect(textoDe(result.current.canciones[1].vistas.acordes)).toBe('SOL RE');
+  });
+});

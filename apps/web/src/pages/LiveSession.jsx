@@ -14,13 +14,14 @@
 // `usePreferenciaLocal` es de este dispositivo y no viaja a ningún sitio.
 import { useEffect, useMemo, useState, useRef, useCallback } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { TRANSPOSING_INSTRUMENTS, INSTRUMENT_GROUPS, SOURCE_INSTRUMENT } from "@notesheet/core";
+import { TRANSPOSING_INSTRUMENTS, INSTRUMENT_GROUPS, SOURCE_INSTRUMENT, vistaPreferida } from "@notesheet/core";
 import { getUserPreferences } from "@notesheet/api";
 import { useAuth } from "../context/AuthContext";
 import useLiveSession from "../hooks/useLiveSession";
 import useAlineacionTexto from "../hooks/useAlineacionTexto";
 import AlineacionTexto from "../components/AlineacionTexto";
 import Desplegable from "../components/Desplegable";
+import SelectorVista from "../components/SelectorVista";
 import HerramientasFlotantes from "../components/herramientas/HerramientasFlotantes";
 import useLiveSetlistContent from "../hooks/useLiveSetlistContent";
 import usePreferenciaLocal from "../hooks/usePreferenciaLocal";
@@ -36,6 +37,10 @@ import GuestGate from "../components/live/GuestGate";
 const INSTRUMENTOS = Object.keys(TRANSPOSING_INSTRUMENTS);
 const SEGUIR = ["si", "no"];
 const SIN_CANCIONES = [];
+
+// La vista con que arranca cada instrumento en una lista de canciones: se
+// supone que las hay de todo, y cada canción que no lo tenga avisa.
+const vistaDelInstrumento = (id) => vistaPreferida(id, { hayLetra: true, hayAcordes: true });
 
 function LiveSession() {
   const { code } = useParams();
@@ -79,6 +84,15 @@ function LiveSession() {
   const { fontSize, setFontSize, increaseFontSize, decreaseFontSize } =
     useFontSizePreference(currentUser);
   const [alineacion, setAlineacion] = useAlineacionTexto();
+
+  // Notas, letra o acordes de todas las canciones. Arranca en la del
+  // instrumento (la voz en la letra, la guitarra en los acordes...) y vuelve
+  // a ella si cambia de instrumento; una canción que no tenga la elegida
+  // enseña sus notas con un aviso (`elegirVista`).
+  const [vista, setVista] = useState(() => vistaDelInstrumento(instrumento));
+  useEffect(() => {
+    setVista(vistaDelInstrumento(instrumento));
+  }, [instrumento]);
 
   // --- Lo compartido ---
   const {
@@ -454,6 +468,8 @@ function LiveSession() {
           botonClassName="live-icon-btn"
         />
 
+        <SelectorVista vista={vista} onCambiar={setVista} className="live-control-group live-vista" />
+
         <div className="live-control-group live-follow">
           <label className="live-switch">
             <input
@@ -527,6 +543,7 @@ function LiveSession() {
             activa={song.id === activeSongId}
             fontSize={fontSize}
             alineacion={alineacion}
+            vista={vista}
             onCambiarTonalidad={cambiarTonalidad}
             onQuitar={quitarCancion}
             onMover={moverCancion}

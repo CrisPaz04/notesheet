@@ -2,6 +2,8 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import { getSongById } from "@notesheet/api";
 import {
   renderSongContent,
+  renderChordChart,
+  formatLyrics,
   buildVoicesList,
   resolveInitialVoice,
   parseVoiceKey,
@@ -130,6 +132,16 @@ export default function useLiveSetlistContent({
         cargada: doc,
         rendered: null,
         pdf: { path: score.path },
+        // Un PDF puede traer además letra y acordes, en texto
+        vistas: {
+          letra: formatLyrics(doc.lyricsOnly),
+          acordes: renderChordChart(doc.acordes, {
+            baseKey: doc.key,
+            targetKey: entrada.key || doc.key,
+            instrument,
+            notationSystem
+          })
+        },
         voices: buildScoreVoicesList(doc.pdfs, TRANSPOSING_INSTRUMENTS),
         voiceKey: score.voiceKey,
         error: null
@@ -155,14 +167,21 @@ export default function useLiveSetlistContent({
 
     // El pipeline en su orden: tonalidad, instrumento, notación. `baseKey` es
     // la de la canción del repertorio y `targetKey` la que decidió la sesión.
-    const rendered = renderSongContent(content, {
+    const opciones = {
       baseKey: doc.key,
       targetKey: entrada.key || doc.key,
       instrument,
       notationSystem
-    });
+    };
+    const rendered = renderSongContent(content, opciones);
 
-    return { ...entrada, cargada: doc, rendered, voices, voiceKey, error: null };
+    // La letra y los acordes, listos para quien elija verlos (`elegirVista`)
+    const vistas = {
+      letra: rendered.lyricsOnly,
+      acordes: renderChordChart(doc.acordes, opciones)
+    };
+
+    return { ...entrada, cargada: doc, rendered, vistas, voices, voiceKey, error: null };
   }), [songs, cargadas, errores, instrument, notationSystem, voiceKeys]);
 
   return { canciones: preparadas, loading };

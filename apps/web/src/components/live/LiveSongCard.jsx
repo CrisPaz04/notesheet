@@ -1,8 +1,9 @@
 import { forwardRef } from "react";
 import PlaylistKeySelector from "../PlaylistKeySelector";
-import { nombrarTonalidad } from "@notesheet/core";
+import { nombrarTonalidad, elegirVista } from "@notesheet/core";
 import PdfEnLista from "../PdfEnLista";
 import Desplegable from "../Desplegable";
+import { SeccionesCancion, AvisoVista } from "../SeccionesCancion";
 
 /**
  * Una canción dentro de la sesión, con sus controles a la vista.
@@ -25,6 +26,7 @@ const LiveSongCard = forwardRef(function LiveSongCard({
   activa,
   fontSize,
   alineacion = "left",
+  vista = "principal",
   onCambiarTonalidad,
   onQuitar,
   onMover,
@@ -34,6 +36,11 @@ const LiveSongCard = forwardRef(function LiveSongCard({
   const tonalidadCompartida = song.key || song.originalKey || "?";
   const tonalidadPropia = song.rendered?.displayKey;
   const difieren = tonalidadPropia && tonalidadPropia !== tonalidadCompartida;
+
+  // Notas (o partitura), letra o acordes, según lo que eligió este músico.
+  // Si la canción no tiene lo pedido, la principal y un aviso.
+  const cargada = Boolean(song.rendered || song.pdf);
+  const eleccion = elegirVista(vista, song.vistas);
 
   return (
     <article
@@ -134,18 +141,18 @@ const LiveSongCard = forwardRef(function LiveSongCard({
         <p className="live-card-loading">Cargando…</p>
       )}
 
-      {/* Solo se abre cuando la canción está cerca de la pantalla: una
-          sesión puede llevar varios PDF. */}
-      {song.pdf && <PdfEnLista path={song.pdf.path} title={song.title} />}
+      {cargada && <AvisoVista faltaba={eleccion.faltaba} esPdf={Boolean(song.pdf)} />}
 
-      {song.rendered?.formatted?.sections?.map((section, i) => (
-        <section key={i} className="song-section-modern">
-          <h4 className="song-section-title">{section.title}</h4>
-          <div className={`song-section-content alinear-${alineacion}`} style={{ fontSize: `${fontSize}px` }}>
-            {section.content}
-          </div>
-        </section>
-      ))}
+      {eleccion.vista === "principal" ? (
+        <>
+          {/* Solo se abre cuando la canción está cerca de la pantalla: una
+              sesión puede llevar varios PDF. */}
+          {song.pdf && <PdfEnLista path={song.pdf.path} title={song.title} />}
+          <SeccionesCancion formatted={song.rendered?.formatted} alineacion={alineacion} fontSize={fontSize} />
+        </>
+      ) : (
+        <SeccionesCancion formatted={song.vistas[eleccion.vista]} alineacion={alineacion} fontSize={fontSize} />
+      )}
     </article>
   );
 });

@@ -4,11 +4,23 @@ import { useParams, Link } from "react-router-dom";
 import { getPlaylistById, getSongById, getUserPreferences } from "@notesheet/api";
 import { useAuth } from "../context/AuthContext";
 import useNotacionPreferida from "../hooks/useNotacionPreferida";
-import { renderSongContent, isPdfSong, nombrarTonalidad, resolveScore, DEFAULT_SCORE_VARIANT } from "@notesheet/core";
+import {
+  renderSongContent,
+  renderChordChart,
+  formatLyrics,
+  elegirVista,
+  vistaPreferida,
+  isPdfSong,
+  nombrarTonalidad,
+  resolveScore,
+  DEFAULT_SCORE_VARIANT
+} from "@notesheet/core";
 import LoadingSpinner from "../components/LoadingSpinner";
 import StartLiveButton from "../components/live/StartLiveButton";
 import PdfEnLista from "../components/PdfEnLista";
 import AlineacionTexto from "../components/AlineacionTexto";
+import SelectorVista from "../components/SelectorVista";
+import { SeccionesCancion, AvisoVista } from "../components/SeccionesCancion";
 import useAlineacionTexto from "../hooks/useAlineacionTexto";
 import HerramientasFlotantes from "../components/herramientas/HerramientasFlotantes";
 
@@ -23,6 +35,12 @@ function PlaylistView() {
   const { currentUser } = useAuth();
   const [notacion] = useNotacionPreferida(currentUser);
   const [alineacion, setAlineacion] = useAlineacionTexto();
+
+  // Notas, letra o acordes de todas las canciones de la lista. Arranca en la
+  // del instrumento de las preferencias, cuando llegan (la voz en la letra, la
+  // guitarra en los acordes...); una canción que no tenga la elegida enseña
+  // sus notas con un aviso (`elegirVista`).
+  const [vista, setVista] = useState("principal");
 
   // Con qué voz se abre cada partitura: la del instrumento del músico, como
   // en la vista de la canción. Sin preferencias, la voz principal.
@@ -40,6 +58,7 @@ function PlaylistView() {
     getUserPreferences(currentUser.uid)
       .then((prefs) => {
         if (!vigente) return;
+        setVista(vistaPreferida(prefs?.defaultInstrument, { hayLetra: true, hayAcordes: true }));
         setPreferenciasPdf({
           instrument: prefs?.defaultInstrument || null,
           variant: prefs?.defaultScoreVariant || DEFAULT_SCORE_VARIANT
@@ -113,15 +132,47 @@ function PlaylistView() {
   // mostrarla en la tonalidad elegida, no en la original. Antes se formateaba
   // sin transponer y la etiqueta decía una tonalidad mientras los acordes
   // mostraban otra. La notación es la del perfil, como en el resto de la app.
+  //
+  // Y en el instrumento del músico, como en la vista de la canción y en la
+  // sesión en vivo: los acordes de la guitarra van en concierto, y con las
+  // notas en la referencia de Sib la etiqueta de tonalidad no casaría.
+  const instrumento = preferenciasPdf.instrument || undefined;
   const cancionesVista = useMemo(() => songs.map((song) => {
-    if (song.error || isPdfSong(song)) return { ...song, formattedContent: null };
-    const { formatted } = renderSongContent(song.content, {
+    if (song.error) return { ...song, formattedContent: null, vistas: {} };
+
+    const opciones = {
       baseKey: song.key,
       targetKey: song.selectedKey || song.key,
+      instrument: instrumento,
       notationSystem: notacion
-    });
-    return { ...song, formattedContent: formatted };
-  }), [songs, notacion]);
+    };
+
+    // Un PDF puede traer además letra y acordes, en texto
+    if (isPdfSong(song)) {
+      return {
+        ...song,
+        formattedContent: null,
+        vistas: {
+          letra: formatLyrics(song.lyricsOnly),
+          acordes: renderChordChart(song.acordes, opciones)
+        }
+      };
+    }
+
+    const { formatted, lyricsOnly, displayKey } = renderSongContent(song.content, opciones);
+    return {
+      ...song,
+      formattedContent: formatted,
+      displayKey,
+      vistas: { letra: lyricsOnly, acordes: renderChordChart(song.acordes, opciones) }
+    };
+  }), [songs, notacion, instrumento]);
+
+  // Qué se enseña de cada una: lo elegido o, si no lo tiene, la principal
+  const cancionesConVista = useMemo(() => cancionesVista.map((song) => ({
+    ...song,
+    eleccion: song.error ? null : elegirVista(vista, song.vistas)
+  })), [cancionesVista, vista]);
 
   // Estilos de impresión
   useEffect(() => {
@@ -296,6 +347,8 @@ function PlaylistView() {
               </div>
 
               <AlineacionTexto alineacion={alineacion} onCambiar={setAlineacion} />
+
+              <SelectorVista vista={vista} onCambiar={setVista} />
               
               {/* Botones de acción */}
               <div className="action-buttons-song">
@@ -369,7 +422,7 @@ function PlaylistView() {
                 </h3>
               </div>
               
-              {cancionesVista.map((song, index) => (
+              {cancionesConVista.map((song, index) => (
                 <div key={song.id} id={`cancion-${song.id}`} className="playlist-song-ancla">
                   {/* Item de la canción */}
                   <div className="playlist-song-item">
@@ -400,14 +453,29 @@ function PlaylistView() {
                     </div>
                     
                     <div className="playlist-song-key">
-                      {nombrarTonalidad(song.selectedKey || song.key, notacion) || "?"}
+                      {nombrarTonalidad(song.displayKey || song.selectedKey || song.key, notacion) || "?"}
                     </div>
                   </div>
                   
+                  {song.eleccion && (
+                    <>
+                      <AvisoVista faltaba={song.eleccion.faltaba} esPdf={isPdfSong(song)} />
+                      {song.eleccion.vista !== "principal" && (
+                        <div className="song-content-section">
+                          <SeccionesCancion
+                            formatted={song.vistas[song.eleccion.vista]}
+                            alineacion={alineacion}
+                            fontSize={fontSize}
+                          />
+                        </div>
+                      )}
+                    </>
+                  )}
+
                   {/* Una partitura en PDF se despliega aquí mismo, en la voz
                       del músico, para leer la lista de corrido. Para elegir
                       otra voz está la pantalla de la canción. */}
-                  {!song.error && isPdfSong(song) && (
+                  {!song.error && isPdfSong(song) && song.eleccion.vista === "principal" && (
                     <div className="song-content-section">
                       {preferenciasListas && (
                         <PdfEnLista
@@ -423,7 +491,7 @@ function PlaylistView() {
                   )}
 
                   {/* Contenido de la canción */}
-                  {!song.error && song.formattedContent && (
+                  {!song.error && song.formattedContent && song.eleccion.vista === "principal" && (
                     <div className="song-content-section">
                       {song.formattedContent.sections.map((section, sectionIndex) => (
                         <div key={sectionIndex} className="song-section-modern">

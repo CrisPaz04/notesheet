@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { renderChordChart, CHORDS_SOURCE_INSTRUMENT, vistaPreferida } from '@notesheet/core';
+import { renderChordChart, CHORDS_SOURCE_INSTRUMENT, vistaPreferida, elegirVista } from '@notesheet/core';
 
 // Los acordes (`song.acordes`) se guardan en concierto, como los escribe el
 // guitarrista, y se muestran con el mismo recorrido que las notas.
@@ -76,5 +76,22 @@ describe('vistaPreferida: con qué vista abre cada músico', () => {
     expect(vistaPreferida('c_piano', todo)).toBe('acordes');
     expect(vistaPreferida('c_bass', todo)).toBe('acordes');
     expect(vistaPreferida('c_guitar', { hayLetra: true })).toBe('principal');
+  });
+});
+
+describe('elegirVista: qué se enseña en una lista', () => {
+  const con = (t) => ({ sections: [{ title: '', content: t }] });
+  const vacia = { sections: [{ title: 'Intro', content: '  ' }] };
+
+  it('lo pedido, si la canción lo tiene', () => {
+    expect(elegirVista('letra', { letra: con('Aleluya') })).toEqual({ vista: 'letra', faltaba: null });
+    expect(elegirVista('acordes', { acordes: con('DO SOL') })).toEqual({ vista: 'acordes', faltaba: null });
+    expect(elegirVista('principal', { letra: con('x') })).toEqual({ vista: 'principal', faltaba: null });
+  });
+
+  it('si no lo tiene (o solo tiene títulos), la principal y qué faltaba', () => {
+    expect(elegirVista('acordes', { letra: con('x'), acordes: null })).toEqual({ vista: 'principal', faltaba: 'acordes' });
+    expect(elegirVista('letra', { letra: vacia })).toEqual({ vista: 'principal', faltaba: 'letra' });
+    expect(elegirVista('letra', undefined)).toEqual({ vista: 'principal', faltaba: 'letra' });
   });
 });
