@@ -466,3 +466,40 @@ describe('SongEditor: tempo, compás y datos de la grabación', () => {
     expect((await guardar(user)).grabacion).toBeNull();
   });
 });
+
+// Los acordes para guitarra y piano: su propia pestaña, en concierto, y se
+// guardan tal cual se escriben (ver `renderChordChart`).
+describe('SongEditor: acordes', () => {
+  const pestanaAcordes = () => screen.getByRole('button', { name: /^Acordes$/ });
+
+  it('tienen su pestaña, que explica que van en concierto', async () => {
+    const user = userEvent.setup();
+    await renderEditor();
+    await user.click(pestanaAcordes());
+
+    expect(screen.getByLabelText('editor')).toHaveValue('');
+    expect(screen.getByText(/como suenan/)).toBeInTheDocument();
+  });
+
+  it('carga los que la canción ya tiene', async () => {
+    const user = userEvent.setup();
+    mockGetSongById.mockResolvedValue({ ...SONG, acordes: '## Coro\nSIb FA' });
+    await renderEditor();
+    await user.click(pestanaAcordes());
+
+    expect(screen.getByLabelText('editor')).toHaveValue('## Coro\nSIb FA');
+  });
+
+  it('se guardan tal cual, sin tocar la voz principal', async () => {
+    const user = userEvent.setup();
+    await renderEditor();
+    await user.click(pestanaAcordes());
+    await user.type(screen.getByLabelText('editor'), 'SIb FA');
+    await user.click(screen.getByRole('button', { name: /^Guardar$/ }));
+
+    await waitFor(() => expect(mockUpdateSong).toHaveBeenCalled());
+    const guardado = mockUpdateSong.mock.calls.at(-1)[1];
+    expect(guardado.acordes).toBe('SIb FA');
+    expect(guardado.content).toBe(SONG.voices.bb_trumpet[1]);
+  });
+});

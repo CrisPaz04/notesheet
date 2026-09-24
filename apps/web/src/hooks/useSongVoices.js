@@ -3,26 +3,30 @@ import { addVoiceToSong, removeVoiceFromSong } from "@notesheet/api";
 import { parseVoiceKey } from "@notesheet/core";
 
 export const LYRICS_TAB = "lyrics";
+export const ACORDES_TAB = "acordes";
 
 /**
  * Gestiona las voces de una canción en el editor: alta, baja, pestaña activa
  * y contenido de cada voz. Persiste en Firestore solo si la canción ya existe;
  * en una canción nueva todo vive en memoria hasta que se guarda.
  *
- * La pestaña de letra (`LYRICS_TAB`) no es una voz: su contenido lo lleva el
- * componente, y el hook lo delega a `lyrics.value` / `lyrics.onChange`.
+ * Las pestañas de letra (`LYRICS_TAB`) y de acordes (`ACORDES_TAB`) no son
+ * voces: su contenido lo lleva el componente, y el hook lo delega a
+ * `lyrics` / `acordes` (`{ value, onChange }`).
  *
  * @param {Object} options
  * @param {string|undefined} options.songId - Id de la canción, si ya existe
  * @param {boolean} options.isNewSong - Si aún no se ha guardado
  * @param {Function} options.onError - Recibe el mensaje de error a mostrar
  * @param {Object} options.lyrics - `{ value, onChange }` para la pestaña de letra
+ * @param {Object} options.acordes - `{ value, onChange }` para la de acordes
  */
 export default function useSongVoices({
   songId,
   isNewSong,
   onError = () => {},
-  lyrics = { value: "", onChange: () => {} }
+  lyrics = { value: "", onChange: () => {} },
+  acordes = { value: "", onChange: () => {} }
 } = {}) {
   const [voices, setVoices] = useState({ bb_trumpet: { "1": "" } });
   const [currentTab, setCurrentTab] = useState("bb_trumpet-1");
@@ -102,6 +106,7 @@ export default function useSongVoices({
 
   const getCurrentTabContent = () => {
     if (currentTab === LYRICS_TAB) return lyrics.value;
+    if (currentTab === ACORDES_TAB) return acordes.value;
 
     const parsed = parseVoiceKey(currentTab);
     if (!parsed) return "";
@@ -111,6 +116,10 @@ export default function useSongVoices({
   const updateCurrentTabContent = (newContent) => {
     if (currentTab === LYRICS_TAB) {
       lyrics.onChange(newContent);
+      return;
+    }
+    if (currentTab === ACORDES_TAB) {
+      acordes.onChange(newContent);
       return;
     }
 

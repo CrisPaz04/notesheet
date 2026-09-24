@@ -195,7 +195,7 @@ Bootstrap acaban saliendo en los seis. Usa las variables:
 ## Modelo de datos
 
 **songs**: `userId` (dueño), `public` (repertorio compartido), `album`, `title`, `key`,
-`type`, `version`, `versiones`, `tempo`, `compas`, `grabacion`, `content`, `lyricsOnly`, `voices` (mapa instrumento → nº de voz →
+`type`, `version`, `versiones`, `tempo`, `compas`, `grabacion`, `content`, `lyricsOnly`, `acordes`, `voices` (mapa instrumento → nº de voz →
 contenido), `primaryInstrument`, `primaryVoiceNumber`, `format` (`"chords"` por
 ausencia, o `"pdf"`), `pdfs` (mapa instrumento → nº de voz → variante → **ruta**
 en Storage, nunca la URL de descarga).
@@ -210,6 +210,20 @@ en Storage, nunca la URL de descarga).
   metrónomo al abrirlo desde la canción. `grabacion` son los datos de la grabación
   original traídos con "Buscar datos" (artista, álbum, año, duración, `tonoConcierto`,
   `bpm`, `compas`, y sus `fuentes`). **Está en concierto** y nunca pisa `key`.
+- `acordes` es la hoja de acordes para guitarra y piano (texto, con `##` secciones y la
+  letra debajo si se quiere). Va **en concierto**, no en la referencia de Sib como
+  `content` y `voices`: se guarda tal cual la escribe el guitarrista. Convertirla a Sib y
+  deshacerlo al abrir cambiaba la ortografía (SIb → DO → LA#), porque el transpositor
+  conserva el bemol o el sostenido de cada nota. `renderChordChart` (`songRendering.js`)
+  la pasa por lo mismo que las notas (tonalidad, instrumento, cejilla, notación) con
+  `CHORDS_SOURCE_INSTRUMENT` como origen. En el visor es la tercera vista, "Acordes",
+  junto a Notas y Letra. Está **siempre** (salvo en un PDF sin acordes), aunque la
+  canción no los tenga: así se sabe dónde van, y a quien puede editarla le ofrece
+  "Añadir acordes" (Notas y Letra avisan igual cuando están vacías). La canción se
+  abre en la vista del instrumento de las preferencias (`vistaPreferida`, en
+  `instruments.js`): los vientos en Notas, la voz en Letra, guitarra, piano y bajo en
+  Acordes; nunca en una vista vacía. En el editor, pestaña "Acordes" junto a "Solo Letra".
+  Todavía **no** se muestran en la lista ni en la sesión en vivo.
 - `getAllSongs(userId)` devuelve las propias **más** las públicas de otros, y marca cada
   una con `isOwn`. Son dos consultas porque Firestore no hace OR entre campos distintos.
 - La interfaz solo debe ofrecer editar o borrar cuando `isOwn`; las reglas lo imponen
@@ -369,7 +383,7 @@ SPA (el orden importa).
 ## Notes
 
 - No TypeScript - pure JavaScript
-- Vitest configured; 1628 tests in `apps/web/src/test/` (run with `npm run test:run`)
+- Vitest configured; 1653 tests in `apps/web/src/test/` (run with `npm run test:run`)
 - Los tests se validan con **mutaciones**: se rompe el código a propósito y se comprueba
   que algún test falla. Ha destapado cuatro tests que pasaban por la razón equivocada,
   y un bug de verdad en `scores.js` (las voces se ordenaban como texto, así que la 10
@@ -512,14 +526,11 @@ ahorra volver a buscarlo.
   decidir si se saca el archivo del repo; sacarlo del árbol no lo saca del
   historial.
 
-### Acordes: falta el contenido, no el motor
+### Acordes: el sitio ya está, falta el contenido
 
-Ya están en el catálogo la guitarra, el piano, el bajo y la voz
-(`readsChordChart`, `supportsCapo` en `instruments.js`), y el capo funciona.
-Pero **ninguna de las 118 canciones del repertorio tiene acordes**: su
-`content` son líneas de notas sueltas ("Re# Mi Fa# Sol# La# Si"), que es la
-melodía del viento. Ni una lleva sufijo de acorde (`m`, `7`, `sus4`, `maj7`).
-
-Así que un guitarrista que elige su instrumento ve esas mismas notas bajadas un
-tono, no una hoja de acordes. Falta decidir dónde vive la progresión y en qué
-tonalidad se guarda.
+Las canciones ya pueden llevar su hoja de acordes (`acordes`, ver Modelo de datos),
+que escribe la banda de oído en concierto. Pero **ninguna de las 118 canciones del
+repertorio tiene todavía**: su `content` son líneas de notas sueltas ("Re# Mi Fa#
+Sol# La# Si"), la melodía del viento. Queda:
+- escribirlos, canción por canción;
+- enseñarlos también en la lista y en la sesión en vivo, que hoy solo enseñan notas.

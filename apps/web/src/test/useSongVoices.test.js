@@ -9,7 +9,7 @@ vi.mock('@notesheet/api', () => ({
   removeVoiceFromSong: (...args) => mockRemoveVoiceFromSong(...args)
 }));
 
-const { default: useSongVoices, LYRICS_TAB } = await import('../hooks/useSongVoices');
+const { default: useSongVoices, LYRICS_TAB, ACORDES_TAB } = await import('../hooks/useSongVoices');
 
 let onError;
 
@@ -164,6 +164,24 @@ describe('useSongVoices', () => {
 
     expect(onChange).toHaveBeenCalledWith('letra editada');
     // La letra no se guarda como si fuera una voz
+    expect(result.current.voices).toEqual({ bb_trumpet: { '1': '' } });
+  });
+
+  it('delega la pestaña de acordes al componente, sin tocar las voces ni la letra', () => {
+    const acordes = { value: 'DO SOL', onChange: vi.fn() };
+    const lyrics = { value: 'la letra', onChange: vi.fn() };
+    const { result } = setup({ lyrics, acordes });
+
+    act(() => {
+      result.current.setCurrentTab(ACORDES_TAB);
+    });
+    expect(result.current.getCurrentTabContent()).toBe('DO SOL');
+
+    act(() => {
+      result.current.updateCurrentTabContent('DO SOL LAm FA');
+    });
+    expect(acordes.onChange).toHaveBeenCalledWith('DO SOL LAm FA');
+    expect(lyrics.onChange).not.toHaveBeenCalled();
     expect(result.current.voices).toEqual({ bb_trumpet: { '1': '' } });
   });
 

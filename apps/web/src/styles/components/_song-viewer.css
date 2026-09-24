@@ -82,9 +82,13 @@
     gap: 1rem;
   }
   
+  /* Envuelve en cualquier ancho, no solo en el móvil: con la pestaña de
+     acordes, la fila ya no cabía en una tablet en horizontal y la página
+     entera se desplazaba de lado. */
   .controls-group {
     display: flex;
     align-items: center;
+    flex-wrap: wrap;
     gap: var(--spacing-sm);
   }
   
@@ -243,7 +247,13 @@
   
   .action-buttons-song {
     display: flex;
+    flex-wrap: wrap;
     gap: var(--spacing-sm);
+  }
+
+  /* Una vista (letra, acordes) de una canción que aún no la tiene */
+  .vista-vacia .btn-song-action {
+    display: inline-flex;
   }
   
   .btn-song-action {

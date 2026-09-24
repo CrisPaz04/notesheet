@@ -37,7 +37,7 @@ import ScoreUploader from "../components/ScoreUploader";
 import VersionesInput from "../components/VersionesInput";
 import useNotacionPreferida from "../hooks/useNotacionPreferida";
 import BuscarDatosModal from "../components/datos/BuscarDatosModal";
-import useSongVoices from "../hooks/useSongVoices";
+import useSongVoices, { LYRICS_TAB, ACORDES_TAB } from "../hooks/useSongVoices";
 import Desplegable from "../components/Desplegable";
 
 // Instrumentos soportados para voces adicionales
@@ -49,6 +49,9 @@ const VOICE_INSTRUMENTS = Object.entries(TRANSPOSING_INSTRUMENTS)
 // dentro del componente es nuevo en cada render: como cada tecla provoca un
 // render, cada tecla destruía el editor y el cursor se perdía, así que había
 // que volver a hacer clic para seguir escribiendo.
+// Pestañas que son texto también en una canción en PDF: no son voces
+const PESTANAS_DE_TEXTO = [LYRICS_TAB, ACORDES_TAB];
+
 const EDITOR_OPTIONS = {
   autofocus: false,
   spellChecker: false,
@@ -99,6 +102,9 @@ function SongEditor() {
   const toquesRef = useRef([]);
   const [content, setContent] = useState("");
   const [lyricsOnly, setLyricsOnly] = useState("");
+  // En concierto, como los toca la guitarra sin cejilla (ver
+  // `renderChordChart`). Se guardan tal cual se escriben.
+  const [acordes, setAcordes] = useState("");
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
   const [error, setError] = useState("");
@@ -144,7 +150,8 @@ function SongEditor() {
     songId: id,
     isNewSong,
     onError: setError,
-    lyrics: { value: lyricsOnly, onChange: setLyricsOnly }
+    lyrics: { value: lyricsOnly, onChange: setLyricsOnly },
+    acordes: { value: acordes, onChange: setAcordes }
   });
 
   // Si las notas no encajan con la tonalidad elegida, proponer la que sí.
@@ -198,6 +205,8 @@ function SongEditor() {
       setContent(song.content || "");
       setFormat(getSongFormat(song));
       setPdfs(song.pdfs || {});
+
+      setAcordes(song.acordes || "");
 
       if (song.lyricsOnly) {
         setLyricsOnly(song.lyricsOnly);
@@ -342,6 +351,7 @@ function SongEditor() {
         // reaparecía como una vista de letra fantasma.
         content: esPdf ? "" : primaryContent,
         lyricsOnly,
+        acordes,
         voices,
         format,
         pdfs,
@@ -559,8 +569,9 @@ function SongEditor() {
       });
     });
 
-    // Add lyrics tab at the end
+    // Letra y acordes al final: no son voces
     tabs.push({ id: "lyrics", label: "Solo Letra", icon: "bi-card-text" });
+    tabs.push({ id: "acordes", label: "Acordes", icon: "bi-music-note" });
 
     return (
       <div className="editor-tabs">
@@ -1010,7 +1021,7 @@ function SongEditor() {
               esta voz. La pestaña de letra sigue siendo texto en los dos
               formatos: un PDF puede traer además la letra. */}
           <div className="editor-content">
-            {format === SONG_FORMAT_PDF && currentTab !== "lyrics" ? (
+            {format === SONG_FORMAT_PDF && !PESTANAS_DE_TEXTO.includes(currentTab) ? (
               <ScoreUploader
                 casilla={pdfsDeLaPestana}
                 disabled={isNewSong || !id}
@@ -1035,13 +1046,22 @@ function SongEditor() {
 
           {/* Texto de ayuda */}
           <div className="editor-help-text">
-            {format === SONG_FORMAT_PDF && currentTab !== "lyrics" ? (
+            {format === SONG_FORMAT_PDF && !PESTANAS_DE_TEXTO.includes(currentTab) ? (
               <>
                 <i className="bi bi-info-circle me-2"></i>
                 Sube el PDF de esta voz. La versión <strong>con nombres de
                 notas</strong> es para quien todavía no lee partitura: si no
                 está, a quien la tenga elegida se le muestra la normal y se le
                 avisa.
+              </>
+            ) : currentTab === "acordes" ? (
+              <>
+                <i className="bi bi-info-circle me-2"></i>
+                Escribe los acordes <strong>como suenan</strong> (en concierto, lo que
+                toca la guitarra sin cejilla), una línea de acordes por línea:
+                {" "}<code>DO SOL LAm FA</code>. Puedes poner la letra debajo de cada
+                línea y usar <code>## Título</code> para las secciones. Cada músico
+                los verá en su instrumento y su notación.
               </>
             ) : currentTab === "lyrics" ? (
               <>

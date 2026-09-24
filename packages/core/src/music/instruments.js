@@ -98,6 +98,27 @@ export const readsChordChart = (instrumentId) =>
   Boolean(TRANSPOSING_INSTRUMENTS[instrumentId]?.readsChordChart);
 
 /**
+ * La vista con la que se abre una canción, según el instrumento del músico
+ * (el de sus preferencias):
+ * - la voz, la letra; y si no hay, los acordes;
+ * - guitarra, piano y bajo, los acordes;
+ * - los vientos, sus notas.
+ * Nunca una vista vacía: si no hay lo suyo, la principal (notas o partitura).
+ *
+ * @param {string} instrumentId
+ * @param {{hayLetra?: boolean, hayAcordes?: boolean}} [contenido]
+ * @returns {'principal'|'letra'|'acordes'}
+ */
+export const vistaPreferida = (instrumentId, { hayLetra = false, hayAcordes = false } = {}) => {
+  if (instrumentId === 'c_voice') {
+    if (hayLetra) return 'letra';
+    return hayAcordes ? 'acordes' : 'principal';
+  }
+  if (readsChordChart(instrumentId) && hayAcordes) return 'acordes';
+  return 'principal';
+};
+
+/**
  * ¿A este instrumento se le puede poner cejilla?
  *
  * @param {string} instrumentId

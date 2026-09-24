@@ -15,10 +15,18 @@ export default function useSwipeViews(viewCount = 2) {
   const [touchStart, setTouchStart] = useState(null);
   const [touchEnd, setTouchEnd] = useState(null);
 
-  // Una ref de contenedor y una posición de scroll por vista. Se crean una
-  // sola vez para que las refs sean estables entre renders.
-  const viewRefs = useRef(Array.from({ length: viewCount }, () => ({ current: null }))).current;
-  const scrollPositions = useRef(new Array(viewCount).fill(0));
+  // Una ref de contenedor y una posición de scroll por vista. El número de
+  // vistas puede crecer después de montar (la de acordes aparece al cargar
+  // la canción), así que la lista se amplía, pero las refs que ya había se
+  // conservan: tienen que ser estables entre renders.
+  const viewRefs = useRef([]).current;
+  while (viewRefs.length < viewCount) viewRefs.push({ current: null });
+  const scrollPositions = useRef([]);
+
+  // Si desaparece la vista en la que se estaba, a la última que queda
+  useEffect(() => {
+    if (activeView > viewCount - 1) setActiveView(Math.max(0, viewCount - 1));
+  }, [activeView, viewCount]);
 
   const saveScrollPosition = () => {
     const element = viewRefs[activeView]?.current;

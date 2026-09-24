@@ -484,3 +484,109 @@ describe('SongView: tempo y grabación original', () => {
     expect(screen.getByText('Muéstrame Tu Gloria (2003)')).toBeInTheDocument();
   });
 });
+
+// Los acordes para guitarra y piano: una tercera vista, que solo sale si
+// alguien los escribió. Se guardan en concierto (lo que toca la guitarra).
+describe('SongView: acordes', () => {
+  const CON_ACORDES = {
+    ...SONG,
+    // DO en la referencia de Sib es SIb en concierto
+    acordes: '## Coro\nSIb FA SOLm MIb\nAleluya al Rey'
+  };
+
+  const pestana = (nombre) => screen.getByRole('button', { name: nombre });
+
+  // La pestaña está siempre: así se sabe dónde van
+  it('sin acordes la pestaña está igual, y avisa de que faltan', async () => {
+    const { container } = await renderSongView();
+    expect(pestana('Notas')).toBeInTheDocument();
+    expect(pestana('Letra')).toBeInTheDocument();
+    expect(pestana('Acordes')).toBeInTheDocument();
+    expect(container.querySelector('.song-view--acordes'))
+      .toHaveTextContent('Esta canción todavía no tiene acordes.');
+    // Quien no puede editarla no ve el enlace
+    expect(screen.queryByRole('link', { name: /Añadir acordes/ })).toBeNull();
+  });
+
+  it('a quien puede editarla le ofrece añadirlos', async () => {
+    mockAuth.currentUser = { uid: 'user-1' };
+    mockAuth.canEditSongs = () => true;
+    mockGetSongById.mockResolvedValue({ ...SONG, userId: 'user-1' });
+    await renderSongView();
+    expect(screen.getByRole('link', { name: /Añadir acordes/ })).toHaveAttribute('href', '/songs/song-1/edit');
+  });
+
+  it('la letra vacía avisa igual, y ofrece añadirla a quien puede editarla', async () => {
+    mockAuth.currentUser = { uid: 'user-1' };
+    mockAuth.canEditSongs = () => true;
+    // Solo notas: no queda letra que sacar
+    mockGetSongById.mockResolvedValue({
+      ...SONG, userId: 'user-1', voices: { bb_trumpet: { 1: '## Intro\nDO SOL LAm FA' } }
+    });
+    await renderSongView();
+    expect(screen.getByText('Esta canción todavía no tiene letra.')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Añadir letra/ })).toHaveAttribute('href', '/songs/song-1/edit');
+  });
+
+  it('las notas vacías avisan igual que la letra y los acordes', async () => {
+    mockAuth.currentUser = { uid: 'user-1' };
+    mockAuth.canEditSongs = () => true;
+    mockGetSongById.mockResolvedValue({
+      ...SONG, userId: 'user-1', content: '', voices: { bb_trumpet: { 1: '' } }
+    });
+    await renderSongView();
+    expect(screen.getByText('Esta canción todavía no tiene notas.')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Añadir notas/ })).toHaveAttribute('href', '/songs/song-1/edit');
+  });
+
+  it('quien canta abre la canción en la letra', async () => {
+    mockAuth.currentUser = { uid: 'user-1' };
+    mockGetUserPreferences.mockResolvedValue({ defaultInstrument: 'c_voice' });
+    mockGetSongById.mockResolvedValue(CON_ACORDES);
+    await renderSongView();
+    await waitFor(() => expect(pestana('Letra')).toHaveClass('active'));
+  });
+
+  it('quien toca guitarra no abre en una pestaña de acordes vacía', async () => {
+    mockAuth.currentUser = { uid: 'user-1' };
+    mockGetUserPreferences.mockResolvedValue({ defaultInstrument: 'c_guitar' });
+    await renderSongView();
+    expect(pestana('Notas')).toHaveClass('active');
+  });
+
+  it('con acordes sale la tercera pestaña, y la tira de vistas se ensancha', async () => {
+    mockGetSongById.mockResolvedValue(CON_ACORDES);
+    const { container } = await renderSongView();
+
+    expect(pestana('Acordes')).toBeInTheDocument();
+    expect(container.querySelector('.song-sections').style.width).toBe('300%');
+
+    await userEvent.click(pestana('Acordes'));
+    expect(container.querySelector('.song-sections').style.transform).toMatch(/translateX\(-66\.66/);
+  });
+
+  it('la trompeta los ve un tono arriba, como sus notas', async () => {
+    mockGetSongById.mockResolvedValue(CON_ACORDES);
+    const { container } = await renderSongView();
+    const vista = container.querySelector('.song-view--acordes');
+    expect(vista).toHaveTextContent('DO SOL LAm FA');
+    expect(vista).toHaveTextContent('Aleluya al Rey');
+  });
+
+  it('quien toca guitarra abre la canción en los acordes, tal como se escribieron', async () => {
+    mockAuth.currentUser = { uid: 'user-1' };
+    mockGetUserPreferences.mockResolvedValue({ defaultInstrument: 'c_guitar' });
+    mockGetSongById.mockResolvedValue(CON_ACORDES);
+    const { container } = await renderSongView();
+
+    await waitFor(() => expect(pestana('Acordes')).toHaveClass('active'));
+    expect(container.querySelector('.song-view--acordes')).toHaveTextContent('SIb FA SOLm MIb');
+  });
+
+  it('la trompeta sigue abriendo en las notas', async () => {
+    mockGetSongById.mockResolvedValue(CON_ACORDES);
+    await renderSongView();
+    expect(pestana('Notas')).toHaveClass('active');
+  });
+});
+

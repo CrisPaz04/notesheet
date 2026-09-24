@@ -161,6 +161,62 @@ export const renderSongContent = (content, {
 };
 
 /**
+ * La referencia en la que se guardan los acordes (`song.acordes`): el tono
+ * de concierto, lo que suena y lo que toca la guitarra sin cejilla.
+ *
+ * No la de la trompeta en Sib, como las notas. Así el guitarrista escribe lo
+ * que toca, y lo que escribe es lo que se guarda: convertir a Sib al guardar
+ * y deshacerlo al abrir el editor cambiaba la ortografía (SIb subía a DO y
+ * bajaba como LA#), porque el transpositor conserva el bemol o el sostenido
+ * de cada nota y DO no tiene ninguno.
+ */
+export const CHORDS_SOURCE_INSTRUMENT = 'c_guitar';
+
+/**
+ * Prepara los acordes de una canción para mostrarlos, con el mismo recorrido
+ * que las notas: tonalidad, instrumento, cejilla y notación.
+ *
+ * Las tonalidades (`baseKey`, `targetKey`) son las de la canción, que están en
+ * la referencia de Sib como `key`. Se pasan a concierto antes de transponer:
+ * la distancia es la misma, pero `transposeContent` elige bemoles o
+ * sostenidos según la tonalidad, y la buena es la que están escritos.
+ *
+ * @param {string} acordes - `song.acordes`, en concierto
+ * @param {Object} options - Las mismas de `renderSongContent`
+ * @returns {Object|null} Estructura de `formatSong`, o null si no hay acordes
+ */
+export const renderChordChart = (acordes, {
+  baseKey,
+  targetKey,
+  instrument = SOURCE_INSTRUMENT,
+  notationSystem = 'latin',
+  capo = 0
+} = {}) => {
+  if (!acordes || !acordes.trim()) return null;
+
+  let processed = acordes;
+
+  if (targetKey && baseKey && targetKey !== baseKey) {
+    processed = transposeContent(
+      processed,
+      getVisualKeyForInstrument(baseKey, CHORDS_SOURCE_INSTRUMENT),
+      getVisualKeyForInstrument(targetKey, CHORDS_SOURCE_INSTRUMENT)
+    );
+  }
+
+  if (instrument !== CHORDS_SOURCE_INSTRUMENT) {
+    processed = transposeForInstrument(processed, CHORDS_SOURCE_INSTRUMENT, instrument);
+  }
+
+  const trasteCapo = Number.isInteger(capo) && capo > 0 ? capo : 0;
+  if (trasteCapo) {
+    processed = transposeBySemitones(processed, -trasteCapo);
+  }
+
+  return formatSong(convertNotationSystem(processed, notationSystem));
+};
+
+/**
  * Construye la lista plana de voces disponibles de una canción a partir de
  * `song.voices`, ordenada por instrumento y número de voz.
  *

@@ -1,5 +1,5 @@
 // apps/web/src/pages/SongView.jsx
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, Link } from "react-router-dom";
 import {
   getSongById,
@@ -15,12 +15,14 @@ import {
   getVisualKeyForInstrument,
   transposeKeyBySemitones,
   renderSongContent,
+  renderChordChart,
   formatLyrics,
   buildVoicesList,
   parseVoiceKey,
   resolveInitialVoice,
   isPdfSong,
   readsChordChart,
+  vistaPreferida,
   supportsCapo,
   buildScoreVoicesList,
   resolveScore,
@@ -73,6 +75,7 @@ function SongView() {
   const [song, setSong] = useState(null);
   const [formattedSong, setFormattedSong] = useState(null);
   const [formattedLyricsOnly, setFormattedLyricsOnly] = useState(null);
+  const [formattedAcordes, setFormattedAcordes] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -126,6 +129,28 @@ function SongView() {
     ? Boolean(song?.lyricsOnly?.trim())
     : true;
 
+  // Los acordes (guitarra, piano) son una vista más. Está siempre, aunque la
+  // canción aún no los tenga: así se sabe dónde van, y quien puede editarla
+  // tiene ahí el enlace para añadirlos. Salvo en un PDF sin acordes, que se
+  // queda con su vista única (el tamaño lo manda el zoom del visor).
+  const hayAcordes = Boolean(song?.acordes?.trim());
+  const tieneAcordes = hayAcordes || !esPdf;
+  const puedeEditar = canEditSongs() && song?.userId === currentUser?.uid;
+
+  // Las vistas entre las que se desliza, en orden. La principal siempre está.
+  const vistas = [
+    {
+      id: "principal",
+      etiqueta: esPdf ? "Partitura" : "Notas",
+      icono: esPdf ? "bi bi-file-earmark-music" : "bi bi-music-note-list",
+      objeto: esPdf ? "la partitura" : "las notas"
+    },
+    ...(tieneLetra ? [{ id: "letra", etiqueta: "Letra", icono: "bi bi-card-text", objeto: "la letra" }] : []),
+    ...(tieneAcordes ? [{ id: "acordes", etiqueta: "Acordes", icono: "bi bi-music-note", objeto: "los acordes" }] : [])
+  ];
+  const variasVistas = vistas.length > 1;
+  const indiceDe = (vistaId) => vistas.findIndex((v) => v.id === vistaId);
+
   const {
     fontSize,
     setFontSize,
@@ -142,8 +167,24 @@ function SongView() {
     handleTouchStart,
     handleTouchMove,
     handleTouchEnd
-  } = useSwipeViews(2);
-  const [chordsViewRef, lyricsViewRef] = viewRefs;
+  } = useSwipeViews(vistas.length);
+  const refDe = (vistaId) => viewRefs[indiceDe(vistaId)];
+
+  // Cada músico abre la canción en lo suyo, según el instrumento de sus
+  // preferencias: la voz en la letra, guitarra, piano y bajo en los acordes,
+  // los vientos en las notas (`vistaPreferida`). Solo al abrirla, no cada vez
+  // que se recarga, y nunca en una vista vacía.
+  const vistaInicialDe = useRef(null);
+  useEffect(() => {
+    if (!song || vistaInicialDe.current === song.id) return;
+    vistaInicialDe.current = song.id;
+    const preferida = vistaPreferida(currentInstrument, {
+      hayLetra: tieneLetra && formattedLyricsOnly?.sections?.length > 0,
+      hayAcordes
+    });
+    if (indiceDe(preferida) > 0) setActiveView(indiceDe(preferida));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [song]);
 
   /**
    * Ejecuta el pipeline de renderizado y vuelca el resultado en el estado.
@@ -152,14 +193,19 @@ function SongView() {
    * todavia no esta en el estado de este render.
    */
   const applyRender = (content, overrides = {}) => {
-    const rendered = renderSongContent(content, {
+    const { acordes = song?.acordes, ...opciones } = overrides;
+    const todas = {
       baseKey,
       targetKey,
       instrument: currentInstrument,
       notationSystem,
       capo,
-      ...overrides
-    });
+      ...opciones
+    };
+    const rendered = renderSongContent(content, todas);
+    // Los acordes siguen a las notas: misma tonalidad, instrumento, cejilla y
+    // notación (están guardados en concierto; ver `renderChordChart`).
+    setFormattedAcordes(renderChordChart(acordes, todas));
 
     setFormattedSong(rendered.formatted);
     setFormattedLyricsOnly(rendered.lyricsOnly);
@@ -233,6 +279,12 @@ function SongView() {
           // La letra, si la hay, se muestra tal cual: en un PDF no hay
           // acordes que quitar, así que aquí no pinta el pipeline entero.
           setFormattedLyricsOnly(formatLyrics(loadedSong.lyricsOnly));
+          setFormattedAcordes(renderChordChart(loadedSong.acordes, {
+            baseKey: songKey,
+            targetKey: songKey,
+            instrument,
+            notationSystem: notation
+          }));
         } else {
           setScore(null);
           setScoreVoicesList([]);
@@ -252,7 +304,8 @@ function SongView() {
             baseKey: songKey,
             targetKey: songKey,
             instrument,
-            notationSystem: notation
+            notationSystem: notation,
+            acordes: loadedSong.acordes
           });
         }
         // Canciones del mismo álbum. Solo se consulta el repertorio si esta
@@ -857,7 +910,7 @@ function SongView() {
             <div className="controls-group">
               {/* Controles de fuente. En un PDF el tamaño no lo manda la
                   fuente sino el zoom, que vive en el propio visor. */}
-              <div className="font-controls" hidden={esPdf && !tieneLetra}>
+              <div className="font-controls" hidden={esPdf && !variasVistas}>
                 <button
                   className="font-control-btn"
                   onClick={decreaseFontSize}
@@ -881,31 +934,27 @@ function SongView() {
                 </button>
               </div>
 
-              {!(esPdf && !tieneLetra) && (
+              {!(esPdf && !variasVistas) && (
                 <AlineacionTexto alineacion={alineacion} onCambiar={setAlineacion} />
               )}
               
-              {/* Toggle de vista. Un PDF sin letra tiene una sola vista: el
-                  botón sobraría. */}
-              {tieneLetra && (
+              {/* Toggle de vista. Un PDF sin letra ni acordes tiene una sola
+                  vista: el botón sobraría. */}
+              {variasVistas && (
                 <div className="view-toggle-controls">
-                  <button
-                    className={`view-toggle-btn-song ${activeView === 0 ? 'active' : ''}`}
-                    onClick={() => setActiveView(0)}
-                  >
-                    <i className={esPdf ? "bi bi-file-earmark-music" : "bi bi-music-note-list"}></i>
-                    {esPdf ? "Partitura" : "Notas"}
-                  </button>
-                  <button
-                    className={`view-toggle-btn-song ${activeView === 1 ? 'active' : ''}`}
-                    onClick={() => setActiveView(1)}
-                  >
-                    <i className="bi bi-card-text"></i>
-                    Letra
-                  </button>
+                  {vistas.map((vista, indice) => (
+                    <button
+                      key={vista.id}
+                      className={`view-toggle-btn-song ${activeView === indice ? 'active' : ''}`}
+                      onClick={() => setActiveView(indice)}
+                    >
+                      <i className={vista.icono}></i>
+                      {vista.etiqueta}
+                    </button>
+                  ))}
                 </div>
               )}
-              
+
               {/* Botones de acción */}
               <div className="action-buttons-song">
                 <button
@@ -953,7 +1002,7 @@ function SongView() {
                   </button>
                 )}
 
-                {canEditSongs() && song.userId === currentUser?.uid && (
+                {puedeEditar && (
                   <Link
                     to={`/songs/${id}/edit`}
                     className="btn-song-action btn-song-primary"
@@ -979,22 +1028,23 @@ function SongView() {
         <div className="song-content slide-up">
           {/* Indicador de vista. Sin segunda vista no hay nada entre lo que
               deslizar, y los puntos solo despistarían. */}
-          {tieneLetra && (
+          {variasVistas && (
             <div className="view-indicator no-print">
               <div className="view-dots">
-                <button
-                  onClick={() => setActiveView(0)}
-                  className={`view-dot ${activeView === 0 ? 'active' : ''}`}
-                />
-                <button
-                  onClick={() => setActiveView(1)}
-                  className={`view-dot ${activeView === 1 ? 'active' : ''}`}
-                />
+                {vistas.map((vista, indice) => (
+                  <button
+                    key={vista.id}
+                    onClick={() => setActiveView(indice)}
+                    className={`view-dot ${activeView === indice ? 'active' : ''}`}
+                    aria-label={`Ver ${vista.objeto}`}
+                  />
+                ))}
               </div>
               <div className="view-hint">
-                {activeView === 0
-                  ? 'Deslizar para ver solo letra →'
-                  : `← Deslizar para ver ${esPdf ? 'la partitura' : 'las notas'}`}
+                {[
+                  vistas[activeView - 1] && `← Deslizar para ver ${vistas[activeView - 1].objeto}`,
+                  vistas[activeView + 1] && `Deslizar para ver ${vistas[activeView + 1].objeto} →`
+                ].filter(Boolean).join(' · ')}
               </div>
             </div>
           )}
@@ -1002,21 +1052,24 @@ function SongView() {
           {/* Contenedor de vistas con swipe */}
           <div
             className="song-sections-container"
-            onTouchStart={tieneLetra ? handleTouchStart : undefined}
-            onTouchMove={tieneLetra ? handleTouchMove : undefined}
-            onTouchEnd={tieneLetra ? handleTouchEnd : undefined}
+            onTouchStart={variasVistas ? handleTouchStart : undefined}
+            onTouchMove={variasVistas ? handleTouchMove : undefined}
+            onTouchEnd={variasVistas ? handleTouchEnd : undefined}
           >
+            {/* Una tira con todas las vistas, una al lado de otra, que se
+                desplaza: su ancho y el de cada vista dependen de cuántas hay */}
             <div
-              className={`song-sections${tieneLetra ? '' : ' song-sections--sola'}`}
-              style={{
-                transform: tieneLetra ? `translateX(-${activeView * 50}%)` : undefined,
-              }}
+              className={`song-sections${variasVistas ? '' : ' song-sections--sola'}`}
+              style={variasVistas ? {
+                width: `${vistas.length * 100}%`,
+                transform: `translateX(-${(activeView * 100) / vistas.length}%)`
+              } : undefined}
             >
               {/* Vista principal: la partitura en PDF o los acordes */}
               <div
-                ref={chordsViewRef}
+                ref={refDe("principal")}
                 className="song-view"
-                style={{ fontSize: `${fontSize}px !important` }}
+                style={variasVistas ? { width: `${100 / vistas.length}%` } : undefined}
               >
                 {esPdf ? (
                   <>
@@ -1048,9 +1101,15 @@ function SongView() {
                     ))}
 
                     {(!formattedSong || formattedSong.sections.length === 0) && (
-                      <div className="text-center" style={{ color: 'rgba(var(--overlay-rgb), 0.6)', padding: '3rem' }}>
+                      <div className="text-center vista-vacia" style={{ color: 'rgba(var(--overlay-rgb), 0.6)', padding: '3rem' }}>
                         <i className="bi bi-music-note-list" style={{ fontSize: '3rem', marginBottom: '1rem' }}></i>
-                        <p>No hay contenido disponible para esta canción.</p>
+                        <p>Esta canción todavía no tiene notas.</p>
+                        {puedeEditar && (
+                          <Link to={`/songs/${id}/edit`} className="btn-song-action btn-song-primary">
+                            <i className="bi bi-plus-lg"></i>
+                            Añadir notas
+                          </Link>
+                        )}
                       </div>
                     )}
                   </>
@@ -1060,9 +1119,9 @@ function SongView() {
               {/* Vista de solo letras */}
               {tieneLetra && (
               <div
-                ref={lyricsViewRef}
+                ref={refDe("letra")}
                 className="song-view"
-                style={{ fontSize: `${fontSize}px !important` }}
+                style={{ width: `${100 / vistas.length}%` }}
               >
                 {formattedLyricsOnly && formattedLyricsOnly.sections.map((section, index) => (
                   <div key={index} className="song-section-modern">
@@ -1074,12 +1133,49 @@ function SongView() {
                 ))}
                 
                 {(!formattedLyricsOnly || formattedLyricsOnly.sections.length === 0) && (
-                  <div className="text-center" style={{ color: 'rgba(var(--overlay-rgb), 0.6)', padding: '3rem' }}>
+                  <div className="text-center vista-vacia" style={{ color: 'rgba(var(--overlay-rgb), 0.6)', padding: '3rem' }}>
                     <i className="bi bi-card-text" style={{ fontSize: '3rem', marginBottom: '1rem' }}></i>
-                   <p>No hay contenido de letra disponible para esta canción.</p>
-                 </div>
+                    <p>Esta canción todavía no tiene letra.</p>
+                    {puedeEditar && (
+                      <Link to={`/songs/${id}/edit`} className="btn-song-action btn-song-primary">
+                        <i className="bi bi-plus-lg"></i>
+                        Añadir letra
+                      </Link>
+                    )}
+                  </div>
                )}
              </div>
+              )}
+
+              {/* Vista de acordes, para guitarra y piano */}
+              {tieneAcordes && (
+                <div
+                  ref={refDe("acordes")}
+                  className="song-view song-view--acordes"
+                  style={{ width: `${100 / vistas.length}%` }}
+                >
+                  {formattedAcordes && formattedAcordes.sections.map((section, index) => (
+                    <div key={index} className="song-section-modern">
+                      {section.title && <h3 className="song-section-title">{section.title}</h3>}
+                      <div className={`song-section-content alinear-${alineacion}`} style={{ fontSize: `${fontSize}px` }}>
+                        {section.content}
+                      </div>
+                    </div>
+                  ))}
+
+                  {!hayAcordes && (
+                    <div className="text-center vista-vacia" style={{ color: 'rgba(var(--overlay-rgb), 0.6)', padding: '3rem' }}>
+                      <i className="bi bi-music-note" style={{ fontSize: '3rem', marginBottom: '1rem' }}></i>
+                      <p>Esta canción todavía no tiene acordes.</p>
+                      {puedeEditar && (
+                        <Link to={`/songs/${id}/edit`} className="btn-song-action btn-song-primary">
+                          <i className="bi bi-plus-lg"></i>
+                          Añadir acordes
+                        </Link>
+                      )}
+                    </div>
+                  )}
+                </div>
               )}
            </div>
          </div>
