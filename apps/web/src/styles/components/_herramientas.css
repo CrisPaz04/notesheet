@@ -1,0 +1,410 @@
+/* src/styles/components/_herramientas.css */
+
+/* Paneles flotantes (lista, afinador, metrónomo, círculo de quintas).
+ *
+ * No son ventanas modales: no hay fondo que tape la partitura ni bloquean el
+ * desplazamiento. Por eso van por debajo de las modales de Bootstrap (1050)
+ * y por encima de la cabecera fija de la sesión en vivo. */
+
+.barra-herramientas {
+  position: fixed;
+  left: 50%;
+  bottom: 1rem;
+  transform: translateX(-50%);
+  z-index: 1040;
+  display: flex;
+  gap: 0.25rem;
+  padding: 0.35rem;
+  background: var(--surface-raised);
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  box-shadow: var(--shadow-medium);
+}
+
+.barra-herramientas-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 40px;
+  padding: 0.4rem 0.85rem;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-light-secondary);
+  font-size: 0.85rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.barra-herramientas-btn:hover {
+  background: var(--surface-hover);
+  color: var(--text-light-primary);
+}
+
+.barra-herramientas-btn.activo {
+  background: var(--color-primary);
+  color: var(--on-primary);
+}
+
+.barra-herramientas-btn i {
+  font-size: 1.05rem;
+}
+
+/* Cada panel va suelto, pegado a su lado y a su altura (la pone el
+   componente en línea). */
+.panel-flotante--suelto {
+  position: fixed;
+  z-index: 1040;
+  width: min(360px, calc(100vw - 2rem));
+  max-height: calc(100vh - 84px);
+}
+
+.panel-flotante--suelto.arrastrando {
+  z-index: 1045;
+  opacity: 0.95;
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.45);
+}
+
+.panel-flotante {
+  display: flex;
+  flex-direction: column;
+  background: var(--surface-raised);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-heavy);
+  color: var(--text-light-primary);
+}
+
+.panel-flotante-cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.35rem 0.35rem 0.35rem 0.75rem;
+  border-bottom: 1px solid var(--border-strong);
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+/* Se arrastra por la cabecera. `touch-action: none` para que en la tablet el
+   dedo mueva el panel y no la página. */
+.panel-flotante-cabecera--arrastrable {
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+.arrastrando .panel-flotante-cabecera--arrastrable {
+  cursor: grabbing;
+}
+
+.panel-flotante-asa {
+  margin-right: 0.25rem;
+  color: var(--text-light-secondary);
+}
+
+.panel-flotante-acciones {
+  display: flex;
+  gap: 0.1rem;
+}
+
+.panel-flotante-cerrar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-light-secondary);
+  cursor: pointer;
+}
+
+.panel-flotante-cerrar:hover {
+  background: var(--surface-hover);
+  color: var(--text-light-primary);
+}
+
+.panel-flotante-cuerpo {
+  min-height: 0;
+  padding: 0.75rem;
+  overflow-y: auto;
+}
+
+.panel-flotante-cargando {
+  margin: 0;
+  padding: 1rem;
+  text-align: center;
+  color: var(--text-light-secondary);
+}
+
+/* Hueco al final de la página para que la barra no tape la última línea */
+.barra-herramientas-hueco {
+  height: 5rem;
+}
+
+/* --- Lista ------------------------------------------------------------- */
+
+.panel-lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.panel-lista-linea {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.35rem 0.5rem;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-light-primary);
+  font-size: 0.9rem;
+  text-align: left;
+}
+
+.panel-lista--mensaje .panel-lista-linea:not(.panel-lista-ir) {
+  color: var(--text-light-secondary);
+}
+
+.panel-lista-ir {
+  cursor: pointer;
+}
+
+.panel-lista-ir:hover {
+  background: var(--surface-hover);
+}
+
+.panel-lista-ir.activa {
+  background: rgba(var(--color-primary-rgb), 0.18);
+  color: var(--color-primary);
+}
+
+.panel-lista-texto,
+.panel-lista-titulo {
+  flex: 1;
+  /* La lista hereda el centrado del contenido de la página */
+  text-align: left;
+}
+
+.panel-lista-numero {
+  min-width: 1.4rem;
+  color: var(--text-light-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.panel-lista-key {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.05rem 0.4rem;
+  border-radius: var(--radius-sm);
+  background: rgba(var(--color-primary-rgb), 0.15);
+  color: var(--color-primary);
+}
+
+.panel-lista-seccion {
+  margin-top: 0.6rem;
+  padding: 0 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--color-primary);
+}
+
+.panel-lista-seccion:first-child {
+  margin-top: 0;
+}
+
+.panel-lista-tonalidad {
+  padding: 0 0.5rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-light-secondary);
+}
+
+.panel-lista-vacia {
+  margin: 0;
+  color: var(--text-light-secondary);
+}
+
+/* --- Círculo de quintas ------------------------------------------------ */
+
+.circulo-quintas {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* --- Móvil: un panel cada vez, a lo ancho, encima de la barra ---------- */
+
+@media (max-width: 767px) {
+  .barra-herramientas-texto {
+    display: none;
+  }
+
+  .barra-herramientas-btn {
+    padding: 0.4rem 0.75rem;
+  }
+
+  /* Un panel cada vez, a lo ancho, encima de la barra, sin arrastre */
+  .paneles-flotantes {
+    position: fixed;
+    left: 0.5rem;
+    right: 0.5rem;
+    bottom: 4.75rem;
+    z-index: 1040;
+    display: flex;
+    flex-direction: column;
+    max-height: 60vh;
+  }
+
+  .paneles-flotantes .panel-flotante {
+    max-height: 60vh;
+  }
+}
+
+@media print {
+  .barra-herramientas,
+  .paneles-flotantes,
+  .paneles-sueltos,
+  .barra-herramientas-hueco {
+    display: none !important;
+  }
+}
+
+/* Al saltar desde el panel, que el título no quede pegado al borde */
+.playlist-song-ancla {
+  scroll-margin-top: 1rem;
+}
+
+/* --- Metrónomo y afinador simplificados -------------------------------- */
+
+.metronome-mini,
+.tuner-mini {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.metronome-mini-bpm {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+}
+
+.metronome-mini-valor {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 5rem;
+  line-height: 1;
+}
+
+.metronome-mini-valor strong {
+  font-size: 2.5rem;
+  color: var(--color-primary);
+}
+
+.metronome-mini-valor span {
+  font-size: 0.75rem;
+  color: var(--text-light-secondary);
+}
+
+.metronome-mini-paso {
+  min-width: 40px;
+  min-height: 40px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-light-primary);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.metronome-mini-paso:hover {
+  background: var(--surface-hover);
+}
+
+.metronome-mini-fila {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.metronome-mini-fila .form-select {
+  width: auto;
+}
+
+.metronome-mini-play {
+  margin-left: auto;
+}
+
+.tuner-mini-lectura {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+.tuner-mini-nota {
+  font-size: 2.75rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.tuner-mini-cents {
+  display: flex;
+  flex-direction: column;
+  min-width: 4rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.tuner-mini-cents small {
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: var(--text-light-secondary);
+}
+
+.tuner-mini-barra {
+  position: relative;
+  height: 10px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #f44336, #ffc107 35%, #4caf50 45%, #4caf50 55%, #ffc107 65%, #f44336);
+  opacity: 0.85;
+}
+
+.tuner-mini-centro {
+  position: absolute;
+  left: 50%;
+  top: -3px;
+  bottom: -3px;
+  width: 2px;
+  transform: translateX(-50%);
+  background: var(--text-light-primary);
+}
+
+.tuner-mini-marca {
+  position: absolute;
+  top: 50%;
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--surface-raised);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: left 0.08s linear;
+}
+
+.tuner-mini-escala {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.7rem;
+  color: var(--text-light-secondary);
+}

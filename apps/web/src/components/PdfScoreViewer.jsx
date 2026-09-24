@@ -1,5 +1,5 @@
 // apps/web/src/components/PdfScoreViewer.jsx
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import usePdfDocument from "../hooks/usePdfDocument";
 import LoadingSpinner from "./LoadingSpinner";
 import PdfScorePage from "./PdfScorePage";
@@ -16,7 +16,12 @@ const MAX_DENSIDAD = 2;
 
 const ZOOM_MIN = 0.5;
 const ZOOM_MAX = 3;
-const ZOOM_PASO = 0.25;
+// De 5 en 5: afinar el tamaño sobre el atril pide pasos pequeños.
+const ZOOM_PASO = 0.05;
+
+// Sumar 0,05 una y otra vez acumula error de coma flotante (1,1500000002) y
+// el tope dejaría de coincidir exacto. Se redondea a centésimas.
+const redondearZoom = (z) => Math.round(z * 100) / 100;
 
 /**
  * Muestra una partitura en PDF.
@@ -39,7 +44,12 @@ function PdfScoreViewer({ path, title = "partitura" }) {
   const [visibles, setVisibles] = useState(() => new Set([0]));
 
   const contenedorRef = useRef(null);
-  const observerRef = useRef(null);
+  // En estado y no en una ref: las páginas se dan de alta en sus efectos, que
+  // corren ANTES que el del visor que crea el observador. Con una ref se
+  // apuntaban al observador viejo (o a ninguno), este se desconectaba, y solo
+  // se veía la página 1, la que arranca marcada como visible. Al cambiar el
+  // observador cambia `observarPagina` y todas se vuelven a dar de alta.
+  const [observer, setObserver] = useState(null);
 
   // Ancho útil del contenedor, para encajar la página a lo ancho. Se mide con
   // ResizeObserver y no con `window.resize` porque el contenedor también
@@ -106,28 +116,73 @@ function PdfScoreViewer({ path, title = "partitura" }) {
       { root: null, rootMargin: MARGEN_DE_PINTADO, threshold: 0 }
     );
 
-    observerRef.current = observer;
+    setObserver(observer);
     return () => {
       observer.disconnect();
-      observerRef.current = null;
+      setObserver(null);
     };
   }, [pages]);
 
   // Cada página se apunta al observador al montarse y se da de baja al
-  // desmontarse. La función es estable (`useCallback` sin dependencias) para
-  // que las páginas no se den de alta y de baja en cada render.
+  // desmontarse. Solo cambia cuando cambia el observador, para que las
+  // páginas no se den de alta y de baja en cada render.
   const observarPagina = useCallback((nodo, indice) => {
-    const observer = observerRef.current;
     if (!observer || !nodo) return undefined;
 
     nodo.dataset.pagina = String(indice);
     observer.observe(nodo);
     return () => observer.unobserve(nodo);
-  }, []);
+  }, [observer]);
 
-  const alejar = () => setZoom((z) => Math.max(ZOOM_MIN, z - ZOOM_PASO));
-  const acercar = () => setZoom((z) => Math.min(ZOOM_MAX, z + ZOOM_PASO));
-  const encajar = () => setZoom(1);
+  // El zoom se hace desde el centro de lo que se ve, no desde la esquina de
+  // arriba a la izquierda. Antes de cambiarlo se apunta qué punto de la
+  // partitura está en el centro de la pantalla (en proporción, porque el
+  // tamaño va a cambiar), y después de pintar se desplaza para que siga ahí.
+  const anclaRef = useRef(null);
+
+  const cambiarZoom = (calcular) => {
+    const nodo = contenedorRef.current;
+    if (nodo) {
+      const caja = nodo.getBoundingClientRect();
+      anclaRef.current = {
+        x: nodo.scrollWidth
+          ? (nodo.scrollLeft + nodo.clientWidth / 2) / nodo.scrollWidth
+          : 0.5,
+        y: caja.height ? (window.innerHeight / 2 - caja.top) / caja.height : null
+      };
+    }
+    setZoom(calcular);
+  };
+
+  // `useLayoutEffect` y no `useEffect`: el desplazamiento tiene que ocurrir
+  // antes de que el navegador pinte, o la partitura da un salto visible.
+  useLayoutEffect(() => {
+    const ancla = anclaRef.current;
+    const nodo = contenedorRef.current;
+    if (!ancla || !nodo) return;
+    anclaRef.current = null;
+
+    nodo.scrollLeft = ancla.x * nodo.scrollWidth - nodo.clientWidth / 2;
+
+    // En vertical solo si el centro de la pantalla cae dentro de la
+    // partitura: en una lista puede estar mirando otra canción.
+    if (ancla.y !== null && ancla.y > 0 && ancla.y < 1) {
+      const caja = nodo.getBoundingClientRect();
+      window.scrollBy(0, ancla.y * caja.height - (window.innerHeight / 2 - caja.top));
+    }
+  }, [escala]);
+
+  const alejar = () => cambiarZoom((z) => Math.max(ZOOM_MIN, redondearZoom(z - ZOOM_PASO)));
+  const acercar = () => cambiarZoom((z) => Math.min(ZOOM_MAX, redondearZoom(z + ZOOM_PASO)));
+  const encajar = () => cambiarZoom(1);
+
+  // Con zoom la partitura se mueve de lado a lado arrastrando el dedo. Ese
+  // gesto no debe llegar al deslizamiento de la canción, que lo tomaría por
+  // "ir a la letra".
+  const retenerGestoSiDesborda = (e) => {
+    const nodo = contenedorRef.current;
+    if (nodo && nodo.scrollWidth > nodo.clientWidth) e.stopPropagation();
+  };
 
   if (!path) {
     return (
@@ -193,21 +248,29 @@ function PdfScoreViewer({ path, title = "partitura" }) {
         </span>
       </div>
 
-      <div className="pdf-score-pages" ref={contenedorRef}>
-        {pages.map((medida, indice) => (
-          <PdfScorePage
-            key={indice}
-            doc={doc}
-            indice={indice}
-            numero={indice + 1}
-            medida={medida}
-            escala={escala}
-            densidad={densidad}
-            activa={visibles.has(indice)}
-            registrar={observarPagina}
-            title={title}
-          />
-        ))}
+      <div
+        className="pdf-score-pages"
+        ref={contenedorRef}
+        onTouchStart={retenerGestoSiDesborda}
+        onTouchMove={retenerGestoSiDesborda}
+        onTouchEnd={retenerGestoSiDesborda}
+      >
+        <div className="pdf-score-pages-lienzo">
+          {pages.map((medida, indice) => (
+            <PdfScorePage
+              key={indice}
+              doc={doc}
+              indice={indice}
+              numero={indice + 1}
+              medida={medida}
+              escala={escala}
+              densidad={densidad}
+              activa={visibles.has(indice)}
+              registrar={observarPagina}
+              title={title}
+            />
+          ))}
+        </div>
       </div>
     </div>
   );

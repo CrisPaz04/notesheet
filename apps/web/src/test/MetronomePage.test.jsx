@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 
 // MetronomeEngine usa Web Audio, que no existe en jsdom
 vi.mock('@notesheet/core/src/audio/metronomeEngine', () => {
@@ -72,5 +72,32 @@ describe('Metronome (página)', () => {
     render(<Metronome tempoInicial={72} compasInicial="11/16" />);
     expect(await bpmEnPantalla()).toBe('72');
     expect(document.querySelector('.bpm-display').textContent).toMatch(/3\/4 •/);
+  });
+});
+
+describe('Metronome simplificado (panel flotante)', () => {
+  const valor = () => document.querySelector('.metronome-mini-valor strong').textContent;
+
+  it('arranca con el tempo de la canción y deja subir y bajar', async () => {
+    mockGetMetronomePreferences.mockResolvedValue({ bpm: 90 });
+    render(<Metronome compact mini tempoInicial={72} />);
+    await screen.findByRole('button', { name: /Iniciar/ });
+
+    expect(valor()).toBe('72');
+    fireEvent.click(screen.getByRole('button', { name: 'Subir 5 BPM' }));
+    expect(valor()).toBe('77');
+    fireEvent.click(screen.getByRole('button', { name: 'Bajar 1 BPM' }));
+    expect(valor()).toBe('76');
+  });
+
+  it('solo trae lo de tocar: sin presets, sonidos ni entrenador', async () => {
+    mockGetMetronomePreferences.mockResolvedValue({});
+    render(<Metronome compact mini compasInicial="6/8" />);
+    await screen.findByRole('button', { name: /Iniciar/ });
+
+    expect(screen.getByRole('combobox', { name: 'Compás' })).toHaveAttribute('data-valor', '6/8');
+    expect(screen.getByRole('button', { name: /Tap/ })).toBeInTheDocument();
+    expect(document.querySelector('.bpm-display')).toBeNull();
+    expect(screen.queryByText(/Entrenador/i)).toBeNull();
   });
 });

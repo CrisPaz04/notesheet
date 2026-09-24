@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { elegirEnDesplegable, valorDe, opcionesDe } from './utils/desplegable';
 
 // --- Mocks ---
 const mockGetAllSongs = vi.fn();
@@ -245,13 +246,13 @@ describe('Dashboard', () => {
 
   describe('filtro por tonalidad', () => {
     const selector = () => screen.getByRole('combobox', { name: 'Filtrar por tonalidad' });
-    const opciones = () => within(selector()).getAllByRole('option').map((o) => o.textContent);
+    const opciones = () => opcionesDe(selector());
 
-    it('ofrece solo las tonalidades que hay, con cuántas canciones tiene cada una', async () => {
+    it('ofrece solo las tonalidades que hay, cada una una vez', async () => {
       mockGetAllSongs.mockResolvedValue([...SONGS, { ...SONGS[0], id: '5', title: 'Otra en Do' }]);
       await renderDashboard();
 
-      expect(opciones()).toEqual(['Todas las tonalidades', 'DO (2)', 'RE (1)', 'SOL (1)']);
+      expect(opciones()).toEqual(['Todas las tonalidades', 'DO', 'RE', 'SOL']);
     });
 
     it('pone las mayores antes que las menores', async () => {
@@ -261,14 +262,14 @@ describe('Dashboard', () => {
       render(<Dashboard />);
       await screen.findByText('En do menor');
 
-      expect(opciones()).toEqual(['Todas las tonalidades', 'DO (1)', 'RE (1)', 'SOL (1)', 'DOm (1)']);
+      expect(opciones()).toEqual(['Todas las tonalidades', 'DO', 'RE', 'SOL', 'DOm']);
     });
 
     it('deja solo las canciones de la tonalidad elegida', async () => {
       const user = userEvent.setup();
       await renderDashboard();
 
-      await user.selectOptions(selector(), 'SOL (1)');
+      await elegirEnDesplegable(user, selector(), 'SOL');
 
       expect(tituloVisibles()).toEqual(['Sublime Gracia']);
     });
@@ -282,10 +283,10 @@ describe('Dashboard', () => {
       ]);
       await renderDashboard();
 
-      expect(opciones()).toContain('RE#m (2)');
-      expect(opciones()).not.toContain('MIbm (1)');
+      expect(opciones()).toContain('RE#m');
+      expect(opciones()).not.toContain('MIbm');
 
-      await user.selectOptions(selector(), 'RE#m (2)');
+      await elegirEnDesplegable(user, selector(), 'RE#m');
       expect(screen.getByText('Con sostenidos')).toBeInTheDocument();
       expect(screen.getByText('Con bemoles')).toBeInTheDocument();
       expect(tituloVisibles()).toEqual([]);
@@ -296,7 +297,7 @@ describe('Dashboard', () => {
       mockGetAllSongs.mockResolvedValue([...SONGS, { ...SONGS[0], id: '8', title: 'En menor', key: 'REm' }]);
       await renderDashboard();
 
-      await user.selectOptions(selector(), 'RE (1)');
+      await elegirEnDesplegable(user, selector(), 'RE');
 
       expect(tituloVisibles()).toEqual(['Al Que Está Sentado']);
       expect(screen.queryByText('En menor')).not.toBeInTheDocument();
@@ -306,7 +307,7 @@ describe('Dashboard', () => {
       const user = userEvent.setup();
       await renderDashboard();
 
-      await user.selectOptions(selector(), 'RE (1)');
+      await elegirEnDesplegable(user, selector(), 'RE');
 
       expect(opciones()).toHaveLength(4);
     });
@@ -315,13 +316,13 @@ describe('Dashboard', () => {
       const user = userEvent.setup();
       await renderDashboard();
 
-      await user.selectOptions(selector(), 'RE (1)');
+      await elegirEnDesplegable(user, selector(), 'RE');
       await user.click(screen.getByRole('button', { name: 'Júbilo' }));
       await screen.findByText('No se encontraron canciones');
       await user.click(screen.getByRole('button', { name: 'Limpiar Filtros' }));
 
       expect(tituloVisibles()).toHaveLength(3);
-      expect(selector()).toHaveValue('');
+      expect(valorDe(selector())).toBe('');
     });
   });
 
@@ -848,9 +849,10 @@ describe('Dashboard', () => {
       await renderDashboard();
 
       await waitFor(() => expect(screen.getByText(/^Bm • /)).toBeInTheDocument());
-      const opciones = within(screen.getByRole('combobox', { name: 'Filtrar por tonalidad' }))
+      await userEvent.click(screen.getByRole('combobox', { name: 'Filtrar por tonalidad' }));
+      const opciones = within(screen.getByRole('listbox'))
         .getAllByRole('option').map((o) => o.textContent);
-      expect(opciones).toEqual(['Todas las tonalidades', 'C (1)', 'D (1)', 'G (1)', 'Bm (1)']);
+      expect(opciones).toEqual(['Todas las tonalidades', 'C', 'D', 'G', 'Bm']);
     });
 
     it('buscar "Bm" encuentra la canción en SIm', async () => {

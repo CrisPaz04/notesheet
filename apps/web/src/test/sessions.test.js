@@ -165,6 +165,22 @@ describe('createSession', () => {
     expect(sesion.id).toBe(sesion.code);
   });
 
+  it('copia el mensaje del director, para el panel "Lista"', async () => {
+    const mensajeDirector = { texto: '*Intro\nTe alabare', enlaces: { 2: 's1', 9: 'fuera' } };
+    await createSession({ playlist: { ...LISTA, mensajeDirector }, host: HOST });
+
+    // La línea 9 no existe: ese enlace no viaja
+    expect(mockSetDoc.mock.calls[0][1].mensajeDirector).toEqual({
+      texto: '*Intro\nTe alabare',
+      enlaces: { 2: 's1' }
+    });
+  });
+
+  it('una lista sin mensaje abre la sesión sin él', async () => {
+    await createSession({ playlist: LISTA, host: HOST });
+    expect(mockSetDoc.mock.calls[0][1].mensajeDirector).toBeNull();
+  });
+
   // La regla de `create` exige las dos cosas; si el cliente dejara de
   // mandarlas, crear una sesión fallaría en producción y no en los tests.
   it('nace en la versión cero y en estado live', async () => {

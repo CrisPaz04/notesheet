@@ -75,6 +75,29 @@
   --bs-form-switch-bg: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='rgba%280, 0, 0, 0.25%29'/%3e%3c/svg%3e");
 }
 
+/* La barra del deslizador. Bootstrap la pinta con su gris claro porque no
+   reconoce nuestros temas (`rainforest-dark`…), y en los oscuros quedaba una
+   raya blanca. Llena con el color del tema hasta el valor (`--relleno`, lo
+   pone `rellenoDeslizador`) y apagada el resto. */
+.form-range::-webkit-slider-runnable-track {
+  background: linear-gradient(
+    to right,
+    var(--color-primary) 0 var(--relleno, 0%),
+    rgba(var(--overlay-rgb), 0.15) var(--relleno, 0%)
+  );
+}
+
+.form-range::-moz-range-track {
+  background-color: rgba(var(--overlay-rgb), 0.15);
+}
+
+/* Firefox sí pinta la parte recorrida por su cuenta */
+.form-range::-moz-range-progress {
+  height: 0.5rem;
+  border-radius: 1rem;
+  background-color: var(--color-primary);
+}
+
 .form-range::-webkit-slider-thumb {
   background-color: var(--color-primary);
 }

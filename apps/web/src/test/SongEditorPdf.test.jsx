@@ -203,7 +203,7 @@ describe('SongEditor con una canción en PDF', () => {
 
       const { container } = render(<SongEditor />);
       await screen.findByRole('heading', { level: 1, name: /Nueva Canción/ });
-      await user.click(screen.getByRole('button', { name: /Partituras PDF/ }));
+      await user.click(screen.getByRole('button', { name: 'PDF' }));
 
       soltarEn(casillaDe(container, 0), pdfFile());
 
@@ -284,7 +284,7 @@ describe('SongEditor con una canción en PDF', () => {
     render(<SongEditor />);
     await screen.findByRole('heading', { level: 1, name: /Nueva Canción/ });
 
-    await user.click(screen.getByRole('button', { name: /Partituras PDF/ }));
+    await user.click(screen.getByRole('button', { name: 'PDF' }));
 
     expect(screen.getByRole('status')).toHaveTextContent(/la canción tiene que existir antes/);
 
@@ -302,7 +302,7 @@ describe('SongEditor con una canción en PDF', () => {
     render(<SongEditor />);
     await screen.findByRole('heading', { level: 1, name: /Nueva Canción/ });
 
-    await user.click(screen.getByRole('button', { name: /Partituras PDF/ }));
+    await user.click(screen.getByRole('button', { name: 'PDF' }));
     await user.type(screen.getByPlaceholderText('Nombre de la canción'), 'Popurrí');
     await user.click(screen.getByRole('button', { name: /^Guardar$/ }));
 
@@ -324,7 +324,7 @@ describe('SongEditor con una canción en PDF', () => {
     render(<SongEditor />);
     await screen.findByRole('heading', { level: 1, name: /Nueva Canción/ });
 
-    await user.click(screen.getByRole('button', { name: /Partituras PDF/ }));
+    await user.click(screen.getByRole('button', { name: 'PDF' }));
     await user.click(screen.getByRole('button', { name: /^Guardar$/ }));
 
     await screen.findByText(/Ponle un título/);
@@ -340,7 +340,7 @@ describe('SongEditor con una canción en PDF', () => {
     render(<SongEditor />);
     await screen.findByRole('heading', { level: 1, name: /Nueva Canción/ });
 
-    await user.click(screen.getByRole('button', { name: /Partituras PDF/ }));
+    await user.click(screen.getByRole('button', { name: 'PDF' }));
     await user.type(screen.getByPlaceholderText('Nombre de la canción'), 'Popurrí');
     await user.click(screen.getByRole('button', { name: /Guardar ahora/ }));
 
@@ -375,7 +375,7 @@ describe('SongEditor con una canción en PDF', () => {
     render(<SongEditor />);
     await screen.findByRole('heading', { level: 1, name: /Nueva Canción/ });
 
-    await user.click(screen.getByRole('button', { name: /Partituras PDF/ }));
+    await user.click(screen.getByRole('button', { name: 'PDF' }));
     await user.type(screen.getByPlaceholderText('Nombre de la canción'), 'Popurrí');
     await user.click(screen.getByRole('button', { name: /^Guardar$/ }));
 

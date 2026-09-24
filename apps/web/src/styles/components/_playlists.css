@@ -639,3 +639,32 @@
   flex-wrap: wrap;
   gap: 0.5rem;
 }
+
+/* El mensaje del director ya guardado con la lista */
+.mensaje-guardado {
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  background: rgba(var(--overlay-rgb), 0.04);
+}
+
+.mensaje-guardado-cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  margin-bottom: 0.5rem;
+  color: var(--color-primary);
+}
+
+.mensaje-guardado-texto {
+  margin: 0;
+  max-height: 10rem;
+  overflow: auto;
+  white-space: pre-wrap;
+  font-family: inherit;
+  font-size: 0.85rem;
+  color: var(--text-light-secondary);
+}

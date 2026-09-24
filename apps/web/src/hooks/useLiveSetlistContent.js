@@ -5,7 +5,10 @@ import {
   buildVoicesList,
   resolveInitialVoice,
   parseVoiceKey,
-  TRANSPOSING_INSTRUMENTS
+  TRANSPOSING_INSTRUMENTS,
+  isPdfSong,
+  resolveScore,
+  buildScoreVoicesList
 } from "@notesheet/core";
 
 /**
@@ -114,6 +117,22 @@ export default function useLiveSetlistContent({
         voices: [],
         voiceKey: null,
         error: errores[entrada.id] || null
+      };
+    }
+
+    // Una partitura en PDF no pasa por el pipeline: no hay texto que
+    // transponer. Lo que hace el instrumento es elegir el archivo, como en la
+    // vista de la canción, y la voz elegida a mano manda sobre él.
+    if (isPdfSong(doc)) {
+      const score = resolveScore(doc, { voiceKey: voiceKeys[entrada.id] || null, instrument });
+      return {
+        ...entrada,
+        cargada: doc,
+        rendered: null,
+        pdf: { path: score.path },
+        voices: buildScoreVoicesList(doc.pdfs, TRANSPOSING_INSTRUMENTS),
+        voiceKey: score.voiceKey,
+        error: null
       };
     }
 

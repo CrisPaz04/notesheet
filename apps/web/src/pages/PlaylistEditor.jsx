@@ -7,8 +7,9 @@ import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import LoadingSpinner from "../components/LoadingSpinner";
 import PlaylistKeySelector from "../components/PlaylistKeySelector";
 import useSelectedSongs from "../hooks/useSelectedSongs";
-import { emparejarSetlist, isPdfSong, nombrarTonalidad } from "@notesheet/core";
+import { emparejarSetlist, isPdfSong, nombrarTonalidad, limpiarMensajeDirector } from "@notesheet/core";
 import useNotacionPreferida from "../hooks/useNotacionPreferida";
+import Desplegable from "../components/Desplegable";
 
 function PlaylistEditor() {
   const [name, setName] = useState("");
@@ -22,6 +23,9 @@ function PlaylistEditor() {
   // Importar la lista que el director manda por WhatsApp
   const [textoImport, setTextoImport] = useState("");
   const [resultadoImport, setResultadoImport] = useState(null);
+  // El mensaje tal cual, con las canciones que se confirmaron: es lo que se
+  // ve en el panel "Lista" al tocar. Se guarda con la lista.
+  const [mensajeDirector, setMensajeDirector] = useState(null);
   
   const { currentUser } = useAuth();
   // Solo para mostrar las tonalidades; se guardan en latina
@@ -93,6 +97,7 @@ function PlaylistEditor() {
       }
       
       setIsPublic(playlist.public || false);
+      setMensajeDirector(limpiarMensajeDirector(playlist.mensajeDirector));
       
       // Cargar las canciones seleccionadas
       if (playlist.songs && Array.isArray(playlist.songs)) {
@@ -130,11 +135,15 @@ function PlaylistEditor() {
    * el director indicó para cada bloque.
    */
   const aplicarImport = () => {
+    const enlaces = {};
     resultadoImport.forEach((entrada) => {
       if (!entrada.elegida) return;
       addSong(entrada.elegida);
       if (entrada.key) changeKey(entrada.elegida.id, entrada.key);
+      enlaces[entrada.linea] = entrada.elegida.id;
     });
+
+    setMensajeDirector(limpiarMensajeDirector({ texto: textoImport, enlaces }));
 
     setResultadoImport(null);
     setTextoImport("");
@@ -168,7 +177,8 @@ function PlaylistEditor() {
         date: new Date(date),
         public: isPublic,
         songs: selectedSongs,
-        creatorId: currentUser.uid
+        creatorId: currentUser.uid,
+        mensajeDirector: limpiarMensajeDirector(mensajeDirector)
       };
 
       // Compartir la lista implica compartir lo que contiene: una canción
@@ -369,6 +379,25 @@ function PlaylistEditor() {
                 Pegar lista del director
               </div>
               <div className="playlist-editor-card-body">
+                {mensajeDirector && !resultadoImport && (
+                  <div className="mensaje-guardado">
+                    <div className="mensaje-guardado-cabecera">
+                      <span>
+                        <i className="bi bi-check2-circle me-1"></i>
+                        Mensaje guardado: se verá en el panel «Lista» al tocar
+                      </span>
+                      <button
+                        type="button"
+                        className="btn-playlist-secondary btn-sm"
+                        onClick={() => setMensajeDirector(null)}
+                      >
+                        Quitar
+                      </button>
+                    </div>
+                    <pre className="mensaje-guardado-texto">{mensajeDirector.texto}</pre>
+                  </div>
+                )}
+
                 {!resultadoImport ? (
                   <>
                     <textarea
@@ -407,19 +436,19 @@ function PlaylistEditor() {
                         </div>
 
                         {entrada.candidatos.length > 0 ? (
-                          <select
-                            className="form-control-modern form-control-sm"
-                            aria-label={`Coincidencia para ${entrada.consulta}`}
+                          <Desplegable
+                            className="desplegable--compacto desplegable--ancho"
+                            ariaLabel={`Coincidencia para ${entrada.consulta}`}
                             value={entrada.elegida?.id || ''}
-                            onChange={(e) => cambiarCoincidencia(i, e.target.value)}
-                          >
-                            <option value="">— No añadir —</option>
-                            {entrada.candidatos.map((c) => (
-                              <option key={c.cancion.id} value={c.cancion.id}>
-                                {c.cancion.title} ({Math.round(c.score * 100)}%)
-                              </option>
-                            ))}
-                          </select>
+                            onChange={(songId) => cambiarCoincidencia(i, songId)}
+                            opciones={[
+                              { value: '', label: '— No añadir —' },
+                              ...entrada.candidatos.map((c) => ({
+                                value: c.cancion.id,
+                                label: `${c.cancion.title} (${Math.round(c.score * 100)}%)`
+                              }))
+                            ]}
+                          />
                         ) : (
                           <div className="import-vacio">No se encontró ninguna canción parecida</div>
                         )}

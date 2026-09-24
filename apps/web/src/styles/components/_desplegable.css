@@ -1,0 +1,161 @@
+/* src/styles/components/_desplegable.css */
+
+/* El desplegable propio (`Desplegable.jsx`), en lugar del `<select>` nativo:
+   la lista abierta del nativo la pinta el sistema y en Windows la marca en
+   azul en todos los temas. Este usa solo variables del tema. */
+
+.desplegable {
+  position: relative;
+  width: 100%;
+}
+
+.desplegable-boton {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  width: 100%;
+  /* Las mismas medidas que .form-control-modern: en un formulario tiene que
+     quedar a la altura de los campos de al lado */
+  padding: 0.75rem 1rem;
+  border: 2px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  background: rgba(var(--overlay-rgb), 0.05);
+  color: var(--text-light-primary);
+  font-size: 1rem;
+  line-height: 1.5;
+  min-height: 54px;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.desplegable-boton:hover:not(:disabled) {
+  border-color: var(--border-light-hover);
+}
+
+.desplegable-boton:focus-visible,
+.desplegable.abierto .desplegable-boton {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 0.2rem rgba(var(--color-primary-rgb), 0.2);
+}
+
+.desplegable-boton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.desplegable-texto {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.desplegable-flecha {
+  flex-shrink: 0;
+  font-size: 0.75rem;
+  color: var(--text-light-secondary);
+  transition: transform 0.15s ease;
+}
+
+.desplegable.abierto .desplegable-flecha {
+  transform: rotate(180deg);
+}
+
+.desplegable-lista {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 1060;
+  min-width: 100%;
+  max-height: 280px;
+  margin: 0;
+  padding: 0.3rem;
+  overflow-y: auto;
+  list-style: none;
+  background: var(--surface-raised);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-medium);
+}
+
+.desplegable.hacia-arriba .desplegable-lista {
+  top: auto;
+  bottom: calc(100% + 4px);
+}
+
+.desplegable-sublista {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.desplegable-opcion {
+  padding: 0.45rem 0.7rem;
+  border-radius: var(--radius-sm);
+  color: var(--text-light-primary);
+  font-size: 0.92rem;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.desplegable-opcion.activa {
+  background: var(--surface-hover);
+}
+
+.desplegable-opcion.elegida {
+  background: rgba(var(--color-primary-rgb), 0.2);
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+.desplegable-grupo {
+  padding: 0.55rem 0.7rem 0.2rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-light-secondary);
+}
+
+/* --- Variantes de tamaño ------------------------------------------------ */
+
+/* Pequeño y a su ancho: la voz en la sesión, el compás del panel */
+.desplegable--compacto {
+  width: auto;
+}
+
+.desplegable--compacto .desplegable-boton {
+  min-height: 36px;
+  padding: 0.3rem 0.65rem;
+  border-width: 1px;
+  border-radius: var(--radius-md);
+  font-size: 0.88rem;
+}
+
+/* Redondeado como el buscador del Dashboard */
+.desplegable--pildora {
+  width: auto;
+}
+
+.desplegable--pildora .desplegable-boton {
+  padding: 0.75rem 1.25rem;
+  border-radius: 25px;
+}
+
+/* En la sesión en vivo: el borde fino de sus otros controles */
+.desplegable--live .desplegable-boton {
+  min-height: 44px;
+  padding: 0 var(--spacing-sm);
+  border-radius: var(--radius-md);
+  font-size: 0.95rem;
+  border-width: 1px;
+  border-color: var(--border-light-hover);
+  background: var(--bg-dark-tertiary);
+}
+
+/* Compacto pero a todo el ancho: las coincidencias al importar una lista */
+.desplegable--ancho {
+  width: 100%;
+}

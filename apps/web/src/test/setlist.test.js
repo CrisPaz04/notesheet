@@ -6,6 +6,8 @@ import {
   puntuarCoincidencia,
   buscarCandidatos,
   emparejarSetlist,
+  parsearCabecera,
+  estructurarMensaje,
   UMBRAL_SEGURO
 } from '@notesheet/core';
 
@@ -273,5 +275,110 @@ No me averguenzo`;
 
   it('devuelve lista vacía si no hay nada que interpretar', () => {
     expect(emparejarSetlist('', REPERTORIO)).toEqual([]);
+  });
+});
+
+// Un mensaje real del director (2026-09): bloques marcados con asterisco,
+// notas entre paréntesis y puntos al final de algunas líneas.
+const MENSAJE_BLOQUES = `*Intro
+Por quién eres tú (Coalo)
+*Moderadas
+in Jesus name
+Tu fidelidad (Ingrid Rosario)
+*Rápidas
+Camino al Cielo yo voy.(yo tengo gozo)
+La voz de mi amado(versión nueva)
+*Lentas
+Mi corazón entona.`;
+
+const REPERTORIO_BLOQUES = [
+  { id: 'a', title: 'Por Quién Eres Tú', lyricsOnly: 'Por quién eres tú te alabo' },
+  { id: 'b', title: 'In Jesus Name', lyricsOnly: 'In Jesus name we pray' },
+  { id: 'c', title: 'Tu Fidelidad', lyricsOnly: 'Tu fidelidad es grande' },
+  { id: 'd', title: 'Yo Tengo Gozo', lyricsOnly: 'Yo tengo gozo en mi alma, camino al cielo yo voy' },
+  { id: 'e', title: 'La Voz De Mi Amado', lyricsOnly: 'La voz de mi amado me llama' },
+  { id: 'f', title: 'Mi Corazón Entona', lyricsOnly: 'Mi corazón entona la canción' },
+  { id: 'g', title: 'Intro Instrumental', lyricsOnly: '' }
+];
+
+describe('parsearCabecera', () => {
+  it('reconoce los bloques marcados con asterisco (la negrita de WhatsApp)', () => {
+    expect(parsearCabecera('*Intro')).toBe('Intro');
+    expect(parsearCabecera('*Rápidas ')).toBe('Rápidas');
+    expect(parsearCabecera('*Lentas*')).toBe('Lentas');
+    expect(parsearCabecera('** Moderadas **')).toBe('Moderadas');
+  });
+
+  it('una canción normal no es un bloque', () => {
+    expect(parsearCabecera('Tu fidelidad')).toBeNull();
+    expect(parsearCabecera('Hoy *es* el día')).toBeNull();
+    expect(parsearCabecera('*')).toBeNull();
+    expect(parsearCabecera('')).toBeNull();
+  });
+});
+
+describe('emparejarSetlist con bloques y paréntesis', () => {
+  it('los bloques no se buscan como canciones', () => {
+    // "*Intro" encajaba con "Intro Instrumental" y se colaba en la lista
+    const consultas = emparejarSetlist(MENSAJE_BLOQUES, REPERTORIO_BLOQUES).map((e) => e.consulta);
+    expect(consultas).not.toContain('*Intro');
+    expect(consultas).toHaveLength(6);
+  });
+
+  it('empareja cada línea con su canción aunque lleve notas entre paréntesis', () => {
+    const r = emparejarSetlist(MENSAJE_BLOQUES, REPERTORIO_BLOQUES);
+    expect(r.map((e) => e.elegida?.id)).toEqual(['a', 'b', 'c', 'd', 'e', 'f']);
+  });
+
+  it('el artista entre paréntesis no le resta a un título exacto', () => {
+    const sin = puntuarCoincidencia('Tu fidelidad', REPERTORIO_BLOQUES[2]).score;
+    const con = puntuarCoincidencia('Tu fidelidad (Ingrid Rosario)', REPERTORIO_BLOQUES[2]).score;
+    expect(con).toBe(sin);
+    expect(con).toBe(1);
+  });
+
+  it('el autor entre paréntesis desempata entre dos versiones con el mismo título', () => {
+    const repertorio = [
+      { id: 'otra', title: 'Tu Fidelidad', version: 'Marcos Witt' },
+      { id: 'ingrid', title: 'Tu Fidelidad', versiones: ['Ingrid Rosario'], version: 'Ingrid Rosario' }
+    ];
+    expect(buscarCandidatos('Tu fidelidad (Ingrid Rosario)', repertorio).elegida.id).toBe('ingrid');
+    // Con el nombre a medias también: "Coalo" es Coalo Zamorano
+    const coalo = [
+      { id: 'x', title: 'Por Quién Eres Tú' },
+      { id: 'coalo', title: 'Por Quién Eres Tú', version: 'Barak, Coalo Zamorano' }
+    ];
+    expect(buscarCandidatos('Por quién eres tú (Coalo)', coalo).elegida.id).toBe('coalo');
+    // Y sin paréntesis manda el orden del repertorio, sin inventar preferencias
+    expect(buscarCandidatos('Tu fidelidad', repertorio).elegida.id).toBe('otra');
+  });
+
+  it('lo que va entre paréntesis también puede ser la pista buena', () => {
+    // El título real es el del paréntesis
+    const r = puntuarCoincidencia('Otra cosa (yo tengo gozo)', REPERTORIO_BLOQUES[3]);
+    expect(r.score).toBe(1);
+  });
+});
+
+describe('estructurarMensaje', () => {
+  it('devuelve el mensaje línea a línea: bloques, tonalidades y canciones', () => {
+    const r = estructurarMensaje('*Intro\nMi m\nTe alabare\n\nOtra', { 3: 's1' });
+    expect(r).toEqual([
+      { tipo: 'seccion', texto: 'Intro', linea: 1 },
+      { tipo: 'tonalidad', texto: 'Mi m', key: 'MIm', linea: 2 },
+      { tipo: 'cancion', texto: 'Te alabare', linea: 3, songId: 's1' },
+      { tipo: 'cancion', texto: 'Otra', linea: 5, songId: null }
+    ]);
+  });
+
+  it('las claves de los enlaces pueden llegar como texto (así vuelven de Firestore)', () => {
+    // Ojo: "A" o "B" solas serían tonalidades (LA, SI), no canciones
+    expect(estructurarMensaje('Uno\nDos', { 2: 'x' })[1].songId).toBe('x');
+    expect(estructurarMensaje('Uno\nDos', { '2': 'x' })[1].songId).toBe('x');
+  });
+
+  it('sin texto, nada', () => {
+    expect(estructurarMensaje('')).toEqual([]);
+    expect(estructurarMensaje(undefined)).toEqual([]);
   });
 });

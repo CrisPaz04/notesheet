@@ -38,6 +38,7 @@ import {
   serverTimestamp,
   Timestamp
 } from 'firebase/firestore';
+import { limpiarMensajeDirector } from '@notesheet/core';
 import { db } from '../firebase/config';
 import { publishOwnSongs } from './songs';
 
@@ -168,7 +169,7 @@ const actorFrom = (user) => ({
  * nunca, pero un reintento es más barato que pisar la sesión de otro.
  *
  * @param {Object} options
- * @param {Object} options.playlist - Lista de origen: `{ id, name, songs }`
+ * @param {Object} options.playlist - Lista de origen: `{ id, name, songs, mensajeDirector }`
  * @param {Object} options.host - Usuario que abre la sesión
  * @param {number} [options.ttlMs] - Duración antes de que expire
  * @returns {Promise<Object>} la sesión creada, con su `code`
@@ -195,6 +196,9 @@ export const createSession = async ({ playlist, host, ttlMs = SESSION_TTL_MS }) 
       name: playlist?.name || 'Sesión en vivo',
       hostId: host.uid,
       songs,
+      // El mensaje del director con el que se armó la lista, para el panel
+      // "Lista" de la sesión. Viaja copiado, como las canciones.
+      mensajeDirector: limpiarMensajeDirector(playlist?.mensajeDirector),
       activeSongId: songs[0]?.id || null,
       status: 'live',
       // Arranca en 0 y sube de uno en uno: ver `applySessionChange`.

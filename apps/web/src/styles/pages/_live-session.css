@@ -219,6 +219,11 @@
 }
 
 .live-icon-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+.live-icon-btn.active {
+  background: rgba(var(--color-primary-rgb), 0.2);
+  color: var(--color-primary);
+  border-color: var(--color-primary);
+}
 .live-icon-danger:hover:not(:disabled) { border-color: #ef4444; color: #f87171; }
 
 /* --- Controles propios --- */

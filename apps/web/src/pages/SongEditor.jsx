@@ -38,6 +38,7 @@ import VersionesInput from "../components/VersionesInput";
 import useNotacionPreferida from "../hooks/useNotacionPreferida";
 import BuscarDatosModal from "../components/datos/BuscarDatosModal";
 import useSongVoices from "../hooks/useSongVoices";
+import Desplegable from "../components/Desplegable";
 
 // Instrumentos soportados para voces adicionales
 const VOICE_INSTRUMENTS = Object.entries(TRANSPOSING_INSTRUMENTS)
@@ -758,7 +759,7 @@ function SongEditor() {
                 value={versiones}
                 onChange={setVersiones}
               />
-              <div className="editor-help-text mt-1">
+              <div className="form-help-text">
                 Pulsa Enter para añadir otro nombre.
               </div>
             </div>
@@ -780,21 +781,10 @@ function SongEditor() {
               </div>
             </div>
 
-            <div className="form-group-modern">
-              <label className="form-label-modern">
-                <i className="bi bi-music-note-beamed"></i>
-                Instrumento Principal
-              </label>
-              <select
-                className="form-control-modern"
-                value={primaryInstrument}
-                onChange={(e) => handlePrimaryInstrumentChange(e.target.value)}
-              >
-                {VOICE_INSTRUMENTS.map(inst => (
-                  <option key={inst.id} value={inst.id}>{inst.name}</option>
-                ))}
-              </select>
-            </div>
+            <TypeSelector
+              value={type}
+              onChange={handleTypeChange}
+            />
 
             <div>
               <KeySelector
@@ -822,10 +812,18 @@ function SongEditor() {
               )}
             </div>
 
-            <TypeSelector
-              value={type}
-              onChange={handleTypeChange}
-            />
+            <div className="form-group-modern">
+              <label className="form-label-modern" htmlFor="song-instrumento-principal">
+                <i className="bi bi-music-note-beamed"></i>
+                Instrumento Principal
+              </label>
+              <Desplegable
+                id="song-instrumento-principal"
+                value={primaryInstrument}
+                onChange={handlePrimaryInstrumentChange}
+                opciones={VOICE_INSTRUMENTS.map((inst) => ({ value: inst.id, label: inst.name }))}
+              />
+            </div>
 
             <div className="form-group-modern">
               <label className="form-label-modern" htmlFor="song-tempo">
@@ -853,7 +851,7 @@ function SongEditor() {
                   Tap
                 </button>
               </div>
-              <div className="editor-help-text mt-1">
+              <div className="form-help-text">
                 El metrónomo arranca con él al abrirlo desde la canción.
               </div>
             </div>
@@ -863,41 +861,15 @@ function SongEditor() {
                 <i className="bi bi-grid-3x2"></i>
                 Compás
               </label>
-              <select
+              <Desplegable
                 id="song-compas"
-                className="form-control-modern"
                 value={compas}
-                onChange={(e) => setCompas(e.target.value)}
-              >
-                <option value="">Sin indicar</option>
-                {COMPASES.map((c) => (<option key={c} value={c}>{c}</option>))}
-              </select>
-            </div>
-
-            <div className="form-group-modern grabacion-original">
-              <label className="form-label-modern">
-                <i className="bi bi-vinyl"></i>
-                Grabación original
-              </label>
-              {grabacion ? (
-                <p className="grabacion-resumen">
-                  {[grabacion.artista, grabacion.album, grabacion.anio, formatearDuracion(grabacion.duracion)]
-                    .filter(Boolean).join(" · ") || grabacion.titulo}
-                </p>
-              ) : (
-                <p className="grabacion-resumen grabacion-resumen-vacia">Sin datos todavía.</p>
-              )}
-              <div className="grabacion-acciones">
-                <button type="button" className="btn-editor-secondary" onClick={() => setBuscandoDatos(true)}>
-                  <i className="bi bi-search me-1"></i>
-                  Buscar datos
-                </button>
-                {grabacion && (
-                  <button type="button" className="btn-editor-secondary" onClick={() => setGrabacion(null)}>
-                    Quitar
-                  </button>
-                )}
-              </div>
+                onChange={setCompas}
+                opciones={[
+                  { value: "", label: "Sin indicar" },
+                  ...COMPASES.map((c) => ({ value: c, label: c }))
+                ]}
+              />
             </div>
 
             <div className="form-group-modern">
@@ -912,7 +884,8 @@ function SongEditor() {
                   onClick={() => setFormat(SONG_FORMAT_CHORDS)}
                 >
                   <i className="bi bi-music-note-list me-2"></i>
-                  Acordes
+                  {/* El repertorio son notas de la melodía, no acordes */}
+                  Notas
                 </button>
                 <button
                   type="button"
@@ -920,13 +893,12 @@ function SongEditor() {
                   onClick={() => setFormat(SONG_FORMAT_PDF)}
                 >
                   <i className="bi bi-file-earmark-pdf me-2"></i>
-                  Partituras PDF
+                  PDF
                 </button>
               </div>
               <div className="form-help-text">
-                En PDF, cada pestaña de voz lleva sus dos archivos: la
-                partitura y la versión con los nombres de las notas encima.
-                No se transpone ni se cambia de notación.
+                En PDF, cada voz lleva la partitura y la versión con los
+                nombres de las notas. No se transpone.
               </div>
             </div>
 
@@ -958,6 +930,37 @@ function SongEditor() {
                 puedes editarlas o borrarlas.
               </div>
             </div>
+
+            <div className="form-group-modern grabacion-original">
+              <label className="form-label-modern">
+                <i className="bi bi-vinyl"></i>
+                Grabación original
+              </label>
+              <div className="grabacion-caja">
+              {grabacion ? (
+                <p className="grabacion-resumen">
+                  {[grabacion.artista, grabacion.album, grabacion.anio, formatearDuracion(grabacion.duracion)]
+                    .filter(Boolean).join(" · ") || grabacion.titulo}
+                </p>
+              ) : (
+                <p className="grabacion-resumen grabacion-resumen-vacia">Sin datos todavía.</p>
+              )}
+              <div className="grabacion-acciones">
+                <button type="button" className="btn-editor-secondary" onClick={() => setBuscandoDatos(true)}>
+                  <i className="bi bi-search me-1"></i>
+                  Buscar datos
+                </button>
+                {grabacion && (
+                  <button type="button" className="btn-editor-secondary" onClick={() => setGrabacion(null)}>
+                    Quitar
+                  </button>
+                )}
+              </div>
+              </div>
+              <div className="form-help-text">
+                Tonalidad, tempo y duración del disco, de MusicBrainz, iTunes y GetSongBPM.
+              </div>
+            </div>
           </div>
         </div>
 
@@ -974,28 +977,22 @@ function SongEditor() {
               </h4>
               <div className="voice-form">
                 <div className="form-group-modern">
-                  <label className="form-label-modern">Instrumento</label>
-                  <select 
-                    className="form-control-modern"
+                  <label className="form-label-modern" htmlFor="nueva-voz-instrumento">Instrumento</label>
+                  <Desplegable
+                    id="nueva-voz-instrumento"
                     value={newVoiceInstrument}
-                    onChange={(e) => setNewVoiceInstrument(e.target.value)}
-                  >
-                    {VOICE_INSTRUMENTS.map(inst => (
-                      <option key={inst.id} value={inst.id}>{inst.name}</option>
-                    ))}
-                  </select>
+                    onChange={setNewVoiceInstrument}
+                    opciones={VOICE_INSTRUMENTS.map((inst) => ({ value: inst.id, label: inst.name }))}
+                  />
                 </div>
                 <div className="form-group-modern">
-                  <label className="form-label-modern">Número de Voz</label>
-                  <select 
-                    className="form-control-modern"
+                  <label className="form-label-modern" htmlFor="nueva-voz-numero">Número de Voz</label>
+                  <Desplegable
+                    id="nueva-voz-numero"
                     value={newVoiceNumber}
-                    onChange={(e) => setNewVoiceNumber(e.target.value)}
-                  >
-                    {[1, 2, 3, 4].map(num => (
-                      <option key={num} value={num.toString()}>{num}</option>
-                    ))}
-                  </select>
+                    onChange={setNewVoiceNumber}
+                    opciones={[1, 2, 3, 4].map((num) => ({ value: num.toString(), label: String(num) }))}
+                  />
                 </div>
                 <button 
                   className="btn-editor-primary"

@@ -7,6 +7,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { elegirEnDesplegable, valorDe } from './utils/desplegable';
 
 const acciones = {
   irACancion: vi.fn(),
@@ -149,7 +150,7 @@ describe('navegación compartida', () => {
     render(<LiveSession />);
     await userEvent.click(screen.getByRole('button', { name: /siguiente/i }));
 
-    expect(acciones.siguiente).toHaveBeenCalled();
+    expect(acciones.irACancion).toHaveBeenCalledWith('s2');
   });
 
   it('no deja retroceder en la primera ni avanzar en la última', () => {
@@ -180,6 +181,85 @@ describe('navegación compartida', () => {
 
     expect(acciones.irACancion).toHaveBeenCalledWith('s2');
   });
+});
+
+describe('la canción que se está viendo', () => {
+  const TRES = [...SONGS, { id: 's3', title: 'Prueba PDF', key: 'DO', originalKey: 'DO' }];
+
+  // jsdom no maqueta: se le dice dónde está cada tarjeta, como si el músico
+  // hubiera bajado a mano hasta `vista` (0, 1 o 2).
+  const bajarHasta = (vista) => {
+    TRES.forEach((s, i) => {
+      const nodo = tarjeta(s.title);
+      nodo.getBoundingClientRect = () => ({ top: (i - vista) * 900 + 50, bottom: (i - vista) * 900 + 950, height: 900 });
+    });
+    window.dispatchEvent(new Event('scroll'));
+  };
+
+  beforeEach(() => {
+    estadoSesion = sesionEnVivo({ songs: TRES });
+    estadoLista = { canciones: TRES.map((s) => cancion(s)), loading: false };
+  });
+
+  it('el contador sigue a la que se ve, no a la de la banda', async () => {
+    render(<LiveSession />);
+    bajarHasta(2);
+
+    expect(await screen.findByRole('button', { name: /3 de 3/ })).toBeInTheDocument();
+  });
+
+  it('Siguiente lleva a la canción aunque ya sea la de la banda', async () => {
+    // El fallo real: mirando la 1 con la banda en la 2, Siguiente no hacía
+    // nada, porque solo cambiaba la de la banda y el scroll iba detrás
+    estadoSesion = sesionEnVivo({ songs: TRES, activeSongId: 's2', activeIndex: 1 });
+    render(<LiveSession />);
+    bajarHasta(0);
+    await screen.findByRole('button', { name: /1 de 3/ });
+    Element.prototype.scrollIntoView.mockClear();
+
+    await userEvent.click(screen.getByRole('button', { name: /siguiente/i }));
+
+    expect(Element.prototype.scrollIntoView.mock.contexts).toContain(tarjeta('Sublime Gracia'));
+    expect(acciones.irACancion).not.toHaveBeenCalled();
+    expect(screen.getByRole('button', { name: /2 de 3/ })).toBeInTheDocument();
+  });
+
+  it('dos pulsaciones seguidas avanzan dos canciones', async () => {
+    render(<LiveSession />);
+    bajarHasta(0);
+    await screen.findByRole('button', { name: /1 de 3/ });
+
+    await userEvent.click(screen.getByRole('button', { name: /siguiente/i }));
+    await userEvent.click(screen.getByRole('button', { name: /siguiente/i }));
+
+    expect(acciones.irACancion).toHaveBeenLastCalledWith('s3');
+  });
+
+  it('durante el desplazamiento animado no cuenta desde la canción de antes', async () => {
+    render(<LiveSession />);
+    bajarHasta(0);
+    await screen.findByRole('button', { name: /1 de 3/ });
+
+    await userEvent.click(screen.getByRole('button', { name: /siguiente/i }));
+    // El scroll acaba de empezar: la tarjeta 1 sigue arriba
+    bajarHasta(0);
+    await new Promise((r) => setTimeout(r, 100));
+    await userEvent.click(screen.getByRole('button', { name: /siguiente/i }));
+
+    expect(acciones.irACancion).toHaveBeenLastCalledWith('s3');
+  });
+
+  it('Siguiente y Anterior cuentan desde la que se ve, no desde la de la banda', async () => {
+    // El fallo real: bajar a mano hasta la última y pulsar Siguiente llevaba a la segunda
+    render(<LiveSession />);
+    bajarHasta(2);
+    await screen.findByRole('button', { name: /3 de 3/ });
+
+    expect(screen.getByRole('button', { name: /siguiente/i })).toBeDisabled();
+    await userEvent.click(screen.getByRole('button', { name: /anterior/i }));
+    expect(acciones.irACancion).toHaveBeenCalledWith('s2');
+  });
+
 });
 
 describe('seguir al director', () => {
@@ -334,8 +414,7 @@ describe('controles a la vista', () => {
     });
     render(<LiveSession />);
 
-    await userEvent.selectOptions(
-      screen.getByLabelText(/Voz para Cristo Vive/),
+    await elegirEnDesplegable(userEvent, screen.getByLabelText(/Voz para Cristo Vive/),
       'bb_trumpet-2'
     );
 
@@ -352,8 +431,8 @@ describe('controles a la vista', () => {
     });
     render(<LiveSession />);
 
-    await userEvent.selectOptions(screen.getByLabelText(/Voz para Cristo Vive/), 'bb_trumpet-2');
-    await userEvent.selectOptions(screen.getByLabelText('Mi instrumento'), 'eb_alto_sax');
+    await elegirEnDesplegable(userEvent, screen.getByLabelText(/Voz para Cristo Vive/), 'bb_trumpet-2');
+    await elegirEnDesplegable(userEvent, screen.getByLabelText('Mi instrumento'), 'eb_alto_sax');
 
     expect(argsLista.voiceKeys).toEqual({});
   });
@@ -465,7 +544,7 @@ describe('añadir canciones en vivo', () => {
 describe('lo mío', () => {
   it('cambiar de instrumento no escribe en la sesión', async () => {
     render(<LiveSession />);
-    await userEvent.selectOptions(screen.getByLabelText('Mi instrumento'), 'eb_alto_sax');
+    await elegirEnDesplegable(userEvent, screen.getByLabelText('Mi instrumento'), 'eb_alto_sax');
 
     expect(acciones.cambiarTonalidad).not.toHaveBeenCalled();
     expect(acciones.irACancion).not.toHaveBeenCalled();
@@ -475,7 +554,7 @@ describe('lo mío', () => {
 
   it('la notación se recuerda en este dispositivo', async () => {
     render(<LiveSession />);
-    await userEvent.selectOptions(screen.getByLabelText('Notación'), 'english');
+    await elegirEnDesplegable(userEvent, screen.getByLabelText('Notación'), 'english');
 
     expect(localStorage.getItem('live:notacion')).toBe('english');
   });
@@ -484,12 +563,12 @@ describe('lo mío', () => {
     mockGetUserPreferences.mockResolvedValue({ defaultNotationSystem: 'english' });
     render(<LiveSession />);
 
-    await waitFor(() => expect(screen.getByLabelText('Notación')).toHaveValue('english'));
+    await waitFor(() => expect(valorDe(screen.getByLabelText('Notación'))).toBe('english'));
   });
 
   it('con cuenta, cambiarla la guarda también en el perfil', async () => {
     render(<LiveSession />);
-    await userEvent.selectOptions(screen.getByLabelText('Notación'), 'english');
+    await elegirEnDesplegable(userEvent, screen.getByLabelText('Notación'), 'english');
 
     await waitFor(() =>
       expect(mockUpdateUserPreferences).toHaveBeenCalledWith('u1', { defaultNotationSystem: 'english' })
@@ -500,7 +579,7 @@ describe('lo mío', () => {
     mockGetUserPreferences.mockResolvedValue({ defaultNotationSystem: 'english' });
     render(<LiveSession />);
 
-    await waitFor(() => expect(screen.getByLabelText('Notación')).toHaveValue('english'));
+    await waitFor(() => expect(valorDe(screen.getByLabelText('Notación'))).toBe('english'));
     expect(within(tarjeta('Cristo Vive')).getByRole('button', { name: /^C$/ })).toBeInTheDocument();
     expect(within(tarjeta('Sublime Gracia')).getByRole('button', { name: /^G$/ })).toBeInTheDocument();
   });
@@ -509,7 +588,7 @@ describe('lo mío', () => {
     mockGetUserPreferences.mockResolvedValue({ defaultNotationSystem: 'english' });
     mockGetAllSongs.mockResolvedValue([{ id: 's9', title: 'Nueva', key: 'LA' }]);
     render(<LiveSession />);
-    await waitFor(() => expect(screen.getByLabelText('Notación')).toHaveValue('english'));
+    await waitFor(() => expect(valorDe(screen.getByLabelText('Notación'))).toBe('english'));
 
     await userEvent.click(screen.getByRole('button', { name: /1 de 2/ }));
     const indice = document.querySelector('.live-setlist');
@@ -525,8 +604,8 @@ describe('lo mío', () => {
     localStorage.setItem('live:notacion', 'english');
     render(<LiveSession />);
 
-    expect(screen.getByLabelText('Notación')).toHaveValue('english');
-    await userEvent.selectOptions(screen.getByLabelText('Notación'), 'latin');
+    expect(valorDe(screen.getByLabelText('Notación'))).toBe('english');
+    await elegirEnDesplegable(userEvent, screen.getByLabelText('Notación'), 'latin');
     expect(mockUpdateUserPreferences).not.toHaveBeenCalled();
     expect(localStorage.getItem('live:notacion')).toBe('latin');
   });

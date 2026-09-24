@@ -16,6 +16,7 @@ import MetronomeVisualizer from '../components/metronome/MetronomeVisualizer';
 import TempoPresets from '../components/metronome/TempoPresets';
 import SoundPresetSelector from '../components/metronome/SoundPresetSelector';
 import TempoTrainer from '../components/metronome/TempoTrainer';
+import Desplegable from '../components/Desplegable';
 
 /**
  * Carga las preferencias y, solo cuando las tiene, monta el metrónomo.
@@ -28,7 +29,7 @@ import TempoTrainer from '../components/metronome/TempoTrainer';
  * `tempoInicial` y `compasInicial` son los de la canción desde la que se abre
  * (SongView) y mandan sobre los guardados.
  */
-function Metronome({ compact = false, tempoInicial = null, compasInicial = null }) {
+function Metronome({ compact = false, mini = false, tempoInicial = null, compasInicial = null }) {
   const { currentUser } = useAuth();
   const [preferencesLoaded, setPreferencesLoaded] = useState(false);
   const [initialPreferences, setInitialPreferences] = useState({});
@@ -87,10 +88,10 @@ function Metronome({ compact = false, tempoInicial = null, compasInicial = null 
   if (Number.isFinite(tempoInicial) && tempoInicial > 0) iniciales.bpm = tempoInicial;
   if (compasInicial && TIME_SIGNATURES[compasInicial]) iniciales.timeSignature = compasInicial;
 
-  return <MetronomeCuerpo compact={compact} initialPreferences={iniciales} />;
+  return <MetronomeCuerpo compact={compact} mini={mini} initialPreferences={iniciales} />;
 }
 
-function MetronomeCuerpo({ compact, initialPreferences }) {
+function MetronomeCuerpo({ compact, mini, initialPreferences }) {
   const {
     isPlaying,
     bpm,
@@ -123,6 +124,53 @@ function MetronomeCuerpo({ compact, initialPreferences }) {
     updateBpm,
     isPlaying
   );
+
+  // Versión simplificada para el panel flotante: lo que se toca en vivo
+  // (tempo, compás, empezar y parar). Lo demás está en la página completa.
+  if (mini) {
+    return (
+      <div className="metronome-mini">
+        {error && <div className="alert alert-danger py-2 small" role="alert">{error}</div>}
+
+        <div className="metronome-mini-bpm">
+          <button type="button" className="metronome-mini-paso" onClick={() => decrementBpm(5)} aria-label="Bajar 5 BPM">−5</button>
+          <button type="button" className="metronome-mini-paso" onClick={() => decrementBpm(1)} aria-label="Bajar 1 BPM">−1</button>
+          <div className="metronome-mini-valor">
+            <strong>{bpm}</strong>
+            <span>BPM</span>
+          </div>
+          <button type="button" className="metronome-mini-paso" onClick={() => incrementBpm(1)} aria-label="Subir 1 BPM">+1</button>
+          <button type="button" className="metronome-mini-paso" onClick={() => incrementBpm(5)} aria-label="Subir 5 BPM">+5</button>
+        </div>
+
+        <MetronomeVisualizer
+          currentBeat={currentBeat}
+          totalBeats={timeSignatureBeats}
+          isPlaying={isPlaying}
+        />
+
+        <div className="metronome-mini-fila">
+          {/* El compás solo se cambia en pausa, como en la página completa */}
+          <Desplegable
+            className="desplegable--compacto"
+            value={timeSignature}
+            onChange={updateTimeSignature}
+            disabled={isPlaying}
+            ariaLabel="Compás"
+            opciones={Object.keys(TIME_SIGNATURES).map((c) => ({ value: c, label: c }))}
+          />
+          <button type="button" className="btn btn-sm btn-outline-secondary" onClick={tapTempo}>
+            <i className="bi bi-hand-index me-1"></i>
+            Tap
+          </button>
+          <button type="button" className="btn btn-sm btn-primary metronome-mini-play" onClick={toggle} disabled={loading}>
+            <i className={`bi bi-${isPlaying ? 'pause' : 'play'}-fill me-1`}></i>
+            {isPlaying ? 'Pausar' : 'Iniciar'}
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={compact ? 'metronome-compact' : 'metronome-container'}>

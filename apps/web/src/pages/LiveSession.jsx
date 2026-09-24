@@ -18,6 +18,10 @@ import { TRANSPOSING_INSTRUMENTS, INSTRUMENT_GROUPS, SOURCE_INSTRUMENT } from "@
 import { getUserPreferences } from "@notesheet/api";
 import { useAuth } from "../context/AuthContext";
 import useLiveSession from "../hooks/useLiveSession";
+import useAlineacionTexto from "../hooks/useAlineacionTexto";
+import AlineacionTexto from "../components/AlineacionTexto";
+import Desplegable from "../components/Desplegable";
+import HerramientasFlotantes from "../components/herramientas/HerramientasFlotantes";
 import useLiveSetlistContent from "../hooks/useLiveSetlistContent";
 import usePreferenciaLocal from "../hooks/usePreferenciaLocal";
 import useNotacionPreferida from "../hooks/useNotacionPreferida";
@@ -73,12 +77,13 @@ function LiveSession() {
 
   const { fontSize, setFontSize, increaseFontSize, decreaseFontSize } =
     useFontSizePreference(currentUser);
+  const [alineacion, setAlineacion] = useAlineacionTexto();
 
   // --- Lo compartido ---
   const {
     session, songs, activeSongId, activeIndex,
     estado, error, sinRed, participants, isHost,
-    irACancion, siguiente, anterior, cambiarTonalidad,
+    irACancion, cambiarTonalidad,
     moverCancion, agregarCancion, quitarCancion, cerrarSesion, salir,
     anunciarInstrumento
   } = useLiveSession(code, { user: currentUser });
@@ -161,6 +166,101 @@ function LiveSession() {
       block: "start"
     });
   }, [activeSongId, seguir]);
+
+  /**
+   * La canción que este músico tiene delante.
+   *
+   * No es la de la banda: quien baja a mirar la siguiente con el dedo sigue
+   * teniendo la banda en otra. Antes el contador y Anterior/Siguiente iban
+   * siempre con la de la banda, así que tras bajar a mano hasta la última,
+   * "Siguiente" te subía a la segunda.
+   *
+   * Cuenta la última tarjeta cuyo principio ya ha pasado por debajo de la
+   * cabecera fija. Al final de la página una canción corta no llega a subir
+   * tanto; si ya no se puede bajar más, cuenta la última que asoma.
+   */
+  const [enVistaId, setEnVistaId] = useState(null);
+
+  // Mientras dura un salto pedido con Anterior/Siguiente, el desplazamiento
+  // animado pasa por las canciones de en medio. Se ignoran esas lecturas un
+  // momento; si no, una segunda pulsación rápida contaría desde la de antes.
+  const saltoEnCurso = useRef(null); // { id, hasta }
+
+  useEffect(() => {
+    // Se mide como mucho cada 60 ms mientras se desplaza: sobra para un
+    // contador y no carga la tablet.
+    let pendiente = null;
+
+    const medir = () => {
+      pendiente = null;
+      const cajas = songs
+        .map((s) => ({ id: s.id, nodo: refsCanciones.current[s.id] }))
+        .filter((c) => c.nodo)
+        .map((c) => ({ id: c.id, caja: c.nodo.getBoundingClientRect() }));
+
+      // Sin maquetar todavía (o en jsdom) todo mide 0: no se sabe cuál se ve
+      if (cajas.length === 0 || cajas.every((c) => c.caja.height === 0)) {
+        setEnVistaId(null);
+        return;
+      }
+
+      const linea = (headerRef.current?.getBoundingClientRect().bottom ?? 0) + 24;
+      let elegida = cajas[0].id;
+      cajas.forEach((c) => { if (c.caja.top <= linea) elegida = c.id; });
+
+      const alFinal = window.innerHeight + window.scrollY
+        >= document.documentElement.scrollHeight - 2;
+      if (alFinal) {
+        const asoman = cajas.filter((c) => c.caja.top < window.innerHeight);
+        if (asoman.length > 0) elegida = asoman[asoman.length - 1].id;
+      }
+
+      const salto = saltoEnCurso.current;
+      if (salto) {
+        if (elegida !== salto.id && Date.now() < salto.hasta) return;
+        saltoEnCurso.current = null;
+      }
+
+      setEnVistaId(elegida);
+    };
+
+    const alMoverse = () => {
+      if (pendiente === null) pendiente = setTimeout(medir, 60);
+    };
+
+    medir();
+    window.addEventListener("scroll", alMoverse, { passive: true });
+    window.addEventListener("resize", alMoverse);
+    return () => {
+      window.removeEventListener("scroll", alMoverse);
+      window.removeEventListener("resize", alMoverse);
+      if (pendiente !== null) clearTimeout(pendiente);
+    };
+  }, [songs]);
+
+  // Anterior y Siguiente cuentan desde la que se ve; si no se sabe, desde la
+  // de la banda.
+  const indiceEnVista = enVistaId ? songs.findIndex((s) => s.id === enVistaId) : -1;
+  const indiceBase = indiceEnVista >= 0 ? indiceEnVista : activeIndex;
+  //
+  // El botón lleva SIEMPRE a la canción, y además mueve a la banda si iba en
+  // otra. Antes solo movía a la banda y el scroll iba detrás del cambio: si
+  // la de destino ya era la de la banda (mirando la 1 con la banda en la 2,
+  // pulsar Siguiente), no cambiaba nada y el botón parecía no funcionar.
+  const irARelativa = (salto) => {
+    const destino = songs[indiceBase + salto];
+    if (!destino) return;
+
+    refsCanciones.current[destino.id]?.scrollIntoView({ behavior: "smooth", block: "start" });
+    // Ya se va para allá: que el efecto de la canción activa no repita el salto
+    ultimaActiva.current = destino.id;
+    saltoEnCurso.current = { id: destino.id, hasta: Date.now() + 1200 };
+    // El contador cambia ya, sin esperar a que termine el desplazamiento: dos
+    // pulsaciones seguidas cuentan desde la nueva, no desde la de antes.
+    setEnVistaId(destino.id);
+
+    if (destino.id !== activeSongId) irACancion(destino.id);
+  };
 
   // Las preferencias del usuario mandan sobre el valor por defecto, pero no
   // sobre lo que ya eligió en este dispositivo.
@@ -304,39 +404,43 @@ function LiveSession() {
           <label className="live-control-label" htmlFor="live-instrumento">
             Mi instrumento
           </label>
-          <select
+          <Desplegable
             id="live-instrumento"
-            className="live-select"
+            className="desplegable--live"
             value={instrumento}
-            onChange={(e) => cambiarInstrumento(e.target.value)}
-          >
-            {INSTRUMENT_GROUPS.map((grupo) => (
-              <optgroup key={grupo.name} label={grupo.name}>
-                {grupo.instruments.map((id) => (
-                  <option key={id} value={id}>{TRANSPOSING_INSTRUMENTS[id].name}</option>
-                ))}
-              </optgroup>
-            ))}
-          </select>
+            onChange={cambiarInstrumento}
+            grupos={INSTRUMENT_GROUPS.map((grupo) => ({
+              label: grupo.name,
+              opciones: grupo.instruments.map((id) => ({ value: id, label: TRANSPOSING_INSTRUMENTS[id].name }))
+            }))}
+          />
         </div>
 
         <div className="live-control-group">
           <label className="live-control-label" htmlFor="live-notacion">Notación</label>
-          <select
+          <Desplegable
             id="live-notacion"
-            className="live-select"
+            className="desplegable--live"
             value={notacion}
-            onChange={(e) => setNotacion(e.target.value)}
-          >
-            <option value="latin">DO-RE-MI</option>
-            <option value="english">C-D-E</option>
-          </select>
+            onChange={setNotacion}
+            opciones={[
+              { value: "latin", label: "DO-RE-MI" },
+              { value: "english", label: "C-D-E" }
+            ]}
+          />
         </div>
 
         <div className="live-control-group live-font-controls">
           <button type="button" className="live-icon-btn" onClick={decreaseFontSize}>A-</button>
           <button type="button" className="live-icon-btn" onClick={increaseFontSize}>A+</button>
         </div>
+
+        <AlineacionTexto
+          alineacion={alineacion}
+          onCambiar={setAlineacion}
+          className="live-control-group live-font-controls"
+          botonClassName="live-icon-btn"
+        />
 
         <div className="live-control-group live-follow">
           <label className="live-switch">
@@ -355,8 +459,8 @@ function LiveSession() {
         <button
           type="button"
           className="btn-live"
-          onClick={conScroll(anterior)}
-          disabled={activeIndex <= 0}
+          onClick={() => irARelativa(-1)}
+          disabled={indiceBase <= 0}
         >
           <i className="bi bi-chevron-left" />
           Anterior
@@ -369,14 +473,14 @@ function LiveSession() {
           aria-expanded={verIndice}
         >
           <i className="bi bi-list-ol me-2" />
-          {activeIndex >= 0 ? `${activeIndex + 1} de ${songs.length}` : `${songs.length} canciones`}
+          {indiceBase >= 0 ? `${indiceBase + 1} de ${songs.length}` : `${songs.length} canciones`}
         </button>
 
         <button
           type="button"
           className="btn-live"
-          onClick={conScroll(siguiente)}
-          disabled={activeIndex < 0 || activeIndex >= songs.length - 1}
+          onClick={() => irARelativa(1)}
+          disabled={indiceBase < 0 || indiceBase >= songs.length - 1}
         >
           Siguiente
           <i className="bi bi-chevron-right" />
@@ -410,6 +514,7 @@ function LiveSession() {
             total={canciones.length}
             activa={song.id === activeSongId}
             fontSize={fontSize}
+            alineacion={alineacion}
             onCambiarTonalidad={cambiarTonalidad}
             onQuitar={quitarCancion}
             onMover={moverCancion}
@@ -424,6 +529,18 @@ function LiveSession() {
         yaEnLaSesion={songs.map((s) => s.id)}
         onAgregar={agregarCancion}
         notacion={notacion}
+      />
+
+      {/* El panel "Lista" solo mueve la pantalla de este músico. Para llevar
+          a la banda entera a otra canción está el índice de arriba. */}
+      <HerramientasFlotantes
+        notacion={notacion}
+        lista={{
+          mensaje: session?.mensajeDirector || null,
+          canciones: songs.map((s) => ({ id: s.id, title: s.title, key: s.key || s.originalKey })),
+          activaId: activeSongId,
+          onIr: (songId) => refsCanciones.current[songId]?.scrollIntoView({ behavior: "smooth", block: "start" })
+        }}
       />
     </div>
   );

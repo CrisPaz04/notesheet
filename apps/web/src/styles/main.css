@@ -19,6 +19,8 @@
 @import './components/_modal.css';
 @import './components/_metronome.css';
 @import './components/_tuner.css';
+@import './components/_herramientas.css';
+@import './components/_desplegable.css';
 
 /* Pages */
 @import './pages/_home.css';

@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor, within, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { elegirEnDesplegable, valorDe } from './utils/desplegable';
 
 // --- Mocks ---
 // SongEditor arrastra Firebase, el router y SimpleMDE (que no funciona en
@@ -376,11 +377,11 @@ describe('SongEditor: tempo, compás y datos de la grabación', () => {
     mockGetSongById.mockResolvedValue({ ...SONG, tempo: 72, compas: '3/4' });
     await renderEditor();
     expect(screen.getByLabelText(/Tempo \(BPM\)/)).toHaveValue(72);
-    expect(screen.getByLabelText(/Compás/)).toHaveValue('3/4');
+    expect(valorDe(screen.getByLabelText(/Compás/))).toBe('3/4');
 
     await user.clear(screen.getByLabelText(/Tempo \(BPM\)/));
     await user.type(screen.getByLabelText(/Tempo \(BPM\)/), '96');
-    await user.selectOptions(screen.getByLabelText(/Compás/), '6/8');
+    await elegirEnDesplegable(user, screen.getByLabelText(/Compás/), '6/8');
     const guardado = await guardar(user);
     expect(guardado.tempo).toBe(96);
     expect(guardado.compas).toBe('6/8');

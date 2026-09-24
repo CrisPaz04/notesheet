@@ -36,12 +36,26 @@
   margin-left: auto;
 }
 
+/* Con zoom la página es más ancha que la pantalla: el contenedor se desplaza
+   de lado. Antes cada página se recortaba al ancho (`max-width: 100%` y
+   `overflow: hidden`) y solo se veía su parte izquierda. */
 .pdf-score-pages {
+  width: 100%;
+  overflow-x: auto;
+}
+
+/* Lo que se desplaza. Mide lo que la página más ancha, y como mínimo el
+   contenedor: así sin zoom (o alejando) las páginas quedan centradas, y con
+   zoom se puede llegar a los dos bordes. Un `align-items: center` a secas
+   centraría también lo que desborda, y el borde izquierdo quedaría fuera de
+   alcance. */
+.pdf-score-pages-lienzo {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 1rem;
-  width: 100%;
+  width: max-content;
+  min-width: 100%;
 }
 
 .pdf-score-page {
@@ -53,7 +67,6 @@
   /* El hueco se reserva aunque la página no esté pintada: sin esto la barra
      de desplazamiento pegaría saltos al pasar página. */
   flex: 0 0 auto;
-  max-width: 100%;
 }
 
 .pdf-score-canvas {
@@ -173,38 +186,24 @@
 
 /* --- Dentro de una lista ---------------------------------------------- */
 
-/* Enlace a la partitura desde la lista. La lista no abre ningún PDF: sobre el
-   atril se lee una canción cada vez, y ocho documentos abiertos a la vez es
-   justo lo que no aguanta la tablet más barata de la sección. */
-.playlist-song-pdf {
-  display: flex;
+/* La partitura se despliega dentro de la lista (`PdfEnLista`), que solo
+   monta el visor mientras está cerca de la pantalla. */
+.playlist-pdf {
+  min-height: 12rem;
+}
+
+/* Debajo de la partitura, para leerla en otra voz desde su pantalla */
+.playlist-song-pdf-otra-voz {
+  display: inline-flex;
   align-items: center;
-  gap: 1rem;
-  padding: 1rem 1.25rem;
-  border: 1px solid var(--border-light);
-  border-radius: var(--radius-lg);
-  text-decoration: none;
-  color: inherit;
-  transition: border-color 0.2s ease;
-}
-
-.playlist-song-pdf:hover {
-  border-color: var(--color-primary);
-}
-
-.playlist-song-pdf > span {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-}
-
-.playlist-song-pdf small {
-  opacity: 0.7;
-}
-
-.playlist-song-pdf > i:first-child {
-  font-size: 1.5rem;
+  margin-top: 0.75rem;
+  font-size: 0.9rem;
   color: var(--color-primary);
+  text-decoration: none;
+}
+
+.playlist-song-pdf-otra-voz:hover {
+  text-decoration: underline;
 }
 
 /* Tonalidad de una entrada de PDF dentro del editor de listas: es un dato,

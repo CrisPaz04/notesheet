@@ -71,6 +71,19 @@ export const parsearTonalidad = (linea) => {
 };
 
 /**
+ * ¿Es esta línea el nombre de un bloque ("*Intro", "*Rápidas*")? Devuelve el
+ * nombre sin asteriscos, o null.
+ *
+ * El director separa la lista por momentos del servicio marcándolos con un
+ * asterisco, que en WhatsApp es la negrita. No son canciones: sin esto,
+ * "*Lentas" se buscaba en el repertorio como si lo fuera.
+ */
+export const parsearCabecera = (linea) => {
+  const m = /^\s*\*+\s*([^*]+?)\s*\**\s*$/.exec(linea || '');
+  return m ? m[1] : null;
+};
+
+/**
  * Divide el texto en entradas: cada canción mencionada con la tonalidad que
  * estaba vigente en ese punto.
  *
@@ -83,7 +96,7 @@ export const parsearSetlist = (texto) => {
 
   (texto || '').split('\n').forEach((lineaCruda, i) => {
     const linea = lineaCruda.trim();
-    if (!linea) return;
+    if (!linea || parsearCabecera(linea)) return;
 
     const tonalidad = parsearTonalidad(linea);
     if (tonalidad) {
@@ -160,6 +173,42 @@ const cobertura = (palabrasConsulta, palabrasTexto) => {
  * @returns {{score: number, razon: string}} score de 0 a 1
  */
 export const puntuarCoincidencia = (consulta, cancion) => {
+  // "Por quién eres tú (Coalo)", "Camino al Cielo yo voy (yo tengo gozo)".
+  // Lo que va entre paréntesis puede ser ruido (el artista, "versión nueva")
+  // o justo lo que identifica la canción (otro título, un verso). Se prueba
+  // con la línea entera, sin el paréntesis y con solo el paréntesis, y gana
+  // la mejor: así el ruido no resta y la pista sí suma.
+  const dentro = entreParentesis(consulta);
+  if (dentro.length === 0) return puntuarUna(consulta, cancion);
+
+  const fuera = (consulta || '').replace(/\([^)]*\)?/g, ' ');
+  const mejor = [consulta, fuera, ...dentro]
+    .filter((v) => normalizarTexto(v))
+    .map((v) => puntuarUna(v, cancion))
+    .reduce((m, r) => (r.score > m.score ? r : m));
+
+  // El paréntesis suele ser el autor: "Por quién eres tú (Coalo)" es la de
+  // Coalo Zamorano. No sube la puntuación (el título ya dice qué canción
+  // es), pero desempata entre dos versiones con el mismo título.
+  return { ...mejor, autor: dentro.some((d) => coincideAutor(d, cancion)) };
+};
+
+const entreParentesis = (texto) => (
+  [...(texto || '').matchAll(/\(([^)]*)\)/g)].map((m) => m[1])
+);
+
+/** ¿Lo que escribió está en el "Versión de" de la canción? "Coalo" → "Coalo Zamorano". */
+const coincideAutor = (texto, cancion) => {
+  const t = normalizarTexto(texto);
+  if (t.length < 3) return false;
+  const autores = [
+    ...(Array.isArray(cancion?.versiones) ? cancion.versiones : []),
+    ...String(cancion?.version || '').split(',')
+  ].map(normalizarTexto).filter(Boolean);
+  return autores.some((a) => a.includes(t) || t.includes(a));
+};
+
+const puntuarUna = (consulta, cancion) => {
   const q = normalizarTexto(consulta);
   if (!q) return { score: 0, razon: 'vacia' };
 
@@ -210,7 +259,8 @@ export const buscarCandidatos = (consulta, repertorio = []) => {
   const candidatos = repertorio
     .map((cancion) => ({ cancion, ...puntuarCoincidencia(consulta, cancion) }))
     .filter((c) => c.score >= UMBRAL_MINIMO)
-    .sort((a, b) => b.score - a.score)
+    // A igual puntuación, la del autor que indicó el director
+    .sort((a, b) => (b.score - a.score) || (Number(Boolean(b.autor)) - Number(Boolean(a.autor))))
     .slice(0, 5);
 
   const mejor = candidatos[0] || null;
@@ -237,3 +287,78 @@ export const emparejarSetlist = (texto, repertorio = []) =>
     ...entrada,
     ...buscarCandidatos(entrada.consulta, repertorio)
   }));
+
+/**
+ * El mensaje del director, línea a línea, listo para enseñarlo tal cual.
+ *
+ * Es lo que se ve en el panel "Lista" durante el servicio: el mismo texto que
+ * mandó por WhatsApp, con sus bloques y sus tonalidades, pero con cada
+ * canción enlazada a la suya. Los enlaces no se vuelven a adivinar aquí: son
+ * los que el músico confirmó al importar (`linea` → id de canción), que para
+ * eso los revisó.
+ *
+ * @param {string} texto - El mensaje tal cual
+ * @param {Object<string, string>} [enlaces] - Número de línea → id de canción
+ * @returns {Array<{tipo: 'seccion'|'tonalidad'|'cancion', texto: string,
+ *                  linea: number, key?: string, songId?: string|null}>}
+ */
+export const estructurarMensaje = (texto, enlaces = {}) => {
+  const lineas = [];
+
+  (texto || '').split('\n').forEach((lineaCruda, i) => {
+    const linea = lineaCruda.trim();
+    if (!linea) return;
+    const numero = i + 1;
+
+    const cabecera = parsearCabecera(linea);
+    if (cabecera) {
+      lineas.push({ tipo: 'seccion', texto: cabecera, linea: numero });
+      return;
+    }
+
+    const tonalidad = parsearTonalidad(linea);
+    if (tonalidad) {
+      lineas.push({ tipo: 'tonalidad', texto: linea, key: tonalidad, linea: numero });
+      return;
+    }
+
+    lineas.push({
+      tipo: 'cancion',
+      texto: linea,
+      linea: numero,
+      songId: enlaces?.[numero] || enlaces?.[String(numero)] || null
+    });
+  });
+
+  return lineas;
+};
+
+// Un mensaje de WhatsApp con la lista del domingo no pasa de unos cientos de
+// caracteres. El tope es por si alguien pega otra cosa: el documento de la
+// lista viaja entero a cada músico, y en la sesión en vivo a cada latido.
+const MENSAJE_MAX = 4000;
+
+/**
+ * El mensaje del director tal y como se guarda: `{ texto, enlaces }`, o null
+ * si no hay nada. Los enlaces (nº de línea → id de canción) son solo los que
+ * apuntan a una línea que existe y a un id con forma de id.
+ *
+ * @param {*} mensaje
+ * @returns {{texto: string, enlaces: Object<string, string>}|null}
+ */
+export const limpiarMensajeDirector = (mensaje) => {
+  const texto = typeof mensaje?.texto === 'string' ? mensaje.texto.slice(0, MENSAJE_MAX) : '';
+  if (!texto.trim()) return null;
+
+  const totalLineas = texto.split('\n').length;
+  const enlaces = {};
+  Object.entries(mensaje?.enlaces || {}).forEach(([linea, songId]) => {
+    const n = Number(linea);
+    if (Number.isInteger(n) && n >= 1 && n <= totalLineas
+        && typeof songId === 'string' && songId && songId.length <= 128) {
+      enlaces[String(n)] = songId;
+    }
+  });
+
+  return { texto, enlaces };
+};

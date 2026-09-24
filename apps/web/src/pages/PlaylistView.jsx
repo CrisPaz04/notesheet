@@ -1,12 +1,16 @@
 // apps/web/src/pages/PlaylistView.jsx
 import { useState, useEffect, useMemo } from "react";
 import { useParams, Link } from "react-router-dom";
-import { getPlaylistById, getSongById } from "@notesheet/api";
+import { getPlaylistById, getSongById, getUserPreferences } from "@notesheet/api";
 import { useAuth } from "../context/AuthContext";
 import useNotacionPreferida from "../hooks/useNotacionPreferida";
-import { renderSongContent, isPdfSong, nombrarTonalidad } from "@notesheet/core";
+import { renderSongContent, isPdfSong, nombrarTonalidad, resolveScore, DEFAULT_SCORE_VARIANT } from "@notesheet/core";
 import LoadingSpinner from "../components/LoadingSpinner";
 import StartLiveButton from "../components/live/StartLiveButton";
+import PdfEnLista from "../components/PdfEnLista";
+import AlineacionTexto from "../components/AlineacionTexto";
+import useAlineacionTexto from "../hooks/useAlineacionTexto";
+import HerramientasFlotantes from "../components/herramientas/HerramientasFlotantes";
 
 function PlaylistView() {
   const [playlist, setPlaylist] = useState(null);
@@ -18,6 +22,29 @@ function PlaylistView() {
   const { id } = useParams();
   const { currentUser } = useAuth();
   const [notacion] = useNotacionPreferida(currentUser);
+  const [alineacion, setAlineacion] = useAlineacionTexto();
+
+  // Con qué voz se abre cada partitura: la del instrumento del músico, como
+  // en la vista de la canción. Sin preferencias, la voz principal.
+  const [preferenciasPdf, setPreferenciasPdf] = useState({
+    instrument: null,
+    variant: DEFAULT_SCORE_VARIANT
+  });
+
+  useEffect(() => {
+    if (!currentUser) return undefined;
+    let vigente = true;
+    getUserPreferences(currentUser.uid)
+      .then((prefs) => {
+        if (!vigente) return;
+        setPreferenciasPdf({
+          instrument: prefs?.defaultInstrument || null,
+          variant: prefs?.defaultScoreVariant || DEFAULT_SCORE_VARIANT
+        });
+      })
+      .catch((prefsError) => console.error("Error loading user preferences:", prefsError));
+    return () => { vigente = false; };
+  }, [currentUser]);
 
   useEffect(() => {
     const loadPlaylist = async () => {
@@ -36,11 +63,9 @@ function PlaylistView() {
                 const fullSong = await getSongById(song.id);
 
                 // Una partitura en PDF no tiene `content` que formatear ni
-                // tonalidad a la que transponer: se enlaza a la canción, que
-                // es donde vive el visor. Aquí no se abre ninguna: una lista
-                // con ocho PDF abiertos a la vez es justo lo que no aguanta
-                // la tablet más barata de la sección, y sobre el atril se
-                // lee una canción cada vez.
+                // tonalidad a la que transponer. Se despliega más abajo con
+                // `PdfEnLista`, que solo la abre cuando está cerca de la
+                // pantalla.
                 if (isPdfSong(fullSong)) {
                   return {
                     ...fullSong,
@@ -146,6 +171,12 @@ function PlaylistView() {
 
   const handlePrint = () => {
     window.print();
+  };
+
+  // Desde el panel "Lista": lleva a la canción sin salir de la página
+  const irACancion = (songId) => {
+    document.getElementById(`cancion-${songId}`)
+      ?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
   // Formatear fecha
@@ -259,13 +290,20 @@ function PlaylistView() {
                   A+
                 </button>
               </div>
+
+              <AlineacionTexto alineacion={alineacion} onCambiar={setAlineacion} />
               
               {/* Botones de acción */}
               <div className="action-buttons-song">
                 {/* La sesión copia la lista: lo que se cambie durante el
                     servicio no toca la lista guardada. */}
                 <StartLiveButton
-                  playlist={{ id, name: playlist.name, songs: playlist.songs }}
+                  playlist={{
+                    id,
+                    name: playlist.name,
+                    songs: playlist.songs,
+                    mensajeDirector: playlist.mensajeDirector || null
+                  }}
                   user={currentUser}
                 />
 
@@ -328,7 +366,7 @@ function PlaylistView() {
               </div>
               
               {cancionesVista.map((song, index) => (
-                <div key={song.id}>
+                <div key={song.id} id={`cancion-${song.id}`} className="playlist-song-ancla">
                   {/* Item de la canción */}
                   <div className="playlist-song-item">
                     <div className="playlist-song-number">
@@ -362,17 +400,18 @@ function PlaylistView() {
                     </div>
                   </div>
                   
-                  {/* Una partitura en PDF se abre en su propia pantalla. Sin
-                      esto no se vería nada y parecería una canción vacía. */}
+                  {/* Una partitura en PDF se despliega aquí mismo, en la voz
+                      del músico, para leer la lista de corrido. Para elegir
+                      otra voz está la pantalla de la canción. */}
                   {!song.error && isPdfSong(song) && (
                     <div className="song-content-section">
-                      <Link to={`/songs/${song.id}`} className="playlist-song-pdf">
-                        <i className="bi bi-file-earmark-music"></i>
-                        <span>
-                          <strong>Partitura en PDF</strong>
-                          <small>Ábrela para verla en tu voz</small>
-                        </span>
-                        <i className="bi bi-chevron-right"></i>
+                      <PdfEnLista
+                        path={resolveScore(song, preferenciasPdf).path}
+                        title={song.title}
+                      />
+                      <Link to={`/songs/${song.id}`} className="playlist-song-pdf-otra-voz no-print">
+                        <i className="bi bi-file-earmark-music me-1"></i>
+                        Ver en otra voz
                       </Link>
                     </div>
                   )}
@@ -383,7 +422,7 @@ function PlaylistView() {
                       {song.formattedContent.sections.map((section, sectionIndex) => (
                         <div key={sectionIndex} className="song-section-modern">
                           <h4 className="song-section-title">{section.title}</h4>
-                          <div className="song-section-content" style={{ fontSize: `${fontSize}px` }}>
+                          <div className={`song-section-content alinear-${alineacion}`} style={{ fontSize: `${fontSize}px` }}>
                             {section.content}
                           </div>
                         </div>
@@ -405,6 +444,18 @@ function PlaylistView() {
           )}
         </div>
       </div>
+
+      <HerramientasFlotantes
+        notacion={notacion}
+        lista={{
+          mensaje: playlist.mensajeDirector || null,
+          canciones: cancionesVista
+            .filter((c) => !c.error)
+            .map((c) => ({ id: c.id, title: c.title, key: c.selectedKey || c.key })),
+          activaId: null,
+          onIr: irACancion
+        }}
+      />
     </div>
   );
 }

@@ -215,3 +215,51 @@ describe('tonalidad', () => {
     expect(texto(result.current.canciones[1])).toContain('G D');
   });
 });
+
+describe('partituras en PDF', () => {
+  const PDF = {
+    id: 's3',
+    title: 'Prueba PDF',
+    key: 'DO',
+    format: 'pdf',
+    content: '',
+    primaryInstrument: 'bb_trumpet',
+    primaryVoiceNumber: '1',
+    pdfs: {
+      bb_trumpet: { 1: { partitura: 'partituras/s3/bb_trumpet-1-partitura.pdf' } },
+      bb_trombone: { 1: { partitura: 'partituras/s3/bb_trombone-1-partitura.pdf' } }
+    }
+  };
+  const CON_PDF = [...LISTA, { id: 's3', title: 'Prueba PDF', key: 'DO', originalKey: 'DO' }];
+
+  beforeEach(() => {
+    mockGetSongById.mockImplementation(async (id) => (id === 's3' ? PDF : REPERTORIO[id]));
+  });
+
+  it('no pasa por el pipeline de texto: da la partitura de su instrumento', async () => {
+    // El fallo real: salían los títulos de sección vacíos y ninguna partitura
+    const { result } = montar({ songs: CON_PDF, instrument: 'bb_trombone' });
+
+    await waitFor(() => expect(result.current.canciones[2].pdf).toBeTruthy());
+    const cancion = result.current.canciones[2];
+    expect(cancion.rendered).toBeNull();
+    expect(cancion.pdf.path).toBe('partituras/s3/bb_trombone-1-partitura.pdf');
+    expect(cancion.voiceKey).toBe('bb_trombone-1');
+  });
+
+  it('la voz elegida a mano manda, y ofrece las voces que tienen PDF', async () => {
+    const { result } = montar({ songs: CON_PDF, voiceKeys: { s3: 'bb_trombone-1' } });
+
+    await waitFor(() => expect(result.current.canciones[2].pdf).toBeTruthy());
+    expect(result.current.canciones[2].pdf.path).toBe('partituras/s3/bb_trombone-1-partitura.pdf');
+    expect(result.current.canciones[2].voices.map((v) => v.id))
+      .toEqual(['bb_trombone-1', 'bb_trumpet-1']);
+  });
+
+  it('sin voz para su instrumento, la principal', async () => {
+    const { result } = montar({ songs: CON_PDF, instrument: 'eb_alto_sax' });
+
+    await waitFor(() => expect(result.current.canciones[2].pdf).toBeTruthy());
+    expect(result.current.canciones[2].pdf.path).toBe('partituras/s3/bb_trumpet-1-partitura.pdf');
+  });
+});

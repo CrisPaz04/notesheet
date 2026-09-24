@@ -9,6 +9,7 @@ import {
   getStringFrequency,
   getInstrumentIcon
 } from '@notesheet/core';
+import Desplegable from '../Desplegable';
 
 function StringModeSelector({
   stringModeEnabled,
@@ -80,21 +81,15 @@ function StringModeSelector({
               <i className={`${currentTuning ? getInstrumentIcon(currentTuning.instrument) : 'bi-music-note'} me-2`}></i>
               Afinación
             </label>
-            <select
-              className="form-control-modern"
+            <Desplegable
               value={selectedTuning}
-              onChange={(e) => onTuningChange(e.target.value)}
-            >
-              {Object.entries(tuningGroups).map(([group, tunings]) => (
-                <optgroup key={group} label={group.charAt(0).toUpperCase() + group.slice(1)}>
-                  {tunings.map((tuning) => (
-                    <option key={tuning.id} value={tuning.id}>
-                      {tuning.name}
-                    </option>
-                  ))}
-                </optgroup>
-              ))}
-            </select>
+              onChange={onTuningChange}
+              ariaLabel="Afinación"
+              grupos={Object.entries(tuningGroups).map(([group, tunings]) => ({
+                label: group.charAt(0).toUpperCase() + group.slice(1),
+                opciones: tunings.map((tuning) => ({ value: tuning.id, label: tuning.name }))
+              }))}
+            />
           </div>
 
           {/* String Grid */}

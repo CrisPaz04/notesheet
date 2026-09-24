@@ -25,7 +25,7 @@ import StringModeSelector from '../components/tuner/StringModeSelector';
  * Firebase aún no había respondido: el afinador arrancaba siempre en 440 y con
  * la trompeta, y además guardaba esos valores encima de los del usuario.
  */
-function Tuner({ compact = false }) {
+function Tuner({ compact = false, mini = false }) {
   const { currentUser } = useAuth();
   const [preferencesLoaded, setPreferencesLoaded] = useState(false);
   const [initialPreferences, setInitialPreferences] = useState({});
@@ -80,10 +80,10 @@ function Tuner({ compact = false }) {
     );
   }
 
-  return <TunerCuerpo compact={compact} initialPreferences={initialPreferences} />;
+  return <TunerCuerpo compact={compact} mini={mini} initialPreferences={initialPreferences} />;
 }
 
-function TunerCuerpo({ compact, initialPreferences }) {
+function TunerCuerpo({ compact, mini, initialPreferences }) {
   const {
     isRunning,
     loading,
@@ -132,6 +132,49 @@ function TunerCuerpo({ compact, initialPreferences }) {
       pitchHistory.clearHistory();
     }
   }, [isRunning, pitchHistory.clearHistory]);
+
+  // Versión simplificada para el panel flotante: la nota, una barra de
+  // cents y el botón. La frecuencia de referencia, las cuerdas y los tonos siguen en la
+  // página completa, con las mismas preferencias.
+  if (mini) {
+    const afinado = tuningStatus === 'in-tune';
+    const color = !detectedNote
+      ? 'var(--text-light-secondary)'
+      : afinado ? '#4caf50' : Math.abs(centsDeviation) > 15 ? '#f44336' : '#ffc107';
+    // -50..+50 cents -> 0..100 % del ancho de la barra
+    const posicion = Math.max(0, Math.min(100, 50 + centsDeviation));
+
+    return (
+      <div className="tuner-mini">
+        {error && <div className="alert alert-danger py-2 small" role="alert">{error}</div>}
+
+        <div className="tuner-mini-lectura">
+          <span className="tuner-mini-nota" style={{ color }}>
+            {detectedNote || (isRunning ? '♪' : '--')}
+          </span>
+          <span className="tuner-mini-cents" style={{ color }}>
+            {detectedNote ? `${centsDeviation > 0 ? '+' : ''}${Math.round(centsDeviation)}¢` : ''}
+            <small>{detectedFrequency ? `${detectedFrequency.toFixed(1)} Hz` : ''}</small>
+          </span>
+        </div>
+
+        <div className="tuner-mini-barra" aria-hidden="true">
+          <span className="tuner-mini-centro" />
+          {detectedNote && (
+            <span className="tuner-mini-marca" style={{ left: `${posicion}%`, background: color }} />
+          )}
+        </div>
+        <div className="tuner-mini-escala" aria-hidden="true">
+          <span>♭ -50</span><span>0</span><span>+50 ♯</span>
+        </div>
+
+        <button type="button" className="btn btn-primary btn-sm" onClick={toggle} disabled={loading}>
+          <i className={`bi bi-${isRunning ? 'stop' : 'mic'}-fill me-1`}></i>
+          {loading ? 'Iniciando…' : isRunning ? 'Detener' : 'Iniciar'}
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className={compact ? 'tuner-compact' : 'tuner-container'}>

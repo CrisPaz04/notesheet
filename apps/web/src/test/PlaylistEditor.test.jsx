@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { elegirEnDesplegable } from './utils/desplegable';
 
 // --- Mocks ---
 const mockGetAllSongs = vi.fn();
@@ -324,9 +325,9 @@ voy a perder la compostura`;
       });
 
       // La primera se reconoce por el título
-      expect(entradas[0].querySelector('select').value).toBe('s1');
+      expect(entradas[0].querySelector('[role="combobox"]').dataset.valor).toBe('s1');
       // La segunda solo por la letra: su título no se parece al verso
-      expect(entradas[1].querySelector('select').value).toBe('s3');
+      expect(entradas[1].querySelector('[role="combobox"]').dataset.valor).toBe('s3');
       expect(entradas[1].textContent).toContain('voy a perder la compostura');
     });
 
@@ -372,9 +373,68 @@ voy a perder la compostura`;
       await renderNueva();
 
       await interpretar(user, 'Cristo Vive');
-      await user.selectOptions(await screen.findByRole('combobox'), '');
+      await elegirEnDesplegable(user, await screen.findByRole('combobox'), '');
 
       expect(screen.getByRole('button', { name: /Añadir 0 a la lista/i })).toBeInTheDocument();
+    });
+
+    it('guarda el mensaje tal cual con las canciones confirmadas, para el panel "Lista"', async () => {
+      mockGetAllSongs.mockResolvedValue(conLetras);
+      const user = userEvent.setup();
+      await renderNueva();
+
+      await user.type(screen.getByPlaceholderText('Nombre de la lista'), 'Domingo');
+      await interpretar(user, '*Intro\nCristo Vive\nzzzz que no existe');
+      await user.click(await screen.findByRole('button', { name: /Añadir 1 a la lista/i }));
+
+      // Se ve que quedó guardado, y se puede quitar
+      expect(await screen.findByText(/Mensaje guardado/)).toBeInTheDocument();
+
+      await user.click(screen.getByRole('button', { name: /Guardar/i }));
+      await waitFor(() => expect(mockCreatePlaylist).toHaveBeenCalled());
+
+      // Solo la línea 2 se confirmó; "*Intro" es un bloque, no una canción
+      expect(mockCreatePlaylist.mock.calls[0][0].mensajeDirector).toEqual({
+        texto: '*Intro\nCristo Vive\nzzzz que no existe',
+        enlaces: { 2: 's1' }
+      });
+    });
+
+    it('"Quitar" deja la lista sin mensaje', async () => {
+      mockGetAllSongs.mockResolvedValue(conLetras);
+      const user = userEvent.setup();
+      await renderNueva();
+
+      await user.type(screen.getByPlaceholderText('Nombre de la lista'), 'Domingo');
+      await interpretar(user, 'Cristo Vive');
+      await user.click(await screen.findByRole('button', { name: /Añadir 1 a la lista/i }));
+      await user.click(await screen.findByRole('button', { name: 'Quitar' }));
+      await user.click(screen.getByRole('button', { name: /Guardar/i }));
+
+      await waitFor(() => expect(mockCreatePlaylist).toHaveBeenCalled());
+      expect(mockCreatePlaylist.mock.calls[0][0].mensajeDirector).toBeNull();
+    });
+
+    it('al editar, conserva el mensaje que ya tenía la lista', async () => {
+      routeParams.id = 'p1';
+      mockGetPlaylistById.mockResolvedValue({
+        id: 'p1',
+        name: 'Domingo',
+        creatorId: 'user-1',
+        songs: [{ id: 's1', title: 'Cristo Vive', key: 'DO', originalKey: 'DO' }],
+        mensajeDirector: { texto: '*Intro\nCristo Vive', enlaces: { 2: 's1' } }
+      });
+      const user = userEvent.setup();
+      render(<PlaylistEditor />);
+
+      expect(await screen.findByText(/Mensaje guardado/)).toBeInTheDocument();
+      await user.click(screen.getByRole('button', { name: /Guardar/i }));
+
+      await waitFor(() => expect(mockUpdatePlaylist).toHaveBeenCalled());
+      expect(mockUpdatePlaylist.mock.calls[0][1].mensajeDirector).toEqual({
+        texto: '*Intro\nCristo Vive',
+        enlaces: { 2: 's1' }
+      });
     });
 
     it('cancelar vuelve al cuadro de texto', async () => {

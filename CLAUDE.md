@@ -39,8 +39,25 @@ publicado y no lo privado. Ese fallo no lo ve el dueño de la canción.
   más 1,4 MB de worker que no tiene por qué tragarse quien solo lee texto.
 - El visor pinta **solo las páginas cercanas a la vista**. Cada página es un
   canvas a tamaño completo; un popurrí largo pintado entero tumba la tablet más
-  barata de la sección. Por lo mismo, una lista **no abre ningún PDF**: enlaza a
-  la canción.
+  barata de la sección. En una lista el PDF se despliega en la voz del músico,
+  pero `PdfEnLista` solo monta el visor mientras la canción está cerca de la
+  pantalla, y al alejarse lo desmonta dejando reservado su alto. En la sesión en
+  vivo igual: `useLiveSetlistContent` no pasa un PDF por el pipeline de texto
+  (saldrían los títulos de sección vacíos), elige el archivo con `resolveScore`
+  por la voz elegida o el instrumento, y la tarjeta enseña la tonalidad como
+  dato, sin selector.
+- Las páginas se apuntan al observador de visibilidad en **sus** efectos, que
+  corren antes que el del visor que lo crea. Por eso el observador va en
+  estado y no en una ref: con una ref se apuntaban al viejo, que se
+  desconectaba, y solo se pintaba la página 1 (las demás, con su número en
+  medio). Lo vigila `PdfScoreViewer.test.jsx`.
+- El zoom del visor se hace **desde el centro** de lo que se ve: se apunta en
+  proporción qué punto está en el centro y, tras pintar (`useLayoutEffect`), se
+  desplaza para que siga ahí. Las páginas no llevan `max-width`: con zoom el
+  contenedor se desplaza de lado (antes se recortaban y solo se veía la parte
+  izquierda), y ese arrastre no llega al deslizamiento acordes/letra. Cada
+  clic es un 5%, redondeado a centésimas: sin redondear, 40 sumas de 0,05
+  dan 2,9999… y el tope de 300% no llega a desactivar el botón.
 
 **CORS del bucket**: sin él, el visor no puede descargar el PDF. El archivo
 sube bien, el servidor responde 200, y el navegador tira la respuesta porque no
@@ -112,10 +129,11 @@ packages/ui/          # Shared UI components (planned)
 ### Web App Structure (apps/web/src/)
 
 - **pages/** - Route-level components (Dashboard, SongEditor, SongView, PlaylistEditor, Metronome, Tuner, etc.)
-- **components/** - Reusable components organized by feature (metronome/, tuner/, live/, datos/, Navbar, Modal, ProtectedRoute, selectores de tonalidad, VersionesInput, visor de PDF)
+- **components/** - Reusable components organized by feature (metronome/, tuner/, live/, datos/, herramientas/, Navbar, Modal, ProtectedRoute, selectores de tonalidad, VersionesInput, visor de PDF)
 - **hooks/** - Custom hooks (useMetronome, useTuner, useTheme, useThemeWithAuth, useModal, usePitchHistory,
   useTempoTrainer, useSwipeViews, useFontSizePreference, useSongVoices, useSelectedSongs,
-  useLiveSession, useLiveSetlistContent, usePdfDocument, useNotacionPreferida, usePreferenciaLocal)
+  useLiveSession, useLiveSetlistContent, usePdfDocument, useNotacionPreferida, usePreferenciaLocal,
+  useAlineacionTexto, useHerramientas)
 - **context/** - React Context (AuthContext for user state)
 - **styles/** - Modular CSS (base/, components/, pages/, utilities/)
 
@@ -149,6 +167,18 @@ Bootstrap acaban saliendo en los seis. Usa las variables:
 - Las miniaturas de Preferencias sí llevan colores fijos: enseñan cada tema
   aunque esté puesto otro. Si cambias una paleta, cámbiala también allí.
 - Un `var()` no funciona en un atributo SVG (`stroke="..."`): va en `style`.
+- **No uses `<select>` nativo**: su lista abierta la pinta el sistema y en Windows
+  marca la opción en azul en todos los temas. Usa `components/Desplegable.jsx`
+  (combobox ARIA, teclado, grupos como `<optgroup>`, se abre hacia arriba si no
+  cabe). Variantes de tamaño: `desplegable--compacto`, `--pildora`, `--live`,
+  `--ancho`. En los tests, `test/utils/desplegable.js` (`elegirEnDesplegable`,
+  `valorDe`, `opcionesDe`) sustituye a `selectOptions` / `toHaveValue`.
+- Los deslizadores (`.form-range`) pintan la barra con el tema en
+  `_bootstrap-theme.css`; Bootstrap no reconoce nuestros temas y la dejaba
+  blanca. La parte recorrida necesita `style={rellenoDeslizador(valor, min, max)}`
+  (`utils/rellenoDeslizador.js`): Chromium no tiene pseudoelemento para ella.
+- Las barras de desplazamiento toman el tema con un solo `scrollbar-color` en
+  `:root` (`base/_reset.css`), que se hereda a todo.
 
 **Audio:** Web Audio API via `packages/core/src/audio/` for metronome synthesis and pitch detection.
 
@@ -175,9 +205,15 @@ en Storage, nunca la URL de descarga).
 - La interfaz solo debe ofrecer editar o borrar cuando `isOwn`; las reglas lo imponen
   igual, pero no conviene ofrecer lo que va a fallar.
 
-**playlists**: `creatorId`, `public`, `date`, `songs[]`. Cada entrada de `songs` lleva su
-propia `key` y `originalKey`: una canción dentro de una lista se puede transponer para esa
-ocasión sin tocar la del repertorio.
+**playlists**: `creatorId`, `public`, `date`, `songs[]`, `mensajeDirector`. Cada entrada de
+`songs` lleva su propia `key` y `originalKey`: una canción dentro de una lista se puede
+transponer para esa ocasión sin tocar la del repertorio.
+
+`mensajeDirector` es `{ texto, enlaces }` o null: el mensaje de WhatsApp tal cual se pegó
+al armar la lista, y `enlaces` (nº de línea → id de canción) son las coincidencias que el
+músico **confirmó** al importar; no se vuelven a adivinar. Es lo que enseña el panel
+"Lista". Pasa siempre por `limpiarMensajeDirector` (`setlist.js`) al guardar y al abrir
+una sesión, que lo copia como copia las canciones.
 
 Al guardar una lista como pública se publican sus canciones propias privadas
 (`publicarCancionesDeLaLista`). Sin eso, la lista le aparecería vacía al resto de la banda,
@@ -220,6 +256,14 @@ sessions/{code}/participants/{uid}  name, instrumentId, voiceNumber, lastSeen, e
   siempre.
 - La canción activa se guarda por **id**, no por posición, para que quitar o reordenar no
   cambie cuál se está tocando.
+- El contador ("2 de 3") y Anterior/Siguiente van con la canción **que este músico tiene
+  delante**, no con la de la banda: la última tarjeta cuyo principio pasó bajo la
+  cabecera fija (o, al final de la página, la última que asoma). Antes iban con la de la
+  banda y, tras bajar a mano hasta la última, "Siguiente" subía a la segunda. Los botones
+  **siempre desplazan** a la canción y además mueven a la banda si iba en otra: si solo
+  movieran a la banda, cuando el destino ya es la suya no cambiaría nada y no se
+  movería la pantalla. Durante el desplazamiento animado se ignoran las lecturas de las
+  canciones de en medio (`saltoEnCurso`).
 - La tonalidad compartida es la **de concierto**. Cada cliente la pasa por
   `renderSongContent` con su instrumento local (`useLiveSongContent`). Instrumento, voz,
   notación y tamaño de letra **no viajan**: son de cada dispositivo.
@@ -299,7 +343,7 @@ SPA (el orden importa).
 ## Notes
 
 - No TypeScript - pure JavaScript
-- Vitest configured; 1534 tests in `apps/web/src/test/` (run with `npm run test:run`)
+- Vitest configured; 1610 tests in `apps/web/src/test/` (run with `npm run test:run`)
 - Los tests se validan con **mutaciones**: se rompe el código a propósito y se comprueba
   que algún test falla. Ha destapado cuatro tests que pasaban por la razón equivocada,
   y un bug de verdad en `scores.js` (las voces se ordenaban como texto, así que la 10
@@ -357,6 +401,11 @@ SPA (el orden importa).
   web**, y su comprobador lee el HTML sin JavaScript: el enlace está en el pie y en
   un `<noscript>` de `index.html`, y un test vigila los dos. La clave va en
   `VITE_GETSONGBPM_API_KEY` (`.env` local y variables de entorno de Netlify).
+- Alineación del texto de las canciones (izquierda, centro, derecha): botones
+  junto al tamaño de letra en la canción, la lista y la sesión en vivo, con
+  `useAlineacionTexto` (del dispositivo). Arranca **centrado** porque
+  `.song-section-modern` ya centraba; por eso las tres alineaciones llevan su
+  regla explícita en `_song-viewer.css`, o la izquierda no haría nada.
 - `Metronome.jsx` y `Tuner.jsx` cargan las preferencias y **solo entonces** montan
   el cuerpo que llama a `useMetronome` / `useTuner`, porque esos hooks toman sus
   valores iniciales con `useState`. Antes arrancaban siempre con los valores por
@@ -369,11 +418,27 @@ SPA (el orden importa).
   `packages/core/src/music/setlist.js`. Las líneas sueltas tipo "Mi m" son la tonalidad
   del bloque, no canciones; y el director suele nombrar la canción por un fragmento de la
   letra, no por el título. El emparejador puntúa varias señales y se queda con la mejor.
+  Las líneas con asterisco (`*Intro`, `*Lentas`) son **bloques**, no canciones. Lo que va
+  entre paréntesis se prueba por separado ("(yo tengo gozo)" puede ser el título bueno y
+  "(Coalo)" ruido); si coincide con el "Versión de" de la canción ("Coalo" → Coalo
+  Zamorano) desempata entre dos con el mismo título, sin subir la puntuación.
+- Herramientas flotantes (`components/herramientas/`): lista, afinador, metrónomo y
+  círculo de quintas en la lista, la sesión en vivo y la canción. Son paneles, **no
+  modales**: no tapan ni bloquean el scroll. Cada uno va pegado a un lado y a una altura
+  (se recuerdan por dispositivo), se arrastran por la cabecera y al soltar se pegan al
+  lado más cercano; si pisan a otro, se aparta el otro (`colocarPaneles.js`, puro y con
+  tests). En un móvil sale uno cada vez, abajo, sin arrastre. El afinador y el metrónomo
+  del panel son **versiones simplificadas** (`mini` en `Tuner.jsx` / `Metronome.jsx`, con
+  el mismo motor y preferencias). El círculo de quintas es solo una imagen de referencia,
+  sin interacción. En la sesión en vivo, tocar una canción del panel mueve **solo** la
+  pantalla de ese músico; el índice de arriba es el que mueve a la banda.
 - Offline: Firestore usa `persistentLocalCache` y la app es una PWA instalable
   (`vite-plugin-pwa`). El service worker **no** debe interceptar Firebase: Firestore ya
   tiene su caché y la autenticación necesita red.
 - `packages/ui` sigue vacío a propósito (ver el comentario en su `index.js`)
 - Spanish comments appear in some files
+- En la interfaz, el formato de texto se llama **"Notas"** (no "Acordes"): el
+  repertorio son notas de la melodía. En el código sigue siendo `format: "chords"`.
 - Mobile app (React Native) is planned but not yet implemented
 
 ## Pendientes

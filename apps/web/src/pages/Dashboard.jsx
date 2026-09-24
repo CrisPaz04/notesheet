@@ -14,6 +14,7 @@ import LoadingSpinner from "../components/LoadingSpinner";
 import { SkeletonGrid } from "../components/SkeletonCard";
 import usePreferenciaLocal from "../hooks/usePreferenciaLocal";
 import useNotacionPreferida from "../hooks/useNotacionPreferida";
+import Desplegable from "../components/Desplegable";
 
 const ORDENES = ["nuevas", "az", "za"];
 const VISTAS = ["cards", "list"];
@@ -82,10 +83,8 @@ function Dashboard() {
     for (const song of songs) {
       const id = identificarTonalidad(song.key);
       if (!id) continue;
-      const actual = porId.get(id);
       // Se muestra como la escribe la primera canción que la trae
-      if (actual) actual.cuantas++;
-      else porId.set(id, { id, etiqueta: song.key.trim(), cuantas: 1 });
+      if (!porId.has(id)) porId.set(id, { id, etiqueta: song.key.trim() });
     }
     const orden = (id) => parseInt(id, 10) + (id.endsWith("m") ? 12 : 0);
     return [...porId.values()].sort((a, b) => orden(a.id) - orden(b.id));
@@ -324,20 +323,19 @@ function Dashboard() {
           </div>
           {tonalidades.length > 0 && (
             <div className="key-filter-wrap">
-            <select
-              className="search-input key-filter"
-              aria-label="Filtrar por tonalidad"
-              value={keyFilter}
-              onChange={(e) => setKeyFilter(e.target.value)}
-            >
-              <option value="">Todas las tonalidades</option>
-              {tonalidades.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {nombrarTonalidad(t.etiqueta, notacion)} ({t.cuantas})
-                </option>
-              ))}
-            </select>
-            <i className="bi bi-chevron-down key-filter-chevron" aria-hidden="true"></i>
+              <Desplegable
+                className="desplegable--pildora"
+                ariaLabel="Filtrar por tonalidad"
+                value={keyFilter}
+                onChange={setKeyFilter}
+                opciones={[
+                  { value: "", label: "Todas las tonalidades" },
+                  ...tonalidades.map((t) => ({
+                    value: t.id,
+                    label: nombrarTonalidad(t.etiqueta, notacion)
+                  }))
+                ]}
+              />
             </div>
           )}
         </div>

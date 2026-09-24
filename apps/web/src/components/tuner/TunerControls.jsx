@@ -4,6 +4,8 @@
  * Provides UI controls for tuner settings
  */
 
+import { rellenoDeslizador } from "../../utils/rellenoDeslizador";
+
 function TunerControls({
   referenceFrequency,
   showConcertPitch,
@@ -44,6 +46,7 @@ function TunerControls({
           max="450"
           step="1"
           disabled={isRunning}
+          style={rellenoDeslizador(referenceFrequency, 430, 450)}
         />
 
         <div className="d-flex justify-content-between tuner-controls-range-labels">

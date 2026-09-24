@@ -1,6 +1,8 @@
 import { forwardRef } from "react";
 import PlaylistKeySelector from "../PlaylistKeySelector";
 import { nombrarTonalidad } from "@notesheet/core";
+import PdfEnLista from "../PdfEnLista";
+import Desplegable from "../Desplegable";
 
 /**
  * Una canción dentro de la sesión, con sus controles a la vista.
@@ -22,6 +24,7 @@ const LiveSongCard = forwardRef(function LiveSongCard({
   total,
   activa,
   fontSize,
+  alineacion = "left",
   onCambiarTonalidad,
   onQuitar,
   onMover,
@@ -53,12 +56,17 @@ const LiveSongCard = forwardRef(function LiveSongCard({
         <div className="live-card-controls no-print">
           <div className="live-card-keys">
             <span className="live-control-label">Banda</span>
-            <PlaylistKeySelector
-              value={tonalidadCompartida}
-              originalKey={song.originalKey || song.key || "DO"}
-              onChange={(key) => onCambiarTonalidad(song.id, key)}
-              notacion={notacion}
-            />
+            {/* Un PDF no se transpone: la tonalidad es un dato, no un control */}
+            {song.pdf ? (
+              <span className="live-key-badge">{nombrarTonalidad(tonalidadCompartida, notacion)}</span>
+            ) : (
+              <PlaylistKeySelector
+                value={tonalidadCompartida}
+                originalKey={song.originalKey || song.key || "DO"}
+                onChange={(key) => onCambiarTonalidad(song.id, key)}
+                notacion={notacion}
+              />
+            )}
           </div>
 
           {difieren && (
@@ -71,16 +79,13 @@ const LiveSongCard = forwardRef(function LiveSongCard({
           {song.voices.length > 1 && (
             <div className="live-card-keys">
               <span className="live-control-label">Voz</span>
-              <select
-                className="live-select live-select-compact"
+              <Desplegable
+                className="desplegable--compacto desplegable--live"
                 value={song.voiceKey || ""}
-                onChange={(e) => onElegirVoz(song.id, e.target.value)}
-                aria-label={`Voz para ${song.title || "esta canción"}`}
-              >
-                {song.voices.map((v) => (
-                  <option key={v.id} value={v.id}>{v.label}</option>
-                ))}
-              </select>
+                onChange={(voz) => onElegirVoz(song.id, voz)}
+                ariaLabel={`Voz para ${song.title || "esta canción"}`}
+                opciones={song.voices.map((v) => ({ value: v.id, label: v.label }))}
+              />
             </div>
           )}
 
@@ -125,14 +130,18 @@ const LiveSongCard = forwardRef(function LiveSongCard({
         </div>
       )}
 
-      {!song.error && !song.rendered && (
+      {!song.error && !song.rendered && !song.pdf && (
         <p className="live-card-loading">Cargando…</p>
       )}
+
+      {/* Solo se abre cuando la canción está cerca de la pantalla: una
+          sesión puede llevar varios PDF. */}
+      {song.pdf && <PdfEnLista path={song.pdf.path} title={song.title} />}
 
       {song.rendered?.formatted?.sections?.map((section, i) => (
         <section key={i} className="song-section-modern">
           <h4 className="song-section-title">{section.title}</h4>
-          <div className="song-section-content" style={{ fontSize: `${fontSize}px` }}>
+          <div className={`song-section-content alinear-${alineacion}`} style={{ fontSize: `${fontSize}px` }}>
             {section.content}
           </div>
         </section>

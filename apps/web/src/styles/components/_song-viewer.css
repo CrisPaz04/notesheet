@@ -188,6 +188,19 @@
     color: var(--color-primary);
   }
   
+  /* El botón de alineación elegido */
+  .font-control-btn.active {
+    background: rgba(var(--color-primary-rgb), 0.2);
+    color: var(--color-primary);
+  }
+
+  /* Alineación del texto de la canción (izquierda, centro o derecha). Las
+     tres van explícitas: `.song-section-modern` centra, y sin la regla de la
+     izquierda el texto lo heredaba y el botón no hacía nada. */
+  .song-section-content.alinear-left { text-align: left; }
+  .song-section-content.alinear-center { text-align: center; }
+  .song-section-content.alinear-right { text-align: right; }
+
   .font-control-btn:not(:last-child) {
     border-right: 1px solid var(--border-light);
   }

@@ -5,6 +5,8 @@
  */
 
 import { TIME_SIGNATURES, SUBDIVISIONS } from '@notesheet/core/src/audio/metronomeEngine';
+import { rellenoDeslizador } from "../../utils/rellenoDeslizador";
+import Desplegable from "../Desplegable";
 
 function MetronomeControls({
   bpm,
@@ -61,6 +63,7 @@ function MetronomeControls({
           onChange={(e) => onBpmChange(e.target.value)}
           min="40"
           max="240"
+          style={rellenoDeslizador(bpm, 40, 240)}
         />
 
         <div className="d-flex justify-content-between metronome-controls-range-labels">
@@ -87,6 +90,7 @@ function MetronomeControls({
             min="0"
             max="1"
             step="0.05"
+            style={rellenoDeslizador(volume, 0, 1)}
           />
           <i className="bi bi-volume-up text-secondary"></i>
         </div>
@@ -98,18 +102,13 @@ function MetronomeControls({
       {/* Time Signature */}
       <div className="mb-4">
         <label className="form-label-modern">Compás</label>
-        <select
-          className="form-control-modern"
+        <Desplegable
           value={timeSignature}
-          onChange={(e) => onTimeSignatureChange(e.target.value)}
+          onChange={onTimeSignatureChange}
           disabled={isPlaying}
-        >
-          {Object.keys(TIME_SIGNATURES).map((sig) => (
-            <option key={sig} value={sig}>
-              {sig}
-            </option>
-          ))}
-        </select>
+          ariaLabel="Compás"
+          opciones={Object.keys(TIME_SIGNATURES).map((sig) => ({ value: sig, label: sig }))}
+        />
         {isPlaying && (
           <div className="metronome-controls-hint mt-1">
             <i className="bi bi-info-circle me-1"></i>

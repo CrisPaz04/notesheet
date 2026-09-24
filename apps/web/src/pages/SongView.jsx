@@ -32,14 +32,14 @@ import {
 } from "@notesheet/core";
 import { useAuth } from "../context/AuthContext";
 import LoadingSpinner from "../components/LoadingSpinner";
-import Modal from "../components/Modal";
-import Metronome from "./Metronome";
-import Tuner from "./Tuner";
-import useModal from "../hooks/useModal";
+import HerramientasFlotantes from "../components/herramientas/HerramientasFlotantes";
+import useHerramientas from "../hooks/useHerramientas";
 import useSwipeViews from "../hooks/useSwipeViews";
 import useFontSizePreference from "../hooks/useFontSizePreference";
 import { recordarNotacionEnDispositivo } from "../hooks/useNotacionPreferida";
 import PdfScoreViewer from "../components/PdfScoreViewer";
+import AlineacionTexto from "../components/AlineacionTexto";
+import useAlineacionTexto from "../hooks/useAlineacionTexto";
 import DatosGrabacion from "../components/datos/DatosGrabacion";
 
 // Trastes donde se pone la cejilla. Más allá del VII ya no queda mástil para
@@ -108,8 +108,9 @@ function SongView() {
   const [showNotationDropdown, setShowNotationDropdown] = useState(false);
   const [showVariantDropdown, setShowVariantDropdown] = useState(false);
 
-  const metronomeModal = useModal();
-  const tunerModal = useModal();
+  // Metrónomo, afinador y círculo de quintas en paneles flotantes: se
+  // pueden usar sin dejar de ver la canción, que con una ventana modal no.
+  const herramientas = useHerramientas();
 
   const { id } = useParams();
   const { currentUser, canEditSongs } = useAuth();
@@ -132,6 +133,7 @@ function SongView() {
     decreaseFontSize,
     resetFontSize
   } = useFontSizePreference(currentUser);
+  const [alineacion, setAlineacion] = useAlineacionTexto();
 
   const {
     activeView,
@@ -878,6 +880,10 @@ function SongView() {
                   A+
                 </button>
               </div>
+
+              {!(esPdf && !tieneLetra) && (
+                <AlineacionTexto alineacion={alineacion} onCambiar={setAlineacion} />
+              )}
               
               {/* Toggle de vista. Un PDF sin letra tiene una sola vista: el
                   botón sobraría. */}
@@ -888,7 +894,7 @@ function SongView() {
                     onClick={() => setActiveView(0)}
                   >
                     <i className={esPdf ? "bi bi-file-earmark-music" : "bi bi-music-note-list"}></i>
-                    {esPdf ? "Partitura" : "Acordes"}
+                    {esPdf ? "Partitura" : "Notas"}
                   </button>
                   <button
                     className={`view-toggle-btn-song ${activeView === 1 ? 'active' : ''}`}
@@ -904,7 +910,8 @@ function SongView() {
               <div className="action-buttons-song">
                 <button
                   className="btn-song-action"
-                  onClick={metronomeModal.open}
+                  onClick={() => herramientas.alternar("metronomo")}
+                  aria-pressed={herramientas.estaAbierto("metronomo")}
                   title="Metrónomo"
                 >
                   <i className="bi bi-hourglass-split"></i>
@@ -913,7 +920,8 @@ function SongView() {
 
                 <button
                   className="btn-song-action"
-                  onClick={tunerModal.open}
+                  onClick={() => herramientas.alternar("afinador")}
+                  aria-pressed={herramientas.estaAbierto("afinador")}
                   title="Afinador"
                 >
                   <i className="bi bi-soundwave"></i>
@@ -986,7 +994,7 @@ function SongView() {
               <div className="view-hint">
                 {activeView === 0
                   ? 'Deslizar para ver solo letra →'
-                  : `← Deslizar para ver ${esPdf ? 'la partitura' : 'acordes'}`}
+                  : `← Deslizar para ver ${esPdf ? 'la partitura' : 'las notas'}`}
               </div>
             </div>
           )}
@@ -1033,7 +1041,7 @@ function SongView() {
                     {formattedSong && formattedSong.sections.map((section, index) => (
                       <div key={index} className="song-section-modern">
                         {section.title && <h3 className="song-section-title">{section.title}</h3>}
-                        <div className="song-section-content" style={{ fontSize: `${fontSize}px` }}>
+                        <div className={`song-section-content alinear-${alineacion}`} style={{ fontSize: `${fontSize}px` }}>
                           {section.content}
                         </div>
                       </div>
@@ -1059,7 +1067,7 @@ function SongView() {
                 {formattedLyricsOnly && formattedLyricsOnly.sections.map((section, index) => (
                   <div key={index} className="song-section-modern">
                     {section.title && <h3 className="song-section-title">{section.title}</h3>}
-                    <div className="song-section-content" style={{ fontSize: `${fontSize}px` }}>
+                    <div className={`song-section-content alinear-${alineacion}`} style={{ fontSize: `${fontSize}px` }}>
                       {section.content}
                     </div>
                   </div>
@@ -1078,26 +1086,15 @@ function SongView() {
        </div>
      </div>
 
-     {/* Metronome Modal */}
-     <Modal
-       isOpen={metronomeModal.isOpen}
-       onClose={metronomeModal.close}
-       title="Metrónomo"
-       size="large"
-     >
-       {/* Arranca con el tempo y el compás de la canción, si los tiene */}
-       <Metronome compact={true} tempoInicial={song?.tempo || null} compasInicial={song?.compas || null} />
-     </Modal>
-
-     {/* Tuner Modal */}
-     <Modal
-       isOpen={tunerModal.isOpen}
-       onClose={tunerModal.close}
-       title="Afinador"
-       size="large"
-     >
-       <Tuner compact={true} />
-     </Modal>
+     {/* Metrónomo y afinador se abren con los botones de arriba; en la
+         barra solo queda lo que no tiene botón propio. El metrónomo arranca
+         con el tempo y el compás de la canción, si los tiene. */}
+     <HerramientasFlotantes
+       herramientas={herramientas}
+       notacion={notationSystem}
+       metronomo={{ tempoInicial: song?.tempo || null, compasInicial: song?.compas || null }}
+       ocultarBotones={["metronomo", "afinador"]}
+     />
    </div>
  );
 }

@@ -73,3 +73,10 @@ select option:hover {
   background-color: var(--color-primary, #f0c674) !important;
   color: var(--bg-dark-primary, #0f0f1a) !important;
 }
+
+/* Barras de desplazamiento con los colores del tema. `scrollbar-color` se
+   hereda: puesta aquí vale para la página, los desplegables y los paneles
+   flotantes. Sin ella, la del sistema salía blanca en los temas oscuros. */
+:root {
+  scrollbar-color: var(--border-strong) transparent;
+}
