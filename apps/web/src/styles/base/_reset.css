@@ -76,7 +76,29 @@ select option:hover {
 
 /* Barras de desplazamiento con los colores del tema. `scrollbar-color` se
    hereda: puesta aquí vale para la página, los desplegables y los paneles
-   flotantes. Sin ella, la del sistema salía blanca en los temas oscuros. */
+   flotantes. Sin ella, la del sistema salía blanca en los temas oscuros.
+
+   El carril es transparente, así que en la barra de la página se ve lo que
+   hay detrás: el lienzo, que toma el fondo de html/body. Cada vista pinta su
+   fondo en su propio contenedor y el body seguía blanco (el de Bootstrap), así
+   que el carril salía como una franja blanca. Por eso el fondo del tema va
+   también aquí; de paso, el rebote al pasarse de scroll deja de verse blanco. */
 :root {
   scrollbar-color: var(--border-strong) transparent;
+  background-color: var(--bg-dark-primary);
+}
+
+body {
+  background-color: var(--bg-dark-primary);
+}
+
+/* Para lo que pinta el propio navegador (la barra en Safari y Firefox
+   antiguos, calendarios, autocompletado) */
+[data-bs-theme="dark"],
+[data-bs-theme$="-dark"] {
+  color-scheme: dark;
+}
+
+[data-bs-theme$="light"] {
+  color-scheme: light;
 }

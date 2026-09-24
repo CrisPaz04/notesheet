@@ -30,12 +30,20 @@ const normalizarBusqueda = (texto) => (texto || "")
 // vaya antes que "Salmo 21" y no al revés, que es lo que da comparar texto.
 const porTitulo = new Intl.Collator("es", { sensitivity: "base", numeric: true });
 
+// Pestañas de tipo → valor de `song.type`
+const TIPOS = { jubilo: "Júbilo", adoracion: "Adoración", moderada: "Moderada" };
+
 function Dashboard() {
   const [songs, setSongs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
+  // Pestañas: el tipo de canción (Adoración, Júbilo, Moderada)
   const [activeFilter, setActiveFilter] = useState("all");
+  // "mine" o "recent", en su propio desplegable junto al de tonalidad. Antes
+  // eran pestañas al lado de los tipos, y como solo había una activa no se
+  // podía pedir "mis canciones de Adoración".
+  const [origenFilter, setOrigenFilter] = useState("");
   // Guarda la tonalidad identificada ("11m"), no el texto: así "RE#m" y
   // "MIbm" caen en la misma opción aunque cada una se escribiera distinta.
   const [keyFilter, setKeyFilter] = useState("");
@@ -122,27 +130,17 @@ function Dashboard() {
       filtered = filtered.filter(song => identificarTonalidad(song.key) === keyFilter);
     }
 
-    // Filtrar por categoría
-    if (activeFilter !== "all") {
-      filtered = filtered.filter(song => {
-        switch (activeFilter) {
-          case "recent": {
-            const oneWeekAgo = new Date();
-            oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-            return song.updatedAt && song.updatedAt.toDate() > oneWeekAgo;
-          }
-          case "mine":
-            return song.isOwn;
-          case "jubilo":
-            return song.type === "Júbilo";
-          case "adoracion":
-            return song.type === "Adoración";
-          case "moderada":
-            return song.type === "Moderada";
-          default:
-            return true;
-        }
-      });
+    if (origenFilter === "mine") {
+      filtered = filtered.filter(song => song.isOwn);
+    } else if (origenFilter === "recent") {
+      const oneWeekAgo = new Date();
+      oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+      filtered = filtered.filter(song => song.updatedAt && song.updatedAt.toDate() > oneWeekAgo);
+    }
+
+    // Filtrar por tipo
+    if (TIPOS[activeFilter]) {
+      filtered = filtered.filter(song => song.type === TIPOS[activeFilter]);
     }
 
     // Ordenar alfabéticamente si toca. Se copia antes de ordenar porque
@@ -156,7 +154,7 @@ function Dashboard() {
     }
 
     return filtered;
-  }, [songs, searchTerm, keyFilter, activeFilter, sortOrder, notacion]);
+  }, [songs, searchTerm, keyFilter, origenFilter, activeFilter, sortOrder, notacion]);
 
   const getGreeting = () => {
     const greetings = [
@@ -338,6 +336,19 @@ function Dashboard() {
               />
             </div>
           )}
+          <div className="key-filter-wrap">
+            <Desplegable
+              className="desplegable--pildora"
+              ariaLabel="Mostrar canciones"
+              value={origenFilter}
+              onChange={setOrigenFilter}
+              opciones={[
+                { value: "", label: "Todas las canciones" },
+                { value: "mine", label: "Solo las mías" },
+                { value: "recent", label: "Editadas esta semana" }
+              ]}
+            />
+          </div>
         </div>
 
         {/* Mis Canciones */}
@@ -355,18 +366,6 @@ function Dashboard() {
                   onClick={() => setActiveFilter('all')}
                 >
                   Todas
-                </button>
-                <button
-                  className={`filter-tab ${activeFilter === 'mine' ? 'active' : ''}`}
-                  onClick={() => setActiveFilter('mine')}
-                >
-                  Mías
-                </button>
-                <button
-                  className={`filter-tab ${activeFilter === 'recent' ? 'active' : ''}`}
-                  onClick={() => setActiveFilter('recent')}
-                >
-                  Recientes
                 </button>
                 <button
                   className={`filter-tab ${activeFilter === 'adoracion' ? 'active' : ''}`}
@@ -399,7 +398,8 @@ function Dashboard() {
                   aria-pressed={sortOrder === 'nuevas'}
                 >
                   {/* Un icono de ordenar, no un reloj: el reloj se confundía
-                      con la pestaña "Recientes", que filtra en vez de ordenar. */}
+                      con el filtro "Editadas esta semana", que filtra en vez
+                      de ordenar. */}
                   <i className="bi bi-sort-down"></i>
                 </button>
                 <button

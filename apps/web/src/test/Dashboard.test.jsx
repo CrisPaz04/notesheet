@@ -362,10 +362,20 @@ describe('Dashboard', () => {
       });
     });
 
-    it('Recientes deja solo lo de la última semana', async () => {
+    const mostrar = () => screen.getByRole('combobox', { name: 'Mostrar canciones' });
+
+    it('Mías y Recientes ya no son pestañas: van en el desplegable "Mostrar"', async () => {
+      await renderDashboard();
+      const tabs = document.querySelector('.filter-tabs');
+      expect(within(tabs).queryByRole('button', { name: 'Mías' })).toBeNull();
+      expect(within(tabs).queryByRole('button', { name: 'Recientes' })).toBeNull();
+      expect(mostrar()).toHaveTextContent('Todas las canciones');
+    });
+
+    it('"Editadas esta semana" deja solo lo de la última semana', async () => {
       const user = userEvent.setup();
       await renderDashboard();
-      await clickFiltro(user, 'Recientes');
+      await elegirEnDesplegable(user, mostrar(), 'Editadas esta semana');
 
       await waitFor(() => {
         // Sublime Gracia se actualizó hace 30 días
@@ -382,6 +392,21 @@ describe('Dashboard', () => {
 
       await clickFiltro(user, 'Todas');
       await waitFor(() => expect(tituloVisibles()).toHaveLength(3));
+    });
+
+    it('"Editadas esta semana" se combina con una pestaña de tipo', async () => {
+      const user = userEvent.setup();
+      await renderDashboard();
+      await elegirEnDesplegable(user, mostrar(), 'Editadas esta semana');
+      await clickFiltro(user, 'Júbilo');
+
+      await waitFor(() => expect(tituloVisibles()).toEqual(['Cristo Vive']));
+
+      // Y "Todas" quita solo el tipo, no el otro filtro
+      await clickFiltro(user, 'Todas');
+      await waitFor(() => {
+        expect(tituloVisibles()).toEqual(['Cristo Vive', 'Al Que Está Sentado']);
+      });
     });
 
     it('combina búsqueda y filtro de categoría', async () => {
@@ -412,12 +437,13 @@ describe('Dashboard', () => {
       expect(document.querySelectorAll('.song-delete-btn')).toHaveLength(3);
     });
 
-    it('el filtro Mías deja fuera el repertorio ajeno', async () => {
+    it('"Solo las mías" deja fuera el repertorio ajeno', async () => {
       const user = userEvent.setup();
       await renderDashboard();
 
-      const tabs = document.querySelector('.filter-tabs');
-      await user.click(within(tabs).getByRole('button', { name: 'Mías' }));
+      await elegirEnDesplegable(
+        user, screen.getByRole('combobox', { name: 'Mostrar canciones' }), 'Solo las mías'
+      );
 
       await waitFor(() => {
         expect(screen.queryByText('Renuévame')).not.toBeInTheDocument();

@@ -178,7 +178,11 @@ Bootstrap acaban saliendo en los seis. Usa las variables:
   blanca. La parte recorrida necesita `style={rellenoDeslizador(valor, min, max)}`
   (`utils/rellenoDeslizador.js`): Chromium no tiene pseudoelemento para ella.
 - Las barras de desplazamiento toman el tema con un solo `scrollbar-color` en
-  `:root` (`base/_reset.css`), que se hereda a todo.
+  `:root` (`base/_reset.css`), que se hereda a todo. El carril es transparente,
+  así que html y body llevan el fondo del tema (`--bg-dark-primary`): cada vista
+  pinta el suyo en su contenedor y el body de Bootstrap seguía blanco, y la
+  barra de la página salía como una franja blanca. Los temas oscuros declaran
+  además `color-scheme: dark`.
 
 **Audio:** Web Audio API via `packages/core/src/audio/` for metronome synthesis and pitch detection.
 
