@@ -313,3 +313,25 @@ describe('la voz que le toca por su número', () => {
     expect(texto(result.current.canciones[0])).toMatch(/Voz de saxo alto/);
   });
 });
+
+describe('la tonalidad de la parte de un PDF', () => {
+  it('es la del instrumento de la parte que abre', async () => {
+    const PDF = {
+      id: 's2', title: 'Sublime Gracia', key: 'SOL', format: 'pdf',
+      primaryInstrument: 'bb_trumpet', primaryVoiceNumber: '1',
+      pdfs: {
+        bb_trumpet: { 1: { partitura: 'p/t1.pdf' } },
+        c_flute: { 1: { partitura: 'p/f1.pdf' } }
+      }
+    };
+    mockGetSongById.mockImplementation(async (id) => (id === 's2' ? PDF : REPERTORIO[id]));
+
+    const flauta = montar({ instrument: 'c_flute' });
+    await waitFor(() => expect(flauta.result.current.canciones[1].pdf).toBeTruthy());
+    expect(flauta.result.current.canciones[1].pdf).toEqual({ path: 'p/f1.pdf', displayKey: 'FA' });
+
+    const trompeta = montar();
+    await waitFor(() => expect(trompeta.result.current.canciones[1].pdf).toBeTruthy());
+    expect(trompeta.result.current.canciones[1].pdf.displayKey).toBe('SOL');
+  });
+});

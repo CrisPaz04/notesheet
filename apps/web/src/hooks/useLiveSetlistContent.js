@@ -8,6 +8,7 @@ import {
   resolveVoiceForMusician,
   TRANSPOSING_INSTRUMENTS,
   isPdfSong,
+  tonalidadDeLaParte,
   resolveScore,
   buildScoreVoicesList
 } from "@notesheet/core";
@@ -132,7 +133,8 @@ export default function useLiveSetlistContent({
         ...entrada,
         cargada: doc,
         rendered: null,
-        pdf: { path: score.path },
+        // La tonalidad de la parte que abre: la de su instrumento
+        pdf: { path: score.path, displayKey: tonalidadDeLaParte(entrada.key || doc.key, score.voiceKey, instrument) },
         // Un PDF puede traer además letra y acordes, en texto
         vistas: {
           letra: formatLyrics(doc.lyricsOnly),

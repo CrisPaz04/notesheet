@@ -11,6 +11,7 @@ import {
   elegirVista,
   vistaPreferida,
   resolveVoiceForMusician,
+  tonalidadDeLaParte,
   NUMEROS_DE_VOZ,
   isPdfSong,
   nombrarTonalidad,
@@ -157,9 +158,12 @@ function PlaylistView() {
 
     // Un PDF puede traer además letra y acordes, en texto
     if (isPdfSong(song)) {
+      // La tonalidad de la parte que abre, no la de la trompeta: el saxo lee la suya
+      const parte = resolveScore(song, { ...preferenciasPdf, voiceNumber: numeroVoz });
       return {
         ...song,
         formattedContent: null,
+        displayKey: tonalidadDeLaParte(song.selectedKey || song.key, parte.voiceKey, instrumento),
         vistas: {
           letra: formatLyrics(song.lyricsOnly),
           acordes: renderChordChart(song.acordes, opciones)
@@ -175,7 +179,7 @@ function PlaylistView() {
       displayKey,
       vistas: { letra: lyricsOnly, acordes: renderChordChart(song.acordes, opciones) }
     };
-  }), [songs, notacion, instrumento, numeroVoz]);
+  }), [songs, notacion, instrumento, numeroVoz, preferenciasPdf]);
 
   // Qué se enseña de cada una: lo elegido o, si no lo tiene, la principal
   const cancionesConVista = useMemo(() => cancionesVista.map((song) => ({

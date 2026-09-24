@@ -361,3 +361,22 @@ export const resolveVoiceForMusician = (song, { voiceKey = null, instrument = nu
 
   return resolveInitialVoice(song, null);
 };
+
+/**
+ * La tonalidad en la que está escrita la parte de un PDF que se tiene delante.
+ *
+ * `key` está en la referencia de la trompeta en Sib, como en las canciones de
+ * texto. Un PDF no se transpone, así que la que vale es la del instrumento de
+ * esa parte: el saxo alto que abre la suya la ve en su tonalidad, y si abre la
+ * de trompeta (porque no hay de saxo), la de la trompeta.
+ *
+ * @param {string} key - La de la canción (o la que decidió la lista o la sesión)
+ * @param {string|null} voiceKey - La parte que se muestra ("eb_alto_sax-1")
+ * @param {string} [instrument] - Si no se sabe la parte, el del músico
+ * @returns {string} La tonalidad de esa parte
+ */
+export const tonalidadDeLaParte = (key, voiceKey, instrument = SOURCE_INSTRUMENT) => {
+  if (!key) return key;
+  const deLaParte = parseVoiceKey(voiceKey)?.instrumentId || instrument || SOURCE_INSTRUMENT;
+  return getVisualKeyForInstrument(key, deLaParte);
+};

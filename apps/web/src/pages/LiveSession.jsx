@@ -129,7 +129,7 @@ function LiveSession() {
   });
 
   const propiaPorId = useMemo(
-    () => new Map(canciones.map((c) => [c.id, c.rendered?.displayKey]).filter(([, k]) => k)),
+    () => new Map(canciones.map((c) => [c.id, c.rendered?.displayKey || c.pdf?.displayKey]).filter(([, k]) => k)),
     [canciones]
   );
 

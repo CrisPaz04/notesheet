@@ -289,6 +289,16 @@ function Dashboard() {
               </Link>
             )}
 
+            {canEditSongs() && (
+              <Link to="/partituras/importar" className="action-card card-hover">
+                <div className="action-icon">
+                  <i className="bi bi-folder-symlink"></i>
+                </div>
+                <h3 className="action-title">Importar partituras</h3>
+                <p className="action-description">Subir los PDF de una carpeta de golpe</p>
+              </Link>
+            )}
+
             <Link to="/playlists/new" className="action-card card-hover">
               <div className="action-icon">
                 <i className="bi bi-collection-play"></i>

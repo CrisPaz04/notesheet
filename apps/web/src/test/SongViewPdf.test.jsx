@@ -277,3 +277,75 @@ describe('SongView con una canción en PDF', () => {
     expect(screen.getByText(/Gloria a Dios en las alturas/)).toBeInTheDocument();
   });
 });
+
+// Una canción que tenía sus notas en texto y a la que se le subieron los PDF
+// (por ejemplo, con "Importar partituras") no las pierde.
+describe('SongView: PDF con las notas en texto', () => {
+  const CON_NOTAS = {
+    ...SONG_PDF,
+    voices: {
+      bb_trumpet: { 1: '## Verso\nDO SOL\nPrimera voz', 2: '## Verso\nMI SI\nSegunda voz' },
+      bb_trombone: { 1: '' }
+    }
+  };
+
+  // Las pestañas de vista (hay otro botón "Partitura": el de la versión)
+  const pestana = (nombre) => within(document.querySelector('.view-toggle-controls'))
+    .getByRole('button', { name: nombre });
+
+  it('la partitura sigue siendo la principal, y las notas van en su pestaña', async () => {
+    mockGetSongById.mockResolvedValue(CON_NOTAS);
+    const { container } = await renderView('Popurrí de Navidad');
+
+    expect(pestana('Partitura')).toHaveClass('active');
+    expect(pestana('Notas')).toBeInTheDocument();
+    expect(screen.getByTestId('pdf-viewer')).toBeInTheDocument();
+    expect(container.querySelector('.song-view--notas')).toHaveTextContent('Primera voz');
+  });
+
+  it('la letra sale de las notas si no la tiene aparte', async () => {
+    mockGetSongById.mockResolvedValue(CON_NOTAS);
+    await renderView('Popurrí de Navidad');
+    expect(pestana('Letra')).toBeInTheDocument();
+  });
+
+  it('al cambiar de voz, las notas siguen a la partitura', async () => {
+    const user = userEvent.setup();
+    mockGetSongById.mockResolvedValue(CON_NOTAS);
+    const { container } = await renderView('Popurrí de Navidad');
+
+    await user.click(screen.getByRole('button', { name: /Trompeta en Sib 1/ }));
+    await user.click(screen.getByText('Trompeta en Sib 2'));
+
+    expect(rutaMostrada()).toBe('partituras/song-pdf/bb_trumpet-2-partitura.pdf');
+    expect(container.querySelector('.song-view--notas')).toHaveTextContent('Segunda voz');
+  });
+
+  it('un PDF sin notas en texto no tiene esa pestaña', async () => {
+    await renderView('Popurrí de Navidad');
+    expect(document.querySelector('.song-view--notas')).toBeNull();
+  });
+});
+
+describe('SongView: la tonalidad de la parte del PDF', () => {
+  const CON_FLAUTA = {
+    ...SONG_PDF,
+    pdfs: { ...SONG_PDF.pdfs, c_flute: { 1: { partitura: 'partituras/song-pdf/c_flute-1-partitura.pdf' } } }
+  };
+
+  it('la flauta ve la de su parte, no la de la trompeta', async () => {
+    mockAuth.currentUser = { uid: 'u1' };
+    mockGetUserPreferences.mockResolvedValue({ defaultInstrument: 'c_flute' });
+    mockGetSongById.mockResolvedValue(CON_FLAUTA);
+    await renderView('Popurrí de Navidad');
+
+    await waitFor(() => expect(rutaMostrada()).toBe('partituras/song-pdf/c_flute-1-partitura.pdf'));
+    // SIb en la referencia de Sib: LAb en concierto
+    expect(screen.getAllByText('LAb').length).toBeGreaterThan(0);
+  });
+
+  it('la trompeta, la de siempre', async () => {
+    await renderView('Popurrí de Navidad');
+    expect(screen.getAllByText('SIb').length).toBeGreaterThan(0);
+  });
+});

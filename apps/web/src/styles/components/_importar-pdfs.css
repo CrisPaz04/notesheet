@@ -1,0 +1,222 @@
+/* src/styles/components/_importar-pdfs.css
+ *
+ * Subir muchas partituras de golpe: "Subir varios PDF" en el editor y la
+ * página "Importar partituras". Solo variables del tema (ver _variables.css).
+ */
+
+/* --- El reparto: qué archivo va a qué voz --------------------------------- */
+
+.reparto-pdfs {
+  margin: 0.75rem 0;
+}
+
+.reparto-pdfs-lista {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.reparto-pdfs-lista + .reparto-pdfs-lista {
+  margin-top: 0.5rem;
+}
+
+.reparto-pdfs-lista li {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.25rem 1rem;
+  padding: 0.45rem 0.75rem;
+  font-size: 0.88rem;
+}
+
+.reparto-pdfs-lista li + li {
+  border-top: 1px solid var(--border-light);
+}
+
+.reparto-pdfs-voz {
+  font-weight: 600;
+  color: var(--text-light-primary);
+}
+
+.reparto-pdfs-variante {
+  margin-left: 0.5rem;
+  font-weight: 400;
+  color: var(--text-light-secondary);
+}
+
+.reparto-pdfs-archivo {
+  color: var(--text-light-secondary);
+  word-break: break-all;
+}
+
+.reparto-pdfs-apartados .reparto-pdfs-voz {
+  font-weight: 400;
+  color: var(--text-light-secondary);
+}
+
+/* --- "Subir varios PDF" en el editor ---------------------------------------- */
+
+.subir-varios-pdf {
+  padding: 0.75rem 1rem 0;
+}
+
+.subir-varios-panel {
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  background: rgba(var(--overlay-rgb), 0.03);
+}
+
+.subir-varios-titulo {
+  margin: 0;
+  font-weight: 600;
+}
+
+.subir-varios-acciones,
+.importar-pdfs-elegir,
+.importar-pdfs-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.subir-varios-progreso,
+.importar-pdfs-progreso {
+  margin: 0.5rem 0 0;
+  color: var(--text-light-secondary);
+}
+
+.subir-varios-resultado,
+.importar-pdfs-resultados li {
+  margin-top: 0.5rem;
+  color: var(--color-primary);
+}
+
+.subir-varios-resultado.con-errores,
+.importar-pdfs-resultados li.con-errores {
+  color: var(--color-danger);
+}
+
+/* --- La página "Importar partituras" ---------------------------------------- */
+
+.importar-pdfs-container {
+  min-height: 100vh;
+  padding: 2rem 0 6rem;
+}
+
+.importar-pdfs-cabecera {
+  margin-bottom: 1.5rem;
+}
+
+.importar-pdfs-cabecera h1 {
+  margin-bottom: 0.75rem;
+}
+
+.importar-pdfs-cabecera p {
+  color: var(--text-light-secondary);
+}
+
+.importar-pdfs-ejemplo {
+  display: inline-block;
+  margin: 0.25rem 0 0.75rem;
+  padding: 0.35rem 0.6rem;
+  border-radius: var(--radius-sm);
+  background: rgba(var(--overlay-rgb), 0.06);
+  color: var(--text-light-primary);
+  word-break: break-all;
+}
+
+.importar-pdfs-nota {
+  font-size: 0.9rem;
+}
+
+.importar-pdfs-elegir label {
+  cursor: pointer;
+}
+
+.importar-pdfs-vacio {
+  margin-top: 1rem;
+  color: var(--text-light-secondary);
+}
+
+.importar-pdfs-canciones {
+  margin: 1.5rem 0 1rem;
+  padding: 0;
+  list-style: none;
+}
+
+.importar-pdfs-cancion {
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  background: rgba(var(--overlay-rgb), 0.03);
+}
+
+.importar-pdfs-cancion + .importar-pdfs-cancion {
+  margin-top: 0.5rem;
+}
+
+.importar-pdfs-cancion.excluida {
+  opacity: 0.55;
+}
+
+.importar-pdfs-fila {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1rem;
+}
+
+.importar-pdfs-check {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1 1 14rem;
+  margin: 0;
+  cursor: pointer;
+}
+
+.importar-pdfs-check input {
+  accent-color: var(--color-primary);
+}
+
+.importar-pdfs-autor,
+.importar-pdfs-destino {
+  color: var(--text-light-secondary);
+  font-size: 0.9rem;
+}
+
+.importar-pdfs-detalle {
+  padding: 0.25rem 0.6rem;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  color: var(--text-light-primary);
+  font-size: 0.85rem;
+}
+
+.importar-pdfs-aviso {
+  margin: 0.5rem 0 0;
+  font-size: 0.85rem;
+  color: var(--text-light-secondary);
+}
+
+.importar-pdfs-resultados {
+  margin-top: 1rem;
+  padding: 0;
+  list-style: none;
+}
+
+.importar-pdfs-resultados a {
+  color: inherit;
+  text-decoration: underline;
+}
+
+/* Los datos de cada canción nueva, abiertos dentro de su fila */
+.importar-pdfs-detalles {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border-light);
+}

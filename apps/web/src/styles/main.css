@@ -21,6 +21,7 @@
 @import './components/_tuner.css';
 @import './components/_herramientas.css';
 @import './components/_desplegable.css';
+@import './components/_importar-pdfs.css';
 
 /* Pages */
 @import './pages/_home.css';

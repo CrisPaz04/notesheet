@@ -126,3 +126,19 @@ describe('resolveScore con número de voz (PDF)', () => {
     expect(resolveScore(PDF, { instrument: 'bb_trumpet' }).path).toBe('p/t1.pdf');
   });
 });
+
+describe('tonalidadDeLaParte (PDF)', () => {
+  // RE en la referencia de Sib: DO en concierto, LA para el saxo alto
+  it('la de la parte que se ve, desde la referencia de Sib', async () => {
+    const { tonalidadDeLaParte } = await import('@notesheet/core');
+    expect(tonalidadDeLaParte('RE', 'bb_trumpet-1')).toBe('RE');
+    expect(tonalidadDeLaParte('RE', 'c_flute-1')).toBe('DO');
+    expect(tonalidadDeLaParte('RE', 'eb_alto_sax-2')).toBe('LA');
+  });
+
+  it('sin parte, la del instrumento del músico', async () => {
+    const { tonalidadDeLaParte } = await import('@notesheet/core');
+    expect(tonalidadDeLaParte('RE', null, 'c_flute')).toBe('DO');
+    expect(tonalidadDeLaParte('', 'c_flute-1')).toBe('');
+  });
+});

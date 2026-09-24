@@ -23,6 +23,7 @@ import {
   isPdfSong,
   readsChordChart,
   vistaPreferida,
+  tonalidadDeLaParte,
   supportsCapo,
   buildScoreVoicesList,
   resolveScore,
@@ -124,11 +125,16 @@ function SongView() {
   // selector de tonalidad que no hace nada es peor que no tenerlo.
   const esPdf = isPdfSong(song);
 
+  const conTexto = (formatted) =>
+    Boolean(formatted?.sections?.some((seccion) => (seccion.content || "").trim()));
+
   // Un PDF puede traer además la letra (las 118 la tienen aparte). Si la
   // trae, se mantienen las dos vistas y el deslizamiento; si no, sobra.
-  const tieneLetra = esPdf
-    ? Boolean(song?.lyricsOnly?.trim())
-    : true;
+  const tieneLetra = esPdf ? conTexto(formattedLyricsOnly) : true;
+
+  // Una canción que tenía sus notas en texto y a la que luego se le subieron
+  // los PDF no las pierde: siguen en su propia vista, junto a la partitura.
+  const tieneNotasAparte = esPdf && conTexto(formattedSong);
 
   // Los acordes (guitarra, piano) son una vista más. Está siempre, aunque la
   // canción aún no los tenga: así se sabe dónde van, y quien puede editarla
@@ -146,6 +152,7 @@ function SongView() {
       icono: esPdf ? "bi bi-file-earmark-music" : "bi bi-music-note-list",
       objeto: esPdf ? "la partitura" : "las notas"
     },
+    ...(tieneNotasAparte ? [{ id: "notas", etiqueta: "Notas", icono: "bi bi-music-note-list", objeto: "las notas" }] : []),
     ...(tieneLetra ? [{ id: "letra", etiqueta: "Letra", icono: "bi bi-card-text", objeto: "la letra" }] : []),
     ...(tieneAcordes ? [{ id: "acordes", etiqueta: "Acordes", icono: "bi bi-music-note", objeto: "los acordes" }] : [])
   ];
@@ -217,6 +224,33 @@ function SongView() {
     setSoundingKey(rendered.soundingKey);
   };
 
+  /**
+   * Lo que una canción en PDF tiene además en texto: sus notas (si las tenía
+   * antes de subirle los PDF), la letra y los acordes. Las notas, de la misma
+   * voz que la partitura elegida, o la que le toca al músico si esa no tiene.
+   * La letra, la del campo `lyricsOnly` si la hay; si no, la de las notas.
+   */
+  const pintarTextoDePdf = (cancion, voiceKey, opciones) => {
+    const { content } = resolveVoiceForMusician(cancion, {
+      voiceKey,
+      instrument: opciones.instrument,
+      voiceNumber: numeroVoz
+    });
+
+    if (content.trim()) {
+      setOriginalContent(content);
+      applyRender(content, { ...opciones, acordes: cancion.acordes });
+    } else {
+      setOriginalContent("");
+      setFormattedSong(null);
+      setFormattedLyricsOnly(null);
+      setFormattedAcordes(renderChordChart(cancion.acordes, opciones));
+    }
+
+    const letraAparte = formatLyrics(cancion.lyricsOnly);
+    if (letraAparte || !content.trim()) setFormattedLyricsOnly(letraAparte);
+  };
+
   // Cargar canción y preferencias de usuario.
   useEffect(() => {
     if (!id) return;
@@ -278,18 +312,13 @@ function SongView() {
           setScore(elegida);
           setSelectedVoiceKey(elegida.voiceKey);
           setAvailableVoicesList([]);
-          setOriginalContent("");
-          setFormattedSong(null);
 
-          // La letra, si la hay, se muestra tal cual: en un PDF no hay
-          // acordes que quitar, así que aquí no pinta el pipeline entero.
-          setFormattedLyricsOnly(formatLyrics(loadedSong.lyricsOnly));
-          setFormattedAcordes(renderChordChart(loadedSong.acordes, {
+          pintarTextoDePdf(loadedSong, elegida.voiceKey, {
             baseKey: songKey,
             targetKey: songKey,
             instrument,
             notationSystem: notation
-          }));
+          });
         } else {
           setScore(null);
           setScoreVoicesList([]);
@@ -394,11 +423,18 @@ function SongView() {
     setShowVoiceDropdown(false);
     if (voiceKey === selectedVoiceKey) return;
 
-    // En un PDF cambiar de voz no re-renderiza nada: elige otro archivo
+    // En un PDF cambiar de voz elige otro archivo, y las notas en texto (si
+    // las tiene) pasan a las de esa voz
     if (esPdf) {
       const elegida = resolveScore(song, { voiceKey, variant: scoreVariant });
       setScore(elegida);
       setSelectedVoiceKey(elegida.voiceKey);
+      pintarTextoDePdf(song, elegida.voiceKey, {
+        baseKey,
+        targetKey,
+        instrument: currentInstrument,
+        notationSystem
+      });
       return;
     }
 
@@ -623,7 +659,10 @@ function SongView() {
                 Tonalidad
               </div>
               <div className="song-meta-value">
-                {esPdf ? (verTonalidad(song.key) || "—") : verTonalidad(displayKey)}
+                {/* En un PDF, la de la parte que se ve: el saxo lee su tonalidad */}
+                {esPdf
+                  ? (verTonalidad(tonalidadDeLaParte(song.key, score?.voiceKey, currentInstrument)) || "—")
+                  : verTonalidad(displayKey)}
                 {!esPdf && capo > 0 && (
                   <span className="song-meta-nota">
                     {" "}· capo {TRASTES_ROMANOS[capo]}, suena en {verTonalidad(soundingKey)}
@@ -1125,6 +1164,24 @@ function SongView() {
                 )}
               </div>
               
+              {/* Las notas en texto de una canción en PDF, en su propia vista */}
+              {tieneNotasAparte && (
+                <div
+                  ref={refDe("notas")}
+                  className="song-view song-view--notas"
+                  style={{ width: `${100 / vistas.length}%` }}
+                >
+                  {formattedSong.sections.map((section, index) => (
+                    <div key={index} className="song-section-modern">
+                      {section.title && <h3 className="song-section-title">{section.title}</h3>}
+                      <div className={`song-section-content alinear-${alineacion}`} style={{ fontSize: `${fontSize}px` }}>
+                        {section.content}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
               {/* Vista de solo letras */}
               {tieneLetra && (
               <div

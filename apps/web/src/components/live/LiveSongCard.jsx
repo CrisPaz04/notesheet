@@ -34,7 +34,7 @@ const LiveSongCard = forwardRef(function LiveSongCard({
   notacion = "latin"
 }, ref) {
   const tonalidadCompartida = song.key || song.originalKey || "?";
-  const tonalidadPropia = song.rendered?.displayKey;
+  const tonalidadPropia = song.rendered?.displayKey || song.pdf?.displayKey;
   const difieren = tonalidadPropia && tonalidadPropia !== tonalidadCompartida;
 
   // Notas (o partitura), letra o acordes, según lo que eligió este músico.

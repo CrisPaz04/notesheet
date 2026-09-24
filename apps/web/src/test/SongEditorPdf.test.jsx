@@ -107,6 +107,12 @@ describe('SongEditor con una canción en PDF', () => {
 
     expect(screen.getByLabelText('editor')).toBeInTheDocument();
     expect(screen.queryByText('Con nombres de notas')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Subir varios PDF/ })).not.toBeInTheDocument();
+  });
+
+  it('una canción en PDF ofrece subir varios de golpe', async () => {
+    await renderEditor();
+    expect(screen.getByRole('button', { name: /Subir varios PDF/ })).toBeEnabled();
   });
 
   it('distingue la casilla que ya tiene archivo de la que no', async () => {

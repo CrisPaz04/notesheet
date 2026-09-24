@@ -23,10 +23,8 @@ import {
   leerVersiones,
   limpiarVersiones,
   unirVersiones,
-  tempoDesdeToques,
   TEMPO_MIN,
-  TEMPO_MAX,
-  formatearDuracion
+  TEMPO_MAX
 } from "@notesheet/core";
 import KeySelector from "../components/KeySelector";
 import LoadingSpinner from "../components/LoadingSpinner";
@@ -36,8 +34,9 @@ import TypeSelector from "../components/TypeSelector";
 import ScoreUploader from "../components/ScoreUploader";
 import VersionesInput from "../components/VersionesInput";
 import useNotacionPreferida from "../hooks/useNotacionPreferida";
-import BuscarDatosModal from "../components/datos/BuscarDatosModal";
+import CamposCancion from "../components/cancion/CamposCancion";
 import useSongVoices, { LYRICS_TAB, ACORDES_TAB } from "../hooks/useSongVoices";
+import SubirVariosPdf from "../components/partituras/SubirVariosPdf";
 import Desplegable from "../components/Desplegable";
 
 // Instrumentos soportados para voces adicionales
@@ -76,8 +75,6 @@ const EDITOR_OPTIONS = {
   }
 };
 
-const COMPASES = ["2/4", "3/4", "4/4", "6/8", "12/8"];
-
 // El tempo escrito, como número, o null si está vacío o no tiene sentido
 const tempoValido = (texto) => {
   const n = Math.round(Number(String(texto).replace(",", ".")));
@@ -98,8 +95,6 @@ function SongEditor() {
   // Datos de la grabación original, traídos con "Buscar datos". En
   // concierto: nunca se mezclan con `key` (ver datosCancion.js en core).
   const [grabacion, setGrabacion] = useState(null);
-  const [buscandoDatos, setBuscandoDatos] = useState(false);
-  const toquesRef = useRef([]);
   const [content, setContent] = useState("");
   const [lyricsOnly, setLyricsOnly] = useState("");
   // En concierto, como los toca la guitarra sin cejilla (ver
@@ -271,40 +266,24 @@ function SongEditor() {
 
 
   // Handlers para cambios de campos
-  const handleTitleChange = (e) => {
-    setTitle(e.target.value);
-  };
-
   const handleKeyChange = (newKey) => {
     setKey(newKey);
   };
 
-  const handleTypeChange = (newType) => {
-    setType(newType);
-  };
-
-  const handleAlbumChange = (e) => {
-    setAlbum(e.target.value);
-  };
-
-  // Tap tempo: cada toque apunta el instante; con tres ya hay tempo. Si pasan
-  // más de 2 s entre toques, se empieza de nuevo.
-  const handleTapTempo = () => {
-    const ahora = performance.now();
-    const toques = toquesRef.current;
-    if (toques.length && ahora - toques[toques.length - 1] > 2000) toques.length = 0;
-    toques.push(ahora);
-    if (toques.length > 8) toques.shift();
-    const calculado = tempoDesdeToques(toques);
-    if (calculado) setTempo(String(calculado));
-  };
-
-  // Lo que el músico aceptó en "Buscar datos": solo rellena el formulario
-  const aplicarDatos = (propuesta) => {
-    if (propuesta.grabacion) setGrabacion(propuesta.grabacion);
-    if (propuesta.tempo) setTempo(String(propuesta.tempo));
-    if (propuesta.compas) setCompas(propuesta.compas);
-    if (propuesta.versiones) setVersiones(propuesta.versiones);
+  // Los datos de la canción (`CamposCancion`) avisan campo a campo
+  const cambiarCampo = (campo, valor) => {
+    const setters = {
+      title: setTitle,
+      versiones: setVersiones,
+      album: setAlbum,
+      type: setType,
+      key: setKey,
+      tempo: setTempo,
+      compas: setCompas,
+      isPublic: setIsPublic,
+      grabacion: setGrabacion
+    };
+    setters[campo]?.(valor);
   };
 
   // Guardar la canción
@@ -745,239 +724,91 @@ function SongEditor() {
             Información de la Canción
           </h3>
 
-          <div className="metadata-grid">
-            <div className="form-group-modern">
-              <label className="form-label-modern">
-                <i className="bi bi-card-heading"></i>
-                Título
-              </label>
-              <input
-                type="text"
-                className="form-control-modern"
-                value={title}
-                onChange={handleTitleChange}
-                placeholder="Nombre de la canción"
-              />
-            </div>
-
-            <div className="form-group-modern">
-              <label className="form-label-modern" htmlFor="song-versiones">
-                <i className="bi bi-person"></i>
-                Versión de
-              </label>
-              <VersionesInput
-                id="song-versiones"
-                value={versiones}
-                onChange={setVersiones}
-              />
-              <div className="form-help-text">
-                Pulsa Enter para añadir otro nombre.
-              </div>
-            </div>
-
-            <div className="form-group-modern">
-              <label className="form-label-modern">
-                <i className="bi bi-disc me-2"></i>
-                Álbum
-              </label>
-              <input
-                type="text"
-                className="form-control-modern"
-                value={album}
-                onChange={handleAlbumChange}
-                placeholder="Álbum al que pertenece"
-              />
-              <div className="form-help-text">
-                Las canciones del mismo álbum se enlazan entre sí.
-              </div>
-            </div>
-
-            <TypeSelector
-              value={type}
-              onChange={handleTypeChange}
-            />
-
-            <div>
-              <KeySelector
-                value={key}
-                onChange={handleKeyChange}
-                notacion={notacion}
-              />
-              {/* Solo cambia el selector: no guarda ni transpone. Se da por
-                  hecho que las notas están bien y lo que falla es la etiqueta. */}
-              {sugerenciaTonalidad && (
-                <div className="key-suggestion" role="status">
-                  <i className="bi bi-lightbulb"></i>
-                  <span>Por las notas parece {sugerenciaTonalidad.map((k) => nombrarTonalidad(k, notacion)).join(" o ")}</span>
-                  {sugerenciaTonalidad.map((sugerida) => (
-                    <button
-                      key={sugerida}
-                      type="button"
-                      className="key-suggestion-btn"
-                      onClick={() => handleKeyChange(sugerida)}
-                    >
-                      Usar {nombrarTonalidad(sugerida, notacion)}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <div className="form-group-modern">
-              <label className="form-label-modern" htmlFor="song-instrumento-principal">
-                <i className="bi bi-music-note-beamed"></i>
-                Instrumento Principal
-              </label>
-              <Desplegable
-                id="song-instrumento-principal"
-                value={primaryInstrument}
-                onChange={handlePrimaryInstrumentChange}
-                opciones={VOICE_INSTRUMENTS.map((inst) => ({ value: inst.id, label: inst.name }))}
-              />
-            </div>
-
-            <div className="form-group-modern">
-              <label className="form-label-modern" htmlFor="song-tempo">
-                <i className="bi bi-speedometer2"></i>
-                Tempo (BPM)
-              </label>
-              <div className="tempo-campo">
-                <input
-                  id="song-tempo"
-                  type="number"
-                  inputMode="numeric"
-                  min={TEMPO_MIN}
-                  max={TEMPO_MAX}
-                  className="form-control-modern"
-                  value={tempo}
-                  onChange={(e) => setTempo(e.target.value)}
-                  placeholder="Ej.: 72"
-                />
-                <button
-                  type="button"
-                  className="btn-editor-secondary tempo-tap"
-                  onClick={handleTapTempo}
-                  title="Toca al ritmo de la canción"
-                >
-                  Tap
-                </button>
-              </div>
-              <div className="form-help-text">
-                El metrónomo arranca con él al abrirlo desde la canción.
-              </div>
-            </div>
-
-            <div className="form-group-modern">
-              <label className="form-label-modern" htmlFor="song-compas">
-                <i className="bi bi-grid-3x2"></i>
-                Compás
-              </label>
-              <Desplegable
-                id="song-compas"
-                value={compas}
-                onChange={setCompas}
-                opciones={[
-                  { value: "", label: "Sin indicar" },
-                  ...COMPASES.map((c) => ({ value: c, label: c }))
-                ]}
-              />
-            </div>
-
-            <div className="form-group-modern">
-              <label className="form-label-modern">
-                <i className="bi bi-file-earmark-music me-2"></i>
-                Formato
-              </label>
-              <div className="visibility-toggle">
-                <button
-                  type="button"
-                  className={`visibility-option ${format === SONG_FORMAT_CHORDS ? 'active' : ''}`}
-                  onClick={() => setFormat(SONG_FORMAT_CHORDS)}
-                >
-                  <i className="bi bi-music-note-list me-2"></i>
-                  {/* El repertorio son notas de la melodía, no acordes */}
-                  Notas
-                </button>
-                <button
-                  type="button"
-                  className={`visibility-option ${format === SONG_FORMAT_PDF ? 'active' : ''}`}
-                  onClick={() => setFormat(SONG_FORMAT_PDF)}
-                >
-                  <i className="bi bi-file-earmark-pdf me-2"></i>
-                  PDF
-                </button>
-              </div>
-              <div className="form-help-text">
-                En PDF, cada voz lleva la partitura y la versión con los
-                nombres de las notas. No se transpone.
-              </div>
-            </div>
-
-            <div className="form-group-modern">
-              <label className="form-label-modern">
-                <i className="bi bi-eye me-2"></i>
-                Visibilidad
-              </label>
-              <div className="visibility-toggle">
-                <button
-                  type="button"
-                  className={`visibility-option ${isPublic ? 'active' : ''}`}
-                  onClick={() => setIsPublic(true)}
-                >
-                  <i className="bi bi-people me-2"></i>
-                  Repertorio
-                </button>
-                <button
-                  type="button"
-                  className={`visibility-option ${!isPublic ? 'active' : ''}`}
-                  onClick={() => setIsPublic(false)}
-                >
-                  <i className="bi bi-lock me-2"></i>
-                  Privada
-                </button>
-              </div>
-              <div className="form-help-text">
-                Las canciones del repertorio las ven todos los músicos. Solo tú
-                puedes editarlas o borrarlas.
-              </div>
-            </div>
-
-            <div className="form-group-modern grabacion-original">
-              <label className="form-label-modern">
-                <i className="bi bi-vinyl"></i>
-                Grabación original
-              </label>
-              <div className="grabacion-caja">
-              {grabacion ? (
-                <p className="grabacion-resumen">
-                  {[grabacion.artista, grabacion.album, grabacion.anio, formatearDuracion(grabacion.duracion)]
-                    .filter(Boolean).join(" · ") || grabacion.titulo}
-                </p>
-              ) : (
-                <p className="grabacion-resumen grabacion-resumen-vacia">Sin datos todavía.</p>
-              )}
-              <div className="grabacion-acciones">
-                <button type="button" className="btn-editor-secondary" onClick={() => setBuscandoDatos(true)}>
-                  <i className="bi bi-search me-1"></i>
-                  Buscar datos
-                </button>
-                {grabacion && (
-                  <button type="button" className="btn-editor-secondary" onClick={() => setGrabacion(null)}>
-                    Quitar
+          <CamposCancion
+            valores={{ title, versiones, album, type, key, tempo, compas, isPublic, grabacion }}
+            onCambiar={cambiarCampo}
+            notacion={notacion}
+            bajoTonalidad={sugerenciaTonalidad && (
+              // Solo cambia el selector: no guarda ni transpone. Se da por
+              // hecho que las notas están bien y lo que falla es la etiqueta.
+              <div className="key-suggestion" role="status">
+                <i className="bi bi-lightbulb"></i>
+                <span>Por las notas parece {sugerenciaTonalidad.map((k) => nombrarTonalidad(k, notacion)).join(" o ")}</span>
+                {sugerenciaTonalidad.map((sugerida) => (
+                  <button
+                    key={sugerida}
+                    type="button"
+                    className="key-suggestion-btn"
+                    onClick={() => handleKeyChange(sugerida)}
+                  >
+                    Usar {nombrarTonalidad(sugerida, notacion)}
                   </button>
-                )}
+                ))}
               </div>
+            )}
+            trasTonalidad={(
+              <div className="form-group-modern">
+                <label className="form-label-modern" htmlFor="song-instrumento-principal">
+                  <i className="bi bi-music-note-beamed"></i>
+                  Instrumento Principal
+                </label>
+                <Desplegable
+                  id="song-instrumento-principal"
+                  value={primaryInstrument}
+                  onChange={handlePrimaryInstrumentChange}
+                  opciones={VOICE_INSTRUMENTS.map((inst) => ({ value: inst.id, label: inst.name }))}
+                />
               </div>
-              <div className="form-help-text">
-                Tonalidad, tempo y duración del disco, de MusicBrainz, iTunes y GetSongBPM.
+            )}
+            antesDeVisibilidad={(
+              <div className="form-group-modern">
+                <label className="form-label-modern">
+                  <i className="bi bi-file-earmark-music me-2"></i>
+                  Formato
+                </label>
+                <div className="visibility-toggle">
+                  <button
+                    type="button"
+                    className={`visibility-option ${format === SONG_FORMAT_CHORDS ? 'active' : ''}`}
+                    onClick={() => setFormat(SONG_FORMAT_CHORDS)}
+                  >
+                    <i className="bi bi-music-note-list me-2"></i>
+                    {/* El repertorio son notas de la melodía, no acordes */}
+                    Notas
+                  </button>
+                  <button
+                    type="button"
+                    className={`visibility-option ${format === SONG_FORMAT_PDF ? 'active' : ''}`}
+                    onClick={() => setFormat(SONG_FORMAT_PDF)}
+                  >
+                    <i className="bi bi-file-earmark-pdf me-2"></i>
+                    PDF
+                  </button>
+                </div>
+                <div className="form-help-text">
+                  En PDF, cada voz lleva la partitura y la versión con los
+                  nombres de las notas. No se transpone.
+                </div>
               </div>
-            </div>
-          </div>
+            )}
+          />
         </div>
 
         {/* Editor Principal */}
         <div className="editor-main slide-up-delay">
           {renderTabs()}
+
+          {/* Todos los PDF de la carpeta de la canción a la vez: cada uno va a
+              su voz por el nombre del archivo */}
+          {format === SONG_FORMAT_PDF && !isNewSong && id && (
+            <SubirVariosPdf
+              song={{ id, pdfs, voices, primaryInstrument, primaryVoiceNumber }}
+              onSubidos={({ pdfs: nuevos, voices: nuevas }) => {
+                setPdfs(nuevos);
+                setVoices(nuevas);
+              }}
+            />
+          )}
           
           {/* Formulario para añadir voces */}
           {showVoicesManager && (
@@ -1078,15 +909,6 @@ function SongEditor() {
           </div>
         </div>
       </div>
-      <BuscarDatosModal
-        isOpen={buscandoDatos}
-        onClose={() => setBuscandoDatos(false)}
-        titulo={title}
-        artista={versiones[0] || ""}
-        versiones={versiones}
-        notacion={notacion}
-        onAplicar={aplicarDatos}
-      />
     </div>
   );
 }

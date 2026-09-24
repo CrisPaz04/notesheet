@@ -28,6 +28,7 @@ const Metronome = lazyConRecarga(() => import("./pages/Metronome"));
 const Tuner = lazyConRecarga(() => import("./pages/Tuner"));
 const LiveSession = lazyConRecarga(() => import("./pages/LiveSession"));
 const JoinLive = lazyConRecarga(() => import("./pages/JoinLive"));
+const ImportarPartituras = lazyConRecarga(() => import("./pages/ImportarPartituras"));
 
 // Componentes
 import Navbar from "./components/Navbar";
@@ -111,6 +112,11 @@ function AppLayout() {
           <Route path="/songs/new" element={
             <EditorRoute>
               <SongEditor />
+            </EditorRoute>
+          } />
+          <Route path="/partituras/importar" element={
+            <EditorRoute>
+              <ImportarPartituras />
             </EditorRoute>
           } />
           <Route path="/songs/:id" element={<SongView />} />

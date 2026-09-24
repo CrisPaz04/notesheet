@@ -7,3 +7,4 @@ export * from './services/toolsPreferences';
 export * from './services/scores';
 export * from './services/sessions';
 export * from './services/datosCanciones';
+export * from './services/importarPartituras';

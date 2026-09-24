@@ -88,8 +88,25 @@ canción, primero el **archivo** de Storage y después el documento de Firestore
 `storage.rules` consulta la canción en Firestore para decidir el permiso, así
 que sin documento el archivo queda inaccesible y sin forma de borrarlo.
 
-Queda por decidir cómo subir tantos archivos de golpe: hoy se sube uno a uno
-desde la pestaña de su voz. Una canción con texto **y** PDF ya funciona: el PDF
+**Subir muchos de golpe**, por el nombre de los archivos, como los guarda la banda
+(`Autor--Título--Bb_Trumpet_2--NN.pdf`: instrumento con su número de voz, sin número
+la 1, y `NN` la versión con nombres de notas). La lectura es pura, en
+`packages/core/src/music/importarPdfs.js` (`interpretarNombrePdf`, `repartirPdfs`,
+`agruparPorCancion`, `buscarCancionParaPdfs`); la subida, en
+`packages/api/src/services/importarPartituras.js`, que guarda la canción **tras cada
+archivo** (si se cae la red a mitad, lo subido queda apuntado) y le crea a cada voz
+su casilla en `voices`, de donde el editor saca las pestañas. Dos entradas:
+"Subir varios PDF" en el editor de una canción en PDF, y la página **Importar
+partituras** (`/partituras/importar`, acceso en el Dashboard), que toma la carpeta
+entera: una canción por autor y título, añadida a la propia del mismo título si la
+hay (solo propias: las reglas no dejan escribir las ajenas) o creada nueva. La
+`Score` (partitura completa) no se sube. Siempre se enseña el reparto antes de subir.
+Cada canción nueva trae **abiertos sus datos** (el mismo formulario que el editor,
+`components/cancion/CamposCancion.jsx`, que el editor usa también); los de una que ya
+existe no se tocan.
+Añadir PDF a una canción de texto la pasa a `format: "pdf"`: se abre en la partitura, y
+sus notas escritas siguen en una pestaña **Notas** aparte (Partitura · Notas · Letra ·
+Acordes), de la misma voz que la partitura elegida (`pintarTextoDePdf` en `SongView`). Una canción con texto **y** PDF: el PDF
 es el cuerpo y la letra se queda como segunda vista.
 
 ## Commands
@@ -230,6 +247,9 @@ en Storage, nunca la URL de descarga).
   `AvisoVista`). La lista pinta ya **en el instrumento del músico**, como la canción y
   la sesión (antes las notas iban siempre en la referencia de Sib y la etiqueta de
   tonalidad no casaba con los acordes en concierto).
+- En un PDF la tonalidad que se enseña es **la de la parte que se ve**
+  (`tonalidadDeLaParte`): el saxo que abre su parte ve la suya. En la canción, la lista
+  y la sesión en vivo (ahí como la insignia "Tú").
 - **Qué voz lee cada músico.** Cada uno dice qué número es en su sección ("soy la
   trompeta 2") en "Mi voz", en la sesión en vivo y en la lista; se guarda en el
   dispositivo (`useNumeroDeVoz`, clave `numeroDeVoz`) porque cambia de un servicio a
@@ -316,6 +336,7 @@ no funciona o deja basura:
 2. **Política TTL sobre `expiresAt` en `sessions`**.
 3. **Otra política TTL sobre el grupo de colecciones `participants`** — la del padre no
    alcanza a la subcolección, y sin esta los documentos de presencia quedan huérfanos.
+Las dos (y la de `invitados`) están ya en `firestore.indexes.json` (ver Security Rules).
 
 ## Security Rules
 
@@ -348,7 +369,13 @@ sesión, así que ahí no se mira además la canción.
 Las reglas se prueban con **`npm run test:reglas`** (`scripts/reglas/reglas.test.mjs`,
 `@firebase/rules-unit-testing` 4, que es la que casa con `firebase` 11: la 5 trae la 12
 y duplica el SDK). Validado con mutaciones: quitar cualquiera de los guardias rompe algún
-test. Opcional: una política TTL sobre `expiresAt` en `invitados`.
+test.
+
+Las **políticas TTL** (sobre `expiresAt` en `sessions`, `participants` e `invitados`)
+viven en `firestore.indexes.json`, en `fieldOverrides`, y se despliegan con
+`npx firebase-tools deploy --only firestore:indexes --project notesheet-d63e8`. Antes
+solo estaban en la consola: si alguien despliega los índices sin ellas en el archivo,
+el CLI puede quitarlas.
 
 Los índices compuestos viven en `firestore.indexes.json` y hay que desplegarlos **antes**
 de subir código que dependa de una consulta nueva, o la app falla al cargar.
@@ -401,7 +428,7 @@ SPA (el orden importa).
 ## Notes
 
 - No TypeScript - pure JavaScript
-- Vitest configured; 1696 tests in `apps/web/src/test/` (run with `npm run test:run`)
+- Vitest configured; 1747 tests in `apps/web/src/test/` (run with `npm run test:run`)
 - Los tests se validan con **mutaciones**: se rompe el código a propósito y se comprueba
   que algún test falla. Ha destapado cuatro tests que pasaban por la razón equivocada,
   y un bug de verdad en `scores.js` (las voces se ordenaban como texto, así que la 10
@@ -509,6 +536,17 @@ SPA (el orden importa).
 Trabajo acordado que **todavía no está hecho**. Cada punto se aborda por
 separado; lo que lleva una nota es porque ya se comprobó en el código y
 ahorra volver a buscarlo.
+
+### Música: la ortografía de las tonalidades
+
+Un instrumento en DO lee **LA#** donde se escribe SIb, y **RE#** donde MIb: tanto la
+etiqueta de tonalidad como las notas. `transposeBySemitones` y
+`transposeKeyBySemitones` conservan el bemol o el sostenido de la nota de partida, y
+DO o FA no tienen ninguno. Además `getKeySignature` (`transposition.js`) mira la raíz
+de una menor y no su armadura (trata SOLm como de sostenidos). Se probó arreglar solo
+las tonalidades y la etiqueta dejó de coincidir con el primer acorde (lo vigila
+`songRendering.test.js`): hay que hacerlo en todo el recorrido a la vez (notas,
+tonalidades, capo y acordes), comprobándolo contra el repertorio.
 
 ### Modelo de datos
 
