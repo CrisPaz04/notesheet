@@ -1,3 +1,4 @@
+import Icono from "../Icono";
 /**
  * PitchHistoryGraph Component
  *
@@ -93,11 +94,11 @@ function PitchHistoryGraph({
 
     switch (trend) {
       case 'rising':
-        return { icon: 'bi-arrow-up-right', text: 'Subiendo', color: '#f59e0b' };
+        return { icon: 'arrow-up-right', text: 'Subiendo', color: '#f59e0b' };
       case 'falling':
-        return { icon: 'bi-arrow-down-right', text: 'Bajando', color: '#f59e0b' };
+        return { icon: 'arrow-down-right', text: 'Bajando', color: '#f59e0b' };
       case 'stable':
-        return { icon: 'bi-arrow-right', text: 'Estable', color: '#10b981' };
+        return { icon: 'arrow-right', text: 'Estable', color: '#10b981' };
       default:
         return { icon: '', text: '' };
     }
@@ -263,13 +264,13 @@ function PitchHistoryGraph({
       <div className="graph-status">
         {trendInfo.text && (
           <span className="status-item" style={{ color: trendInfo.color }}>
-            <i className={`bi ${trendInfo.icon} me-1`}></i>
+            <Icono nombre={trendInfo.icon} className="me-1" />
             {trendInfo.text}
           </span>
         )}
         {stabilityRating && (
           <span className="status-item" style={{ color: getStabilityColor() }}>
-            <i className="bi bi-activity me-1"></i>
+            <Icono nombre="pulse" className="me-1" />
             {stabilityRating === 'excellent' && 'Excelente'}
             {stabilityRating === 'good' && 'Bueno'}
             {stabilityRating === 'fair' && 'Regular'}
@@ -281,7 +282,7 @@ function PitchHistoryGraph({
       {/* No data message */}
       {!isRunning && history.length === 0 && (
         <div className="graph-no-data">
-          <i className="bi bi-mic me-2"></i>
+          <Icono nombre="microphone" className="me-2" />
           Inicia el afinador para ver el historial
         </div>
       )}

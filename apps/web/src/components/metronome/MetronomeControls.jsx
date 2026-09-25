@@ -7,6 +7,7 @@
 import { TIME_SIGNATURES, SUBDIVISIONS } from '@notesheet/core/src/audio/metronomeEngine';
 import { rellenoDeslizador } from "../../utils/rellenoDeslizador";
 import Desplegable from "../Desplegable";
+import Icono from "../Icono";
 
 function MetronomeControls({
   bpm,
@@ -34,7 +35,7 @@ function MetronomeControls({
             onClick={() => onDecrement(5)}
             title="Disminuir 5 BPM"
           >
-            <i className="bi bi-dash-lg"></i>
+            <Icono nombre="minus" />
           </button>
 
           <input
@@ -52,7 +53,7 @@ function MetronomeControls({
             onClick={() => onIncrement(5)}
             title="Aumentar 5 BPM"
           >
-            <i className="bi bi-plus-lg"></i>
+            <Icono nombre="plus" />
           </button>
         </div>
 
@@ -76,12 +77,12 @@ function MetronomeControls({
       {/* Volume Control */}
       <div className="mb-4">
         <label className="form-label-modern">
-          <i className="bi bi-volume-up me-2"></i>
+          <Icono nombre="speaker-high" className="me-2" />
           Volumen
         </label>
 
         <div className="d-flex align-items-center gap-3">
-          <i className="bi bi-volume-mute text-secondary"></i>
+          <Icono nombre="speaker-slash" className="text-secondary" />
           <input
             type="range"
             className="form-range flex-grow-1"
@@ -92,7 +93,7 @@ function MetronomeControls({
             step="0.05"
             style={rellenoDeslizador(volume, 0, 1)}
           />
-          <i className="bi bi-volume-up text-secondary"></i>
+          <Icono nombre="speaker-high" className="text-secondary" />
         </div>
         <div className="text-center metronome-controls-hint">
           {Math.round(volume * 100)}%
@@ -111,7 +112,7 @@ function MetronomeControls({
         />
         {isPlaying && (
           <div className="metronome-controls-hint mt-1">
-            <i className="bi bi-info-circle me-1"></i>
+            <Icono nombre="info" className="me-1" />
             Pausa para cambiar el compás
           </div>
         )}
@@ -145,7 +146,7 @@ function MetronomeControls({
           className="btn-tap-tempo w-100"
           onClick={onTapTempo}
         >
-          <i className="bi bi-hand-index-thumb me-2"></i>
+          <Icono nombre="hand-tap" className="me-2" />
           Tap Tempo
         </button>
         <div className="metronome-controls-hint text-center mt-2">

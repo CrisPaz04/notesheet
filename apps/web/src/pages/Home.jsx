@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import Icono from "../components/Icono";
 
 function Home() {
   return (
@@ -18,11 +19,11 @@ function Home() {
           </p>
           <div className="d-flex cta-buttons">
             <Link to="/register" className="btn-hero-primary">
-              <i className="bi bi-rocket-takeoff me-2"></i>
+              <Icono nombre="rocket-launch" className="me-2" />
               Comenzar Gratis
             </Link>
             <Link to="/login" className="btn-hero-secondary">
-              <i className="bi bi-box-arrow-in-right me-2"></i>
+              <Icono nombre="sign-in" className="me-2" />
               Iniciar Sesión
             </Link>
           </div>
@@ -54,7 +55,7 @@ function Home() {
       <div className="col-lg-6">
         <div className="demo-card">
           <div className="demo-header">
-            <i className="bi bi-music-note-beamed me-2" style={{ color: 'var(--color-primary)' }}></i>
+            <Icono nombre="music-notes" className="me-2" style={{ color: 'var(--color-primary)' }} />
             <h4 className="demo-title">Amazing Grace</h4>
           </div>
           <div className="demo-content">
@@ -88,7 +89,7 @@ function Home() {
             <div className="col-md-4">
               <div className="feature-card text-center">
                 <div className="feature-icon">
-                  <i className="bi bi-music-note-list"></i>
+                  <Icono nombre="music-notes" />
                 </div>
                 <h3 className="feature-title">Notación Simple</h3>
                 <p className="feature-description">
@@ -101,7 +102,7 @@ function Home() {
             <div className="col-md-4">
               <div className="feature-card text-center">
                 <div className="feature-icon">
-                  <i className="bi bi-arrow-repeat"></i>
+                  <Icono nombre="arrows-clockwise" />
                 </div>
                 <h3 className="feature-title">Transposición Automática</h3>
                 <p className="feature-description">
@@ -114,7 +115,7 @@ function Home() {
             <div className="col-md-4">
               <div className="feature-card text-center">
                 <div className="feature-icon">
-                  <i className="bi bi-collection-play"></i>
+                  <Icono nombre="playlist" />
                 </div>
                 <h3 className="feature-title">Listas Organizadas</h3>
                 <p className="feature-description">
@@ -127,7 +128,7 @@ function Home() {
             <div className="col-md-4">
               <div className="feature-card text-center">
                 <div className="feature-icon">
-                  <i className="bi bi-phone"></i>
+                  <Icono nombre="device-mobile" />
                 </div>
                 <h3 className="feature-title">Multiplataforma</h3>
                 <p className="feature-description">
@@ -140,7 +141,7 @@ function Home() {
             <div className="col-md-4">
               <div className="feature-card text-center">
                 <div className="feature-icon">
-                  <i className="bi bi-people"></i>
+                  <Icono nombre="users" />
                 </div>
                 <h3 className="feature-title">Colaboración</h3>
                 <p className="feature-description">
@@ -153,7 +154,7 @@ function Home() {
             <div className="col-md-4">
               <div className="feature-card text-center">
                 <div className="feature-icon">
-                  <i className="bi bi-tools"></i>
+                  <Icono nombre="wrench" />
                 </div>
                 <h3 className="feature-title">12+ Instrumentos</h3>
                 <p className="feature-description">

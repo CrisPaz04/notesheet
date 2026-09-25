@@ -1,5 +1,6 @@
 // apps/web/src/components/TypeSelector.jsx
 import { useState, useRef, useEffect } from 'react';
+import Icono from "./Icono";
 
 const SONG_TYPES = ["Júbilo", "Adoración", "Moderada"];
 
@@ -28,7 +29,7 @@ function TypeSelector({ value, onChange, label = "Tipo" }) {
   return (
     <div className="form-group-modern">
       <label className="form-label-modern">
-        <i className="bi bi-heart"></i>
+        <Icono nombre="heart" />
         {label}
       </label>
       <div className="key-selector" ref={dropdownRef}>
@@ -38,7 +39,7 @@ function TypeSelector({ value, onChange, label = "Tipo" }) {
           onClick={() => setIsOpen(!isOpen)}
         >
           <span>{value}</span>
-          <i className={`bi bi-chevron-${isOpen ? 'up' : 'down'}`}></i>
+          <Icono nombre={isOpen ? "caret-up" : "caret-down"} />
         </button>
         
         {isOpen && (

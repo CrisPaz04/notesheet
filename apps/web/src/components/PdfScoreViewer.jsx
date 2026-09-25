@@ -3,6 +3,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import usePdfDocument from "../hooks/usePdfDocument";
 import LoadingSpinner from "./LoadingSpinner";
 import PdfScorePage from "./PdfScorePage";
+import Icono from "./Icono";
 
 // Cuánto alrededor de lo que se ve se pinta por adelantado. Una pantalla
 // entera por arriba y otra por abajo: al pasar página ya está lista, y no se
@@ -193,7 +194,7 @@ function PdfScoreViewer({ path, title = "partitura", zoomInicial = 1, onZoom }) 
   if (!path) {
     return (
       <div className="pdf-score-empty">
-        <i className="bi bi-file-earmark-music"></i>
+        <Icono nombre="file-pdf" />
         <p>Esta voz todavía no tiene partitura.</p>
       </div>
     );
@@ -211,7 +212,7 @@ function PdfScoreViewer({ path, title = "partitura", zoomInicial = 1, onZoom }) 
   if (error) {
     return (
       <div className="alert alert-danger" role="alert">
-        <i className="bi bi-exclamation-triangle-fill me-2"></i>
+        <Icono nombre="warning" peso="fill" className="me-2" />
         {error}
       </div>
     );
@@ -228,7 +229,7 @@ function PdfScoreViewer({ path, title = "partitura", zoomInicial = 1, onZoom }) 
           title="Alejar"
           aria-label="Alejar"
         >
-          <i className="bi bi-zoom-out"></i>
+          <Icono nombre="magnifying-glass-minus" />
         </button>
         <button
           type="button"
@@ -246,7 +247,7 @@ function PdfScoreViewer({ path, title = "partitura", zoomInicial = 1, onZoom }) 
           title="Acercar"
           aria-label="Acercar"
         >
-          <i className="bi bi-zoom-in"></i>
+          <Icono nombre="magnifying-glass-plus" />
         </button>
 
         <span className="pdf-score-pagecount">

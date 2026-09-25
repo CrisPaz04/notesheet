@@ -4,6 +4,7 @@ import { nombrarTonalidad, elegirVista } from "@notesheet/core";
 import PdfEnLista from "../PdfEnLista";
 import Desplegable from "../Desplegable";
 import { SeccionesCancion, AvisoVista } from "../SeccionesCancion";
+import Icono from "../Icono";
 
 /**
  * Una canción dentro de la sesión, con sus controles a la vista.
@@ -54,7 +55,7 @@ const LiveSongCard = forwardRef(function LiveSongCard({
           <h2 className="live-card-title">{song.title || "Sin título"}</h2>
           {activa && (
             <span className="live-card-badge-now">
-              <i className="bi bi-broadcast me-1" />
+              <Icono nombre="broadcast" className="me-1" />
               Ahora
             </span>
           )}
@@ -105,7 +106,7 @@ const LiveSongCard = forwardRef(function LiveSongCard({
               aria-label={`Subir ${song.title || "canción"}`}
               title="Subir"
             >
-              <i className="bi bi-chevron-up" />
+              <Icono nombre="caret-up" />
             </button>
             <button
               type="button"
@@ -115,7 +116,7 @@ const LiveSongCard = forwardRef(function LiveSongCard({
               aria-label={`Bajar ${song.title || "canción"}`}
               title="Bajar"
             >
-              <i className="bi bi-chevron-down" />
+              <Icono nombre="caret-down" />
             </button>
             <button
               type="button"
@@ -124,7 +125,7 @@ const LiveSongCard = forwardRef(function LiveSongCard({
               aria-label={`Quitar ${song.title || "canción"} de la sesión`}
               title="Quitar de la sesión"
             >
-              <i className="bi bi-x-lg" />
+              <Icono nombre="x" />
             </button>
           </div>
         </div>
@@ -132,7 +133,7 @@ const LiveSongCard = forwardRef(function LiveSongCard({
 
       {song.error && (
         <div className="live-warning live-warning-error" role="alert">
-          <i className="bi bi-exclamation-circle me-2" />
+          <Icono nombre="warning-circle" className="me-2" />
           {song.error} Quien abrió la sesión puede quitarla con la X.
         </div>
       )}

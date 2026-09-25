@@ -10,6 +10,7 @@ import useSelectedSongs from "../hooks/useSelectedSongs";
 import { emparejarSetlist, isPdfSong, nombrarTonalidad, limpiarMensajeDirector } from "@notesheet/core";
 import useNotacionPreferida from "../hooks/useNotacionPreferida";
 import Desplegable from "../components/Desplegable";
+import Icono from "../components/Icono";
 
 function PlaylistEditor() {
   const [name, setName] = useState("");
@@ -269,7 +270,7 @@ function PlaylistEditor() {
           <div className="d-flex justify-content-between align-items-center">
             <div>
               <h1 className="playlists-title">
-                <i className="bi bi-music-note-list"></i>
+                <Icono nombre="music-notes" />
                 {isNewPlaylist ? "Nueva Lista" : "Editar Lista"}
               </h1>
               <p className="playlists-subtitle">
@@ -289,7 +290,7 @@ function PlaylistEditor() {
                 </>
               ) : (
                 <>
-                  <i className="bi bi-check-circle me-2"></i>
+                  <Icono nombre="check-circle" className="me-2" />
                   Guardar
                 </>
               )}
@@ -299,7 +300,7 @@ function PlaylistEditor() {
 
         {error && (
           <div className="alert alert-danger mb-4 fade-in" role="alert">
-            <i className="bi bi-exclamation-triangle-fill me-2"></i>
+            <Icono nombre="warning" peso="fill" className="me-2" />
             {error}
           </div>
         )}
@@ -310,13 +311,13 @@ function PlaylistEditor() {
             {/* Detalles de la Lista */}
             <div className="playlist-editor-card">
               <div className="playlist-editor-card-header">
-                <i className="bi bi-gear me-2"></i>
+                <Icono nombre="gear" className="me-2" />
                 Detalles de la Lista
               </div>
               <div className="playlist-editor-card-body">
                 <div className="form-group-modern mb-3">
                   <label className="form-label-modern">
-                    <i className="bi bi-card-heading me-2"></i>
+                    <Icono nombre="text-t" className="me-2" />
                     Nombre
                   </label>
                   <input
@@ -330,7 +331,7 @@ function PlaylistEditor() {
                 
                 <div className="form-group-modern mb-3">
                   <label className="form-label-modern">
-                    <i className="bi bi-calendar3 me-2"></i>
+                    <Icono nombre="calendar-blank" className="me-2" />
                     Fecha
                   </label>
                   <input
@@ -343,7 +344,7 @@ function PlaylistEditor() {
                 
                 <div className="form-group-modern mb-3">
                   <label className="form-label-modern">
-                    <i className="bi bi-eye me-2"></i>
+                    <Icono nombre="eye" className="me-2" />
                     Visibilidad
                   </label>
                   <div className="visibility-toggle">
@@ -352,7 +353,7 @@ function PlaylistEditor() {
                       className={`visibility-option ${!isPublic ? 'active' : ''}`}
                       onClick={() => setIsPublic(false)}
                     >
-                      <i className="bi bi-lock me-2"></i>
+                      <Icono nombre="lock" className="me-2" />
                       Privada
                     </button>
                     <button
@@ -360,7 +361,7 @@ function PlaylistEditor() {
                       className={`visibility-option ${isPublic ? 'active' : ''}`}
                       onClick={() => setIsPublic(true)}
                     >
-                      <i className="bi bi-globe me-2"></i>
+                      <Icono nombre="globe" className="me-2" />
                       Pública
                     </button>
                   </div>
@@ -375,7 +376,7 @@ function PlaylistEditor() {
             {/* Importar la lista que el director manda por WhatsApp */}
             <div className="playlist-editor-card">
               <div className="playlist-editor-card-header">
-                <i className="bi bi-chat-text me-2"></i>
+                <Icono nombre="chat-text" className="me-2" />
                 Pegar lista del director
               </div>
               <div className="playlist-editor-card-body">
@@ -383,7 +384,7 @@ function PlaylistEditor() {
                   <div className="mensaje-guardado">
                     <div className="mensaje-guardado-cabecera">
                       <span>
-                        <i className="bi bi-check2-circle me-1"></i>
+                        <Icono nombre="check-circle" className="me-1" />
                         Mensaje guardado: se verá en el panel «Lista» al tocar
                       </span>
                       <button
@@ -418,7 +419,7 @@ function PlaylistEditor() {
                       disabled={!textoImport.trim()}
                       onClick={interpretarLista}
                     >
-                      <i className="bi bi-magic me-2"></i>
+                      <Icono nombre="magic-wand" className="me-2" />
                       Interpretar
                     </button>
                   </>
@@ -430,7 +431,7 @@ function PlaylistEditor() {
                         className={`import-entrada ${entrada.elegida ? '' : 'sin-coincidencia'}`}
                       >
                         <div className="import-consulta">
-                          <i className={`bi ${entrada.elegida ? (entrada.seguro ? 'bi-check-circle' : 'bi-question-circle') : 'bi-x-circle'} me-2`}></i>
+                          <Icono nombre={entrada.elegida ? (entrada.seguro ? "check-circle" : "question") : "x-circle"} className="me-2" />
                           “{entrada.consulta}”
                           {entrada.key && <span className="import-key ms-2">{entrada.key}</span>}
                         </div>
@@ -461,7 +462,7 @@ function PlaylistEditor() {
                         className="btn-playlist-primary"
                         onClick={aplicarImport}
                       >
-                        <i className="bi bi-plus-circle me-2"></i>
+                        <Icono nombre="plus-circle" className="me-2" />
                         Añadir {resultadoImport.filter((e) => e.elegida).length} a la lista
                       </button>
                       <button
@@ -480,7 +481,7 @@ function PlaylistEditor() {
             {/* Canciones Disponibles */}
             <div className="playlist-editor-card">
               <div className="playlist-editor-card-header">
-                <i className="bi bi-music-note-beamed me-2"></i>
+                <Icono nombre="music-notes" className="me-2" />
                 Canciones Disponibles
                 <span className="badge bg-secondary ms-2">{availableSongs.length}</span>
               </div>
@@ -488,7 +489,7 @@ function PlaylistEditor() {
                 <div className="available-songs-list">
                   {availableSongs.length === 0 ? (
                     <div className="empty-state-small">
-                      <i className="bi bi-music-note-list"></i>
+                      <Icono nombre="music-notes" />
                       <p>No hay canciones disponibles</p>
                     </div>
                   ) : (
@@ -504,7 +505,7 @@ function PlaylistEditor() {
                           <div className="available-song-meta">{nombrarTonalidad(song.key, notacion) || "Sin tonalidad"} • {song.type || "Sin tipo"}</div>
                         </div>
                         {!selectedSongs.some(s => s.id === song.id) && (
-                          <i className="bi bi-plus-circle available-song-add"></i>
+                          <Icono nombre="plus-circle" className="available-song-add" />
                         )}
                       </button>
                     ))
@@ -519,7 +520,7 @@ function PlaylistEditor() {
             <div className="playlist-editor-card">
               <div className="playlist-editor-card-header">
                 <div>
-                  <i className="bi bi-list-ol me-2"></i>
+                  <Icono nombre="list-numbers" className="me-2" />
                   Canciones en la Lista
                 </div>
                 <span className="badge bg-primary">{selectedSongs.length} canciones</span>
@@ -528,7 +529,7 @@ function PlaylistEditor() {
                 {selectedSongs.length === 0 ? (
                   <div className="empty-state">
                     <div className="empty-state-icon">
-                      <i className="bi bi-music-note-list"></i>
+                      <Icono nombre="music-notes" />
                     </div>
                     <h4 className="empty-state-title">Lista vacía</h4>
                     <p className="empty-state-description">
@@ -558,7 +559,7 @@ function PlaylistEditor() {
                                   }}
                                 >
                                   <div className="selected-song-drag" {...provided.dragHandleProps}>
-                                    <i className="bi bi-grip-vertical"></i>
+                                    <Icono nombre="dots-six-vertical" />
                                   </div>
                                   
                                   <div className="selected-song-number">
@@ -577,7 +578,7 @@ function PlaylistEditor() {
                                         <>
                                           <label className="tonality-label">Tonalidad:</label>
                                           <span className="tonality-fixed">
-                                            <i className="bi bi-file-earmark-pdf me-1"></i>
+                                            <Icono nombre="file-pdf" className="me-1" />
                                             {nombrarTonalidad(song.key, notacion) || "—"} · partitura
                                           </span>
                                         </>
@@ -600,7 +601,7 @@ function PlaylistEditor() {
                                     onClick={() => removeSong(song.id)}
                                     title="Eliminar canción"
                                   >
-                                    <i className="bi bi-trash"></i>
+                                    <Icono nombre="trash" />
                                   </button>
                                 </div>
                               )}

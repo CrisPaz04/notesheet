@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { nombrarTonalidad } from "@notesheet/core";
 import { getAllSongs } from "@notesheet/api";
+import Icono from "../Icono";
 
 /**
  * Añadir una canción al final de la sesión, sobre la marcha.
@@ -52,7 +53,7 @@ export default function AddSongToSession({ user, yaEnLaSesion = [], onAgregar, n
         className="btn-live btn-live-wide no-print"
         onClick={() => setAbierto(true)}
       >
-        <i className="bi bi-plus-circle me-2" />
+        <Icono nombre="plus-circle" className="me-2" />
         Añadir una canción a la sesión
       </button>
     );
@@ -68,7 +69,7 @@ export default function AddSongToSession({ user, yaEnLaSesion = [], onAgregar, n
           onClick={() => setAbierto(false)}
           aria-label="Cerrar"
         >
-          <i className="bi bi-x-lg" />
+          <Icono nombre="x" />
         </button>
       </div>
 
@@ -107,7 +108,7 @@ export default function AddSongToSession({ user, yaEnLaSesion = [], onAgregar, n
             >
               <span className="live-add-title">{song.title || "Sin título"}</span>
               <span className="live-add-meta">{nombrarTonalidad(song.key, notacion) || "Sin tonalidad"}</span>
-              <i className="bi bi-plus-circle" />
+              <Icono nombre="plus-circle" />
             </button>
           </li>
         ))}

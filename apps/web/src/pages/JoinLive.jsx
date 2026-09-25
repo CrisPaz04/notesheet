@@ -5,6 +5,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { normalizeSessionCode, isValidSessionCode, SESSION_CODE_LENGTH } from "@notesheet/api";
+import Icono from "../components/Icono";
 
 function JoinLive() {
   const [codigo, setCodigo] = useState("");
@@ -25,7 +26,7 @@ function JoinLive() {
   return (
     <div className="live-container">
       <form className="live-message" onSubmit={entrar}>
-        <i className="bi bi-broadcast live-message-icon" />
+        <Icono nombre="broadcast" className="live-message-icon" />
         <h2>Entrar a una sesión</h2>
         <p>Teclea el código que te pasaron.</p>
 

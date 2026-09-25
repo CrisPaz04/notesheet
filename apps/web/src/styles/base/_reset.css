@@ -102,3 +102,16 @@ body {
 [data-bs-theme$="light"] {
   color-scheme: light;
 }
+
+/* Los íconos (components/Icono.jsx): un SVG de 1em dentro de un <i>, alineado
+   como los de la fuente de Bootstrap Icons, a los que sustituyen. Toma tamaño
+   y color del texto, así que `font-size` y `color` en el <i> siguen valiendo. */
+.icono {
+  display: inline-block;
+  line-height: 1;
+  vertical-align: -0.125em;
+}
+
+.icono > svg {
+  display: block;
+}

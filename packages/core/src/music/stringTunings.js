@@ -229,16 +229,16 @@ export function findClosestString(detectedMidi, strings) {
  */
 export function getInstrumentIcon(instrument) {
   const icons = {
-    guitar: 'bi-music-note',
-    bass: 'bi-music-note-beamed',
-    ukulele: 'bi-music-note',
-    violin: 'bi-music-note-list',
-    viola: 'bi-music-note-list',
-    cello: 'bi-music-note-list',
-    mandolin: 'bi-music-note',
-    banjo: 'bi-music-note'
+    guitar: 'guitar',
+    bass: 'guitar',
+    ukulele: 'guitar',
+    violin: 'music-notes',
+    viola: 'music-notes',
+    cello: 'music-notes',
+    mandolin: 'guitar',
+    banjo: 'guitar'
   };
-  return icons[instrument] || 'bi-music-note';
+  return icons[instrument] || 'guitar';
 }
 
 export default STRING_TUNINGS;

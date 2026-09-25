@@ -16,6 +16,7 @@ import { useAuth } from "../context/AuthContext";
 import RepartoPdfs from "../components/partituras/RepartoPdfs";
 import CamposCancion from "../components/cancion/CamposCancion";
 import useNotacionPreferida from "../hooks/useNotacionPreferida";
+import Icono from "../components/Icono";
 
 // El selector de carpetas no es un atributo estándar de React: va tal cual
 const ELEGIR_CARPETA = { webkitdirectory: "", directory: "" };
@@ -137,12 +138,12 @@ function ImportarPartituras() {
         {!progreso && (
           <div className="importar-pdfs-elegir">
             <label className="btn-editor-primary">
-              <i className="bi bi-folder2-open me-1"></i>
+              <Icono nombre="folder-open" className="me-1" />
               Elegir carpeta
               <input type="file" multiple hidden onChange={alElegir} data-testid="importar-carpeta" {...ELEGIR_CARPETA} />
             </label>
             <label className="btn-editor-secondary">
-              <i className="bi bi-files me-1"></i>
+              <Icono nombre="files" className="me-1" />
               Elegir archivos
               <input type="file" accept="application/pdf,.pdf" multiple hidden onChange={alElegir} data-testid="importar-archivos" />
             </label>
@@ -187,7 +188,7 @@ function ImportarPartituras() {
                       >
                         {p.reparto.asignados.length} PDF
                         {p.reparto.apartados.length > 0 && ` · ${p.reparto.apartados.length} sin subir`}
-                        <i className={`bi bi-chevron-${abierta === p.clave ? "up" : "down"} ms-1`}></i>
+                        <Icono nombre={abierta === p.clave ? "caret-up" : "caret-down"} className="ms-1" />
                       </button>
                     </div>
 
@@ -206,14 +207,14 @@ function ImportarPartituras() {
 
                     {p.destino && (
                       <p className="importar-pdfs-aviso">
-                        <i className="bi bi-info-circle me-1"></i>
+                        <Icono nombre="info" className="me-1" />
                         Se conservan los datos de tu canción: solo se le añaden los PDF.
                       </p>
                     )}
 
                     {p.destino && !isPdfSong(p.destino) && (
                       <p className="importar-pdfs-aviso">
-                        <i className="bi bi-info-circle me-1"></i>
+                        <Icono nombre="info" className="me-1" />
                         Tiene notas en texto: se abrirá en la partitura, y sus notas seguirán en la pestaña Notas.
                       </p>
                     )}
@@ -233,7 +234,7 @@ function ImportarPartituras() {
                 onClick={importar}
                 disabled={incluidas.length === 0}
               >
-                <i className="bi bi-cloud-upload me-1"></i>
+                <Icono nombre="cloud-arrow-up" className="me-1" />
                 Importar {incluidas.length} {incluidas.length === 1 ? "canción" : "canciones"} ({totalPdf} PDF)
               </button>
             </div>
@@ -252,7 +253,7 @@ function ImportarPartituras() {
           <ul className="importar-pdfs-resultados" aria-label="Resultado">
             {resultados.map((r) => (
               <li key={r.titulo} className={r.errores.length ? "con-errores" : ""}>
-                <i className={`bi ${r.errores.length ? "bi-exclamation-triangle" : "bi-check-circle"} me-2`}></i>
+                <Icono nombre={r.errores.length ? "warning" : "check-circle"} className="me-2" />
                 {r.songId ? <Link to={`/songs/${r.songId}`}>{r.titulo}</Link> : r.titulo}
                 {" — "}{r.creada ? "creada, " : ""}{r.subidos} PDF
                 {r.errores.length > 0 && (

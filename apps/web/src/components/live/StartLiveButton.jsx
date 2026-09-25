@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { createSession } from "@notesheet/api";
+import Icono from "../Icono";
 
 /**
  * Abre una sesión en vivo a partir de una lista.
@@ -43,7 +44,7 @@ export default function StartLiveButton({ playlist, user, className = "" }) {
             : "Añade canciones a la lista antes de abrir una sesión"
         }
       >
-        <i className="bi bi-broadcast" />
+        <Icono nombre="broadcast" />
         {abriendo ? "Abriendo..." : "Sesión en vivo"}
       </button>
 

@@ -1,6 +1,7 @@
 // apps/web/src/components/KeySelector.jsx
 import { useState, useRef, useEffect } from 'react';
 import { nombrarTonalidad } from "@notesheet/core";
+import Icono from "./Icono";
 
 const RELATIVE_KEYS = [
   { major: "DO", minor: "LAm" },
@@ -46,7 +47,7 @@ function KeySelector({ value, onChange, label = "Tonalidad", notacion = "latin" 
   return (
     <div className="form-group-modern">
       <label className="form-label-modern">
-        <i className="bi bi-music-note"></i>
+        <Icono nombre="music-note" />
         {label}
       </label>
       <div className="key-selector" ref={dropdownRef}>
@@ -56,7 +57,7 @@ function KeySelector({ value, onChange, label = "Tonalidad", notacion = "latin" 
           onClick={() => setIsOpen(!isOpen)}
         >
           <span>{nombrarTonalidad(value, notacion)}</span>
-          <i className={`bi bi-chevron-${isOpen ? 'up' : 'down'}`}></i>
+          <Icono nombre={isOpen ? "caret-up" : "caret-down"} />
         </button>
         
         {isOpen && (

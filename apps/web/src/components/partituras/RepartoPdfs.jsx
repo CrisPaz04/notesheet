@@ -1,4 +1,5 @@
 import { TRANSPOSING_INSTRUMENTS, SCORE_VARIANT_LABELS } from "@notesheet/core";
+import Icono from "../Icono";
 
 /**
  * Qué archivo va a qué voz, antes de subir nada: lo que devuelve
@@ -31,7 +32,7 @@ function RepartoPdfs({ asignados, apartados }) {
           {apartados.map((a) => (
             <li key={a.archivo.name}>
               <span className="reparto-pdfs-voz">
-                <i className="bi bi-dash-circle me-1" aria-hidden="true"></i>
+                <Icono nombre="minus-circle" className="me-1" aria-hidden="true" />
                 {a.motivo}
               </span>
               <span className="reparto-pdfs-archivo">{a.archivo.name}</span>

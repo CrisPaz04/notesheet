@@ -12,6 +12,7 @@ import {
 import { useThemeWithAuth } from "../hooks/useThemeWithAuth";
 import LoadingSpinner from "../components/LoadingSpinner";
 import PreferencesInstrumentSelector from "../components/PreferencesInstrumentSelector";
+import Icono from "../components/Icono";
 
 function UserPreferences() {
   const [loading, setLoading] = useState(true);
@@ -128,7 +129,7 @@ function UserPreferences() {
         {/* Header */}
         <div className="preferences-header fade-in">
           <h1 className="preferences-title">
-            <i className="bi bi-gear"></i>
+            <Icono nombre="gear" />
             Preferencias de Usuario
           </h1>
           <p className="preferences-subtitle">
@@ -140,14 +141,14 @@ function UserPreferences() {
         <div className="preferences-alerts">
           {error && (
             <div className="alert alert-danger fade-in" role="alert">
-              <i className="bi bi-exclamation-triangle-fill me-2"></i>
+              <Icono nombre="warning" peso="fill" className="me-2" />
               {error}
             </div>
           )}
           
           {success && (
             <div className="alert alert-success fade-in" role="alert">
-              <i className="bi bi-check-circle-fill me-2"></i>
+              <Icono nombre="check-circle" peso="fill" className="me-2" />
               Preferencias guardadas correctamente.
             </div>
           )}
@@ -160,7 +161,7 @@ function UserPreferences() {
               {/* Preferencias de Visualización */}
               <div className="preferences-card slide-up">
                 <div className="preferences-card-header">
-                  <i className="bi bi-eye me-2"></i>
+                  <Icono nombre="eye" className="me-2" />
                   Preferencias de Visualización
                 </div>
                 <div className="preferences-card-body">
@@ -174,7 +175,7 @@ function UserPreferences() {
                   
                   <div className="form-group-modern mb-4">
                     <label className="form-label-modern">
-                      <i className="bi bi-alphabet me-2"></i>
+                      <Icono nombre="text-aa" className="me-2" />
                       Sistema de Notación
                     </label>
                     <div className="notation-options">
@@ -217,7 +218,7 @@ function UserPreferences() {
                       las notas encima siempre, no canción por canción. */}
                   <div className="form-group-modern mb-4">
                     <label className="form-label-modern">
-                      <i className="bi bi-file-earmark-music me-2"></i>
+                      <Icono nombre="file-pdf" className="me-2" />
                       Partituras en PDF
                     </label>
                     <div className="notation-options">
@@ -237,9 +238,7 @@ function UserPreferences() {
                             className="notation-label"
                           >
                             <div className="notation-preview">
-                              <i className={variant === "conNotas"
-                                ? "bi bi-eyeglasses"
-                                : "bi bi-file-earmark-music"}></i>
+                              <Icono nombre={variant === "conNotas" ? "eyeglasses" : "file-pdf"} />
                             </div>
                             <div className="notation-name">
                               {SCORE_VARIANT_LABELS[variant]}
@@ -256,7 +255,7 @@ function UserPreferences() {
 
                   <div className="form-group-modern mb-4">
                     <label htmlFor="pref-font-size-slider" className="form-label-modern">
-                      <i className="bi bi-fonts me-2"></i>
+                      <Icono nombre="text-aa" className="me-2" />
                       Tamaño de Fuente: <span className="font-size-value">{preferences.defaultFontSize}px</span>
                     </label>
                     <div className="font-size-control">
@@ -286,13 +285,13 @@ function UserPreferences() {
               {/* Preferencias de Apariencia */}
               <div className="preferences-card slide-up-delay">
                 <div className="preferences-card-header">
-                  <i className="bi bi-palette me-2"></i>
+                  <Icono nombre="palette" className="me-2" />
                   Temas de Apariencia
                 </div>
                 <div className="preferences-card-body">
                   <div className="form-group-modern">
                     <label className="form-label-modern">
-                      <i className="bi bi-brush me-2"></i>
+                      <Icono nombre="paint-brush" className="me-2" />
                       Seleccionar Tema
                     </label>
                     
@@ -359,7 +358,7 @@ function UserPreferences() {
                   </>
                 ) : (
                   <>
-                    <i className="bi bi-check-circle me-2"></i>
+                    <Icono nombre="check-circle" className="me-2" />
                     Guardar Preferencias
                   </>
                 )}

@@ -10,6 +10,7 @@
 
 import { useEffect } from 'react';
 import ReactDOM from 'react-dom';
+import Icono from "./Icono";
 
 function Modal({ isOpen, onClose, title, children, size = 'medium' }) {
   // Close on Escape key
@@ -53,7 +54,7 @@ function Modal({ isOpen, onClose, title, children, size = 'medium' }) {
             onClick={onClose}
             aria-label="Cerrar"
           >
-            <i className="bi bi-x-lg"></i>
+            <Icono nombre="x" />
           </button>
         </div>
         <div className="modal-body">{children}</div>

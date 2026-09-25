@@ -40,6 +40,7 @@ import LiveSetlist from "../components/live/LiveSetlist";
 import LiveSongCard from "../components/live/LiveSongCard";
 import AddSongToSession from "../components/live/AddSongToSession";
 import GuestGate from "../components/live/GuestGate";
+import Icono from "../components/Icono";
 
 const INSTRUMENTOS = Object.keys(TRANSPOSING_INSTRUMENTS);
 const SEGUIR = ["si", "no"];
@@ -373,7 +374,7 @@ function LiveSession() {
     return (
       <div className="live-container">
         <div className="live-message">
-          <i className="bi bi-question-circle live-message-icon" />
+          <Icono nombre="question" className="live-message-icon" />
           <h2>No encontramos esa sesión</h2>
           <p>
             El código <strong>{code}</strong> no existe o la sesión ya caducó.
@@ -389,7 +390,7 @@ function LiveSession() {
     return (
       <div className="live-container">
         <div className="live-message">
-          <i className="bi bi-exclamation-triangle live-message-icon" />
+          <Icono nombre="warning" className="live-message-icon" />
           <h2>Algo va mal con la sesión</h2>
           <p>{error}</p>
         </div>
@@ -401,7 +402,7 @@ function LiveSession() {
     return (
       <div className="live-container">
         <div className="live-message">
-          <i className="bi bi-check-circle live-message-icon" />
+          <Icono nombre="check-circle" className="live-message-icon" />
           <h2>La sesión terminó</h2>
           <p>{session?.name}</p>
           {session?.playlistId && (
@@ -432,14 +433,14 @@ function LiveSession() {
 
       {error && (
         <div className="live-warning live-warning-error no-print" role="alert">
-          <i className="bi bi-exclamation-circle me-2" />
+          <Icono nombre="warning-circle" className="me-2" />
           {error}
         </div>
       )}
 
       {mismaVoz.length > 0 && (
         <div className="live-warning no-print" role="status">
-          <i className="bi bi-people me-2" />
+          <Icono nombre="users" className="me-2" />
           {mismaVoz.map((p) => p.name).join(", ")} también {mismaVoz.length === 1 ? "es" : "son"}{" "}
           {TRANSPOSING_INSTRUMENTS[instrumento]?.name} {numeroVoz}. Revisen quién toca cada voz.
         </div>
@@ -452,7 +453,7 @@ function LiveSession() {
         onClick={() => setVerAjustes(verAjustes === "si" ? "no" : "si")}
         aria-expanded={verAjustes === "si"}
       >
-        <i className={`bi bi-chevron-${verAjustes === "si" ? "up" : "down"} me-2`} />
+        <Icono nombre={verAjustes === "si" ? "caret-up" : "caret-down"} className="me-2" />
         Mis ajustes
         <span className="live-ajustes-resumen">
           {TRANSPOSING_INSTRUMENTS[instrumento]?.name} {numeroVoz}
@@ -536,7 +537,7 @@ function LiveSession() {
           onClick={() => irARelativa(-1)}
           disabled={indiceBase <= 0}
         >
-          <i className="bi bi-chevron-left" />
+          <Icono nombre="caret-left" />
           Anterior
         </button>
 
@@ -546,7 +547,7 @@ function LiveSession() {
           onClick={() => setVerIndice((v) => !v)}
           aria-expanded={verIndice}
         >
-          <i className="bi bi-list-ol me-2" />
+          <Icono nombre="list-numbers" className="me-2" />
           {indiceBase >= 0 ? `${indiceBase + 1} de ${songs.length}` : `${songs.length} canciones`}
         </button>
 
@@ -557,7 +558,7 @@ function LiveSession() {
           disabled={indiceBase < 0 || indiceBase >= songs.length - 1}
         >
           Siguiente
-          <i className="bi bi-chevron-right" />
+          <Icono nombre="caret-right" />
         </button>
       </div>
       </div>

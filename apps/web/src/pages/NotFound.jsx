@@ -1,4 +1,5 @@
-﻿import { Link } from "react-router-dom";
+import Icono from "../components/Icono";
+import { Link } from "react-router-dom";
 
 function NotFound() {
   return (
@@ -40,7 +41,7 @@ function NotFound() {
               to="/" 
               className="btn-notfound-primary"
             >
-              <i className="bi bi-house-heart me-2"></i>
+              <Icono nombre="house" className="me-2" />
               Volver al Inicio
             </Link>
             
@@ -48,7 +49,7 @@ function NotFound() {
               to="/dashboard" 
               className="btn-notfound-secondary"
             >
-              <i className="bi bi-music-note-list me-2"></i>
+              <Icono nombre="music-notes" className="me-2" />
               Ir al Dashboard
             </Link>
           </div>
@@ -58,15 +59,15 @@ function NotFound() {
             <p className="suggestions-title">¿Qué te gustaría hacer?</p>
             <div className="suggestions-grid">
               <Link to="/songs/new" className="suggestion-item">
-                <i className="bi bi-plus-circle"></i>
+                <Icono nombre="plus-circle" />
                 <span>Crear una canción</span>
               </Link>
               <Link to="/playlists" className="suggestion-item">
-                <i className="bi bi-collection-play"></i>
+                <Icono nombre="playlist" />
                 <span>Ver mis listas</span>
               </Link>
               <Link to="/preferences" className="suggestion-item">
-                <i className="bi bi-gear"></i>
+                <Icono nombre="gear" />
                 <span>Configuración</span>
               </Link>
             </div>

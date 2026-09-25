@@ -1,10 +1,11 @@
-﻿function Footer() {
+import Icono from "./Icono";
+function Footer() {
   return (
     <footer className="footer-dark-custom">
       <div className="container">
         <div className="footer-content">
           <div className="footer-brand">
-            <i className="bi bi-music-note-beamed footer-brand-icon"></i>
+            <Icono nombre="music-notes" className="footer-brand-icon" />
             <h5 className="footer-brand-name">NoteSheet</h5>
           </div>
           
@@ -20,7 +21,7 @@
               rel="noopener noreferrer"
               title="GitHub"
             >
-              <i className="bi bi-github me-1"></i>
+              <Icono nombre="github-logo" className="me-1" />
               GitHub
             </a>
             <a 
@@ -28,7 +29,7 @@
               className="footer-link"
               title="Contacto"
             >
-              <i className="bi bi-envelope me-1"></i>
+              <Icono nombre="envelope-simple" className="me-1" />
               Contacto
             </a>
           </div>

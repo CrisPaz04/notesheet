@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { signInAsGuest } from "@notesheet/api";
+import Icono from "../Icono";
 
 /**
  * Puerta de entrada para quien abre el link sin tener cuenta.
@@ -42,7 +43,7 @@ export default function GuestGate({ code }) {
   return (
     <div className="live-container">
       <form className="live-message" onSubmit={entrar}>
-        <i className="bi bi-music-note-beamed live-message-icon" />
+        <Icono nombre="music-notes" className="live-message-icon" />
         <h2>Te invitaron a una sesión</h2>
         <p>
           Código <strong>{code}</strong>. Pon tu nombre para que el resto sepa

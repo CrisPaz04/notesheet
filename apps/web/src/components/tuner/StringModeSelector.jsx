@@ -10,6 +10,7 @@ import {
   getInstrumentIcon
 } from '@notesheet/core';
 import Desplegable from '../Desplegable';
+import Icono from "../Icono";
 
 function StringModeSelector({
   stringModeEnabled,
@@ -64,7 +65,7 @@ function StringModeSelector({
             onChange={(e) => onToggleStringMode(e.target.checked)}
           />
           <label className="form-check-label string-mode-label" htmlFor="stringModeSwitch">
-            <i className="bi bi-music-note-beamed me-2"></i>
+            <Icono nombre="music-notes" className="me-2" />
             Modo Cuerdas
           </label>
         </div>
@@ -78,7 +79,7 @@ function StringModeSelector({
           {/* Tuning Selector */}
           <div className="mb-3">
             <label className="form-label-modern mb-2">
-              <i className={`${currentTuning ? getInstrumentIcon(currentTuning.instrument) : 'bi-music-note'} me-2`}></i>
+              <Icono nombre={currentTuning ? getInstrumentIcon(currentTuning.instrument) : "music-note"} className="me-2" />
               Afinación
             </label>
             <Desplegable
@@ -118,7 +119,7 @@ function StringModeSelector({
                       </span>
                       {inTune && (
                         <span className="string-check">
-                          <i className="bi bi-check-circle-fill"></i>
+                          <Icono nombre="check-circle" peso="fill" />
                         </span>
                       )}
                     </button>

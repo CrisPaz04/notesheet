@@ -3,6 +3,7 @@ import { buscarDatosDeCancion } from "@notesheet/api";
 import { nombrarTonalidad, formatearDuracion, limpiarVersiones } from "@notesheet/core";
 import Modal from "../Modal";
 import EnlacesVerEn from "./EnlacesVerEn";
+import Icono from "../Icono";
 
 const NOMBRE_FUENTE = { musicbrainz: "MusicBrainz", itunes: "iTunes", getsongbpm: "GetSongBPM" };
 
@@ -122,7 +123,7 @@ function BuscarDatosModal({ isOpen, onClose, titulo, artista, versiones = [], no
             onChange={(e) => setConsulta({ ...consulta, artista: e.target.value })}
           />
           <button type="submit" className="btn-editor-secondary" disabled={estado === "buscando" || !consulta.titulo.trim()}>
-            <i className="bi bi-search me-1"></i>
+            <Icono nombre="magnifying-glass" className="me-1" />
             Buscar
           </button>
         </form>
@@ -138,7 +139,7 @@ function BuscarDatosModal({ isOpen, onClose, titulo, artista, versiones = [], no
 
         {erroresFuente.length > 0 && (
           <p className="buscar-datos-aviso">
-            <i className="bi bi-exclamation-triangle me-1"></i>
+            <Icono nombre="warning" className="me-1" />
             No se pudo consultar {erroresFuente.map(([f]) => NOMBRE_FUENTE[f] || f).join(", ")}. El resto de
             resultados sí son válidos.
           </p>

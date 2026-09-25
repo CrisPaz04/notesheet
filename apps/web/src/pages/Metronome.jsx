@@ -17,6 +17,7 @@ import TempoPresets from '../components/metronome/TempoPresets';
 import SoundPresetSelector from '../components/metronome/SoundPresetSelector';
 import TempoTrainer from '../components/metronome/TempoTrainer';
 import Desplegable from '../components/Desplegable';
+import Icono from "../components/Icono";
 
 /**
  * Carga las preferencias y, solo cuando las tiene, monta el metrónomo.
@@ -160,11 +161,11 @@ function MetronomeCuerpo({ compact, mini, initialPreferences }) {
             opciones={Object.keys(TIME_SIGNATURES).map((c) => ({ value: c, label: c }))}
           />
           <button type="button" className="btn btn-sm btn-outline-secondary" onClick={tapTempo}>
-            <i className="bi bi-hand-index me-1"></i>
+            <Icono nombre="hand-pointing" className="me-1" />
             Tap
           </button>
           <button type="button" className="btn btn-sm btn-primary metronome-mini-play" onClick={toggle} disabled={loading}>
-            <i className={`bi bi-${isPlaying ? 'pause' : 'play'}-fill me-1`}></i>
+            <Icono nombre={isPlaying ? "pause" : "play"} peso="fill" className="me-1" />
             {isPlaying ? 'Pausar' : 'Iniciar'}
           </button>
         </div>
@@ -179,7 +180,7 @@ function MetronomeCuerpo({ compact, mini, initialPreferences }) {
         <div className="metronome-header fade-in">
           <div>
             <h1 className="metronome-title">
-              <i className="bi bi-hourglass-split"></i>
+              <Icono nombre="metronome" />
               Metrónomo
             </h1>
             <p className="metronome-subtitle">
@@ -196,7 +197,7 @@ function MetronomeCuerpo({ compact, mini, initialPreferences }) {
             {/* Error Display */}
             {error && (
               <div className="alert alert-danger mb-4" role="alert">
-                <i className="bi bi-exclamation-triangle me-2"></i>
+                <Icono nombre="warning" className="me-2" />
                 {error}
               </div>
             )}
@@ -246,11 +247,7 @@ function MetronomeCuerpo({ compact, mini, initialPreferences }) {
                   </>
                 ) : (
                   <>
-                    <i
-                      className={`bi bi-${
-                        isPlaying ? 'pause' : 'play'
-                      }-fill me-2`}
-                    ></i>
+                    <Icono nombre={isPlaying ? "pause" : "play"} peso="fill" className="me-2" />
                     {isPlaying ? 'Pausar' : 'Iniciar'}
                   </>
                 )}
@@ -316,7 +313,7 @@ function MetronomeCuerpo({ compact, mini, initialPreferences }) {
       {/* Help Text */}
       {!compact && (
         <div className="metronome-help-text mt-4">
-          <i className="bi bi-info-circle me-2"></i>
+          <Icono nombre="info" className="me-2" />
           <strong>Tip:</strong> Puedes ajustar el tempo, volumen y subdivisión mientras el
           metrónomo está activo. Solo el compás requiere pausar primero.
         </div>

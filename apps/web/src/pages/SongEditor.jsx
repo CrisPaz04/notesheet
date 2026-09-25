@@ -38,6 +38,7 @@ import CamposCancion from "../components/cancion/CamposCancion";
 import useSongVoices, { LYRICS_TAB, ACORDES_TAB } from "../hooks/useSongVoices";
 import SubirVariosPdf from "../components/partituras/SubirVariosPdf";
 import Desplegable from "../components/Desplegable";
+import Icono from "../components/Icono";
 
 // Instrumentos soportados para voces adicionales
 const VOICE_INSTRUMENTS = Object.entries(TRANSPOSING_INSTRUMENTS)
@@ -541,7 +542,7 @@ function SongEditor() {
         tabs.push({
           id: `${instrumentId}-${voiceNumber}`,
           label: `${instrumentName} ${voiceNumber}`,
-          icon: "bi-music-note-beamed",
+          icon: "music-notes",
           badge: format === SONG_FORMAT_PDF ? `${subidas}/2` : null,
           removable: !isPrimary // Don't allow removing the primary voice
         });
@@ -549,8 +550,8 @@ function SongEditor() {
     });
 
     // Letra y acordes al final: no son voces
-    tabs.push({ id: "lyrics", label: "Solo Letra", icon: "bi-card-text" });
-    tabs.push({ id: "acordes", label: "Acordes", icon: "bi-music-note" });
+    tabs.push({ id: "lyrics", label: "Solo Letra", icon: "microphone-stage" });
+    tabs.push({ id: "acordes", label: "Acordes", icon: "guitar" });
 
     return (
       <div className="editor-tabs">
@@ -572,7 +573,7 @@ function SongEditor() {
                 aria-current={activa ? 'true' : undefined}
                 onClick={() => handleTabChange(tab.id)}
               >
-                <i className={tab.icon}></i>
+                <Icono nombre={tab.icon} />
                 <span className="ms-1">{tab.label}</span>
                 {tab.badge && (
                   <span
@@ -604,7 +605,7 @@ function SongEditor() {
             className="editor-tab"
             onClick={() => setShowVoicesManager(!showVoicesManager)}
           >
-            <i className="bi-plus-circle"></i>
+            <Icono nombre="plus-circle" />
             <span className="ms-1">{showVoicesManager ? 'Cancelar' : 'Añadir Voz'}</span>
           </button>
         )}
@@ -661,7 +662,7 @@ function SongEditor() {
           <div className="d-flex justify-content-between align-items-center">
             <div>
               <h1 className="editor-title">
-                <i className="bi bi-music-note-beamed"></i>
+                <Icono nombre="music-notes" />
                 {isNewSong ? "Nueva Canción" : "Editar Canción"}
               </h1>
               <p className="editor-subtitle">
@@ -674,7 +675,7 @@ function SongEditor() {
                 className="btn-editor-secondary"
                 onClick={() => navigate("/dashboard")}
               >
-                <i className="bi bi-arrow-left me-2"></i>
+                <Icono nombre="arrow-left" className="me-2" />
                 Cancelar
               </button>
               <button 
@@ -689,7 +690,7 @@ function SongEditor() {
                   </>
                 ) : (
                   <>
-                    <i className="bi bi-check-circle me-2"></i>
+                    <Icono nombre="check-circle" className="me-2" />
                     Guardar
                   </>
                 )}
@@ -700,7 +701,7 @@ function SongEditor() {
 
         {error && (
           <div className="alert alert-danger mb-4 fade-in" role="alert">
-            <i className="bi bi-exclamation-triangle-fill me-2"></i>
+            <Icono nombre="warning" peso="fill" className="me-2" />
             {error}
           </div>
         )}
@@ -710,9 +711,9 @@ function SongEditor() {
           <div className="song-preview-header">
             <h2 className="song-preview-title">{title || "Nueva Canción"}</h2>
             <div className="song-preview-meta">
-              <span><i className="bi bi-music-note me-1"></i>{type}</span>
-              <span><i className="bi bi-key me-1"></i>{key}</span>
-              {versiones.length > 0 && <span><i className="bi bi-person me-1"></i>{unirVersiones(versiones)}</span>}
+              <span><Icono nombre="music-note" className="me-1" />{type}</span>
+              <span><Icono nombre="key" className="me-1" />{key}</span>
+              {versiones.length > 0 && <span><Icono nombre="user" className="me-1" />{unirVersiones(versiones)}</span>}
             </div>
           </div>
         </div>
@@ -720,7 +721,7 @@ function SongEditor() {
         {/* Metadatos */}
         <div className="metadata-section slide-up">
           <h3 className="section-title mb-3">
-            <i className="bi bi-tags"></i>
+            <Icono nombre="tag" />
             Información de la Canción
           </h3>
 
@@ -732,7 +733,7 @@ function SongEditor() {
               // Solo cambia el selector: no guarda ni transpone. Se da por
               // hecho que las notas están bien y lo que falla es la etiqueta.
               <div className="key-suggestion" role="status">
-                <i className="bi bi-lightbulb"></i>
+                <Icono nombre="lightbulb" />
                 <span>Por las notas parece {sugerenciaTonalidad.map((k) => nombrarTonalidad(k, notacion)).join(" o ")}</span>
                 {sugerenciaTonalidad.map((sugerida) => (
                   <button
@@ -749,7 +750,7 @@ function SongEditor() {
             trasTonalidad={(
               <div className="form-group-modern">
                 <label className="form-label-modern" htmlFor="song-instrumento-principal">
-                  <i className="bi bi-music-note-beamed"></i>
+                  <Icono nombre="music-notes" />
                   Instrumento Principal
                 </label>
                 <Desplegable
@@ -763,7 +764,7 @@ function SongEditor() {
             antesDeVisibilidad={(
               <div className="form-group-modern">
                 <label className="form-label-modern">
-                  <i className="bi bi-file-earmark-music me-2"></i>
+                  <Icono nombre="file-pdf" className="me-2" />
                   Formato
                 </label>
                 <div className="visibility-toggle">
@@ -772,7 +773,7 @@ function SongEditor() {
                     className={`visibility-option ${format === SONG_FORMAT_CHORDS ? 'active' : ''}`}
                     onClick={() => setFormat(SONG_FORMAT_CHORDS)}
                   >
-                    <i className="bi bi-music-note-list me-2"></i>
+                    <Icono nombre="music-notes" className="me-2" />
                     {/* El repertorio son notas de la melodía, no acordes */}
                     Notas
                   </button>
@@ -781,7 +782,7 @@ function SongEditor() {
                     className={`visibility-option ${format === SONG_FORMAT_PDF ? 'active' : ''}`}
                     onClick={() => setFormat(SONG_FORMAT_PDF)}
                   >
-                    <i className="bi bi-file-earmark-pdf me-2"></i>
+                    <Icono nombre="file-pdf" className="me-2" />
                     PDF
                   </button>
                 </div>
@@ -814,7 +815,7 @@ function SongEditor() {
           {showVoicesManager && (
             <div className="voice-manager">
               <h4 className="voice-manager-header">
-                <i className="bi bi-plus-circle"></i>
+                <Icono nombre="plus-circle" />
                 Añadir Nueva Voz
               </h4>
               <div className="voice-form">
@@ -840,7 +841,7 @@ function SongEditor() {
                   className="btn-editor-primary"
                   onClick={handleAddVoice}
                 >
-                  <i className="bi bi-plus me-1"></i>
+                  <Icono nombre="plus" className="me-1" />
                   Añadir
                 </button>
               </div>
@@ -879,7 +880,7 @@ function SongEditor() {
           <div className="editor-help-text">
             {format === SONG_FORMAT_PDF && !PESTANAS_DE_TEXTO.includes(currentTab) ? (
               <>
-                <i className="bi bi-info-circle me-2"></i>
+                <Icono nombre="info" className="me-2" />
                 Sube el PDF de esta voz. La versión <strong>con nombres de
                 notas</strong> es para quien todavía no lee partitura: si no
                 está, a quien la tenga elegida se le muestra la normal y se le
@@ -887,7 +888,7 @@ function SongEditor() {
               </>
             ) : currentTab === "acordes" ? (
               <>
-                <i className="bi bi-info-circle me-2"></i>
+                <Icono nombre="info" className="me-2" />
                 Escribe los acordes <strong>como suenan</strong> (en concierto, lo que
                 toca la guitarra sin cejilla), una línea de acordes por línea:
                 {" "}<code>DO SOL LAm FA</code>. Puedes poner la letra debajo de cada
@@ -896,12 +897,12 @@ function SongEditor() {
               </>
             ) : currentTab === "lyrics" ? (
               <>
-                <i className="bi bi-info-circle me-2"></i>
+                <Icono nombre="info" className="me-2" />
                 Escribe solo la letra, sin acordes. Mantén los títulos de sección con <code>## Título</code>.
               </>
             ) : (
               <>
-                <i className="bi bi-info-circle me-2"></i>
+                <Icono nombre="info" className="me-2" />
                 Escribe las notas para tu instrumento. Usa <code>## Título</code> para crear secciones (Intro, Verso, Coro)
                 y un <code>##</code> suelto para cerrar una sin empezar otra.
               </>

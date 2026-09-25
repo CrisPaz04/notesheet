@@ -15,6 +15,7 @@ import { SkeletonGrid } from "../components/SkeletonCard";
 import usePreferenciaLocal from "../hooks/usePreferenciaLocal";
 import useNotacionPreferida from "../hooks/useNotacionPreferida";
 import Desplegable from "../components/Desplegable";
+import Icono from "../components/Icono";
 
 const ORDENES = ["nuevas", "az", "za"];
 const VISTAS = ["cards", "list"];
@@ -266,7 +267,7 @@ function Dashboard() {
 
         {error && (
           <div className="alert alert-danger mb-4 fade-in" role="alert">
-            <i className="bi bi-exclamation-triangle-fill me-2"></i>
+            <Icono nombre="warning" peso="fill" className="me-2" />
             {error}
           </div>
         )}
@@ -274,7 +275,7 @@ function Dashboard() {
         {/* Acciones rápidas */}
         <div className="quick-actions fade-in-delay">
           <h2 className="section-title">
-            <i className="bi bi-lightning-charge"></i>
+            <Icono nombre="lightning" />
             Acciones Rápidas
           </h2>
 
@@ -282,7 +283,7 @@ function Dashboard() {
             {canEditSongs() && (
               <Link to="/songs/new" className="action-card card-hover">
                 <div className="action-icon">
-                  <i className="bi bi-file-music"></i>
+                  <Icono nombre="music-notes-plus" />
                 </div>
                 <h3 className="action-title">Nueva Canción</h3>
                 <p className="action-description">Crear una canción desde cero</p>
@@ -292,7 +293,7 @@ function Dashboard() {
             {canEditSongs() && (
               <Link to="/partituras/importar" className="action-card card-hover">
                 <div className="action-icon">
-                  <i className="bi bi-folder-symlink"></i>
+                  <Icono nombre="folder-open" />
                 </div>
                 <h3 className="action-title">Importar partituras</h3>
                 <p className="action-description">Subir los PDF de una carpeta de golpe</p>
@@ -301,7 +302,7 @@ function Dashboard() {
 
             <Link to="/playlists/new" className="action-card card-hover">
               <div className="action-icon">
-                <i className="bi bi-collection-play"></i>
+                <Icono nombre="playlist" />
               </div>
               <h3 className="action-title">Nueva Lista</h3>
               <p className="action-description">Organizar canciones para un servicio</p>
@@ -309,7 +310,7 @@ function Dashboard() {
 
             <Link to="/playlists" className="action-card card-hover">
               <div className="action-icon">
-                <i className="bi bi-list-ul"></i>
+                <Icono nombre="list-bullets" />
               </div>
               <h3 className="action-title">Mis Listas</h3>
               <p className="action-description">Ver todas tus listas</p>
@@ -320,7 +321,7 @@ function Dashboard() {
         {/* Buscador */}
         <div className="search-section slide-up">
           <div className="search-container">
-            <i className="bi bi-search search-icon"></i>
+            <Icono nombre="magnifying-glass" className="search-icon" />
             <input
               type="text"
               className="search-input"
@@ -366,7 +367,7 @@ function Dashboard() {
           <div className="content-header">
             <div className="content-header-left">
               <h2 className="section-title mb-0">
-                <i className="bi bi-music-note-list"></i>
+                <Icono nombre="music-notes" />
                 Mis Canciones
               </h2>
               
@@ -410,7 +411,7 @@ function Dashboard() {
                   {/* Un icono de ordenar, no un reloj: el reloj se confundía
                       con el filtro "Editadas esta semana", que filtra en vez
                       de ordenar. */}
-                  <i className="bi bi-sort-down"></i>
+                  <Icono nombre="orden-nuevas" />
                 </button>
                 <button
                   className={`view-toggle-btn ${sortOrder === 'az' ? 'active' : ''}`}
@@ -419,7 +420,7 @@ function Dashboard() {
                   aria-label="Ordenar de la A a la Z"
                   aria-pressed={sortOrder === 'az'}
                 >
-                  <i className="bi bi-sort-alpha-down"></i>
+                  <Icono nombre="orden-az" />
                 </button>
                 <button
                   className={`view-toggle-btn ${sortOrder === 'za' ? 'active' : ''}`}
@@ -428,7 +429,7 @@ function Dashboard() {
                   aria-label="Ordenar de la Z a la A"
                   aria-pressed={sortOrder === 'za'}
                 >
-                  <i className="bi bi-sort-alpha-down-alt"></i>
+                  <Icono nombre="orden-za" />
                 </button>
               </div>
 
@@ -440,7 +441,7 @@ function Dashboard() {
                   aria-label="Vista de tarjetas"
                   aria-pressed={viewMode === 'cards'}
                 >
-                  <i className="bi bi-grid-3x3-gap"></i>
+                  <Icono nombre="squares-four" />
                 </button>
                 <button
                   className={`view-toggle-btn ${viewMode === 'list' ? 'active' : ''}`}
@@ -449,7 +450,7 @@ function Dashboard() {
                   aria-label="Vista de lista"
                   aria-pressed={viewMode === 'list'}
                 >
-                  <i className="bi bi-list"></i>
+                  <Icono nombre="list" />
                 </button>
               </div>
             </div>
@@ -458,7 +459,7 @@ function Dashboard() {
           {songs.length === 0 ? (
             <div className="empty-state fade-in">
               <div className="empty-state-icon pulse">
-                <i className="bi bi-music-note-list"></i>
+                <Icono nombre="music-notes" />
               </div>
               <h3 className="empty-state-title">
                 {canEditSongs() ? "¡Comienza tu colección musical!" : "No hay canciones disponibles"}
@@ -471,7 +472,7 @@ function Dashboard() {
               </p>
               {canEditSongs() && (
                 <Link to="/songs/new" className="btn-primary-dashboard btn-animated">
-                  <i className="bi bi-plus-circle me-2"></i>
+                  <Icono nombre="plus-circle" className="me-2" />
                   Crear Mi Primera Canción
                 </Link>
               )}
@@ -479,7 +480,7 @@ function Dashboard() {
           ) : filteredSongs.length === 0 ? (
             <div className="empty-state fade-in">
               <div className="empty-state-icon">
-                <i className="bi bi-search"></i>
+                <Icono nombre="magnifying-glass" />
               </div>
               <h3 className="empty-state-title">No se encontraron canciones</h3>
               <p className="empty-state-description">
@@ -508,7 +509,7 @@ function Dashboard() {
                     >
                       <div className="recent-item-header">
                         <div className="recent-item-icon">
-                          <i className="bi bi-music-note-beamed"></i>
+                          <Icono nombre="music-notes" />
                         </div>
                         <h4 className="recent-item-title">
                           {song.title || "Sin título"}
@@ -519,7 +520,7 @@ function Dashboard() {
                             onClick={(e) => handleDeleteSong(e, song.id, song.title)}
                             title="Eliminar canción"
                           >
-                            <i className="bi bi-trash"></i>
+                            <Icono nombre="trash" />
                           </button>
                         )}
                       </div>
@@ -551,7 +552,7 @@ function Dashboard() {
                       style={{ animationDelay: `${index * 0.1}s` }}
                     >
                       <div className="list-item-icon">
-                        <i className="bi bi-music-note-beamed"></i>
+                        <Icono nombre="music-notes" />
                       </div>
                       <div className="list-item-content">
                         <h4 className="list-item-title">
@@ -574,7 +575,7 @@ function Dashboard() {
                           onClick={(e) => handleDeleteSong(e, song.id, song.title)}
                           title="Eliminar canción"
                         >
-                          <i className="bi bi-trash"></i>
+                          <Icono nombre="trash" />
                         </button>
                       )}
                     </Link>

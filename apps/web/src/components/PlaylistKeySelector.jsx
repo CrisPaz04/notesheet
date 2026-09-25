@@ -1,6 +1,7 @@
 // apps/web/src/components/PlaylistKeySelector.jsx
 import { useState, useRef, useEffect } from 'react';
 import { nombrarTonalidad } from "@notesheet/core";
+import Icono from "./Icono";
 
 const AVAILABLE_KEYS = [
   "DO", "LAm", "SOL", "MIm", "RE", "SIm", "LA", "FA#m", 
@@ -38,7 +39,7 @@ function PlaylistKeySelector({ value, onChange, originalKey, notacion = 'latin' 
         onClick={() => setIsOpen(!isOpen)}
       >
         <span>{nombrarTonalidad(value, notacion)}</span>
-        <i className={`bi bi-chevron-${isOpen ? 'up' : 'down'}`}></i>
+        <Icono nombre={isOpen ? "caret-up" : "caret-down"} />
       </button>
       
       {isOpen && (

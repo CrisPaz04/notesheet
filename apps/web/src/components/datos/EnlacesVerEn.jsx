@@ -1,4 +1,5 @@
 import { enlacesVerEn } from "@notesheet/core";
+import Icono from "../Icono";
 
 /**
  * Enlaces para consultar la canción a mano en webs que la app no lee (no
@@ -20,7 +21,7 @@ function EnlacesVerEn({ titulo, artista }) {
           className="enlace-ver-en"
         >
           {e.nombre}
-          <i className="bi bi-box-arrow-up-right ms-1" aria-hidden="true"></i>
+          <Icono nombre="arrow-square-out" className="ms-1" aria-hidden="true" />
         </a>
       ))}
     </div>

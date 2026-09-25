@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { TRANSPOSING_INSTRUMENTS } from "@notesheet/core";
+import Icono from "../Icono";
 
 /**
  * Barra de estado de la sesión: el código para que entren los demás, quién
@@ -60,7 +61,7 @@ export default function LiveBar({
             onClick={copiarLink}
             title="Copiar el enlace para que entren los demás"
           >
-            <i className={`bi ${copiado ? "bi-check-lg" : "bi-link-45deg"}`} />
+            <Icono nombre={copiado ? "check" : "link"} />
             {copiado ? "Copiado" : "Compartir"}
           </button>
 
@@ -70,18 +71,18 @@ export default function LiveBar({
             onClick={() => setVerGente((v) => !v)}
             aria-expanded={verGente}
           >
-            <i className="bi bi-people" />
+            <Icono nombre="users" />
             {enLinea.length}
           </button>
 
           {isHost ? (
             <button type="button" className="btn-live btn-live-danger" onClick={onCerrar}>
-              <i className="bi bi-stop-circle" />
+              <Icono nombre="stop-circle" />
               Terminar
             </button>
           ) : (
             <button type="button" className="btn-live" onClick={onSalir}>
-              <i className="bi bi-box-arrow-right" />
+              <Icono nombre="sign-out" />
               Salir
             </button>
           )}
@@ -90,7 +91,7 @@ export default function LiveBar({
 
       {sinRed && (
         <div className="live-warning" role="status">
-          <i className="bi bi-wifi-off me-2" />
+          <Icono nombre="wifi-slash" className="me-2" />
           Sin conexión: estás viendo la última versión que llegó. Los cambios de
           los demás no se están recibiendo.
         </div>

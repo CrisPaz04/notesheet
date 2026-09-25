@@ -1,6 +1,7 @@
 ﻿import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import Icono from "../components/Icono";
 
 function Login() {
   const [email, setEmail] = useState("");
@@ -67,7 +68,7 @@ function Login() {
         {/* Header con icono */}
         <div className="login-header">
           <div className="login-icon">
-            <i className="bi bi-music-note-beamed"></i>
+            <Icono nombre="music-notes" />
           </div>
           <h1 className="h3 mb-0">Bienvenido a NoteSheet</h1>
           <p className="mb-0 opacity-75">Inicia sesión para continuar</p>
@@ -76,7 +77,7 @@ function Login() {
         <div className="card-body p-4">
           {error && (
             <div className="alert alert-danger d-flex align-items-center" role="alert">
-              <i className="bi bi-exclamation-triangle-fill me-2"></i>
+              <Icono nombre="warning" peso="fill" className="me-2" />
               <div>{error}</div>
             </div>
           )}
@@ -89,7 +90,7 @@ function Login() {
                 className="social-btn google"
                 type="button"
               >
-                <i className="bi bi-google me-2"></i>
+                <Icono nombre="google-logo" className="me-2" />
                 Google
               </button>
               <button 
@@ -97,7 +98,7 @@ function Login() {
                 className="social-btn facebook"
                 type="button"
               >
-                <i className="bi bi-facebook me-2"></i>
+                <Icono nombre="facebook-logo" className="me-2" />
                 Facebook
               </button>
               <button 
@@ -105,7 +106,7 @@ function Login() {
                 className="social-btn apple"
                 type="button"
               >
-                <i className="bi bi-apple me-2"></i>
+                <Icono nombre="apple-logo" className="me-2" />
                 Apple
               </button>
             </div>
@@ -128,7 +129,7 @@ function Login() {
                 required
               />
               <label htmlFor="email">
-                <i className="bi bi-envelope me-2"></i>
+                <Icono nombre="envelope-simple" className="me-2" />
                 Correo electrónico
               </label>
             </div>
@@ -145,7 +146,7 @@ function Login() {
                 required
               />
               <label htmlFor="password">
-                <i className="bi bi-lock me-2"></i>
+                <Icono nombre="lock" className="me-2" />
                 Contraseña
               </label>
             </div>
@@ -162,7 +163,7 @@ function Login() {
                 </>
               ) : (
                 <>
-                  <i className="bi bi-box-arrow-in-right me-2"></i>
+                  <Icono nombre="sign-in" className="me-2" />
                   Iniciar Sesión
                 </>
               )}

@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { getAllPlaylists, deletePlaylist } from "@notesheet/api";
 import { useAuth } from "../context/AuthContext";
 import LoadingSpinner from "../components/LoadingSpinner";
+import Icono from "../components/Icono";
 
 function PlaylistsList() {
   const [playlists, setPlaylists] = useState([]);
@@ -76,7 +77,7 @@ function PlaylistsList() {
           <div className="d-flex justify-content-between align-items-center">
             <div>
               <h1 className="playlists-title">
-                <i className="bi bi-collection-play"></i>
+                <Icono nombre="playlist" />
                 Mis Listas
               </h1>
               <p className="playlists-subtitle">
@@ -85,7 +86,7 @@ function PlaylistsList() {
             </div>
             
             <Link to="/playlists/new" className="btn-playlist-primary btn-playlist-action">
-              <i className="bi bi-plus-circle"></i>
+              <Icono nombre="plus-circle" />
               Nueva Lista
             </Link>
           </div>
@@ -93,7 +94,7 @@ function PlaylistsList() {
 
         {error && (
           <div className="alert alert-danger mb-4 fade-in" role="alert">
-            <i className="bi bi-exclamation-triangle-fill me-2"></i>
+            <Icono nombre="warning" peso="fill" className="me-2" />
             {error}
           </div>
         )}
@@ -102,7 +103,7 @@ function PlaylistsList() {
         {playlists.length === 0 ? (
           <div className="empty-playlists-state fade-in">
             <div className="empty-playlists-icon">
-              <i className="bi bi-collection-play"></i>
+              <Icono nombre="playlist" />
             </div>
             <h3 className="empty-playlists-title">¡Comienza a organizar tu música!</h3>
             <p className="empty-playlists-description">
@@ -110,7 +111,7 @@ function PlaylistsList() {
               evento o cualquier criterio que necesites.
             </p>
             <Link to="/playlists/new" className="btn-playlist-primary btn-playlist-action">
-              <i className="bi bi-plus-circle me-2"></i>
+              <Icono nombre="plus-circle" className="me-2" />
               Crear Mi Primera Lista
             </Link>
           </div>
@@ -120,12 +121,12 @@ function PlaylistsList() {
               <div key={playlist.id} className="playlist-card">
                 <div className="playlist-card-header">
                   <h3 className="playlist-card-title">
-                    <i className="bi bi-music-note-list"></i>
+                    <Icono nombre="music-notes" />
                     {playlist.name || "Lista sin nombre"}
                   </h3>
                   <div className="playlist-card-meta">
                     <span>
-                      <i className="bi bi-calendar3 me-1"></i>
+                      <Icono nombre="calendar-blank" className="me-1" />
                       {formatDate(playlist.date)}
                     </span>
                     <span className={`playlist-visibility-badge ${playlist.public ? 'public' : 'private'}`}>
@@ -137,11 +138,11 @@ function PlaylistsList() {
                 <div className="playlist-card-body">
                   <div className="playlist-stats">
                     <div className="playlist-stat">
-                      <i className="bi bi-music-note-beamed"></i>
+                      <Icono nombre="music-notes" />
                       <span>{playlist.songs?.length || 0} canciones</span>
                     </div>
                     <div className="playlist-stat">
-                      <i className="bi bi-clock"></i>
+                      <Icono nombre="clock" />
                       <span>
                         {playlist.updatedAt ? 
                           `Actualizado ${new Date(playlist.updatedAt.toDate()).toLocaleDateString()}` : 
@@ -165,7 +166,7 @@ function PlaylistsList() {
                     to={`/playlists/${playlist.id}`} 
                     className="btn-playlist-primary btn-playlist-action"
                   >
-                    <i className="bi bi-eye"></i>
+                    <Icono nombre="eye" />
                     Ver
                   </Link>
                   
@@ -174,14 +175,14 @@ function PlaylistsList() {
                       to={`/playlists/${playlist.id}/edit`} 
                       className="btn-playlist-action"
                     >
-                      <i className="bi bi-pencil"></i>
+                      <Icono nombre="pencil-simple" />
                       Editar
                     </Link>
                     <button
                       onClick={() => handleDelete(playlist.id, playlist.name)}
                       className="btn-playlist-action btn-playlist-danger"
                     >
-                      <i className="bi bi-trash"></i>
+                      <Icono nombre="trash" />
                       Eliminar
                     </button>
                   </div>

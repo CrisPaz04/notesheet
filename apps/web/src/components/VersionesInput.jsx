@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { limpiarVersiones } from "@notesheet/core";
+import Icono from "./Icono";
 
 /**
  * "Versión de" con varios nombres: una persona y un grupo, o dos personas.
@@ -57,7 +58,7 @@ function VersionesInput({ value, onChange, id }) {
             onClick={() => quitar(i)}
             aria-label={`Quitar ${nombre}`}
           >
-            <i className="bi bi-x" aria-hidden="true"></i>
+            <Icono nombre="x" aria-hidden="true" />
           </button>
         </span>
       ))}

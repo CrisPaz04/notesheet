@@ -1,6 +1,7 @@
 // apps/web/src/components/PreferencesInstrumentSelector.jsx
 import { useState, useRef, useEffect } from 'react';
 import { TRANSPOSING_INSTRUMENTS } from "@notesheet/core";
+import Icono from "./Icono";
 
 function PreferencesInstrumentSelector({ value, onChange, label = "Instrumento Predeterminado" }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -27,7 +28,7 @@ function PreferencesInstrumentSelector({ value, onChange, label = "Instrumento P
   return (
     <div className="form-group-modern">
       <label className="form-label-modern">
-        <i className="bi bi-music-note-beamed me-2"></i>
+        <Icono nombre="music-notes" className="me-2" />
         {label}
       </label>
       <div className="key-selector" ref={dropdownRef}>
@@ -37,7 +38,7 @@ function PreferencesInstrumentSelector({ value, onChange, label = "Instrumento P
           onClick={() => setIsOpen(!isOpen)}
         >
           <span>{TRANSPOSING_INSTRUMENTS[value]?.name || "Trompeta en Sib"}</span>
-          <i className={`bi bi-chevron-${isOpen ? 'up' : 'down'}`}></i>
+          <Icono nombre={isOpen ? "caret-up" : "caret-down"} />
         </button>
         
         {isOpen && (

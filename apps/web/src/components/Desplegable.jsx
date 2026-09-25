@@ -1,5 +1,6 @@
 import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import Icono from "./Icono";
 
 /**
  * Un desplegable con los colores del tema, en lugar del `<select>` nativo.
@@ -208,7 +209,7 @@ function Desplegable({
         onKeyDown={alTeclear}
       >
         <span className="desplegable-texto">{elegida ? elegida.label : placeholder}</span>
-        <i className="bi bi-chevron-down desplegable-flecha" aria-hidden="true"></i>
+        <Icono nombre="caret-down" className="desplegable-flecha" aria-hidden="true" />
       </button>
 
       {abierto && createPortal(

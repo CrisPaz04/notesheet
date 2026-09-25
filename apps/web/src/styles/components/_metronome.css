@@ -781,12 +781,12 @@
   color: var(--text-light-primary);
 }
 
-.metronome-container .alert-info .bi {
+.metronome-container .alert-info .icono {
   color: var(--color-primary);
 }
 
 /* Help text icon */
-.metronome-help-text .bi {
+.metronome-help-text .icono {
   color: var(--color-primary);
 }
 

@@ -5,6 +5,7 @@
  */
 
 import { rellenoDeslizador } from "../../utils/rellenoDeslizador";
+import Icono from "../Icono";
 
 function TunerControls({
   referenceFrequency,
@@ -56,7 +57,7 @@ function TunerControls({
         </div>
 
         <div className="tuner-controls-hint mt-2">
-          <i className="bi bi-info-circle me-1"></i>
+          <Icono nombre="info" className="me-1" />
           Estándar: 440 Hz
         </div>
       </div>

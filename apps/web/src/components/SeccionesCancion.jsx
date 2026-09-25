@@ -1,3 +1,4 @@
+import Icono from "./Icono";
 // Las secciones de una canción ya formateada (notas, letra o acordes), como
 // se pintan en la lista y en la sesión en vivo.
 
@@ -31,7 +32,7 @@ export function AvisoVista({ faltaba, esPdf = false }) {
   if (!faltaba) return null;
   return (
     <p className="vista-aviso">
-      <i className="bi bi-info-circle me-1"></i>
+      <Icono nombre="info" className="me-1" />
       Esta canción aún no tiene {faltaba === "letra" ? "letra" : "acordes"}: se{" "}
       {esPdf ? "muestra la partitura" : "muestran las notas"}.
     </p>

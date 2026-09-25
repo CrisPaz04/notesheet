@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 import { repartirPdfs } from "@notesheet/core";
 import { subirVariasPartituras } from "@notesheet/api";
 import RepartoPdfs from "./RepartoPdfs";
+import Icono from "../Icono";
 
 /**
  * "Subir varios PDF" en el editor de una canción: se eligen todos los de su
@@ -62,7 +63,7 @@ function SubirVariosPdf({ song, onSubidos }) {
           onClick={() => inputRef.current?.click()}
           disabled={!song?.id}
         >
-          <i className="bi bi-files me-1"></i>
+          <Icono nombre="files" className="me-1" />
           Subir varios PDF
         </button>
       )}
@@ -87,7 +88,7 @@ function SubirVariosPdf({ song, onSubidos }) {
                 onClick={subir}
                 disabled={reparto.asignados.length === 0}
               >
-                <i className="bi bi-cloud-upload me-1"></i>
+                <Icono nombre="cloud-arrow-up" className="me-1" />
                 Subir {reparto.asignados.length}
               </button>
               <button type="button" className="btn-editor-secondary" onClick={() => setReparto(null)}>
@@ -100,7 +101,7 @@ function SubirVariosPdf({ song, onSubidos }) {
 
       {resultado && (
         <div className={`subir-varios-resultado${resultado.errores.length ? " con-errores" : ""}`} role="status">
-          <i className="bi bi-check-circle me-1"></i>
+          <Icono nombre="check-circle" className="me-1" />
           Subidos {resultado.subidos}.
           {resultado.errores.length > 0 && (
             <ul>

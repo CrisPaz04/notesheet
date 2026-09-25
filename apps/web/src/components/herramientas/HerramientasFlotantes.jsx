@@ -4,6 +4,7 @@ import useHerramientas, { esPantallaEstrecha } from "../../hooks/useHerramientas
 import PanelLista from "./PanelLista";
 import CirculoQuintas from "./CirculoQuintas";
 import { acotar, alturaInicial, ladoPorPosicion, separar } from "./colocarPaneles";
+import Icono from "../Icono";
 
 // El afinador y el metrónomo arrastran el motor de audio: se cargan al abrir
 // su panel, no al entrar en la lista.
@@ -11,10 +12,10 @@ const Tuner = lazyConRecarga(() => import("../../pages/Tuner"));
 const Metronome = lazyConRecarga(() => import("../../pages/Metronome"));
 
 const HERRAMIENTAS = {
-  lista: { titulo: "Lista", icono: "bi-list-ol", lado: "derecha" },
-  quintas: { titulo: "Círculo de quintas", icono: "bi-bullseye", lado: "derecha" },
-  afinador: { titulo: "Afinador", icono: "bi-soundwave", lado: "izquierda" },
-  metronomo: { titulo: "Metrónomo", icono: "bi-hourglass-split", lado: "izquierda" }
+  lista: { titulo: "Lista", icono: "list-numbers", lado: "derecha" },
+  quintas: { titulo: "Círculo de quintas", icono: "compass", lado: "derecha" },
+  afinador: { titulo: "Afinador", icono: "waveform", lado: "izquierda" },
+  metronomo: { titulo: "Metrónomo", icono: "metronome", lado: "izquierda" }
 };
 
 // Lo que no pueden tapar: arriba un margen, abajo la barra de herramientas
@@ -49,8 +50,8 @@ function PanelFlotante({ id, lado, onCerrar, onCambiarLado, arrastrable, cabecer
         {...cabeceraProps}
       >
         <span>
-          {arrastrable && <i className="bi bi-grip-vertical panel-flotante-asa" aria-hidden="true"></i>}
-          <i className={`bi ${icono} me-2`}></i>
+          {arrastrable && <Icono nombre="dots-six-vertical" className="panel-flotante-asa" aria-hidden="true" />}
+          <Icono nombre={icono} className="me-2" />
           {titulo}
         </span>
         <span className="panel-flotante-acciones">
@@ -62,7 +63,7 @@ function PanelFlotante({ id, lado, onCerrar, onCambiarLado, arrastrable, cabecer
               aria-label={`Mover ${titulo.toLowerCase()} a la ${otroLado}`}
               title={`Mover a la ${otroLado}`}
             >
-              <i className="bi bi-arrow-left-right"></i>
+              <Icono nombre="arrows-left-right" />
             </button>
           )}
           <button
@@ -71,7 +72,7 @@ function PanelFlotante({ id, lado, onCerrar, onCambiarLado, arrastrable, cabecer
             onClick={onCerrar}
             aria-label={`Cerrar ${titulo.toLowerCase()}`}
           >
-            <i className="bi bi-x-lg"></i>
+            <Icono nombre="x" />
           </button>
         </span>
       </header>
@@ -342,7 +343,7 @@ function HerramientasFlotantes({
               aria-pressed={abiertos.includes(id)}
               title={HERRAMIENTAS[id].titulo}
             >
-              <i className={`bi ${HERRAMIENTAS[id].icono}`}></i>
+              <Icono nombre={HERRAMIENTAS[id].icono} />
               <span className="barra-herramientas-texto">{HERRAMIENTAS[id].titulo}</span>
             </button>
           ))}

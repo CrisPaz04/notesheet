@@ -1,6 +1,7 @@
 // apps/web/src/components/ScoreUploader.jsx
 import { useRef, useState } from "react";
 import { SCORE_VARIANTS, SCORE_VARIANT_LABELS } from "@notesheet/core";
+import Icono from "./Icono";
 
 /**
  * Las dos casillas de PDF de una voz: la partitura normal y la que lleva los
@@ -47,7 +48,7 @@ function ScoreUploader({
     >
       {disabled && disabledReason && (
         <div className="alert alert-info score-uploader-aviso" role="status">
-          <i className="bi bi-info-circle"></i>
+          <Icono nombre="info" />
           <span>{disabledReason}</span>
           {onGuardar && (
             <button
@@ -55,7 +56,7 @@ function ScoreUploader({
               className="btn-editor-primary"
               onClick={onGuardar}
             >
-              <i className="bi bi-check-circle me-1"></i>
+              <Icono nombre="check-circle" className="me-1" />
               Guardar ahora
             </button>
           )}
@@ -139,7 +140,7 @@ function ScoreSlot({ variant, path, disabled, subiendo, onUpload, onRemove }) {
       onDrop={alSoltar}
     >
       <div className="score-slot-header">
-        <i className={variant === "conNotas" ? "bi bi-eyeglasses" : "bi bi-file-earmark-music"}></i>
+        <Icono nombre={variant === "conNotas" ? "eyeglasses" : "file-pdf"} />
         <span className="score-slot-title">{SCORE_VARIANT_LABELS[variant]}</span>
       </div>
 
@@ -152,7 +153,7 @@ function ScoreSlot({ variant, path, disabled, subiendo, onUpload, onRemove }) {
         )}
         {!subiendo && path && (
           <>
-            <i className="bi bi-check-circle-fill me-2"></i>
+            <Icono nombre="check-circle" peso="fill" className="me-2" />
             Subida
           </>
         )}
@@ -178,7 +179,7 @@ function ScoreSlot({ variant, path, disabled, subiendo, onUpload, onRemove }) {
           onClick={abrirBuscador}
           disabled={disabled || subiendo}
         >
-          <i className="bi bi-upload me-1"></i>
+          <Icono nombre="upload-simple" className="me-1" />
           {path ? "Reemplazar" : "Buscar archivo"}
         </button>
 
@@ -189,7 +190,7 @@ function ScoreSlot({ variant, path, disabled, subiendo, onUpload, onRemove }) {
             onClick={onRemove}
             disabled={disabled || subiendo}
           >
-            <i className="bi bi-trash me-1"></i>
+            <Icono nombre="trash" className="me-1" />
             Quitar
           </button>
         )}

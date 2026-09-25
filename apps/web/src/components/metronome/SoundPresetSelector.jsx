@@ -5,14 +5,15 @@
  */
 
 import { SOUND_PRESETS } from '@notesheet/core/src/audio/metronomeEngine';
+import Icono from "../Icono";
 
 // Icons for each preset type
 const PRESET_ICONS = {
-  classic: 'bi-music-note',
-  woodBlock: 'bi-box',
-  hiHat: 'bi-disc',
-  rimshot: 'bi-lightning',
-  softClick: 'bi-volume-down'
+  classic: 'music-note',
+  woodBlock: 'cube',
+  hiHat: 'disc',
+  rimshot: 'lightning',
+  softClick: 'speaker-low'
 };
 
 function SoundPresetSelector({
@@ -33,7 +34,7 @@ function SoundPresetSelector({
             disabled={isPlaying}
             title={preset.description}
           >
-            <i className={`bi ${PRESET_ICONS[key] || 'bi-music-note'} preset-icon`}></i>
+            <Icono nombre={PRESET_ICONS[key] || "music-note"} className="preset-icon" />
             <span className="preset-name">{preset.name}</span>
           </button>
         ))}
@@ -43,7 +44,7 @@ function SoundPresetSelector({
         onClick={onTestSound}
         disabled={isPlaying}
       >
-        <i className="bi bi-volume-up me-2"></i>
+        <Icono nombre="speaker-high" className="me-2" />
         Probar Sonido
       </button>
     </div>

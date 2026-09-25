@@ -207,6 +207,23 @@ Bootstrap acaban saliendo en los seis. Usa las variables:
   barra de la página salía como una franja blanca. Los temas oscuros declaran
   además `color-scheme: dark`.
 
+**Íconos:** [Phosphor](https://phosphoricons.com) (`@phosphor-icons/react`), no Bootstrap
+Icons: esta no tiene nada musical (ni metrónomo, ni guitarra, ni piano). Se usan con
+`<Icono nombre="metronome" />` (`components/Icono.jsx`), por el nombre de Phosphor, y
+`peso` (`bold` por defecto: el `regular` quedaba fino junto a las etiquetas en negrita;
+`fill` para lo activo y para reproducir o parar). El SVG va dentro de un `<i>` de 1em con
+el color del texto, como iban los de la fuente, así que el CSS que ya les daba tamaño o
+margen (`.x i`, `me-2`) sigue valiendo. **Solo entra en el paquete lo que está en
+`components/iconos.js`**: para usar uno nuevo, añádelo ahí (se importa cada uno por su
+ruta, no desde el índice del paquete, que obliga a Vite y a Vitest a procesar los 1500).
+Un nombre que no esté pinta un hueco sin error; `Icono.test.jsx` comprueba todos los que
+aparecen en el código. Las vistas llevan el ícono de quien las lee: Notas `music-notes`,
+Letra `microphone-stage`, Acordes `guitar`. Lo que Phosphor no tiene se dibuja a su
+estilo en `components/iconosPropios.jsx` (rejilla de 256, trazo redondo, el grosor de cada
+peso): hoy, los tres de ordenar del Dashboard (`orden-nuevas`, `orden-az`, `orden-za`), la
+misma flecha con lo que va arriba y abajo. Ninguna librería seria tiene trompeta ni
+vientos: si hace falta, va ahí.
+
 **Audio:** Web Audio API via `packages/core/src/audio/` for metronome synthesis and pitch detection.
 
 ## Modelo de datos
@@ -428,7 +445,7 @@ SPA (el orden importa).
 ## Notes
 
 - No TypeScript - pure JavaScript
-- Vitest configured; 1747 tests in `apps/web/src/test/` (run with `npm run test:run`)
+- Vitest configured; 1753 tests in `apps/web/src/test/` (run with `npm run test:run`)
 - Los tests se validan con **mutaciones**: se rompe el código a propósito y se comprueba
   que algún test falla. Ha destapado cuatro tests que pasaban por la razón equivocada,
   y un bug de verdad en `scores.js` (las voces se ordenaban como texto, así que la 10

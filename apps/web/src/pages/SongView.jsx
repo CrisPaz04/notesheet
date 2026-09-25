@@ -45,6 +45,7 @@ import AlineacionTexto from "../components/AlineacionTexto";
 import useAlineacionTexto from "../hooks/useAlineacionTexto";
 import useNumeroDeVoz from "../hooks/useNumeroDeVoz";
 import DatosGrabacion from "../components/datos/DatosGrabacion";
+import Icono from "../components/Icono";
 
 // Trastes donde se pone la cejilla. Más allá del VII ya no queda mástil para
 // tocar cómodo, y la guitarra se queda sin graves.
@@ -149,12 +150,12 @@ function SongView() {
     {
       id: "principal",
       etiqueta: esPdf ? "Partitura" : "Notas",
-      icono: esPdf ? "bi bi-file-earmark-music" : "bi bi-music-note-list",
+      icono: esPdf ? "file-pdf" : "music-notes",
       objeto: esPdf ? "la partitura" : "las notas"
     },
-    ...(tieneNotasAparte ? [{ id: "notas", etiqueta: "Notas", icono: "bi bi-music-note-list", objeto: "las notas" }] : []),
-    ...(tieneLetra ? [{ id: "letra", etiqueta: "Letra", icono: "bi bi-card-text", objeto: "la letra" }] : []),
-    ...(tieneAcordes ? [{ id: "acordes", etiqueta: "Acordes", icono: "bi bi-music-note", objeto: "los acordes" }] : [])
+    ...(tieneNotasAparte ? [{ id: "notas", etiqueta: "Notas", icono: "music-notes", objeto: "las notas" }] : []),
+    ...(tieneLetra ? [{ id: "letra", etiqueta: "Letra", icono: "microphone-stage", objeto: "la letra" }] : []),
+    ...(tieneAcordes ? [{ id: "acordes", etiqueta: "Acordes", icono: "guitar", objeto: "los acordes" }] : [])
   ];
   const variasVistas = vistas.length > 1;
   const indiceDe = (vistaId) => vistas.findIndex((v) => v.id === vistaId);
@@ -558,7 +559,7 @@ function SongView() {
       <div className="song-view-container">
         <div className="container">
           <div className="alert alert-danger fade-in" role="alert">
-            <i className="bi bi-exclamation-triangle-fill me-2"></i>
+            <Icono nombre="warning" peso="fill" className="me-2" />
             {error}
           </div>
         </div>
@@ -573,7 +574,7 @@ function SongView() {
           <div className="text-center fade-in">
             <h2 className="text-white mb-4">Canción no encontrada</h2>
             <Link to="/dashboard" className="btn-song-primary">
-              <i className="bi bi-arrow-left me-2"></i>
+              <Icono nombre="arrow-left" className="me-2" />
               Volver al Dashboard
             </Link>
           </div>
@@ -591,7 +592,7 @@ function SongView() {
 
           {song.album && (
             <div className="song-album-line no-print">
-              <i className="bi bi-disc me-2"></i>
+              <Icono nombre="disc" className="me-2" />
               <span className="song-album-name">{song.album}</span>
               {hermanasDeAlbum.length > 0 && (
                 <span className="song-album-siblings">
@@ -612,7 +613,7 @@ function SongView() {
           <div className="song-meta-grid">
             <div className="song-meta-item">
               <div className="song-meta-label">
-                <i className="bi bi-music-note me-1"></i>
+                <Icono nombre="music-note" className="me-1" />
                 Voz
               </div>
               <div className="song-meta-value">
@@ -628,7 +629,7 @@ function SongView() {
             {esPdf ? (
               <div className="song-meta-item">
                 <div className="song-meta-label">
-                  <i className="bi bi-file-earmark-music me-1"></i>
+                  <Icono nombre="file-pdf" className="me-1" />
                   Partitura
                 </div>
                 <div className="song-meta-value">
@@ -638,7 +639,7 @@ function SongView() {
             ) : (
               <div className="song-meta-item">
                 <div className="song-meta-label">
-                  <i className="bi bi-arrow-left-right me-1"></i>
+                  <Icono nombre="arrows-left-right" className="me-1" />
                   Transpuesto a
                 </div>
                 <div className="song-meta-value">
@@ -655,7 +656,7 @@ function SongView() {
                 de concierto para entenderse con el resto de la banda. */}
             <div className="song-meta-item">
               <div className="song-meta-label">
-                <i className="bi bi-key me-1"></i>
+                <Icono nombre="key" className="me-1" />
                 Tonalidad
               </div>
               <div className="song-meta-value">
@@ -673,7 +674,7 @@ function SongView() {
 
             <div className="song-meta-item">
               <div className="song-meta-label">
-                <i className="bi bi-heart me-1"></i>
+                <Icono nombre="heart" className="me-1" />
                 Tipo
               </div>
               <div className="song-meta-value">{song.type || "No especificado"}</div>
@@ -682,7 +683,7 @@ function SongView() {
             {song.version && (
               <div className="song-meta-item">
                 <div className="song-meta-label">
-                  <i className="bi bi-person me-1"></i>
+                  <Icono nombre="user" className="me-1" />
                   Versión de
                 </div>
                 <div className="song-meta-value">{song.version}</div>
@@ -723,14 +724,14 @@ function SongView() {
                       setShowNotationDropdown(false);
                     }}
                   >
-                    <i className="bi bi-music-note-list"></i>
+                    <Icono nombre="music-notes" />
                     <span>
                       {selectedVoiceKey
                         ? (esPdf ? scoreVoicesList : availableVoicesList)
                             .find(v => v.id === selectedVoiceKey)?.label || "Voz"
                         : "Seleccionar Voz"}
                     </span>
-                    <i className={`bi bi-chevron-${showVoiceDropdown ? 'up' : 'down'}`}></i>
+                    <Icono nombre={showVoiceDropdown ? "caret-up" : "caret-down"} />
                   </button>
 
                   {showVoiceDropdown && (
@@ -761,9 +762,9 @@ function SongView() {
                       setShowVoiceDropdown(false);
                     }}
                   >
-                    <i className="bi bi-eyeglasses"></i>
+                    <Icono nombre="eyeglasses" />
                     <span>{SCORE_VARIANT_LABELS[score.variant] || "Partitura"}</span>
-                    <i className={`bi bi-chevron-${showVariantDropdown ? 'up' : 'down'}`}></i>
+                    <Icono nombre={showVariantDropdown ? "caret-up" : "caret-down"} />
                   </button>
 
                   {showVariantDropdown && (
@@ -798,9 +799,9 @@ function SongView() {
                     setShowNotationDropdown(false);
                   }}
                 >
-                  <i className="bi bi-music-note-beamed"></i>
+                  <Icono nombre="music-notes" />
                   <span>Transponer: {TRANSPOSING_INSTRUMENTS[currentInstrument]?.name || "Trompeta"}</span>
-                  <i className={`bi bi-chevron-${showInstrumentDropdown ? 'up' : 'down'}`}></i>
+                  <Icono nombre={showInstrumentDropdown ? "caret-up" : "caret-down"} />
                 </button>
 
                 {showInstrumentDropdown && (
@@ -836,9 +837,9 @@ function SongView() {
                       setShowNotationDropdown(false);
                     }}
                   >
-                    <i className="bi bi-sliders"></i>
+                    <Icono nombre="sliders-horizontal" />
                     <span>{capo ? `Capo ${TRASTES_ROMANOS[capo]}` : "Sin capo"}</span>
-                    <i className={`bi bi-chevron-${showCapoDropdown ? 'up' : 'down'}`}></i>
+                    <Icono nombre={showCapoDropdown ? "caret-up" : "caret-down"} />
                   </button>
 
                   {showCapoDropdown && (
@@ -873,9 +874,9 @@ function SongView() {
                     setShowNotationDropdown(false);
                   }}
                 >
-                  <i className="bi bi-key"></i>
+                  <Icono nombre="key" />
                   <span>Tonalidad: {verTonalidad(displayKey)}</span>
-                  <i className={`bi bi-chevron-${showKeyDropdown ? 'up' : 'down'}`}></i>
+                  <Icono nombre={showKeyDropdown ? "caret-up" : "caret-down"} />
                 </button>
                 
                 {showKeyDropdown && (
@@ -929,9 +930,9 @@ function SongView() {
                     setShowKeyDropdown(false);
                   }}
                 >
-                  <i className="bi bi-alphabet"></i>
+                  <Icono nombre="text-aa" />
                   <span>{notationSystem === "latin" ? "DO-RE-MI" : "C-D-E"}</span>
-                  <i className={`bi bi-chevron-${showNotationDropdown ? 'up' : 'down'}`}></i>
+                  <Icono nombre={showNotationDropdown ? "caret-up" : "caret-down"} />
                 </button>
                 
                 {showNotationDropdown && (
@@ -996,7 +997,7 @@ function SongView() {
                       className={`view-toggle-btn-song ${activeView === indice ? 'active' : ''}`}
                       onClick={() => setActiveView(indice)}
                     >
-                      <i className={vista.icono}></i>
+                      <Icono nombre={vista.icono} />
                       {vista.etiqueta}
                     </button>
                   ))}
@@ -1011,7 +1012,7 @@ function SongView() {
                   aria-pressed={herramientas.estaAbierto("metronomo")}
                   title="Metrónomo"
                 >
-                  <i className="bi bi-hourglass-split"></i>
+                  <Icono nombre="metronome" />
                   Metrónomo
                 </button>
 
@@ -1021,7 +1022,7 @@ function SongView() {
                   aria-pressed={herramientas.estaAbierto("afinador")}
                   title="Afinador"
                 >
-                  <i className="bi bi-soundwave"></i>
+                  <Icono nombre="waveform" />
                   Afinador
                 </button>
 
@@ -1036,7 +1037,7 @@ function SongView() {
                     disabled={!score?.path}
                     title="Abrir el PDF"
                   >
-                    <i className="bi bi-box-arrow-up-right"></i>
+                    <Icono nombre="arrow-square-out" />
                     Abrir PDF
                   </button>
                 ) : (
@@ -1045,7 +1046,7 @@ function SongView() {
                     onClick={handlePrint}
                     title="Imprimir"
                   >
-                    <i className="bi bi-printer"></i>
+                    <Icono nombre="printer" />
                     Imprimir
                   </button>
                 )}
@@ -1055,7 +1056,7 @@ function SongView() {
                     to={`/songs/${id}/edit`}
                     className="btn-song-action btn-song-primary"
                   >
-                    <i className="bi bi-pencil"></i>
+                    <Icono nombre="pencil-simple" />
                     Editar
                   </Link>
                 )}
@@ -1064,7 +1065,7 @@ function SongView() {
                   to="/dashboard" 
                   className="btn-song-action"
                 >
-                  <i className="bi bi-arrow-left"></i>
+                  <Icono nombre="arrow-left" />
                   Volver
                 </Link>
               </div>
@@ -1126,7 +1127,7 @@ function SongView() {
                         que no es la que esperaba, sin explicación, es peor. */}
                     {score?.variantFallback && (
                       <div className="alert alert-warning pdf-score-fallback no-print" role="status">
-                        <i className="bi bi-info-circle"></i>
+                        <Icono nombre="info" />
                         <span>
                           Esta voz no tiene la versión
                           {" "}<strong>{SCORE_VARIANT_LABELS[score.requestedVariant]?.toLowerCase()}</strong>.
@@ -1150,11 +1151,11 @@ function SongView() {
 
                     {(!formattedSong || formattedSong.sections.length === 0) && (
                       <div className="text-center vista-vacia" style={{ color: 'rgba(var(--overlay-rgb), 0.6)', padding: '3rem' }}>
-                        <i className="bi bi-music-note-list" style={{ fontSize: '3rem', marginBottom: '1rem' }}></i>
+                        <Icono nombre="music-notes" style={{ fontSize: '3rem', marginBottom: '1rem' }} />
                         <p>Esta canción todavía no tiene notas.</p>
                         {puedeEditar && (
                           <Link to={`/songs/${id}/edit`} className="btn-song-action btn-song-primary">
-                            <i className="bi bi-plus-lg"></i>
+                            <Icono nombre="plus" />
                             Añadir notas
                           </Link>
                         )}
@@ -1200,11 +1201,11 @@ function SongView() {
                 
                 {(!formattedLyricsOnly || formattedLyricsOnly.sections.length === 0) && (
                   <div className="text-center vista-vacia" style={{ color: 'rgba(var(--overlay-rgb), 0.6)', padding: '3rem' }}>
-                    <i className="bi bi-card-text" style={{ fontSize: '3rem', marginBottom: '1rem' }}></i>
+                    <Icono nombre="article" style={{ fontSize: '3rem', marginBottom: '1rem' }} />
                     <p>Esta canción todavía no tiene letra.</p>
                     {puedeEditar && (
                       <Link to={`/songs/${id}/edit`} className="btn-song-action btn-song-primary">
-                        <i className="bi bi-plus-lg"></i>
+                        <Icono nombre="plus" />
                         Añadir letra
                       </Link>
                     )}
@@ -1231,11 +1232,11 @@ function SongView() {
 
                   {!hayAcordes && (
                     <div className="text-center vista-vacia" style={{ color: 'rgba(var(--overlay-rgb), 0.6)', padding: '3rem' }}>
-                      <i className="bi bi-music-note" style={{ fontSize: '3rem', marginBottom: '1rem' }}></i>
+                      <Icono nombre="music-note" style={{ fontSize: '3rem', marginBottom: '1rem' }} />
                       <p>Esta canción todavía no tiene acordes.</p>
                       {puedeEditar && (
                         <Link to={`/songs/${id}/edit`} className="btn-song-action btn-song-primary">
-                          <i className="bi bi-plus-lg"></i>
+                          <Icono nombre="plus" />
                           Añadir acordes
                         </Link>
                       )}

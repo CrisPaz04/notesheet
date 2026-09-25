@@ -16,6 +16,7 @@ import TunerControls from '../components/tuner/TunerControls';
 import ReferenceToneGenerator from '../components/tuner/ReferenceToneGenerator';
 import PitchHistoryGraph from '../components/tuner/PitchHistoryGraph';
 import StringModeSelector from '../components/tuner/StringModeSelector';
+import Icono from "../components/Icono";
 
 /**
  * Carga las preferencias y, solo cuando las tiene, monta el afinador.
@@ -169,7 +170,7 @@ function TunerCuerpo({ compact, mini, initialPreferences }) {
         </div>
 
         <button type="button" className="btn btn-primary btn-sm" onClick={toggle} disabled={loading}>
-          <i className={`bi bi-${isRunning ? 'stop' : 'mic'}-fill me-1`}></i>
+          <Icono nombre={isRunning ? "stop" : "microphone"} peso="fill" className="me-1" />
           {loading ? 'Iniciando…' : isRunning ? 'Detener' : 'Iniciar'}
         </button>
       </div>
@@ -183,7 +184,7 @@ function TunerCuerpo({ compact, mini, initialPreferences }) {
         <div className="tuner-header fade-in">
           <div>
             <h1 className="tuner-title">
-              <i className="bi bi-soundwave"></i>
+              <Icono nombre="waveform" />
               Afinador
             </h1>
             <p className="tuner-subtitle">
@@ -200,7 +201,7 @@ function TunerCuerpo({ compact, mini, initialPreferences }) {
             {/* Error Display */}
             {error && (
               <div className="alert alert-danger mb-4" role="alert">
-                <i className="bi bi-exclamation-triangle me-2"></i>
+                <Icono nombre="warning" className="me-2" />
                 {error}
               </div>
             )}
@@ -247,11 +248,7 @@ function TunerCuerpo({ compact, mini, initialPreferences }) {
                   </>
                 ) : (
                   <>
-                    <i
-                      className={`bi bi-${
-                        isRunning ? 'stop' : 'mic'
-                      }-fill me-2`}
-                    ></i>
+                    <Icono nombre={isRunning ? "stop" : "microphone"} peso="fill" className="me-2" />
                     {isRunning ? 'Detener' : 'Iniciar Afinación'}
                   </>
                 )}
@@ -306,7 +303,7 @@ function TunerCuerpo({ compact, mini, initialPreferences }) {
       {/* Help Text */}
       {!compact && (
         <div className="tuner-help-text mt-4">
-          <i className="bi bi-info-circle me-2"></i>
+          <Icono nombre="info" className="me-2" />
           <strong>Tip:</strong> Para mejores resultados, toca notas largas y
           sostenidas. El afinador funciona mejor en ambientes silenciosos.
           Los tonos de referencia te ayudan a comparar el tono de tu instrumento.

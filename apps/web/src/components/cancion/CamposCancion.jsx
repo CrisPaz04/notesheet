@@ -5,6 +5,7 @@ import TypeSelector from "../TypeSelector";
 import VersionesInput from "../VersionesInput";
 import Desplegable from "../Desplegable";
 import BuscarDatosModal from "../datos/BuscarDatosModal";
+import Icono from "../Icono";
 
 const COMPASES = ["2/4", "3/4", "4/4", "6/8", "12/8"];
 
@@ -65,7 +66,7 @@ function CamposCancion({
       <div className="metadata-grid">
         <div className="form-group-modern">
           <label className="form-label-modern" htmlFor={`${idBase}-titulo`}>
-            <i className="bi bi-card-heading"></i>
+            <Icono nombre="text-t" />
             Título
           </label>
           <input
@@ -80,7 +81,7 @@ function CamposCancion({
 
         <div className="form-group-modern">
           <label className="form-label-modern" htmlFor={`${idBase}-versiones`}>
-            <i className="bi bi-person"></i>
+            <Icono nombre="user" />
             Versión de
           </label>
           <VersionesInput
@@ -95,7 +96,7 @@ function CamposCancion({
 
         <div className="form-group-modern">
           <label className="form-label-modern" htmlFor={`${idBase}-album`}>
-            <i className="bi bi-disc me-2"></i>
+            <Icono nombre="disc" className="me-2" />
             Álbum
           </label>
           <input
@@ -122,7 +123,7 @@ function CamposCancion({
 
         <div className="form-group-modern">
           <label className="form-label-modern" htmlFor={`${idBase}-tempo`}>
-            <i className="bi bi-speedometer2"></i>
+            <Icono nombre="metronome" />
             Tempo (BPM)
           </label>
           <div className="tempo-campo">
@@ -153,7 +154,7 @@ function CamposCancion({
 
         <div className="form-group-modern">
           <label className="form-label-modern" htmlFor={`${idBase}-compas`}>
-            <i className="bi bi-grid-3x2"></i>
+            <Icono nombre="grid-four" />
             Compás
           </label>
           <Desplegable
@@ -171,7 +172,7 @@ function CamposCancion({
 
         <div className="form-group-modern">
           <label className="form-label-modern">
-            <i className="bi bi-eye me-2"></i>
+            <Icono nombre="eye" className="me-2" />
             Visibilidad
           </label>
           <div className="visibility-toggle">
@@ -180,7 +181,7 @@ function CamposCancion({
               className={`visibility-option ${isPublic ? 'active' : ''}`}
               onClick={() => onCambiar("isPublic", true)}
             >
-              <i className="bi bi-people me-2"></i>
+              <Icono nombre="users" className="me-2" />
               Repertorio
             </button>
             <button
@@ -188,7 +189,7 @@ function CamposCancion({
               className={`visibility-option ${!isPublic ? 'active' : ''}`}
               onClick={() => onCambiar("isPublic", false)}
             >
-              <i className="bi bi-lock me-2"></i>
+              <Icono nombre="lock" className="me-2" />
               Privada
             </button>
           </div>
@@ -200,7 +201,7 @@ function CamposCancion({
 
         <div className="form-group-modern grabacion-original">
           <label className="form-label-modern">
-            <i className="bi bi-vinyl"></i>
+            <Icono nombre="vinyl-record" />
             Grabación original
           </label>
           <div className="grabacion-caja">
@@ -214,7 +215,7 @@ function CamposCancion({
             )}
             <div className="grabacion-acciones">
               <button type="button" className="btn-editor-secondary" onClick={() => setBuscandoDatos(true)}>
-                <i className="bi bi-search me-1"></i>
+                <Icono nombre="magnifying-glass" className="me-1" />
                 Buscar datos
               </button>
               {grabacion && (

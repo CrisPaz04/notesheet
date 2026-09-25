@@ -232,7 +232,7 @@
   border-radius: 0 var(--radius-md) var(--radius-md) 0;
 }
 
-.tuner-help-text .bi {
+.tuner-help-text .icono {
   color: var(--color-primary);
 }
 
@@ -788,7 +788,7 @@
   color: var(--text-light-primary);
 }
 
-.tuner-container .alert-info .bi {
+.tuner-container .alert-info .icono {
   color: var(--color-primary);
 }
 

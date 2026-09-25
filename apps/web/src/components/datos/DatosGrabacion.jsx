@@ -6,6 +6,7 @@ import {
   TRANSPOSING_INSTRUMENTS
 } from "@notesheet/core";
 import EnlacesVerEn from "./EnlacesVerEn";
+import Icono from "../Icono";
 
 const NOMBRE_FUENTE = { musicbrainz: "MusicBrainz", itunes: "Apple Music", getsongbpm: "GetSongBPM" };
 
@@ -28,7 +29,7 @@ function DatosGrabacion({ grabacion, titulo, artista, instrumento, notacion = "l
   return (
     <details className="datos-grabacion no-print">
       <summary>
-        <i className="bi bi-vinyl me-2" aria-hidden="true"></i>
+        <Icono nombre="vinyl-record" className="me-2" aria-hidden="true" />
         Datos de la grabación original
       </summary>
 
@@ -59,7 +60,7 @@ function DatosGrabacion({ grabacion, titulo, artista, instrumento, notacion = "l
             </dl>
 
             <p className="datos-grabacion-nota">
-              <i className="bi bi-info-circle me-1" aria-hidden="true"></i>
+              <Icono nombre="info" className="me-1" aria-hidden="true" />
               Son los datos de la grabación original, en tonalidad de concierto. Si tu
               instrumento transpone (trompeta, saxo, clarinete…), puede que tengas que
               transportarlos.

@@ -6,6 +6,7 @@
 
 import { useState } from 'react';
 import { midiToFrequency } from '@notesheet/core/src/audio/pitchDetection';
+import Icono from "../Icono";
 
 // Common reference notes for instruments
 const REFERENCE_NOTES = [
@@ -55,7 +56,7 @@ function ReferenceToneGenerator({
   return (
     <div className="reference-tone-generator">
       <label className="form-label-modern mb-3">
-        <i className="bi bi-soundwave me-2"></i>
+        <Icono nombre="waveform" className="me-2" />
         Tonos de Referencia
       </label>
 
@@ -76,14 +77,14 @@ function ReferenceToneGenerator({
               title={`${displayName} - ${midiToFrequency(note.midi, referenceFrequency).toFixed(1)} Hz`}
             >
               {displayName}
-              {isCurrentlyPlaying && <i className="bi bi-volume-up-fill reference-note-playing-icon"></i>}
+              {isCurrentlyPlaying && <Icono nombre="speaker-high" peso="fill" className="reference-note-playing-icon" />}
             </button>
           );
         })}
       </div>
 
       <div className="tuner-controls-hint mt-3">
-        <i className="bi bi-info-circle me-2"></i>
+        <Icono nombre="info" className="me-2" />
         Toca una nota para escuchar su tono.
         {isPlaying ? ' Toca de nuevo para detener.' : ''}
       </div>

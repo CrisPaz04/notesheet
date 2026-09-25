@@ -1,5 +1,6 @@
 // apps/web/src/components/ThemeToggle.jsx
 import { useThemeWithAuth } from "../hooks/useThemeWithAuth";
+import Icono from "./Icono";
 
 function ThemeToggle() {
   const { theme, changeTheme, loading } = useThemeWithAuth();
@@ -18,7 +19,7 @@ function ThemeToggle() {
       title={`Cambiar a tema ${theme === 'dark' ? 'claro' : 'oscuro'}`}
       aria-label={`Cambiar a tema ${theme === 'dark' ? 'claro' : 'oscuro'}`}
     >
-      <i className={`bi ${theme === 'dark' ? 'bi-sun-fill' : 'bi-moon-fill'}`}></i>
+      <Icono nombre={theme === 'dark' ? "sun" : "moon"} peso="fill" />
     </button>
   );
 }

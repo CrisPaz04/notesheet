@@ -37,9 +37,7 @@ export default defineConfig({
         ]
       },
       workbox: {
-        // Las fuentes de bootstrap-icons no entran en el patrón por defecto,
-        // y sin ellas los iconos salen como cuadros vacíos sin conexión.
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
+        globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
         // pdf.js fuera del precache: son 400 KB de biblioteca y 1,4 MB de
         // worker, y se los tragaria en la instalacion tambien quien solo abre
         // canciones de texto. Las partituras sin red no son prioritarias
@@ -47,12 +45,6 @@ export default defineConfig({
         // Si algun dia molesta, la solucion es una regla `CacheFirst` acotada
         // a estos dos archivos y a las descargas de Storage.
         globIgnores: ['**/pdfjs-*.js', '**/pdf.worker*'],
-        // La CSS de bootstrap-icons pide las fuentes con un hash de query
-        // (`...woff2?dd6703...`) que no está en la clave del precache, así que
-        // sin esto Workbox no las encuentra y los iconos desaparecen offline.
-        // Ignorar todos los parámetros es seguro aquí: cada archivo
-        // precacheado ya lleva su propio hash en el nombre.
-        ignoreURLParametersMatching: [/.*/],
         // SPA: cualquier ruta cae en index.html
         navigateFallback: '/index.html',
         // El service worker no debe tocar las llamadas a Firebase: Firestore

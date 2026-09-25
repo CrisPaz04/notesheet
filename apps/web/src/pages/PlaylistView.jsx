@@ -28,6 +28,7 @@ import useNumeroDeVoz from "../hooks/useNumeroDeVoz";
 import { SeccionesCancion, AvisoVista } from "../components/SeccionesCancion";
 import useAlineacionTexto from "../hooks/useAlineacionTexto";
 import HerramientasFlotantes from "../components/herramientas/HerramientasFlotantes";
+import Icono from "../components/Icono";
 
 function PlaylistView() {
   const [playlist, setPlaylist] = useState(null);
@@ -276,7 +277,7 @@ function PlaylistView() {
       <div className="playlists-container">
         <div className="container">
           <div className="alert alert-danger fade-in" role="alert">
-            <i className="bi bi-exclamation-triangle-fill me-2"></i>
+            <Icono nombre="warning" peso="fill" className="me-2" />
             {error}
           </div>
         </div>
@@ -291,7 +292,7 @@ function PlaylistView() {
           <div className="text-center fade-in">
             <h2 className="text-white mb-4">Lista no encontrada</h2>
             <Link to="/playlists" className="btn-playlist-primary btn-playlist-action">
-              <i className="bi bi-arrow-left me-2"></i>
+              <Icono nombre="arrow-left" className="me-2" />
               Volver a Mis Listas
             </Link>
           </div>
@@ -309,15 +310,15 @@ function PlaylistView() {
           
           <div className="playlist-view-meta">
             <span>
-              <i className="bi bi-calendar3 me-1"></i>
+              <Icono nombre="calendar-blank" className="me-1" />
               {formatDate(playlist.date)}
             </span>
             <span className={`playlist-visibility-badge ${playlist.public ? 'public' : 'private'}`}>
-              <i className={`bi ${playlist.public ? 'bi-globe' : 'bi-lock'} me-1`}></i>
+              <Icono nombre={playlist.public ? "globe" : "lock"} className="me-1" />
               {playlist.public ? 'Lista Pública' : 'Lista Privada'}
             </span>
             <span>
-              <i className="bi bi-music-note-beamed me-1"></i>
+              <Icono nombre="music-notes" className="me-1" />
               {songs.length} canciones
             </span>
           </div>
@@ -328,7 +329,7 @@ function PlaylistView() {
           <div className="controls-row">
             <div className="controls-group">
               <h2 className="section-title mb-0">
-                <i className="bi bi-list-ol"></i>
+                <Icono nombre="list-numbers" />
                 Lista de Canciones
               </h2>
             </div>
@@ -393,7 +394,7 @@ function PlaylistView() {
                   onClick={handlePrint}
                   title="Imprimir"
                 >
-                  <i className="bi bi-printer"></i>
+                  <Icono nombre="printer" />
                   Imprimir
                 </button>
                 
@@ -402,7 +403,7 @@ function PlaylistView() {
                     to={`/playlists/${id}/edit`} 
                     className="btn-song-action btn-song-primary"
                   >
-                    <i className="bi bi-pencil"></i>
+                    <Icono nombre="pencil-simple" />
                     Editar
                   </Link>
                 )}
@@ -411,7 +412,7 @@ function PlaylistView() {
                   to="/playlists" 
                   className="btn-song-action"
                 >
-                  <i className="bi bi-arrow-left"></i>
+                  <Icono nombre="arrow-left" />
                   Volver
                 </Link>
               </div>
@@ -424,7 +425,7 @@ function PlaylistView() {
           {songs.length === 0 ? (
             <div className="empty-playlists-state">
               <div className="empty-playlists-icon">
-                <i className="bi bi-music-note-list"></i>
+                <Icono nombre="music-notes" />
               </div>
               <h3 className="empty-playlists-title">Esta lista está vacía</h3>
               <p className="empty-playlists-description">
@@ -432,7 +433,7 @@ function PlaylistView() {
               </p>
               {currentUser && currentUser.uid === playlist.creatorId && (
                 <Link to={`/playlists/${id}/edit`} className="btn-playlist-primary btn-playlist-action">
-                  <i className="bi bi-plus-circle me-2"></i>
+                  <Icono nombre="plus-circle" className="me-2" />
                   Agregar Canciones
                 </Link>
               )}
@@ -441,7 +442,7 @@ function PlaylistView() {
             <div className="playlist-songs-section">
               <div className="playlist-songs-header">
                 <h3 className="section-title">
-                  <i className="bi bi-music-note-list me-2"></i>
+                  <Icono nombre="music-notes" className="me-2" />
                   Canciones de la Lista
                 </h3>
               </div>
@@ -508,7 +509,7 @@ function PlaylistView() {
                         />
                       )}
                       <Link to={`/songs/${song.id}`} className="playlist-song-pdf-otra-voz no-print">
-                        <i className="bi bi-file-earmark-music me-1"></i>
+                        <Icono nombre="file-pdf" className="me-1" />
                         Ver en otra voz
                       </Link>
                     </div>

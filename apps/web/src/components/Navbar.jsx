@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import { getUserDisplayName, getUserInitials } from "../utils/userHelpers";
 import { useThemeWithAuth } from "../hooks/useThemeWithAuth";
+import Icono from "./Icono";
 
 function Navbar() {
   const { currentUser, logout } = useAuth();
@@ -46,7 +47,7 @@ function Navbar() {
     <nav className="navbar navbar-expand-lg navbar-dark-custom">
       <div className="container">
         <Link className="navbar-brand-custom" to={currentUser ? "/dashboard" : "/"}>
-          <i className="bi bi-music-note-beamed me-2"></i>
+          <Icono nombre="music-notes" className="me-2" />
           NoteSheet
         </Link>
         
@@ -71,7 +72,7 @@ function Navbar() {
                     className={`nav-link ${isActive('/dashboard') ? 'active' : ''}`} 
                     to="/dashboard"
                   >
-                    <i className="bi bi-speedometer2"></i>
+                    <Icono nombre="metronome" />
                     Dashboard
                   </Link>
                 </li>
@@ -80,7 +81,7 @@ function Navbar() {
                     className={`nav-link ${isActive('/songs/new') ? 'active' : ''}`} 
                     to="/songs/new"
                   >
-                    <i className="bi bi-plus-circle"></i>
+                    <Icono nombre="plus-circle" />
                     Nueva Canción
                   </Link>
                 </li>
@@ -89,7 +90,7 @@ function Navbar() {
                     className={`nav-link ${isActive('/playlists') ? 'active' : ''}`}
                     to="/playlists"
                   >
-                    <i className="bi bi-collection-play"></i>
+                    <Icono nombre="playlist" />
                     Mis Listas
                   </Link>
                 </li>
@@ -98,7 +99,7 @@ function Navbar() {
                     className={`nav-link ${isActive('/metronome') ? 'active' : ''}`}
                     to="/metronome"
                   >
-                    <i className="bi bi-hourglass-split"></i>
+                    <Icono nombre="metronome" />
                     Metrónomo
                   </Link>
                 </li>
@@ -107,7 +108,7 @@ function Navbar() {
                     className={`nav-link ${isActive('/tuner') ? 'active' : ''}`}
                     to="/tuner"
                   >
-                    <i className="bi bi-soundwave"></i>
+                    <Icono nombre="waveform" />
                     Afinador
                   </Link>
                 </li>
@@ -125,7 +126,7 @@ function Navbar() {
                         {getUserDisplayName(currentUser)}
                       </span>
                     </div>
-                    <i className={`bi bi-chevron-${isUserDropdownOpen ? 'up' : 'down'} dropdown-arrow`}></i>
+                    <Icono nombre={isUserDropdownOpen ? "caret-up" : "caret-down"} className="dropdown-arrow" />
                   </button>
                   
                   {isUserDropdownOpen && (
@@ -151,7 +152,7 @@ function Navbar() {
                         className="user-dropdown-item"
                         onClick={() => setIsUserDropdownOpen(false)}
                       >
-                        <i className="bi bi-gear"></i>
+                        <Icono nombre="gear" />
                         <span>Preferencias</span>
                       </Link>
                       
@@ -160,7 +161,7 @@ function Navbar() {
                         className="user-dropdown-item"
                         onClick={() => setIsUserDropdownOpen(false)}
                       >
-                        <i className="bi bi-palette"></i>
+                        <Icono nombre="palette" />
                         <span>Temas ({currentThemeInfo.name})</span>
                       </Link>
                       
@@ -170,7 +171,7 @@ function Navbar() {
                         className="user-dropdown-item logout" 
                         onClick={handleLogout}
                       >
-                        <i className="bi bi-box-arrow-right"></i>
+                        <Icono nombre="sign-out" />
                         <span>Cerrar Sesión</span>
                       </button>
                     </div>
@@ -184,7 +185,7 @@ function Navbar() {
                     className={`nav-link ${isActive('/') ? 'active' : ''}`} 
                     to="/"
                   >
-                    <i className="bi bi-house"></i>
+                    <Icono nombre="house" />
                     Inicio
                   </Link>
                 </li>
@@ -193,7 +194,7 @@ function Navbar() {
                     className={`nav-link ${isActive('/login') ? 'active' : ''}`} 
                     to="/login"
                   >
-                    <i className="bi bi-box-arrow-in-right"></i>
+                    <Icono nombre="sign-in" />
                     Iniciar Sesión
                   </Link>
                 </li>
@@ -202,7 +203,7 @@ function Navbar() {
                     className={`nav-link ${isActive('/register') ? 'active' : ''}`} 
                     to="/register"
                   >
-                    <i className="bi bi-person-plus"></i>
+                    <Icono nombre="user-plus" />
                     Registrarse
                   </Link>
                 </li>

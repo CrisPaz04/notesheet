@@ -1,7 +1,8 @@
+import Icono from "./Icono";
 const OPCIONES = [
-  { valor: "left", icono: "bi-text-left", texto: "Alinear a la izquierda" },
-  { valor: "center", icono: "bi-text-center", texto: "Centrar" },
-  { valor: "right", icono: "bi-text-right", texto: "Alinear a la derecha" }
+  { valor: "left", icono: "text-align-left", texto: "Alinear a la izquierda" },
+  { valor: "center", icono: "text-align-center", texto: "Centrar" },
+  { valor: "right", icono: "text-align-right", texto: "Alinear a la derecha" }
 ];
 
 /**
@@ -33,7 +34,7 @@ function AlineacionTexto({
           aria-label={o.texto}
           aria-pressed={alineacion === o.valor}
         >
-          <i className={`bi ${o.icono}`}></i>
+          <Icono nombre={o.icono} />
         </button>
       ))}
     </div>

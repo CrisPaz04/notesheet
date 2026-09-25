@@ -1,11 +1,12 @@
+import Icono from "./Icono";
 // Qué se ve de cada canción en la lista y en la sesión en vivo: las notas, la
 // letra o los acordes. Las mismas tres pestañas que en la vista de la canción,
 // pero aquí valen para todas las canciones a la vez.
 
 const VISTAS = [
-  { id: "principal", etiqueta: "Notas", icono: "bi bi-music-note-list" },
-  { id: "letra", etiqueta: "Letra", icono: "bi bi-card-text" },
-  { id: "acordes", etiqueta: "Acordes", icono: "bi bi-music-note" }
+  { id: "principal", etiqueta: "Notas", icono: "music-notes" },
+  { id: "letra", etiqueta: "Letra", icono: "microphone-stage" },
+  { id: "acordes", etiqueta: "Acordes", icono: "guitar" }
 ];
 
 /**
@@ -29,7 +30,7 @@ function SelectorVista({ vista, onCambiar, className = "" }) {
           aria-pressed={vista === v.id}
           onClick={() => onCambiar(v.id)}
         >
-          <i className={v.icono}></i>
+          <Icono nombre={v.icono} />
           {v.etiqueta}
         </button>
       ))}

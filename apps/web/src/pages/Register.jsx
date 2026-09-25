@@ -1,6 +1,7 @@
 ﻿import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import Icono from "../components/Icono";
 
 function Register() {
   const [email, setEmail] = useState("");
@@ -74,7 +75,7 @@ function Register() {
         {/* Header con icono */}
         <div className="login-header">
           <div className="login-icon">
-            <i className="bi bi-person-plus"></i>
+            <Icono nombre="user-plus" />
           </div>
           <h1 className="h3 mb-0">Únete a NoteSheet</h1>
           <p className="mb-0 opacity-75">Crea tu cuenta y comienza</p>
@@ -83,7 +84,7 @@ function Register() {
         <div className="card-body p-4">
           {error && (
             <div className="alert alert-danger d-flex align-items-center" role="alert">
-              <i className="bi bi-exclamation-triangle-fill me-2"></i>
+              <Icono nombre="warning" peso="fill" className="me-2" />
               <div>{error}</div>
             </div>
           )}
@@ -96,7 +97,7 @@ function Register() {
                 className="social-btn google"
                 type="button"
               >
-                <i className="bi bi-google me-2"></i>
+                <Icono nombre="google-logo" className="me-2" />
                 Google
               </button>
               <button 
@@ -104,7 +105,7 @@ function Register() {
                 className="social-btn facebook"
                 type="button"
               >
-                <i className="bi bi-facebook me-2"></i>
+                <Icono nombre="facebook-logo" className="me-2" />
                 Facebook
               </button>
               <button 
@@ -112,7 +113,7 @@ function Register() {
                 className="social-btn apple"
                 type="button"
               >
-                <i className="bi bi-apple me-2"></i>
+                <Icono nombre="apple-logo" className="me-2" />
                 Apple
               </button>
             </div>
@@ -135,7 +136,7 @@ function Register() {
                 required
               />
               <label htmlFor="email">
-                <i className="bi bi-envelope me-2"></i>
+                <Icono nombre="envelope-simple" className="me-2" />
                 Correo electrónico
               </label>
             </div>
@@ -152,7 +153,7 @@ function Register() {
                 required
               />
               <label htmlFor="password">
-                <i className="bi bi-lock me-2"></i>
+                <Icono nombre="lock" className="me-2" />
                 Contraseña
               </label>
             </div>
@@ -169,7 +170,7 @@ function Register() {
                 required
               />
               <label htmlFor="confirmPassword">
-                <i className="bi bi-shield-check me-2"></i>
+                <Icono nombre="shield-check" className="me-2" />
                 Confirmar Contraseña
               </label>
             </div>
@@ -186,7 +187,7 @@ function Register() {
                 </>
               ) : (
                 <>
-                  <i className="bi bi-person-check me-2"></i>
+                  <Icono nombre="user-check" className="me-2" />
                   Crear Cuenta
                 </>
               )}

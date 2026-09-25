@@ -1,3 +1,4 @@
+import Icono from "../Icono";
 /**
  * Tempo Trainer Component
  *
@@ -29,7 +30,7 @@ function TempoTrainer({
   return (
     <div className="tempo-trainer">
       <label className="form-label-modern mb-3">
-        <i className="bi bi-graph-up me-2"></i>
+        <Icono nombre="chart-line-up" className="me-2" />
         Entrenador de Tempo
       </label>
 
@@ -53,7 +54,7 @@ function TempoTrainer({
               </div>
             </div>
             <div className="trainer-arrow">
-              <i className="bi bi-arrow-right"></i>
+              <Icono nombre="arrow-right" />
             </div>
             <div className="trainer-input-group">
               <label className="trainer-input-label">Objetivo</label>
@@ -103,7 +104,7 @@ function TempoTrainer({
 
           {config.startBpm >= config.targetBpm && (
             <div className="trainer-warning mb-3">
-              <i className="bi bi-exclamation-triangle me-1"></i>
+              <Icono nombre="warning" className="me-1" />
               El tempo inicial debe ser menor que el objetivo
             </div>
           )}
@@ -113,7 +114,7 @@ function TempoTrainer({
             onClick={onStart}
             disabled={!isMetronomePlaying || config.startBpm >= config.targetBpm}
           >
-            <i className="bi bi-play-fill me-2"></i>
+            <Icono nombre="play" peso="fill" className="me-2" />
             {isMetronomePlaying ? 'Iniciar Entrenamiento' : 'Inicia el metrónomo primero'}
           </button>
         </div>
@@ -135,12 +136,12 @@ function TempoTrainer({
             <div className="trainer-progress-label">
               {hasReachedTarget ? (
                 <span className="trainer-success">
-                  <i className="bi bi-check-circle me-1"></i>
+                  <Icono nombre="check-circle" className="me-1" />
                   ¡Objetivo alcanzado!
                 </span>
               ) : isPaused ? (
                 <span className="trainer-paused">
-                  <i className="bi bi-pause-circle me-1"></i>
+                  <Icono nombre="pause-circle" className="me-1" />
                   Pausado
                 </span>
               ) : (
@@ -158,14 +159,14 @@ function TempoTrainer({
               onClick={onTogglePause}
               disabled={!canControl || hasReachedTarget}
             >
-              <i className={`bi bi-${isPaused ? 'play' : 'pause'}-fill me-1`}></i>
+              <Icono nombre={isPaused ? "play" : "pause"} peso="fill" className="me-1" />
               {isPaused ? 'Reanudar' : 'Pausar'}
             </button>
             <button
               className="btn-trainer-control stop"
               onClick={onStop}
             >
-              <i className="bi bi-stop-fill me-1"></i>
+              <Icono nombre="stop" peso="fill" className="me-1" />
               Detener
             </button>
           </div>
