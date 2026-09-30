@@ -255,10 +255,15 @@ function useMetronome(initialPreferences = {}) {
    * Update sound preset
    */
   const updateSoundPreset = useCallback((newPreset) => {
-    if (SOUND_PRESETS[newPreset]) {
-      setSoundPreset(newPreset);
+    if (!SOUND_PRESETS[newPreset]) return;
+    setSoundPreset(newPreset);
+    // Parado, se oye al elegirlo (ya no hay botón de probar); sonando, el
+    // cambio se oye en el siguiente click
+    if (engineRef.current && !isPlaying) {
+      engineRef.current.setSoundPreset(newPreset);
+      engineRef.current.playTestSound().catch((err) => console.error('Error playing test sound:', err));
     }
-  }, []);
+  }, [isPlaying]);
 
   /**
    * Update volume (0-1)

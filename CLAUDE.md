@@ -233,7 +233,9 @@ aparecen en el código. Las vistas llevan el ícono de quien las lee: Notas `mus
 Letra `microphone-stage`, Acordes `guitar`. Lo que Phosphor no tiene se dibuja a su
 estilo en `components/iconosPropios.jsx` (rejilla de 256, trazo redondo, el grosor de cada
 peso): hoy, los tres de ordenar del Dashboard (`orden-nuevas`, `orden-az`, `orden-za`), la
-misma flecha con lo que va arriba y abajo. Ninguna librería seria tiene trompeta ni
+misma flecha con lo que va arriba y abajo, y tres sonidos del metrónomo (`claves`, `bombo`,
+`cencerro`). Los nombres que van en un mapa (como los de los sonidos) no los ve el test que
+busca `nombre="…"`: esos llevan su propio test en `Icono.test.jsx`. Ninguna librería seria tiene trompeta ni
 vientos: si hace falta, va ahí.
 
 **Audio:** Web Audio API via `packages/core/src/audio/` for metronome synthesis and pitch detection.
@@ -457,7 +459,7 @@ SPA (el orden importa).
 ## Notes
 
 - No TypeScript - pure JavaScript
-- Vitest configured; 1850 tests in `apps/web/src/test/` (run with `npm run test:run`)
+- Vitest configured; 1852 tests in `apps/web/src/test/` (run with `npm run test:run`)
 - Los tests se validan con **mutaciones**: se rompe el código a propósito y se comprueba
   que algún test falla. Ha destapado cuatro tests que pasaban por la razón equivocada,
   y un bug de verdad en `scores.js` (las voces se ordenaban como texto, así que la 10

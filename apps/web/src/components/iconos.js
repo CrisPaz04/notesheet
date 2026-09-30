@@ -42,6 +42,7 @@ import { GlobeIcon } from "@phosphor-icons/react/dist/csr/Globe";
 import { GoogleLogoIcon } from "@phosphor-icons/react/dist/csr/GoogleLogo";
 import { GridFourIcon } from "@phosphor-icons/react/dist/csr/GridFour";
 import { GuitarIcon } from "@phosphor-icons/react/dist/csr/Guitar";
+import { HandsClappingIcon } from "@phosphor-icons/react/dist/csr/HandsClapping";
 import { HandPointingIcon } from "@phosphor-icons/react/dist/csr/HandPointing";
 import { HandTapIcon } from "@phosphor-icons/react/dist/csr/HandTap";
 import { HeartIcon } from "@phosphor-icons/react/dist/csr/Heart";
@@ -109,13 +110,14 @@ import { VinylRecordIcon } from "@phosphor-icons/react/dist/csr/VinylRecord";
 import { WarningIcon } from "@phosphor-icons/react/dist/csr/Warning";
 import { WarningCircleIcon } from "@phosphor-icons/react/dist/csr/WarningCircle";
 import { WaveformIcon } from "@phosphor-icons/react/dist/csr/Waveform";
+import { WaveSquareIcon } from "@phosphor-icons/react/dist/csr/WaveSquare";
 import { WifiSlashIcon } from "@phosphor-icons/react/dist/csr/WifiSlash";
 import { WrenchIcon } from "@phosphor-icons/react/dist/csr/Wrench";
 import { XIcon } from "@phosphor-icons/react/dist/csr/X";
 import { XCircleIcon } from "@phosphor-icons/react/dist/csr/XCircle";
 
 // Los que Phosphor no tiene, dibujados a su estilo
-import { OrdenAZ, OrdenNuevas, OrdenZA } from "./iconosPropios";
+import { Bombo, Cencerro, Claves, OrdenAZ, OrdenNuevas, OrdenZA } from "./iconosPropios";
 
 export const ICONOS = {
   "apple-logo": AppleLogoIcon,
@@ -157,6 +159,7 @@ export const ICONOS = {
   "google-logo": GoogleLogoIcon,
   "grid-four": GridFourIcon,
   "guitar": GuitarIcon,
+  "hands-clapping": HandsClappingIcon,
   "hand-pointing": HandPointingIcon,
   "hand-tap": HandTapIcon,
   "heart": HeartIcon,
@@ -224,11 +227,15 @@ export const ICONOS = {
   "warning": WarningIcon,
   "warning-circle": WarningCircleIcon,
   "waveform": WaveformIcon,
+  "wave-square": WaveSquareIcon,
   "wifi-slash": WifiSlashIcon,
   "wrench": WrenchIcon,
   "x": XIcon,
   "x-circle": XCircleIcon,
   "orden-az": OrdenAZ,
   "orden-za": OrdenZA,
-  "orden-nuevas": OrdenNuevas
+  "orden-nuevas": OrdenNuevas,
+  "claves": Claves,
+  "bombo": Bombo,
+  "cencerro": Cencerro
 };

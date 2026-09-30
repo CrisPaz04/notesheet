@@ -122,7 +122,6 @@ function MetronomeCuerpo({ compact, mini, initialPreferences }) {
     updateSoundPreset,
     updateVolume,
     updateAcento,
-    testSound,
     tapTempo,
     incrementBpm,
     decrementBpm,
@@ -322,8 +321,6 @@ function MetronomeCuerpo({ compact, mini, initialPreferences }) {
             <SoundPresetSelector
               currentPreset={soundPreset}
               onPresetSelect={updateSoundPreset}
-              onTestSound={testSound}
-              isPlaying={isPlaying}
             />
           </div>
         </div>

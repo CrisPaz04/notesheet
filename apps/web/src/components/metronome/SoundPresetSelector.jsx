@@ -1,7 +1,8 @@
 /**
  * Sound Preset Selector Component
  *
- * Allows users to select different metronome click sounds
+ * Allows users to select different metronome click sounds. Al elegir uno
+ * suena (con el metrónomo parado): no hay botón de probar
  */
 
 import { SOUND_PRESETS } from '@notesheet/core/src/audio/metronomeEngine';
@@ -14,18 +15,16 @@ const PRESET_ICONS = {
   hiHat: 'disc',
   rimshot: 'lightning',
   softClick: 'speaker-low',
-  claves: 'music-note-simple',
-  cencerro: 'bell',
+  claves: 'claves',
+  cencerro: 'cencerro',
   palmas: 'hands-clapping',
-  bombo: 'circle',
+  bombo: 'bombo',
   electronico: 'wave-square'
 };
 
 function SoundPresetSelector({
   currentPreset,
-  onPresetSelect,
-  onTestSound,
-  isPlaying
+  onPresetSelect
 }) {
   return (
     <div className="sound-presets">
@@ -44,15 +43,6 @@ function SoundPresetSelector({
           </button>
         ))}
       </div>
-      <button
-        className="btn-test-sound mt-3"
-        onClick={onTestSound}
-        disabled={isPlaying}
-        title={isPlaying ? 'Ya está sonando' : undefined}
-      >
-        <Icono nombre="speaker-high" className="me-2" />
-        Probar Sonido
-      </button>
     </div>
   );
 }

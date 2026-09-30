@@ -293,6 +293,19 @@ describe('useMetronome', () => {
       expect(ultimoEngine().setVolume).toHaveBeenCalledWith(0.35);
     });
 
+    it('elegir un sonido parado lo hace sonar; sonando, no', async () => {
+      const { result } = renderHook(() => useMetronome());
+
+      act(() => result.current.updateSoundPreset('wood'));
+      expect(ultimoEngine().setSoundPreset).toHaveBeenLastCalledWith('wood');
+      expect(ultimoEngine().playTestSound).toHaveBeenCalledTimes(1);
+
+      await act(async () => { await result.current.start(); });
+      act(() => result.current.updateSoundPreset('classic'));
+      expect(result.current.soundPreset).toBe('classic');
+      expect(ultimoEngine().playTestSound).toHaveBeenCalledTimes(1);
+    });
+
     it('testSound suena solo con el metrónomo parado', async () => {
       const { result } = renderHook(() => useMetronome());
 

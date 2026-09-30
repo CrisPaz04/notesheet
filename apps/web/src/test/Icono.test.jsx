@@ -6,6 +6,8 @@ import { cwd } from 'node:process';
 import Icono from '../components/Icono';
 import { ICONOS } from '../components/iconos';
 import { getInstrumentIcon } from '@notesheet/core';
+import { SOUND_PRESETS } from '@notesheet/core/src/audio/metronomeEngine';
+import SoundPresetSelector from '../components/metronome/SoundPresetSelector';
 
 describe('Icono', () => {
   it('pinta el SVG dentro de un <i> con sus clases, oculto a los lectores', () => {
@@ -66,5 +68,15 @@ describe('los íconos que usa la app', () => {
     for (const inst of ['guitar', 'bass', 'violin', 'cello', 'otro']) {
       expect(ICONOS[getInstrumentIcon(inst)]).toBeDefined();
     }
+  });
+
+  // Van en un mapa del componente, que el patrón de arriba no ve: los cinco
+  // sonidos nuevos salieron sin ícono
+  it('cada sonido del metrónomo tiene su ícono', () => {
+    const { container } = render(<SoundPresetSelector currentPreset="classic" onPresetSelect={() => {}} />);
+    const botones = container.querySelectorAll(".sound-preset-btn");
+    const sinIcono = [...botones].filter((b) => /\w/.test(b.textContent) && !b.querySelector('svg')).map((b) => b.textContent.trim());
+    expect(sinIcono).toEqual([]);
+    expect(botones.length).toBe(Object.keys(SOUND_PRESETS).length);
   });
 });
