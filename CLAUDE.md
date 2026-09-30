@@ -119,6 +119,7 @@ falla con "term not recognized".
 # Development
 npm install                   # Install all dependencies (npm workspaces)
 npm run web                   # Start web dev server (localhost:5173)
+npm run web:red               # El mismo, en la red local y con HTTPS: para probar en la tablet
 npm run test:run              # Run the test suite
 npm run test:reglas           # Reglas de Firestore y Storage contra los emuladores (pide Java)
 npm run lint --workspace=web  # ESLint check
@@ -134,6 +135,15 @@ npm run mobile        # Start React Native
 npm run android       # Android build
 npm run ios           # iOS build
 ```
+
+**Probar en la tablet o el móvil** (`npm run web:red`, modo `red` en `vite.config.js`).
+`npm run web` solo escucha en `localhost`. Además, el navegador **solo da el micrófono en
+https o en localhost**: por `http://192.168.x.x` el afinador no arrancaría. Por eso este
+modo escucha en todas las interfaces y sirve HTTPS con un certificado autofirmado
+(`@vitejs/plugin-basic-ssl`); la primera vez el navegador avisa y hay que aceptarlo.
+Entrar con Google pide añadir la IP del PC en Firebase → Authentication → Settings →
+Authorized domains (con correo y contraseña no hace falta). El service worker no se
+registra con un certificado autofirmado: offline no se puede probar así.
 
 ## Architecture
 

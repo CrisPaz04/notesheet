@@ -4,8 +4,31 @@
     {
       "name": "notesheet-web",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev", "--workspace=web", "--", "--port", "5191", "--strictPort"],
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "--workspace=web",
+        "--",
+        "--port",
+        "5191",
+        "--strictPort"
+      ],
       "port": 5191
+    },
+    {
+      "name": "notesheet-web-red",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "dev:red",
+        "--workspace=web",
+        "--",
+        "--port",
+        "5192",
+        "--strictPort"
+      ],
+      "port": 5192,
+      "url": "https://localhost:5192"
     }
   ]
 }
