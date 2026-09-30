@@ -16,6 +16,17 @@
     gap: 1rem;
   }
   
+  .footer-identidad {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    min-width: 0;
+  }
+
+  .footer-lema {
+    font-size: 0.85rem;
+  }
+
   .footer-brand {
     display: flex;
     align-items: center;
@@ -64,6 +75,16 @@
   .footer-credito {
     font-size: 0.8rem;
     margin-top: 0.25rem;
+    line-height: 1.7;
+  }
+
+  /* Cada crédito entero en su renglón si no cabe junto al anterior */
+  .footer-credito-item {
+    white-space: nowrap;
+  }
+
+  .footer-credito-item .footer-link {
+    font-size: inherit;
   }
 
   .footer-divider {
@@ -73,16 +94,34 @@
     margin: 1rem 0 0.5rem 0;
   }
   
-  /* Responsive Footer */
-  @media (max-width: 768px) {
+  /* Solo el móvil apila y centra: en la tablet va en dos columnas (marca y
+     lema a la izquierda, enlaces a la derecha) */
+  @media (max-width: 575.98px) {
     .footer-content {
       flex-direction: column;
       text-align: center;
+    }
+
+    .footer-identidad {
+      align-items: center;
     }
     
     .footer-links {
       justify-content: center;
       flex-wrap: wrap;
+    }
+
+    /* En el móvil un crédito largo sí se parte: no cabe en un renglón */
+    .footer-credito-item {
+      white-space: normal;
+    }
+
+    .footer-credito-sep {
+      display: none;
+    }
+
+    .footer-credito-item {
+      display: block;
     }
   }
   
