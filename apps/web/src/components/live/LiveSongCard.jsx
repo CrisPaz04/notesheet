@@ -142,7 +142,7 @@ const LiveSongCard = forwardRef(function LiveSongCard({
         <p className="live-card-loading">Cargando…</p>
       )}
 
-      {cargada && <AvisoVista faltaba={eleccion.faltaba} esPdf={Boolean(song.pdf)} />}
+      {cargada && <AvisoVista faltaba={eleccion.faltaba} vista={eleccion.vista} esPdf={Boolean(song.pdf)} />}
 
       {eleccion.vista === "principal" ? (
         <>

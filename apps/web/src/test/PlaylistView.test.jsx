@@ -229,6 +229,18 @@ describe('PlaylistView: qué se ve de cada canción', () => {
     expect(document.querySelectorAll('.playlist-song-key')[0]).toHaveTextContent('SOL');
   });
 
+  // Una canción que la banda no toca: sin notas, solo la letra (el campo de
+  // "Solo letra" del editor). Antes salía un hueco en la lista.
+  it('una canción sin notas enseña su letra y lo dice', async () => {
+    mockGetSongById.mockImplementation(async (id) => (id === 's2'
+      ? { ...CANCIONES.s2, content: '## Intro\n\n## Verso', lyricsOnly: 'Cantaré de tu amor por siempre' }
+      : CON_ACORDES));
+    await renderLista();
+
+    expect(await screen.findByText(/no tiene notas: se muestra la letra/)).toBeInTheDocument();
+    expect(textoDeLaLista()).toMatch(/Cantaré de tu amor por siempre/);
+  });
+
   it('una canción sin acordes enseña sus notas y lo dice', async () => {
     mockGetUserPreferences.mockResolvedValue({ defaultInstrument: 'c_guitar' });
     await renderLista();

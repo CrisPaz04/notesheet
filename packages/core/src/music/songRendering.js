@@ -244,18 +244,40 @@ const tieneTexto = (formatted) =>
  * la vista de una canción sí se enseña la pestaña vacía con su aviso; aquí
  * sería un hueco en mitad de la lista.
  *
+ * Y si tampoco hay notas (una canción que la banda no toca y de la que solo
+ * se tiene la letra, para cantarla), la letra: antes salía un hueco.
+ *
  * @param {'principal'|'letra'|'acordes'} pedida
- * @param {{letra?: Object|null, acordes?: Object|null}} vistas - Las de `formatSong`
- * @returns {{vista: 'principal'|'letra'|'acordes', faltaba: 'letra'|'acordes'|null}}
+ * @param {{principal?: Object|null, letra?: Object|null, acordes?: Object|null}} vistas
+ *   - Las de `formatSong`. `principal` solo se pasa en las de texto: sin ella
+ *   (un PDF) se da por hecho que hay algo que enseñar
+ * @returns {{vista: 'principal'|'letra'|'acordes', faltaba: 'letra'|'acordes'|'notas'|null}}
  */
-export const elegirVista = (pedida, { letra = null, acordes = null } = {}) => {
+export const elegirVista = (pedida, { principal, letra = null, acordes = null } = {}) => {
   if (pedida === 'letra' && tieneTexto(letra)) return { vista: 'letra', faltaba: null };
   if (pedida === 'acordes' && tieneTexto(acordes)) return { vista: 'acordes', faltaba: null };
+
+  const sinNotas = principal !== undefined && !tieneTexto(principal);
+  if (sinNotas && tieneTexto(letra)) {
+    return { vista: 'letra', faltaba: pedida === 'acordes' ? 'acordes' : 'notas' };
+  }
   return {
     vista: 'principal',
     faltaba: pedida === 'letra' || pedida === 'acordes' ? pedida : null
   };
 };
+
+/**
+ * La letra de una canción de texto: la que va entre las notas y, si ahí no
+ * hay, la de "Solo letra" del editor (`lyricsOnly`). Una canción que la banda
+ * solo canta no tiene notas, y su letra solo está en ese campo.
+ *
+ * @param {Object|null} deLasNotas - `lyricsOnly` de `renderSongContent`
+ * @param {string} [lyricsOnly] - El campo de la canción
+ * @returns {Object|null}
+ */
+export const letraDeLaCancion = (deLasNotas, lyricsOnly) =>
+  (tieneTexto(deLasNotas) ? deLasNotas : formatLyrics(lyricsOnly) || deLasNotas);
 
 /**
  * Construye la lista plana de voces disponibles de una canción a partir de

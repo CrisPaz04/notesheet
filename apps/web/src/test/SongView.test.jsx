@@ -547,6 +547,17 @@ describe('SongView: acordes', () => {
     await waitFor(() => expect(pestana('Letra')).toHaveClass('active'));
   });
 
+  // Una canción que la banda no toca: sin notas y con la letra en "Solo letra"
+  it('una canción sin notas se abre en su letra, también para la trompeta', async () => {
+    mockAuth.currentUser = { uid: 'user-1' };
+    mockGetSongById.mockResolvedValue({
+      ...SONG, content: '', voices: { bb_trumpet: { 1: '' } }, lyricsOnly: 'Cantaré de tu amor por siempre'
+    });
+    await renderSongView();
+    await waitFor(() => expect(pestana('Letra')).toHaveClass('active'));
+    expect(screen.getByText(/Cantaré de tu amor por siempre/)).toBeInTheDocument();
+  });
+
   it('quien toca guitarra no abre en una pestaña de acordes vacía', async () => {
     mockAuth.currentUser = { uid: 'user-1' };
     mockGetUserPreferences.mockResolvedValue({ defaultInstrument: 'c_guitar' });

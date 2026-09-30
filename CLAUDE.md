@@ -275,7 +275,10 @@ en Storage, nunca la URL de descarga).
   es una para todas: un selector Notas · Letra · Acordes (`SelectorVista`) que arranca
   en la del instrumento. La canción que no tenga la elegida enseña sus notas (o su
   partitura) con una línea que lo dice, en vez de un hueco (`elegirVista`,
-  `AvisoVista`). La lista pinta ya **en el instrumento del músico**, como la canción y
+  `AvisoVista`). Y si tampoco tiene notas (una que la banda no toca y solo canta),
+  **su letra**, en la lista, la sesión en vivo y al abrir la canción. La letra de una
+  canción de texto es la que va entre las notas y, si ahí no hay, la de "Solo letra"
+  del editor (`letraDeLaCancion`): antes una canción con solo ese campo no enseñaba nada. La lista pinta ya **en el instrumento del músico**, como la canción y
   la sesión (antes las notas iban siempre en la referencia de Sib y la etiqueta de
   tonalidad no casaba con los acordes en concierto).
 - En un PDF la tonalidad que se enseña es **la de la parte que se ve**
@@ -305,7 +308,8 @@ transponer para esa ocasión sin tocar la del repertorio.
 `mensajeDirector` es `{ texto, enlaces }` o null: el mensaje de WhatsApp tal cual se pegó
 al armar la lista, y `enlaces` (nº de línea → id de canción) son las coincidencias que el
 músico **confirmó** al importar; no se vuelven a adivinar. Es lo que enseña el panel
-"Lista". Pasa siempre por `limpiarMensajeDirector` (`setlist.js`) al guardar y al abrir
+"Lista" (`PanelLista.jsx`); las canciones añadidas a la lista después, que no salen en el
+mensaje, se intercalan en su sitio (tras la que las precede en la lista), sin cabecera. Pasa siempre por `limpiarMensajeDirector` (`setlist.js`) al guardar y al abrir
 una sesión, que lo copia como copia las canciones.
 
 Al guardar una lista como pública se publican sus canciones propias privadas
@@ -459,7 +463,7 @@ SPA (el orden importa).
 ## Notes
 
 - No TypeScript - pure JavaScript
-- Vitest configured; 1907 tests in `apps/web/src/test/` (run with `npm run test:run`)
+- Vitest configured; 1915 tests in `apps/web/src/test/` (run with `npm run test:run`)
 - Los tests se validan con **mutaciones**: se rompe el código a propósito y se comprueba
   que algún test falla. Ha destapado cuatro tests que pasaban por la razón equivocada,
   y un bug de verdad en `scores.js` (las voces se ordenaban como texto, así que la 10

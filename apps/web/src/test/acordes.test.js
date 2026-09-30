@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { renderChordChart, CHORDS_SOURCE_INSTRUMENT, vistaPreferida, elegirVista } from '@notesheet/core';
+import { renderChordChart, CHORDS_SOURCE_INSTRUMENT, vistaPreferida, elegirVista, letraDeLaCancion } from '@notesheet/core';
 
 // Los acordes (`song.acordes`) se guardan en concierto, como los escribe el
 // guitarrista, y se muestran con el mismo recorrido que las notas.
@@ -93,5 +93,33 @@ describe('elegirVista: qué se enseña en una lista', () => {
     expect(elegirVista('acordes', { letra: con('x'), acordes: null })).toEqual({ vista: 'principal', faltaba: 'acordes' });
     expect(elegirVista('letra', { letra: vacia })).toEqual({ vista: 'principal', faltaba: 'letra' });
     expect(elegirVista('letra', undefined)).toEqual({ vista: 'principal', faltaba: 'letra' });
+  });
+
+  // Una canción que la banda no toca: solo tiene letra, para cantarla
+  it('sin notas pero con letra, la letra en vez de un hueco', () => {
+    expect(elegirVista('principal', { principal: vacia, letra: con('Cantaré') }))
+      .toEqual({ vista: 'letra', faltaba: 'notas' });
+    expect(elegirVista('principal', { principal: null, letra: con('Cantaré') }))
+      .toEqual({ vista: 'letra', faltaba: 'notas' });
+    expect(elegirVista('acordes', { principal: vacia, letra: con('Cantaré'), acordes: null }))
+      .toEqual({ vista: 'letra', faltaba: 'acordes' });
+  });
+
+  it('con notas, o en un PDF (sin principal de texto), lo de siempre', () => {
+    expect(elegirVista('principal', { principal: con('DO RE'), letra: con('x') }))
+      .toEqual({ vista: 'principal', faltaba: null });
+    expect(elegirVista('principal', { letra: con('x') })).toEqual({ vista: 'principal', faltaba: null });
+    // Sin notas ni letra no hay nada mejor que enseñar
+    expect(elegirVista('principal', { principal: vacia, letra: null })).toEqual({ vista: 'principal', faltaba: null });
+  });
+});
+
+describe('letraDeLaCancion', () => {
+  const con = (t) => ({ sections: [{ title: '', content: t }] });
+
+  it('la de entre las notas; si ahí no hay, la de "Solo letra"', () => {
+    expect(letraDeLaCancion(con('De las notas'), 'Del campo')).toEqual(con('De las notas'));
+    expect(letraDeLaCancion(null, 'Cantaré al Señor')?.sections[0].content).toMatch(/Cantaré al Señor/);
+    expect(letraDeLaCancion({ sections: [] }, '')).toEqual({ sections: [] });
   });
 });

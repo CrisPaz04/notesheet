@@ -3,6 +3,7 @@ import { getSongById } from "@notesheet/api";
 import {
   renderSongContent,
   renderChordChart,
+  letraDeLaCancion,
   formatLyrics,
   buildVoicesList,
   resolveVoiceForMusician,
@@ -174,7 +175,9 @@ export default function useLiveSetlistContent({
 
     // La letra y los acordes, listos para quien elija verlos (`elegirVista`)
     const vistas = {
-      letra: rendered.lyricsOnly,
+      // Sin notas (una que solo se canta) se enseña la letra (`elegirVista`)
+      principal: rendered.formatted,
+      letra: letraDeLaCancion(rendered.lyricsOnly, doc.lyricsOnly),
       acordes: renderChordChart(doc.acordes, opciones)
     };
 

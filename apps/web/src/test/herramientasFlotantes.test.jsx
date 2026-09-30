@@ -123,6 +123,52 @@ describe('Panel "Lista"', () => {
     expect(linea.closest('button')).toBeNull();
   });
 
+  // Se añadieron a la lista después de importar el mensaje: antes no salían
+  const textoDelPanel = () =>
+    [...screen.getByLabelText('Lista').querySelectorAll('.panel-lista--mensaje > *')].map((n) => n.textContent);
+
+  it('una añadida entre dos canciones sale entre ellas, no al final', () => {
+    const lista = [CANCIONES[0], { id: 'c', title: 'Amigo Fiel', key: 'FA#' }, CANCIONES[1]];
+    render(<HerramientasFlotantes lista={{ mensaje: MENSAJE, canciones: lista, onIr: vi.fn() }} />);
+    abrir('Lista');
+    expect(textoDelPanel()).toEqual([
+      'Intro', 'Por quién eres tú (Coalo)DO', 'Amigo FielFA#',
+      'Moderadas', 'MIm', 'Tu fidelidad (Ingrid Rosario)MIm', 'Una que se quitó'
+    ]);
+  });
+
+  it('una añadida antes de todas sale delante de la primera canción del mensaje', () => {
+    const lista = [{ id: 'c', title: 'Amigo Fiel', key: 'FA#' }, ...CANCIONES];
+    render(<HerramientasFlotantes lista={{ mensaje: MENSAJE, canciones: lista, onIr: vi.fn() }} />);
+    abrir('Lista');
+    expect(textoDelPanel().slice(0, 3)).toEqual(['Intro', 'Amigo FielFA#', 'Por quién eres tú (Coalo)DO']);
+  });
+
+  it('una añadida al final de la lista va tras la última canción, sin título aparte', () => {
+    const onIr = vi.fn();
+    const conAñadida = [...CANCIONES, { id: 'c', title: 'Amigo Fiel', key: 'FA#' }];
+    render(<HerramientasFlotantes lista={{ mensaje: MENSAJE, canciones: conAñadida, onIr }} />);
+    abrir('Lista');
+
+    // Detrás de "Tu fidelidad", que es la anterior en la lista; la línea de
+    // la canción que se quitó sigue en su sitio del mensaje
+    expect(textoDelPanel().slice(-3)).toEqual(['Tu fidelidad (Ingrid Rosario)MIm', 'Amigo FielFA#', 'Una que se quitó']);
+    const panel = screen.getByLabelText('Lista');
+    // Las del mensaje no se repiten, ni sale una cabecera nueva
+    expect(within(panel).queryByText('Por Quién Eres Tú')).toBeNull();
+    expect([...panel.querySelectorAll('.panel-lista-seccion')].map((n) => n.textContent)).toEqual(['Intro', 'Moderadas']);
+
+    fireEvent.click(within(panel).getByRole('button', { name: /Amigo Fiel/ }));
+    expect(onIr).toHaveBeenCalledWith('c');
+  });
+
+  it('si ninguna canción del mensaje sigue en la lista, las añadidas van al final', () => {
+    const lista = [{ id: 'c', title: 'Amigo Fiel', key: 'FA#' }];
+    render(<HerramientasFlotantes lista={{ mensaje: MENSAJE, canciones: lista, onIr: vi.fn() }} />);
+    abrir('Lista');
+    expect(textoDelPanel().at(-1)).toBe('Amigo FielFA#');
+  });
+
   it('sin mensaje, la lista numerada con su tonalidad, y marca la que suena', () => {
     render(<HerramientasFlotantes lista={{ mensaje: null, canciones: CANCIONES, activaId: 'b', onIr: vi.fn() }} />);
     abrir('Lista');

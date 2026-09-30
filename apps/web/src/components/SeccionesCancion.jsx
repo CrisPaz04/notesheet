@@ -25,11 +25,23 @@ export function SeccionesCancion({ formatted, alineacion, fontSize }) {
  * por eso se enseña la principal (ver `elegirVista`).
  *
  * @param {Object} props
- * @param {'letra'|'acordes'|null} props.faltaba
+ * @param {'letra'|'acordes'|'notas'|null} props.faltaba
+ * @param {'principal'|'letra'|'acordes'} [props.vista] - La que se enseña en su lugar
  * @param {boolean} [props.esPdf]
  */
-export function AvisoVista({ faltaba, esPdf = false }) {
+export function AvisoVista({ faltaba, vista = "principal", esPdf = false }) {
   if (!faltaba) return null;
+  // Sin notas ni lo pedido: se enseña la letra, para cantarla
+  if (vista === "letra") {
+    return (
+      <p className="vista-aviso">
+        <Icono nombre="microphone-stage" className="me-1" />
+        {faltaba === "acordes"
+          ? "Esta canción no tiene acordes ni notas: se muestra la letra."
+          : "Esta canción no tiene notas: se muestra la letra."}
+      </p>
+    );
+  }
   return (
     <p className="vista-aviso">
       <Icono nombre="info" className="me-1" />

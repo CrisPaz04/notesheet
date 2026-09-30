@@ -17,6 +17,7 @@ import {
   renderSongContent,
   renderChordChart,
   formatLyrics,
+  letraDeLaCancion,
   buildVoicesList,
   parseVoiceKey,
   resolveVoiceForMusician,
@@ -185,10 +186,11 @@ function SongView() {
   useEffect(() => {
     if (!song || vistaInicialDe.current === song.id) return;
     vistaInicialDe.current = song.id;
-    const preferida = vistaPreferida(currentInstrument, {
-      hayLetra: tieneLetra && formattedLyricsOnly?.sections?.length > 0,
-      hayAcordes
-    });
+    const hayLetra = tieneLetra && formattedLyricsOnly?.sections?.length > 0;
+    // Sin notas (una que la banda solo canta) se abre en la letra
+    const preferida = !esPdf && !conTexto(formattedSong) && hayLetra
+      ? 'letra'
+      : vistaPreferida(currentInstrument, { hayLetra, hayAcordes });
     if (indiceDe(preferida) > 0) setActiveView(indiceDe(preferida));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [song]);
@@ -200,7 +202,8 @@ function SongView() {
    * todavia no esta en el estado de este render.
    */
   const applyRender = (content, overrides = {}) => {
-    const { acordes = song?.acordes, ...opciones } = overrides;
+    // `acordes` y `lyricsOnly` se pasan al cargar: la canción aún no está en el estado
+    const { acordes = song?.acordes, lyricsOnly = song?.lyricsOnly, ...opciones } = overrides;
     const todas = {
       baseKey,
       targetKey,
@@ -215,7 +218,8 @@ function SongView() {
     setFormattedAcordes(renderChordChart(acordes, todas));
 
     setFormattedSong(rendered.formatted);
-    setFormattedLyricsOnly(rendered.lyricsOnly);
+    // Si las notas no traen letra, la de "Solo letra" (una que solo se canta)
+    setFormattedLyricsOnly(letraDeLaCancion(rendered.lyricsOnly, lyricsOnly));
     setDisplayKey(rendered.displayKey);
     setSoundingKey(rendered.soundingKey);
   };
@@ -339,7 +343,8 @@ function SongView() {
             targetKey: songKey,
             instrument,
             notationSystem: notation,
-            acordes: loadedSong.acordes
+            acordes: loadedSong.acordes,
+            lyricsOnly: loadedSong.lyricsOnly
           });
         }
         // Canciones del mismo álbum. Solo se consulta el repertorio si esta

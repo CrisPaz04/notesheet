@@ -9,6 +9,7 @@ import {
   renderChordChart,
   formatLyrics,
   elegirVista,
+  letraDeLaCancion,
   vistaPreferida,
   resolveVoiceForMusician,
   tonalidadDeLaParte,
@@ -179,7 +180,12 @@ function PlaylistView() {
       ...song,
       formattedContent: formatted,
       displayKey,
-      vistas: { letra: lyricsOnly, acordes: renderChordChart(song.acordes, opciones) }
+      vistas: {
+        // Sin notas (una que solo se canta) se enseña la letra (`elegirVista`)
+        principal: formatted,
+        letra: letraDeLaCancion(lyricsOnly, song.lyricsOnly),
+        acordes: renderChordChart(song.acordes, opciones)
+      }
     };
   }), [songs, notacion, instrumento, numeroVoz, preferenciasPdf]);
 
@@ -477,7 +483,7 @@ function PlaylistView() {
                   
                   {song.eleccion && (
                     <>
-                      <AvisoVista faltaba={song.eleccion.faltaba} esPdf={isPdfSong(song)} />
+                      <AvisoVista faltaba={song.eleccion.faltaba} vista={song.eleccion.vista} esPdf={isPdfSong(song)} />
                       {song.eleccion.vista !== "principal" && (
                         <div className="song-content-section">
                           <SeccionesCancion
