@@ -209,12 +209,14 @@ describe('capo', () => {
   });
 
   it('baja los acordes que se leen', () => {
-    // El DO del Intro llega a LA# en guitarra (-2), y con capo 2 baja a SOL#.
+    // El DO del Intro llega a SIb en guitarra (-2), y con capo 2 baja a LAb.
+    // SIb, no LA#: es la tonalidad de la guitarra la que decide (ortografia.js).
     const sinCapo = guitarra(0).formatted.sections[0].content;
     const conCapo = guitarra(2).formatted.sections[0].content;
 
-    expect(sinCapo).toContain('LA#');
-    expect(conCapo).toContain('SOL#');
+    expect(sinCapo).toContain('SIb');
+    expect(sinCapo).not.toContain('LA#');
+    expect(conCapo).toContain('LAb');
     expect(conCapo).not.toBe(sinCapo);
   });
 
@@ -226,9 +228,9 @@ describe('capo', () => {
     const sinCapo = guitarra(0);
     const conCapo = guitarra(2);
 
-    expect(sinCapo.soundingKey).toBe('LA#');
-    expect(conCapo.soundingKey).toBe('LA#'); // la banda sigue oyendo lo mismo
-    expect(conCapo.displayKey).toBe('SOL#'); // pero él lee dos semitonos abajo
+    expect(sinCapo.soundingKey).toBe('SIb');
+    expect(conCapo.soundingKey).toBe('SIb'); // la banda sigue oyendo lo mismo
+    expect(conCapo.displayKey).toBe('LAb'); // pero él lee dos semitonos abajo
 
     // El primer acorde del Intro es la tónica: tiene que coincidir con la
     // tonalidad que se anuncia en pantalla.

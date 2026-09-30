@@ -217,10 +217,12 @@ export function midiToFrequency(midiNote, referenceFreq = 440) {
 /**
  * Get note name from MIDI number
  * @param {number} midiNote - MIDI note number
- * @returns {string} - Note name (e.g., "C4", "F#5")
+ * @returns {string} - Note name (e.g., "C4", "F#5", "Bb3")
  */
 export function midiToNoteName(midiNote) {
-  const noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+  // Como las nombra un músico de banda: Eb, Ab y Bb, no D#, G# y A#
+  // (ORTOGRAFIA_NEUTRA en music/ortografia.js)
+  const noteNames = ['C', 'C#', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B'];
   const octave = Math.floor(midiNote / 12) - 1;
   const noteName = noteNames[midiNote % 12];
   return `${noteName}${octave}`;
@@ -232,7 +234,9 @@ export function midiToNoteName(midiNote) {
  * @returns {string} - Note name (e.g., "DO4", "FA#5")
  */
 export function midiToNoteNameLatin(midiNote) {
-  const noteNames = ['DO', 'DO#', 'RE', 'RE#', 'MI', 'FA', 'FA#', 'SOL', 'SOL#', 'LA', 'LA#', 'SI'];
+  // El afinador no sabe en qué tonalidad se toca: la ortografía de banda,
+  // SIb y MIb (antes salía "suena LA#4" al tocar el DO de la trompeta)
+  const noteNames = ['DO', 'DO#', 'RE', 'MIb', 'MI', 'FA', 'FA#', 'SOL', 'LAb', 'LA', 'SIb', 'SI'];
   const octave = Math.floor(midiNote / 12) - 1;
   const noteName = noteNames[midiNote % 12];
   return `${noteName}${octave}`;

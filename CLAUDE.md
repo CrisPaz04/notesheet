@@ -459,7 +459,7 @@ SPA (el orden importa).
 ## Notes
 
 - No TypeScript - pure JavaScript
-- Vitest configured; 1880 tests in `apps/web/src/test/` (run with `npm run test:run`)
+- Vitest configured; 1907 tests in `apps/web/src/test/` (run with `npm run test:run`)
 - Los tests se validan con **mutaciones**: se rompe el código a propósito y se comprueba
   que algún test falla. Ha destapado cuatro tests que pasaban por la razón equivocada,
   y un bug de verdad en `scores.js` (las voces se ordenaban como texto, así que la 10
@@ -472,6 +472,18 @@ SPA (el orden importa).
 - The song rendering pipeline (transposición → instrumento → notación → formato)
   lives in `packages/core/src/music/songRendering.js`. Úsalo en vez de encadenar
   `transposeContent` / `transposeForInstrument` / `convertNotationSystem` a mano.
+- **Ortografía** (`packages/core/src/music/ortografia.js`): cómo se escribe cada nota, SIb o
+  LA#. Sale de la **tonalidad en la que se lee**, no de la nota de partida: bemoles en las
+  de bemoles, sostenidos en las de sostenidos, y en DO (o sin tonalidad, como el afinador)
+  la de banda: DO#, MIb, FA#, LAb, SIb. En las menores, la sensible con sostenido (DO# en
+  REm, SOL# en LAm). Nunca MI#, SI#, FAb ni DOb. Una tonalidad transpuesta toma su nombre
+  habitual, el de menos alteraciones (`transposeKeyBySemitones`: DO de trompeta es SIb de
+  concierto, no LA#); en los empates FA#/SOLb y RE#m/MIbm decide la armadura de partida.
+  `renderSongContent` y `renderChordChart` mueven el contenido **de una vez** (tonalidad +
+  instrumento − cejilla) con la ortografía de `displayKey`, así que la etiqueta y la
+  primera nota casan siempre; antes eran tres pasos y cada uno conservaba la alteración que
+  recibía. Sin movimiento (o a una octava) no se reescribe: se lee lo que escribió la banda.
+  `ortografia.test.js` lo comprueba en todas las tonalidades, instrumentos y cejillas.
 - Un acorde solo se reconoce dentro de una **línea de acordes**
   (`packages/core/src/music/chords.js`). No amplíes los regex de notas para
   cubrir sufijos: la letra en español se destroza ("Amor" -> "LAmor"). Usa
@@ -672,17 +684,6 @@ SPA (el orden importa).
 Trabajo acordado que **todavía no está hecho**. Cada punto se aborda por
 separado; lo que lleva una nota es porque ya se comprobó en el código y
 ahorra volver a buscarlo.
-
-### Música: la ortografía de las tonalidades
-
-Un instrumento en DO lee **LA#** donde se escribe SIb, y **RE#** donde MIb: tanto la
-etiqueta de tonalidad como las notas. `transposeBySemitones` y
-`transposeKeyBySemitones` conservan el bemol o el sostenido de la nota de partida, y
-DO o FA no tienen ninguno. Además `getKeySignature` (`transposition.js`) mira la raíz
-de una menor y no su armadura (trata SOLm como de sostenidos). Se probó arreglar solo
-las tonalidades y la etiqueta dejó de coincidir con el primer acorde (lo vigila
-`songRendering.test.js`): hay que hacerlo en todo el recorrido a la vez (notas,
-tonalidades, capo y acordes), comprobándolo contra el repertorio.
 
 ### Modelo de datos
 

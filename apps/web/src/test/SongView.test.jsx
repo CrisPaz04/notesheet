@@ -376,14 +376,14 @@ describe('SongView', () => {
       await elegirInstrumento(user, 'Guitarra');
       await waitFor(() => screen.getByRole('button', { name: /Sin capo/i }));
 
-      // DO en trompeta llega a LA# en guitarra; con capo II baja a SOL#.
-      expect(screen.getAllByText(/LA#/).length).toBeGreaterThan(0);
+      // DO en trompeta llega a SIb en guitarra; con capo II baja a LAb.
+      expect(screen.getAllByText(/SIb/).length).toBeGreaterThan(0);
 
       await user.click(screen.getByRole('button', { name: /Sin capo/i }));
       await user.click(screen.getByText('Traste II'));
 
       await waitFor(() => {
-        expect(screen.getAllByText(/SOL#/).length).toBeGreaterThan(0);
+        expect(screen.getAllByText(/LAb/).length).toBeGreaterThan(0);
       });
     });
 
@@ -400,7 +400,7 @@ describe('SongView', () => {
       await user.click(screen.getByText('Traste II'));
 
       await waitFor(() => {
-        expect(screen.getByText(/capo II, suena en LA#/)).toBeInTheDocument();
+        expect(screen.getByText(/capo II, suena en SIb/)).toBeInTheDocument();
       });
     });
 
@@ -424,8 +424,8 @@ describe('SongView', () => {
       });
 
       // La flauta tiene la misma transposición que la guitarra (-2): si el
-      // capo hubiera sobrevivido, aquí se leería SOL# en vez de LA#.
-      expect(screen.getAllByText(/LA#/).length).toBeGreaterThan(0);
+      // capo hubiera sobrevivido, aquí se leería LAb en vez de SIb.
+      expect(screen.getAllByText(/SIb/).length).toBeGreaterThan(0);
     });
   });
 });

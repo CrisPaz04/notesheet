@@ -92,7 +92,8 @@ describe('Tuner (página)', () => {
     render(<Tuner />);
     await diapasonEnPantalla();
     const notas = [...document.querySelectorAll('.reference-note-btn')].map((b) => b.textContent);
-    expect(notas).toEqual(['DO', 'DO#', 'RE', 'RE#', 'MI', 'FA', 'FA#', 'SOL', 'SOL#', 'LA', 'LA#', 'SI']);
+    // Con la ortografía de banda: MIb, LAb y SIb (ORTOGRAFIA_NEUTRA)
+    expect(notas).toEqual(['DO', 'DO#', 'RE', 'MIb', 'MI', 'FA', 'FA#', 'SOL', 'LAb', 'LA', 'SIb', 'SI']);
 
     // El LA en la octava 4 es el del diapasón; en la 3, una octava abajo
     expect(screen.getByRole('button', { name: 'LA' })).toHaveAttribute('title', 'LA4 · 440.0 Hz');

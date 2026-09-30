@@ -17,6 +17,7 @@ export * from './music/keySuggestion';
 export * from './music/versiones';
 export * from './music/datosCancion';
 export * from './music/busqueda';
+export * from './music/ortografia';
 
 // Audio utilities
 export * from './audio/audioContext';

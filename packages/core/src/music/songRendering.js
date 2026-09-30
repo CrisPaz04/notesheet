@@ -8,20 +8,51 @@
 // bugs del selector de voces y de las dobles alteraciones. Aquí vive una
 // sola versión, pura y testeable.
 
-import { transposeContent } from './transposition';
+import { getKeyDistance } from './transposition';
 import { convertNotationSystem, formatSong } from './notation';
 import {
-  transposeForInstrument,
   transposeBySemitones,
   transposeKeyBySemitones,
   getVisualKeyForInstrument
 } from './transposition-helper';
+import { TRANSPOSING_INSTRUMENTS } from './instruments';
+import { ortografiaDe } from './ortografia';
 import { splitChordSegment } from './chords';
 import { vozParaMusico } from './voces';
 
 // Las voces se escriben siempre en la tonalidad de trompeta en Sib; el resto
 // de instrumentos se obtiene transponiendo desde esa referencia.
 export const SOURCE_INSTRUMENT = 'bb_trumpet';
+
+// Semitonos entre dos tonalidades (0 si falta alguna o no se reconoce: se
+// deja el contenido como está, como hacía `transposeContent` al fallar)
+const distanciaEntre = (baseKey, targetKey) => {
+  if (!baseKey || !targetKey || baseKey === targetKey) return 0;
+  try {
+    return getKeyDistance(baseKey, targetKey);
+  } catch {
+    return 0;
+  }
+};
+
+const transposicionDe = (instrumento) => TRANSPOSING_INSTRUMENTS[instrumento]?.transposition || 0;
+
+const trasteDe = (capo) => (Number.isInteger(capo) && capo > 0 ? capo : 0);
+
+/**
+ * Mueve el contenido de golpe (tonalidad + instrumento − cejilla) y escribe
+ * cada nota como en la tonalidad que se lee (`ortografiaDe(tonoDeLectura)`).
+ *
+ * Antes eran tres pasos, y cada uno conservaba la alteración de la nota que
+ * recibía: el DO de la trompeta llegaba a LA# en un instrumento en DO, y la
+ * etiqueta, calculada igual, decía LA# también. Ahora las dos salen de la
+ * misma tonalidad, así que siguen casando. Sin movimiento (o una octava justa)
+ * no se toca: se lee tal cual lo escribió la banda.
+ */
+const moverYEscribir = (contenido, semitonos, tonoDeLectura) => {
+  if (semitonos % 12 === 0) return contenido;
+  return transposeBySemitones(contenido, semitonos, ortografiaDe(tonoDeLectura));
+};
 
 /**
  * Funde varias secciones en una sola.
@@ -130,33 +161,26 @@ export const renderSongContent = (content, {
   notationSystem = 'latin',
   capo = 0
 } = {}) => {
-  let processed = content || '';
-
-  if (targetKey && baseKey && targetKey !== baseKey) {
-    processed = transposeContent(processed, baseKey, targetKey);
-  }
-
-  if (instrument !== SOURCE_INSTRUMENT) {
-    processed = transposeForInstrument(processed, SOURCE_INSTRUMENT, instrument);
-  }
-
   // Un capo negativo o no numérico no significa nada: se ignora.
-  const trasteCapo = Number.isInteger(capo) && capo > 0 ? capo : 0;
-  if (trasteCapo) {
-    processed = transposeBySemitones(processed, -trasteCapo);
-  }
+  const trasteCapo = trasteDe(capo);
+  const soundingKey = getVisualKeyForInstrument(targetKey || baseKey, instrument);
+  const displayKey = transposeKeyBySemitones(soundingKey, -trasteCapo);
+
+  const semitonos = distanciaEntre(baseKey, targetKey)
+    + transposicionDe(instrument) - transposicionDe(SOURCE_INSTRUMENT)
+    - trasteCapo;
+  let processed = moverYEscribir(content || '', semitonos, displayKey);
 
   // `convertNotationSystem` es idempotente: aplicarla siempre mantiene el
   // sistema elegido aunque la canción se haya escrito en el otro.
   processed = convertNotationSystem(processed, notationSystem);
 
   const formatted = formatSong(processed);
-  const soundingKey = getVisualKeyForInstrument(targetKey || baseKey, instrument);
 
   return {
     formatted,
     lyricsOnly: extractLyricsSections(formatted),
-    displayKey: transposeKeyBySemitones(soundingKey, -trasteCapo),
+    displayKey,
     soundingKey
   };
 };
@@ -178,9 +202,9 @@ export const CHORDS_SOURCE_INSTRUMENT = 'c_guitar';
  * que las notas: tonalidad, instrumento, cejilla y notación.
  *
  * Las tonalidades (`baseKey`, `targetKey`) son las de la canción, que están en
- * la referencia de Sib como `key`. Se pasan a concierto antes de transponer:
- * la distancia es la misma, pero `transposeContent` elige bemoles o
- * sostenidos según la tonalidad, y la buena es la que están escritos.
+ * la referencia de Sib como `key`: la distancia entre ellas es la misma en
+ * concierto, y la ortografía sale de la tonalidad en la que lee el músico,
+ * como en las notas.
  *
  * @param {string} acordes - `song.acordes`, en concierto
  * @param {Object} options - Las mismas de `renderSongContent`
@@ -195,25 +219,16 @@ export const renderChordChart = (acordes, {
 } = {}) => {
   if (!acordes || !acordes.trim()) return null;
 
-  let processed = acordes;
+  const trasteCapo = trasteDe(capo);
+  const tonoDeLectura = transposeKeyBySemitones(
+    getVisualKeyForInstrument(targetKey || baseKey, instrument),
+    -trasteCapo
+  );
+  const semitonos = distanciaEntre(baseKey, targetKey)
+    + transposicionDe(instrument) - transposicionDe(CHORDS_SOURCE_INSTRUMENT)
+    - trasteCapo;
 
-  if (targetKey && baseKey && targetKey !== baseKey) {
-    processed = transposeContent(
-      processed,
-      getVisualKeyForInstrument(baseKey, CHORDS_SOURCE_INSTRUMENT),
-      getVisualKeyForInstrument(targetKey, CHORDS_SOURCE_INSTRUMENT)
-    );
-  }
-
-  if (instrument !== CHORDS_SOURCE_INSTRUMENT) {
-    processed = transposeForInstrument(processed, CHORDS_SOURCE_INSTRUMENT, instrument);
-  }
-
-  const trasteCapo = Number.isInteger(capo) && capo > 0 ? capo : 0;
-  if (trasteCapo) {
-    processed = transposeBySemitones(processed, -trasteCapo);
-  }
-
+  const processed = moverYEscribir(acordes, semitonos, tonoDeLectura);
   return formatSong(convertNotationSystem(processed, notationSystem));
 };
 

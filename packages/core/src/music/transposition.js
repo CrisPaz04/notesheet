@@ -1,6 +1,7 @@
 // packages/core/src/music/transposition.js
 
 import { mapChordLine, countChordRoots } from './chords';
+import { ortografiaDe, nombrarNota } from './ortografia';
 
 // Definición de notas en notación latina y anglosajona
 const LATIN_NOTES = ['DO', 'DO#', 'RE', 'RE#', 'MI', 'FA', 'FA#', 'SOL', 'SOL#', 'LA', 'LA#', 'SI'];
@@ -145,7 +146,9 @@ const convertNoteToSignature = (note, keySignature) => {
  * @param {string} note - La nota a transponer
  * @param {number} semitones - Cantidad de semitonos a transponer
  * @param {string} targetSystem - Sistema de notación objetivo ('latin' o 'english')
- * @param {string} keySignature - 'sharp' o 'flat' para determinar notación
+ * @param {string|string[]} keySignature - 'sharp' o 'flat', o la ortografía
+ *   de la tonalidad de destino (`ortografiaDe`), que es lo que usa
+ *   `transposeContent`
  * @returns {string} La nota transpuesta
  */
 export const transposeNote = (note, semitones, targetSystem = null, keySignature = 'natural') => {
@@ -168,7 +171,12 @@ export const transposeNote = (note, semitones, targetSystem = null, keySignature
   // Calcular el nuevo índice después de transponer
   const notesArray = sourceSystem === 'latin' ? LATIN_NOTES : ENGLISH_NOTES;
   const totalNotes = notesArray.length;
-  const newIndex = (noteIndex + semitones + totalNotes) % totalNotes;
+  const newIndex = ((noteIndex + semitones) % totalNotes + totalNotes) % totalNotes;
+
+  if (Array.isArray(keySignature)) {
+    const nombre = nombrarNota(newIndex, keySignature, outputSystem);
+    return isMinor ? nombre + 'm' : nombre;
+  }
   
   // Obtener la nueva nota en el sistema destino
   const targetArray = outputSystem === 'latin' ? LATIN_NOTES : ENGLISH_NOTES;
@@ -311,6 +319,11 @@ export const transposeContent = (content, sourceKey, targetKey, targetSystem = n
     
     // Calcular la diferencia de semitonos usando las tonalidades ajustadas
     const semitones = getKeyDistance(sourceKeyForCalc, targetKeyForCalc);
+
+    // Cada nota se escribe como en la tonalidad de destino (ortografia.js):
+    // la sensible de REm es DO#, no REb, y en DO se lee SIb, no LA#. La
+    // armadura sola ('sharp' / 'flat') no distinguía nada de eso.
+    keySignature = ortografiaDe(targetKey) || keySignature;
     
     // Procesar línea por línea manteniendo el mismo sistema de notación
     const transposedContent = content

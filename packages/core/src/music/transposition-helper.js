@@ -2,6 +2,7 @@
 import { transposeContent } from './transposition';
 import { mapChordLine, countChordRoots } from './chords';
 import { TRANSPOSING_INSTRUMENTS } from './instruments';
+import { transponerTonalidad, nombrarNota } from './ortografia';
 
 /**
  * Transpone el contenido un número de semitonos, sin pasar por tonalidades.
@@ -11,14 +12,18 @@ import { TRANSPOSING_INSTRUMENTS } from './instruments';
  * cejilla en el traste 3 se tocan las formas tres semitonos por debajo de lo
  * que suena.
  *
- * Respeta el sistema de notación predominante de la canción y la preferencia
- * de bemoles de cada acorde.
+ * Respeta el sistema de notación predominante de la canción. Con `ortografia`
+ * (la de `ortografiaDe`, de la tonalidad en la que se va a leer) cada nota se
+ * escribe como en esa tonalidad: SIb en FA, LA# en SI. Sin ella conserva el
+ * bemol o el sostenido de cada nota, que es lo que hacía antes y deja LA# donde
+ * se escribe SIb (DO no tiene alteración que conservar).
  *
  * @param {string} content - Contenido de la canción
  * @param {number} semitones - Semitonos a desplazar (puede ser negativo)
+ * @param {string[]|null} [ortografia] - Cómo se escribe cada tecla
  * @returns {string} - Contenido transpuesto
  */
-export function transposeBySemitones(content, semitones) {
+export function transposeBySemitones(content, semitones, ortografia = null) {
   if (!content || !semitones) return content;
 
   const transpositionInterval = semitones;
@@ -64,7 +69,11 @@ export function transposeBySemitones(content, semitones) {
       }
 
       // Calcular el nuevo índice después de transposición
-      const newIndex = (noteIndex + transpositionInterval + 12) % 12;
+      const newIndex = ((noteIndex + transpositionInterval) % 12 + 12) % 12;
+
+      if (ortografia) {
+        return nombrarNota(newIndex, ortografia, isLatinPredominant ? 'latin' : 'english');
+      }
 
       // Usar el sistema de notación predominante para todas las notas,
       // respetando la preferencia de bemoles de la nota original
@@ -99,11 +108,14 @@ export function transposeForInstrument(content, fromInstrument, toInstrument) {
 }
 
 /**
- * Desplaza una tonalidad un número de semitonos.
+ * Desplaza una tonalidad un número de semitonos y le da su nombre habitual
+ * (`transponerTonalidad`, en ortografia.js): "DO" dos semitonos abajo es
+ * "SIb", no "LA#". Antes conservaba el bemol o el sostenido de la de partida,
+ * y como DO no tiene ninguno, la tonalidad de concierto salía LA#.
  *
- * Conserva el modo (mayor o menor) y la preferencia de bemoles o sostenidos
- * de la tonalidad de partida. Es el motor de `getVisualKeyForInstrument` y lo
- * usa también el capo, que baja la tonalidad que se lee sin tocar la que suena.
+ * Conserva el modo (mayor o menor). Es el motor de `getVisualKeyForInstrument`
+ * y lo usa también el capo, que baja la tonalidad que se lee sin tocar la que
+ * suena.
  *
  * @param {string} key - Tonalidad de partida ("RE", "LAm", "MIb", "Am"...)
  * @param {number} semitones - Semitonos a desplazar (puede ser negativo)
@@ -112,65 +124,12 @@ export function transposeForInstrument(content, fromInstrument, toInstrument) {
 export function transposeKeyBySemitones(key, semitones) {
   if (!key || !semitones) return key;
 
-  // Mapa de tonalidades para una búsqueda más sencilla
-  const keyToIndexMap = {
-    // Tonalidades mayores con sostenidos
-    'DO': 0, 'DO#': 1, 'RE': 2, 'RE#': 3, 'MI': 4, 'FA': 5,
-    'FA#': 6, 'SOL': 7, 'SOL#': 8, 'LA': 9, 'LA#': 10, 'SI': 11,
-    // Tonalidades mayores con bemoles
-    'REb': 1, 'MIb': 3, 'SOLb': 6, 'LAb': 8, 'SIb': 10, 'DOb': 11,
-    // Tonalidades menores con sostenidos
-    'DOm': 0, 'DO#m': 1, 'REm': 2, 'RE#m': 3, 'MIm': 4, 'FAm': 5,
-    'FA#m': 6, 'SOLm': 7, 'SOL#m': 8, 'LAm': 9, 'LA#m': 10, 'SIm': 11,
-    // Tonalidades menores con bemoles
-    'REbm': 1, 'MIbm': 3, 'SOLbm': 6, 'LAbm': 8, 'SIbm': 10, 'DObm': 11,
-    // Tonalidades inglesas
-    'C': 0, 'C#': 1, 'D': 2, 'D#': 3, 'E': 4, 'F': 5,
-    'F#': 6, 'G': 7, 'G#': 8, 'A': 9, 'A#': 10, 'B': 11,
-    'Db': 1, 'Eb': 3, 'Gb': 6, 'Ab': 8, 'Bb': 10, 'Cb': 11,
-    'Cm': 0, 'C#m': 1, 'Dm': 2, 'D#m': 3, 'Em': 4, 'Fm': 5,
-    'F#m': 6, 'Gm': 7, 'G#m': 8, 'Am': 9, 'A#m': 10, 'Bm': 11,
-    'Dbm': 1, 'Ebm': 3, 'Gbm': 6, 'Abm': 8, 'Bbm': 10, 'Cbm': 11
-  };
-  
-  // Identificar si es menor
-  const isMinor = key.includes('m');
-
-  // Identificar si usa bemoles o sostenidos
-  const usesFlats = key.includes('b');
-
-  // Obtener el índice de la tonalidad base
-  const keyIndex = keyToIndexMap[key];
-
-  if (keyIndex === undefined) {
+  const transpuesta = transponerTonalidad(key, semitones);
+  if (transpuesta === null) {
     console.warn(`Tonalidad no reconocida: ${key}`);
     return key; // Fallback a la tonalidad original
   }
-
-  const newIndex = ((keyIndex + semitones) % 12 + 12) % 12;
-
-  // Determinar si la nueva tonalidad debe usar sostenidos o bemoles (mantener la preferencia original)
-  let targetScale;
-  if (isMinor) {
-    if (usesFlats) {
-      // Escala menor con bemoles
-      targetScale = ['DOm', 'REbm', 'REm', 'MIbm', 'MIm', 'FAm', 'SOLbm', 'SOLm', 'LAbm', 'LAm', 'SIbm', 'SIm'];
-    } else {
-      // Escala menor con sostenidos
-      targetScale = ['DOm', 'DO#m', 'REm', 'RE#m', 'MIm', 'FAm', 'FA#m', 'SOLm', 'SOL#m', 'LAm', 'LA#m', 'SIm'];
-    }
-  } else {
-    if (usesFlats) {
-      // Escala mayor con bemoles
-      targetScale = ['DO', 'REb', 'RE', 'MIb', 'MI', 'FA', 'SOLb', 'SOL', 'LAb', 'LA', 'SIb', 'SI'];
-    } else {
-      // Escala mayor con sostenidos
-      targetScale = ['DO', 'DO#', 'RE', 'RE#', 'MI', 'FA', 'FA#', 'SOL', 'SOL#', 'LA', 'LA#', 'SI'];
-    }
-  }
-  
-  // Obtener la nueva tonalidad
-  return targetScale[newIndex];
+  return transpuesta;
 }
 
 /**

@@ -390,7 +390,7 @@ describe('useTuner', () => {
       detectar(233.08); // SIb3 de concierto
 
       expect(result.current.detectedNote).toBe('DO4');
-      expect(result.current.notaConcierto).toBe('LA#3');
+      expect(result.current.notaConcierto).toBe('SIb3'); // como lo nombra un trompetista, no LA#3
       // Los cents y el MIDI siguen siendo los de lo que suena
       expect(result.current.detectedMidi).toBe(58);
       expect(result.current.tuningStatus).toBe('in-tune');
