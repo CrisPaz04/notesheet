@@ -42,10 +42,18 @@
     margin-right: var(--spacing-sm);
   }
   
+  /* Cuatro por fila, o dos y dos: con `auto-fit` una tablet en vertical
+     (924 px en una Tab S8 Ultra) ponía tres y dejaba "Mis listas" sola */
   .action-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    grid-template-columns: repeat(4, 1fr);
     gap: 1.5rem;
+  }
+
+  @media (max-width: 991.98px) {
+    .action-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
   }
   
   .action-card {
@@ -60,7 +68,9 @@
     align-items: center;
     text-align: center;
     min-height: 140px;
-    justify-content: center;
+    /* Arriba y no centrado: con el título en uno o dos renglones, los
+       íconos quedaban cada uno a una altura */
+    justify-content: flex-start;
     position: relative;
     overflow: hidden;
   }
@@ -89,8 +99,11 @@
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
   
+  /* Tamaño propio: como h3 tomaba el de los títulos de página (1,75rem) y
+     "Nueva canción" o "Importar partituras" se partían en dos renglones */
   .action-title {
     color: var(--text-light-primary);
+    font-size: 1.25rem;
     font-weight: 600;
     margin-bottom: 0.5rem;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -154,9 +167,8 @@
   }
   
   .recent-item-preview {
-    color: rgba(var(--overlay-rgb), 0.4);
+    color: rgba(var(--overlay-rgb), 0.55);
     font-size: 0.85rem;
-    font-family: 'Courier New', monospace;
     background: rgba(0, 0, 0, 0.2);
     padding: var(--spacing-sm);
     border-radius: var(--radius-sm);

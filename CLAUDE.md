@@ -654,7 +654,11 @@ SPA (el orden importa).
   Samsung de 800). Lo que apila de uno en uno (una canción por fila, botones en columna,
   datos en tarjetas sueltas) va con `@media (max-width: 575.98px)`, no con 768: con 768
   la tablet en vertical recibía el diseño de teléfono y en la canción la música empezaba
-  casi dos pantallas más abajo. En 768 solo se ajustan tamaños. El menú, entre 992 y
+  casi dos pantallas más abajo. En 768 solo se ajustan tamaños. Entre 768 y 991 px el
+  `.container` ocupa el ancho (`_bootstrap-theme.css`): Bootstrap lo dejaba en 720, y en
+  una Tab S8 Ultra en vertical (~924 px) sobraban más de 100 px a cada lado. Las
+  acciones rápidas del Dashboard van 4 por fila o 2×2, nunca `auto-fit` (salían 3 y una
+  sola). El menú, entre 992 y
   1399 px, enseña solo los íconos: con la cuenta abierta son seis enlaces y con sus
   nombres solo caben en el contenedor de 1320 px (si no, se partían o aplastaban el
   logo, que lleva `white-space: nowrap` y no se encoge).

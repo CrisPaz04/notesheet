@@ -144,3 +144,14 @@
 .form-range:focus::-moz-range-thumb {
   box-shadow: 0 0 0 1px var(--bg-dark-primary), 0 0 0 0.25rem rgba(var(--color-primary-rgb), 0.25);
 }
+
+/* Tablets en vertical (768–991 px): el contenedor de Bootstrap se queda en
+   720 px, y en una Tab S8 Ultra (924 px) dejaba más de 100 px vacíos a cada
+   lado. Aquí ocupa el ancho, con el mismo margen que en el móvil. */
+@media (min-width: 768px) and (max-width: 991.98px) {
+  .container,
+  .container-md,
+  .container-sm {
+    max-width: calc(100% - 2rem);
+  }
+}
