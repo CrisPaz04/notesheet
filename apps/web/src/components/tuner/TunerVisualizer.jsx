@@ -4,7 +4,15 @@
  * Displays tuning gauge, detected note, and frequency
  */
 
+import { useRef } from 'react';
 import { getStringFrequency } from '@notesheet/core';
+import useValorSuave from '../../hooks/useValorSuave';
+
+// "LA4" -> ["LA", "4"]: la octava va pequeña, como en los afinadores de verdad
+const partirNota = (nota) => {
+  const m = /^(.*?)(-?\d+)$/.exec(nota || '');
+  return m ? [m[1], m[2]] : [nota, ''];
+};
 
 function TunerVisualizer({
   detectedNote,
@@ -18,8 +26,16 @@ function TunerVisualizer({
   notationSystem,
   referenceFrequency
 }) {
-  // Calculate needle position (-50 to +50 cents maps to -45deg to +45deg)
-  const needleRotation = Math.max(-45, Math.min(45, (centsDeviation / 50) * 45));
+  // La aguja se mueve sola hacia su sitio (useValorSuave), escribiendo el giro
+  // en el SVG: -50..+50 cents son -90..+90 grados, el arco entero. Antes
+  // llegaba solo a ±45, así que a +50 cents apuntaba a la marca de +25. Sin
+  // nota vuelve al centro mientras se desvanece, en vez de desaparecer.
+  const agujaRef = useRef(null);
+  const objetivo = detectedNote ? Math.max(-50, Math.min(50, centsDeviation)) : 0;
+  useValorSuave(objetivo, (cents) => {
+    agujaRef.current?.setAttribute('transform', `rotate(${cents * 1.8} 100 100)`);
+  });
+  const [nombreNota, octava] = partirNota(detectedNote);
 
   // Get status color
   const getStatusColor = () => {
@@ -60,7 +76,7 @@ function TunerVisualizer({
   const targetFreq = targetString ? getStringFrequency(targetString.midi, referenceFrequency) : null;
 
   return (
-    <div className="tuner-visualizer">
+    <div className={`tuner-visualizer${detectedNote && tuningStatus === 'in-tune' ? ' tuner-visualizer--afinado' : ''}`}>
       {/* Target Note Display (String Mode) */}
       {stringModeEnabled && targetString && (
         <div className="tuner-target-display">
@@ -76,7 +92,9 @@ function TunerVisualizer({
           className={`tuner-note-name ${!detectedNote ? 'tuner-note-waiting' : ''}`}
           style={{ color: detectedNote ? getStatusColor() : 'var(--text-light-secondary)' }}
         >
-          {detectedNote || (stringModeEnabled && targetString ? targetNoteName : (isRunning ? '♪' : '--'))}
+          {detectedNote
+            ? <>{nombreNota}<span className="tuner-note-octava">{octava}</span></>
+            : (stringModeEnabled && targetString ? targetNoteName : (isRunning ? '♪' : '--'))}
         </div>
         <div className="tuner-frequency">
           {detectedFrequency ? `${detectedFrequency.toFixed(1)} Hz` : (targetFreq ? `Objetivo: ${targetFreq.toFixed(1)} Hz` : '--- Hz')}
@@ -156,25 +174,23 @@ function TunerVisualizer({
           })}
 
           {/* Needle */}
-          {detectedNote && (
-            <g transform={`rotate(${needleRotation} 100 100)`}>
-              <line
-                x1="100"
-                y1="100"
-                x2="100"
-                y2="30"
-                style={{ stroke: getStatusColor() }}
-                strokeWidth="3"
-                strokeLinecap="round"
-              />
-              <circle
-                cx="100"
-                cy="100"
-                r="5"
-                style={{ fill: getStatusColor() }}
-              />
-            </g>
-          )}
+          <g ref={agujaRef} className={`tuner-aguja${detectedNote ? ' tuner-aguja--visible' : ''}`}>
+            <line
+              x1="100"
+              y1="100"
+              x2="100"
+              y2="30"
+              style={{ stroke: getStatusColor() }}
+              strokeWidth="3"
+              strokeLinecap="round"
+            />
+            <circle
+              cx="100"
+              cy="100"
+              r="5"
+              style={{ fill: getStatusColor() }}
+            />
+          </g>
         </svg>
 
         {/* Cents labels */}

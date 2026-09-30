@@ -7,12 +7,12 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import TunerEngine from '@notesheet/core/src/audio/tunerEngine';
 import {
-  frequencyToMidi,
   midiToFrequency,
   midiToNoteName,
   midiToNoteNameLatin,
   getCentsDeviation
 } from '@notesheet/core/src/audio/pitchDetection';
+import { notaConHisteresis, estadoAfinacion } from '@notesheet/core/src/audio/seguimientoTono';
 import { useAuth } from '../context/AuthContext';
 import useNotacionPreferida from './useNotacionPreferida';
 import { saveTunerPreferences } from '@notesheet/api';
@@ -65,6 +65,10 @@ function useTuner(initialPreferences = {}) {
   const [detectedMidi, setDetectedMidi] = useState(null);
 
   const engineRef = useRef(null);
+  // La nota y el estado de la lectura anterior: con ellos no parpadean en la
+  // frontera entre dos notas ni en el borde de "Afinado"
+  const notaAnteriorRef = useRef(null);
+  const estadoAnteriorRef = useRef(null);
 
   // Initialize engine
   useEffect(() => {
@@ -106,6 +110,8 @@ function useTuner(initialPreferences = {}) {
   const handlePitchDetection = useCallback(
     (frequency) => {
       if (frequency === null) {
+        notaAnteriorRef.current = null;
+        estadoAnteriorRef.current = null;
         setDetectedFrequency(null);
         setDetectedNote(null);
         setDetectedNoteLatin(null);
@@ -117,23 +123,20 @@ function useTuner(initialPreferences = {}) {
 
       setDetectedFrequency(frequency);
 
-      // Convert to MIDI note
-      const midiNote = frequencyToMidi(frequency);
+      // La nota más cercana según el diapasón elegido (con 442, las fronteras
+      // entre notas también se mueven)
+      const semitonos = 69 + 12 * Math.log2(frequency / referenceFrequency);
+      const midiNote = notaConHisteresis(semitonos, notaAnteriorRef.current);
+      notaAnteriorRef.current = midiNote;
       setDetectedMidi(midiNote);
       const targetFrequency = midiToFrequency(midiNote, referenceFrequency);
 
-      // Calculate cents deviation
       const cents = getCentsDeviation(frequency, targetFrequency);
       setCentsDeviation(cents);
 
-      // Determine tuning status
-      if (Math.abs(cents) <= 5) {
-        setTuningStatus('in-tune');
-      } else if (cents < -5) {
-        setTuningStatus('flat');
-      } else {
-        setTuningStatus('sharp');
-      }
+      const estado = estadoAfinacion(cents, estadoAnteriorRef.current);
+      estadoAnteriorRef.current = estado;
+      setTuningStatus(estado);
 
       // Set note names
       setDetectedNote(midiToNoteName(midiNote));
@@ -182,6 +185,8 @@ function useTuner(initialPreferences = {}) {
     try {
       engineRef.current.stop();
       setIsRunning(false);
+      notaAnteriorRef.current = null;
+      estadoAnteriorRef.current = null;
       setDetectedFrequency(null);
       setDetectedNote(null);
       setDetectedNoteLatin(null);
@@ -268,11 +273,9 @@ function useTuner(initialPreferences = {}) {
     if (isPlayingTone) {
       stopReferenceTone();
     } else if (detectedNote) {
-      const midiNote = frequencyToMidi(detectedFrequency);
-      const targetFrequency = midiToFrequency(midiNote, referenceFrequency);
-      playReferenceTone(targetFrequency);
+      playReferenceTone(midiToFrequency(detectedMidi, referenceFrequency));
     }
-  }, [isPlayingTone, detectedNote, detectedFrequency, referenceFrequency, playReferenceTone, stopReferenceTone]);
+  }, [isPlayingTone, detectedNote, detectedMidi, referenceFrequency, playReferenceTone, stopReferenceTone]);
 
   /**
    * Toggle string mode

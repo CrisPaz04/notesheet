@@ -10,6 +10,7 @@ import { useAuth } from '../context/AuthContext';
 import { getTunerPreferences } from '@notesheet/api';
 import { STRING_TUNINGS } from '@notesheet/core';
 import useTuner from '../hooks/useTuner';
+import useValorSuave from '../hooks/useValorSuave';
 import usePitchHistory from '../hooks/usePitchHistory';
 import TunerVisualizer from '../components/tuner/TunerVisualizer';
 import TunerControls from '../components/tuner/TunerControls';
@@ -112,6 +113,13 @@ function TunerCuerpo({ compact, mini, initialPreferences }) {
     updateSelectedString
   } = useTuner(initialPreferences);
 
+  // La marca de la barra del panel se desliza sola (useValorSuave): -50..+50
+  // cents -> 0..100 % del ancho. Sin nota vuelve al centro desvaneciéndose.
+  const marcaRef = useRef(null);
+  useValorSuave(detectedNote ? Math.max(-50, Math.min(50, centsDeviation)) : 0, (cents) => {
+    if (marcaRef.current) marcaRef.current.style.left = `${50 + cents}%`;
+  });
+
   // Pitch history tracking
   const pitchHistory = usePitchHistory();
   const lastSampleTimeRef = useRef(0);
@@ -142,8 +150,6 @@ function TunerCuerpo({ compact, mini, initialPreferences }) {
     const color = !detectedNote
       ? 'var(--text-light-secondary)'
       : afinado ? '#4caf50' : Math.abs(centsDeviation) > 15 ? '#f44336' : '#ffc107';
-    // -50..+50 cents -> 0..100 % del ancho de la barra
-    const posicion = Math.max(0, Math.min(100, 50 + centsDeviation));
 
     return (
       <div className="tuner-mini">
@@ -161,9 +167,11 @@ function TunerCuerpo({ compact, mini, initialPreferences }) {
 
         <div className="tuner-mini-barra" aria-hidden="true">
           <span className="tuner-mini-centro" />
-          {detectedNote && (
-            <span className="tuner-mini-marca" style={{ left: `${posicion}%`, background: color }} />
-          )}
+          <span
+            ref={marcaRef}
+            className={`tuner-mini-marca${detectedNote ? ' tuner-mini-marca--visible' : ''}`}
+            style={{ background: color }}
+          />
         </div>
         <div className="tuner-mini-escala" aria-hidden="true">
           <span>♭ -50</span><span>0</span><span>+50 ♯</span>

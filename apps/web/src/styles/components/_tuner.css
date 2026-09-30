@@ -99,7 +99,36 @@
   font-size: 5rem;
   font-weight: 700;
   line-height: 1;
-  transition: color 0.3s ease;
+  transition: color 0.25s ease, text-shadow 0.3s ease;
+}
+
+/* La octava, pequeña junto a la nota: "LA₄" */
+.tuner-note-octava {
+  margin-left: 0.04em;
+  font-size: 0.4em;
+  font-weight: 600;
+  opacity: 0.7;
+}
+
+/* Afinado: la nota se ilumina */
+.tuner-visualizer--afinado .tuner-note-name {
+  text-shadow: 0 0 28px rgba(76, 175, 80, 0.55);
+}
+
+/* La aguja: el giro lo escribe useValorSuave en cada fotograma; aquí solo se
+   desvanece al perder la nota y cambia de color sin saltos */
+.tuner-aguja {
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.tuner-aguja--visible {
+  opacity: 1;
+}
+
+.tuner-aguja line,
+.tuner-aguja circle {
+  transition: stroke 0.25s ease, fill 0.25s ease;
 }
 
 .tuner-note-waiting {
@@ -500,32 +529,50 @@
 }
 
 
-.history-svg {
+/* El recuadro del gráfico: la escala a la izquierda y el canvas, que pinta la
+   línea; las franjas de afinado (±5), casi (±15) y fuera van de fondo en CSS,
+   así se ven también con el afinador parado */
+.historial-grafico {
+  position: relative;
+  height: 110px;
   border-radius: var(--radius-md);
   background: var(--bg-dark-tertiary);
-  width: 100%;
-  height: auto;
-  max-height: 100px;
 }
 
-.graph-label {
-  font-family: inherit;
+.historial-escala {
+  position: absolute;
+  top: 8px;
+  bottom: 8px;
+  left: 0;
+  width: 30px;
 }
 
-.current-dot {
-  filter: drop-shadow(0 0 4px var(--color-primary));
-  animation: dotPulse 1s ease-in-out infinite;
+.historial-escala span {
+  position: absolute;
+  right: 4px;
+  transform: translateY(-50%);
+  font-size: 0.65rem;
+  line-height: 1;
+  color: var(--text-light-muted);
 }
 
-@keyframes dotPulse {
-  0%, 100% {
-    opacity: 1;
-    r: 4;
-  }
-  50% {
-    opacity: 0.8;
-    r: 5;
-  }
+.historial-canvas {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  bottom: 8px;
+  left: 34px;
+  width: calc(100% - 42px);
+  height: calc(100% - 16px);
+  border-radius: var(--radius-sm);
+  background: linear-gradient(
+    to bottom,
+    rgba(248, 113, 113, 0.1) 0 35%,
+    rgba(251, 191, 36, 0.1) 35% 45%,
+    rgba(16, 185, 129, 0.15) 45% 55%,
+    rgba(251, 191, 36, 0.1) 55% 65%,
+    rgba(248, 113, 113, 0.1) 65% 100%
+  );
 }
 
 .graph-status {
@@ -549,9 +596,7 @@
 }
 
 /* Light themes - graph */
-[data-bs-theme="light"] .history-svg,
-[data-bs-theme="rainforest-light"] .history-svg,
-[data-bs-theme="newspaper-light"] .history-svg {
+:where([data-bs-theme$="light"]) .historial-grafico {
   background: rgba(255, 255, 255, 0.5);
 }
 

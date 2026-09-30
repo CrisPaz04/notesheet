@@ -1,10 +1,111 @@
+import { useEffect, useRef } from "react";
 import Icono from "../Icono";
+
 /**
- * PitchHistoryGraph Component
+ * El historial de la afinación: una línea que corre de derecha a izquierda
+ * con los cents de los últimos segundos, sobre las franjas de afinado (±5),
+ * casi (±15) y fuera.
  *
- * SVG-based rolling graph showing pitch deviation history
- * Color zones indicate tuning accuracy
+ * Se pinta en un canvas en cada fotograma, con el eje X en **tiempo**: la
+ * línea se desplaza a velocidad constante aunque las muestras lleguen a
+ * trompicones. Antes era un SVG rehecho con cada muestra y con el eje X en
+ * número de muestras, así que al empezar la línea se estiraba y encogía, y
+ * avanzaba a saltos. Los cortes de sonido se ven como huecos.
  */
+
+// Lo que cabe en el ancho del gráfico
+const VENTANA_MS = 5000;
+// Dos muestras más separadas que esto no se unen: ahí no sonaba nada
+const HUECO_MS = 250;
+const ESCALA = [50, 25, 0, -25, -50];
+
+// -50..+50 cents -> alto..0
+const centsAY = (cents, alto) => {
+  const c = Math.max(-50, Math.min(50, cents));
+  return alto * (0.5 - c / 100);
+};
+
+function dibujar(canvas, muestras, ahora, colores) {
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return;
+  canvas.dataset.dibujado = "si";
+  const dpr = window.devicePixelRatio || 1;
+  const ancho = canvas.clientWidth;
+  const alto = canvas.clientHeight;
+  if (canvas.width !== Math.round(ancho * dpr) || canvas.height !== Math.round(alto * dpr)) {
+    canvas.width = Math.round(ancho * dpr);
+    canvas.height = Math.round(alto * dpr);
+  }
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, ancho, alto);
+
+  // Línea del cero
+  ctx.save();
+  ctx.strokeStyle = colores.primario;
+  ctx.globalAlpha = 0.5;
+  ctx.setLineDash([4, 4]);
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(0, alto / 2);
+  ctx.lineTo(ancho, alto / 2);
+  ctx.stroke();
+  ctx.restore();
+
+  // Los tramos con sonido, de izquierda (antiguo) a derecha (ahora)
+  const tramos = [];
+  let tramo = [];
+  let anterior = null;
+  for (const m of muestras) {
+    const edad = ahora - m.timestamp;
+    if (edad > VENTANA_MS + HUECO_MS) continue;
+    if (anterior && m.timestamp - anterior > HUECO_MS && tramo.length) {
+      tramos.push(tramo);
+      tramo = [];
+    }
+    tramo.push({ x: ancho - (edad / VENTANA_MS) * ancho, y: centsAY(m.cents, alto) });
+    anterior = m.timestamp;
+  }
+  if (tramo.length) tramos.push(tramo);
+
+  ctx.lineJoin = "round";
+  ctx.lineCap = "round";
+  for (const puntos of tramos) {
+    if (puntos.length < 2) continue;
+    // Relleno hasta el cero
+    ctx.save();
+    ctx.globalAlpha = 0.15;
+    ctx.fillStyle = colores.primario;
+    ctx.beginPath();
+    ctx.moveTo(puntos[0].x, alto / 2);
+    for (const p of puntos) ctx.lineTo(p.x, p.y);
+    ctx.lineTo(puntos[puntos.length - 1].x, alto / 2);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+
+    ctx.strokeStyle = colores.primario;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(puntos[0].x, puntos[0].y);
+    for (const p of puntos) ctx.lineTo(p.x, p.y);
+    ctx.stroke();
+  }
+
+  // El punto de ahora, si aún suena
+  const ultima = muestras[muestras.length - 1];
+  if (ultima && ahora - ultima.timestamp < HUECO_MS) {
+    const y = centsAY(ultima.cents, alto);
+    const x = ancho - ((ahora - ultima.timestamp) / VENTANA_MS) * ancho;
+    ctx.save();
+    ctx.fillStyle = colores.primario;
+    ctx.shadowColor = colores.primario;
+    ctx.shadowBlur = 8;
+    ctx.beginPath();
+    ctx.arc(x, y, 4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+}
 
 function PitchHistoryGraph({
   history,
@@ -12,81 +113,47 @@ function PitchHistoryGraph({
   stabilityRating,
   isRunning
 }) {
-  // Graph dimensions - full width, compact height
-  const width = 500;
-  const height = 100;
-  const padding = { top: 10, right: 15, bottom: 15, left: 30 };
-  const graphWidth = width - padding.left - padding.right;
-  const graphHeight = height - padding.top - padding.bottom;
+  const canvasRef = useRef(null);
+  const historyRef = useRef(history);
 
-  // Y-axis range: -50 to +50 cents
-  const yMin = -50;
-  const yMax = 50;
-
-  // Convert cents to Y coordinate
-  const centsToY = (cents) => {
-    const clampedCents = Math.max(yMin, Math.min(yMax, cents));
-    const normalized = (clampedCents - yMin) / (yMax - yMin);
-    return padding.top + graphHeight - (normalized * graphHeight);
-  };
-
-  // Build smooth path data from history using cubic bezier curves
-  const buildPath = () => {
-    if (history.length < 2) return '';
-
-    const points = history.map((sample, index) => {
-      const x = padding.left + (index / (history.length - 1 || 1)) * graphWidth;
-      const y = centsToY(sample.cents);
-      return { x, y };
-    });
-
-    // Start with move to first point
-    let path = `M ${points[0].x},${points[0].y}`;
-
-    // Use smooth curve through points
-    for (let i = 1; i < points.length; i++) {
-      const prev = points[i - 1];
-      const curr = points[i];
-
-      // Control point for smooth curve (midpoint with slight smoothing)
-      const cpX = (prev.x + curr.x) / 2;
-
-      path += ` Q ${cpX},${prev.y} ${cpX},${(prev.y + curr.y) / 2}`;
-      if (i === points.length - 1) {
-        path += ` Q ${cpX},${curr.y} ${curr.x},${curr.y}`;
-      }
+  useEffect(() => {
+    historyRef.current = history;
+    // Al parar se vacía el historial: se borra lo pintado
+    const canvas = canvasRef.current;
+    if (!history.length && canvas?.dataset.dibujado) {
+      canvas.getContext("2d")?.clearRect(0, 0, canvas.width, canvas.height);
     }
+  }, [history]);
 
-    return path;
-  };
+  // Un fotograma tras otro mientras suena el afinador; al pararlo, una
+  // última vez para dejarlo limpio
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas || (!isRunning && !historyRef.current.length)) return;
 
-  // Build simple line path for fill (smooth curves can cause fill issues)
-  const buildLinePath = () => {
-    if (history.length < 2) return '';
+    // Los colores del tema, releídos cada segundo por si se cambia
+    let colores = null;
+    let leidos = 0;
+    const leerColores = (ahora) => {
+      if (!colores || ahora - leidos > 1000) {
+        const estilo = getComputedStyle(canvas);
+        colores = { primario: estilo.getPropertyValue("--color-primary").trim() || "#2dd4bf" };
+        leidos = ahora;
+      }
+      return colores;
+    };
 
-    const points = history.map((sample, index) => {
-      const x = padding.left + (index / (history.length - 1 || 1)) * graphWidth;
-      const y = centsToY(sample.cents);
-      return `${x},${y}`;
-    });
-
-    return `M ${points.join(' L ')}`;
-  };
-
-  // Build gradient fill area
-  const buildFillPath = () => {
-    if (history.length < 2) return '';
-
-    const linePath = buildLinePath();
-    const firstX = padding.left;
-    const lastX = padding.left + graphWidth;
-    const baseY = centsToY(0);
-
-    return `${linePath} L ${lastX},${baseY} L ${firstX},${baseY} Z`;
-  };
-
-  // Y-axis labels
-  const yLabels = [50, 25, 0, -25, -50];
+    let raf = null;
+    const fotograma = () => {
+      const ahora = Date.now();
+      dibujar(canvas, historyRef.current, ahora, leerColores(ahora));
+      raf = isRunning ? requestAnimationFrame(fotograma) : null;
+    };
+    fotograma();
+    return () => {
+      if (raf !== null) cancelAnimationFrame(raf);
+    };
+  }, [isRunning]);
 
   // Trend icon and text
   const getTrendInfo = () => {
@@ -119,146 +186,16 @@ function PitchHistoryGraph({
 
   return (
     <div className="pitch-history-graph">
-      <svg viewBox={`0 0 ${width} ${height}`} className="history-svg" preserveAspectRatio="xMidYMid meet">
-        {/* Background zones */}
-        <defs>
-          <linearGradient id="lineGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stopColor="#f87171" stopOpacity="0.3" />
-            <stop offset="30%" stopColor="#fbbf24" stopOpacity="0.2" />
-            <stop offset="50%" stopColor="#10b981" stopOpacity="0.3" />
-            <stop offset="70%" stopColor="#fbbf24" stopOpacity="0.2" />
-            <stop offset="100%" stopColor="#f87171" stopOpacity="0.3" />
-          </linearGradient>
-        </defs>
-
-        {/* Zone backgrounds */}
-        {/* Red zone (sharp) */}
-        <rect
-          x={padding.left}
-          y={padding.top}
-          width={graphWidth}
-          height={graphHeight * 0.3}
-          fill="rgba(248, 113, 113, 0.1)"
-        />
-        {/* Yellow zone (slightly sharp) */}
-        <rect
-          x={padding.left}
-          y={padding.top + graphHeight * 0.3}
-          width={graphWidth}
-          height={graphHeight * 0.1}
-          fill="rgba(251, 191, 36, 0.1)"
-        />
-        {/* Green zone (in tune) */}
-        <rect
-          x={padding.left}
-          y={padding.top + graphHeight * 0.4}
-          width={graphWidth}
-          height={graphHeight * 0.2}
-          fill="rgba(16, 185, 129, 0.15)"
-        />
-        {/* Yellow zone (slightly flat) */}
-        <rect
-          x={padding.left}
-          y={padding.top + graphHeight * 0.6}
-          width={graphWidth}
-          height={graphHeight * 0.1}
-          fill="rgba(251, 191, 36, 0.1)"
-        />
-        {/* Red zone (flat) */}
-        <rect
-          x={padding.left}
-          y={padding.top + graphHeight * 0.7}
-          width={graphWidth}
-          height={graphHeight * 0.3}
-          fill="rgba(248, 113, 113, 0.1)"
-        />
-
-        {/* Center line (0 cents) */}
-        <line
-          x1={padding.left}
-          y1={centsToY(0)}
-          x2={padding.left + graphWidth}
-          y2={centsToY(0)}
-          stroke="var(--color-primary)"
-          strokeWidth="1"
-          strokeDasharray="4,4"
-          opacity="0.5"
-        />
-
-        {/* Grid lines */}
-        {yLabels.filter(v => v !== 0).map((value) => (
-          <line
-            key={value}
-            x1={padding.left}
-            y1={centsToY(value)}
-            x2={padding.left + graphWidth}
-            y2={centsToY(value)}
-            stroke="var(--border-light)"
-            strokeWidth="0.5"
-            opacity="0.3"
-          />
-        ))}
-
-        {/* Y-axis labels */}
-        {yLabels.map((value) => (
-          <text
-            key={value}
-            x={padding.left - 5}
-            y={centsToY(value)}
-            textAnchor="end"
-            dominantBaseline="middle"
-            className="graph-label"
-            fontSize="10"
-            fill="var(--text-light-muted)"
-          >
-            {value > 0 ? '+' : ''}{value}
-          </text>
-        ))}
-
-        {/* X-axis label */}
-        <text
-          x={padding.left + graphWidth / 2}
-          y={height - 4}
-          textAnchor="middle"
-          className="graph-label"
-          fontSize="9"
-          fill="var(--text-light-muted)"
-        >
-          Tiempo →
-        </text>
-
-        {/* Pitch history line */}
-        {history.length >= 2 && (
-          <>
-            {/* Fill area */}
-            <path
-              d={buildFillPath()}
-              fill="var(--color-primary)"
-              opacity="0.15"
-            />
-            {/* Line */}
-            <path
-              d={buildPath()}
-              fill="none"
-              stroke="var(--color-primary)"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </>
-        )}
-
-        {/* Current value dot */}
-        {history.length > 0 && (
-          <circle
-            cx={padding.left + graphWidth}
-            cy={centsToY(history[history.length - 1].cents)}
-            r="4"
-            fill="var(--color-primary)"
-            className="current-dot"
-          />
-        )}
-      </svg>
+      <div className="historial-grafico">
+        <div className="historial-escala" aria-hidden="true">
+          {ESCALA.map((valor) => (
+            <span key={valor} style={{ top: `${50 - valor}%` }}>
+              {valor > 0 ? '+' : ''}{valor}
+            </span>
+          ))}
+        </div>
+        <canvas ref={canvasRef} className="historial-canvas" aria-label="Historial de la afinación" />
+      </div>
 
       {/* Status indicators */}
       <div className="graph-status">

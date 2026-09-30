@@ -153,7 +153,7 @@ packages/ui/          # Shared UI components (planned)
 - **hooks/** - Custom hooks (useMetronome, useTuner, useTheme, useThemeWithAuth, useModal, usePitchHistory,
   useTempoTrainer, useSwipeViews, useFontSizePreference, useSongVoices, useSelectedSongs,
   useLiveSession, useLiveSetlistContent, usePdfDocument, useNotacionPreferida, usePreferenciaLocal,
-  useAlineacionTexto, useHerramientas)
+  useAlineacionTexto, useHerramientas, useValorSuave)
 - **context/** - React Context (AuthContext for user state)
 - **styles/** - Modular CSS (base/, components/, pages/, utilities/)
 
@@ -539,6 +539,28 @@ SPA (el orden importa).
   pantalla de ese músico; el índice de arriba es el que mueve a la banda. Ahí el
   panel enseña la tonalidad **en la que lee ese músico** (la "Tú" de la tarjeta),
   no la de la banda.
+- **El afinador** va en tres capas, y cada una arregla una causa de que "no se viera
+  smooth" (medido con tonos sintéticos: antes 20 ms por cuadro en un PC, la mitad de las
+  lecturas una octava abajo y otro tanto perdidas, y a escalones de ~16 cents):
+  1. **Detección** (`pitchDetection.js`, `DetectorDeTono`): método de McLeod (NSDF) con
+     la autocorrelación por FFT, el **primer** pico que llega al 93% del mayor (el
+     periodo, no sus múltiplos) y parábola para afinar el pico. Ventana de 4096
+     muestras (dos periodos del FA grave de la tuba); ~1 ms por cuadro.
+  2. **Seguimiento** (`seguimientoTono.js`, puro y con el tiempo como argumento): una
+     nota nueva tiene que repetirse 3 lecturas (un golpe de lengua o una octava suelta
+     no mueven nada), se suaviza con un filtro "1 €" (firme quieta, rápida al
+     corregir: parámetros elegidos por simulación, anotados en el archivo) y se
+     **mantiene** 400 ms al cortarse el sonido. La nota y el "Afinado" tienen
+     histéresis para no parpadear en la frontera (`notaConHisteresis`,
+     `estadoAfinacion`).
+  3. **Pantalla**: la aguja y la marca del panel se deslizan con `useValorSuave`, que
+     escribe en el DOM en cada fotograma sin renders de React; el historial es un
+     canvas con el eje X en tiempo, que corre a velocidad constante.
+  Los tests (`afinadorDeteccion.test.js`) usan señales sintéticas con armónicos y
+  están validados con mutaciones. Para verlo sin micrófono, en la consola antes de
+  pulsar Iniciar: sustituir `navigator.mediaDevices.getUserMedia` por una función que
+  devuelva el `stream` de un `createMediaStreamDestination` alimentado por un
+  oscilador `sawtooth`.
 - Offline: Firestore usa `persistentLocalCache` y la app es una PWA instalable
   (`vite-plugin-pwa`). El service worker **no** debe interceptar Firebase: Firestore ya
   tiene su caché y la autenticación necesita red.

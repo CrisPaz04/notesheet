@@ -1,7 +1,12 @@
 // packages/core/src/audio/tunerEngine.js
 
 import { getAudioContext } from './audioContext';
-import { detectPitch, PitchSmoother } from './pitchDetection';
+import { DetectorDeTono } from './pitchDetection';
+import { SeguidorDeTono } from './seguimientoTono';
+
+// 4096 muestras: 85 ms a 48 kHz, dos periodos del FA grave de la tuba (44 Hz).
+// Más ventana es más retraso de la aguja; menos, notas graves peor medidas.
+const VENTANA = 4096;
 
 /**
  * TunerEngine Class
@@ -19,7 +24,8 @@ class TunerEngine {
     this.rafId = null;
     this.isRunning = false;
     this.pitchCallback = null;
-    this.smoother = new PitchSmoother(5);
+    this.detector = new DetectorDeTono(VENTANA);
+    this.seguidor = new SeguidorDeTono();
     this.referenceFrequency = 440; // A4 = 440 Hz
 
     // Reference tone generation
@@ -50,8 +56,7 @@ class TunerEngine {
 
       // Create analyser node
       this.analyser = this.audioContext.createAnalyser();
-      this.analyser.fftSize = 8192; // Higher = better low-frequency resolution
-      this.analyser.smoothingTimeConstant = 0.3;
+      this.analyser.fftSize = VENTANA;
 
       const bufferLength = this.analyser.fftSize;
       this.dataArray = new Float32Array(bufferLength);
@@ -83,7 +88,8 @@ class TunerEngine {
 
     this.isRunning = true;
     this.pitchCallback = callback;
-    this.smoother.reset();
+    this.seguidor.reiniciar();
+    this.ultimaFrecuencia = undefined;
     this.detectPitchLoop();
   }
 
@@ -96,7 +102,7 @@ class TunerEngine {
       cancelAnimationFrame(this.rafId);
       this.rafId = null;
     }
-    this.smoother.reset();
+    this.seguidor.reiniciar();
   }
 
   /**
@@ -108,16 +114,16 @@ class TunerEngine {
     // Get time domain data from analyser
     this.analyser.getFloatTimeDomainData(this.dataArray);
 
-    // Detect pitch
-    const rawFrequency = detectPitch(this.dataArray, this.audioContext.sampleRate);
+    // Lectura del cuadro y, de ahí, lo que se enseña: confirmada, suavizada
+    // y mantenida un momento si se corta el sonido (seguimientoTono.js)
+    const lectura = this.detector.detectar(this.dataArray, this.audioContext.sampleRate);
+    const frecuencia = this.seguidor.actualizar(lectura?.frecuencia ?? null, performance.now());
 
-    // Smooth the result to reduce jitter
-    const smoothedFrequency = this.smoother.addReading(rawFrequency);
-
-    // Call callback with result
-    if (this.pitchCallback) {
-      this.pitchCallback(smoothedFrequency);
+    // El silencio se avisa una vez, no 60 por segundo
+    if (this.pitchCallback && (frecuencia !== null || this.ultimaFrecuencia !== null)) {
+      this.pitchCallback(frecuencia);
     }
+    this.ultimaFrecuencia = frecuencia;
 
     // Schedule next detection
     this.rafId = requestAnimationFrame(() => this.detectPitchLoop());
