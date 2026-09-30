@@ -8,8 +8,11 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import MetronomeEngine, { TIME_SIGNATURES, SUBDIVISIONS, SOUND_PRESETS } from '@notesheet/core/src/audio/metronomeEngine';
 import { useAuth } from '../context/AuthContext';
 import { saveMetronomePreferences } from '@notesheet/api';
+import { BPM_MIN, BPM_MAX, limitarBpm } from '@notesheet/core/src/audio/temposClasicos';
 
-const TAP_TEMPO_TIMEOUT = 2000; // Reset tap tempo after 2 seconds
+// Se olvidan los toques tras este silencio. Un poco más de 4 s: a 15 BPM (el
+// mínimo) hay 4 s entre toques, y con menos no se podía marcar un tempo lento
+const TAP_TEMPO_TIMEOUT = 4100;
 const TAP_TEMPO_MIN_TAPS = 2; // Minimum taps needed to calculate tempo
 const SAVE_DEBOUNCE_MS = 500; // Debounce Firebase saves
 
@@ -21,6 +24,10 @@ function useMetronome(initialPreferences = {}) {
   const [subdivision, setSubdivision] = useState(initialPreferences.subdivision || 'quarter');
   const [soundPreset, setSoundPreset] = useState(initialPreferences.soundPreset || 'classic');
   const [volume, setVolume] = useState(initialPreferences.volume !== undefined ? initialPreferences.volume : 0.7);
+  // El tiempo acentuado, desde 1; 0 es "sin acento"
+  const [acento, setAcento] = useState(
+    Number.isInteger(initialPreferences.acento) ? initialPreferences.acento : 1
+  );
   const [currentBeat, setCurrentBeat] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -72,6 +79,12 @@ function useMetronome(initialPreferences = {}) {
       engineRef.current.setSoundPreset(soundPreset);
     }
   }, [soundPreset]);
+
+  useEffect(() => {
+    if (engineRef.current) {
+      engineRef.current.setAcento(acento);
+    }
+  }, [acento]);
 
   useEffect(() => {
     if (engineRef.current) {
@@ -134,7 +147,7 @@ function useMetronome(initialPreferences = {}) {
    * Update BPM
    */
   const updateBpm = useCallback((newBpm) => {
-    const clampedBpm = Math.max(40, Math.min(240, parseInt(newBpm) || 120));
+    const clampedBpm = limitarBpm(parseInt(newBpm) || 120);
     setBpm(clampedBpm);
   }, []);
 
@@ -145,7 +158,22 @@ function useMetronome(initialPreferences = {}) {
     if (TIME_SIGNATURES[newSig]) {
       setTimeSignature(newSig);
       setCurrentBeat(0); // Reset visual beat
+      // Con menos tiempos, el acento que quedaría fuera vuelve al 1
+      setAcento((a) => (a > TIME_SIGNATURES[newSig].beats ? 1 : a));
+      // En 6/8, 9/8 y 12/8 el tiempo es la negra con puntillo: en "negras" solo
+      // se oiría el pulso, así que se pasa al tresillo (las tres corcheas)
+      if (TIME_SIGNATURES[newSig].compuesto) {
+        setSubdivision((s) => (s === 'quarter' ? 'triplet' : s));
+      }
     }
+  }, []);
+
+  /**
+   * El tiempo acentuado (desde 1), o 0 para ninguno. Vale sonando.
+   */
+  const updateAcento = useCallback((nuevo) => {
+    const n = parseInt(nuevo, 10);
+    if (Number.isInteger(n) && n >= 0) setAcento(n);
   }, []);
 
   /**
@@ -191,7 +219,7 @@ function useMetronome(initialPreferences = {}) {
       const calculatedBpm = Math.round(60000 / avgInterval);
 
       // Update BPM if within valid range
-      if (calculatedBpm >= 40 && calculatedBpm <= 240) {
+      if (calculatedBpm >= BPM_MIN && calculatedBpm <= BPM_MAX) {
         updateBpm(calculatedBpm);
       }
     }
@@ -260,7 +288,8 @@ function useMetronome(initialPreferences = {}) {
       timeSignature,
       subdivision,
       soundPreset,
-      volume
+      volume,
+      acento
     };
 
     const texto = JSON.stringify(preferences);
@@ -290,7 +319,7 @@ function useMetronome(initialPreferences = {}) {
     }, SAVE_DEBOUNCE_MS);
 
     return () => clearTimeout(timeoutId);
-  }, [bpm, timeSignature, subdivision, soundPreset, volume, currentUser]);
+  }, [bpm, timeSignature, subdivision, soundPreset, volume, acento, currentUser]);
 
   return {
     // State
@@ -300,6 +329,7 @@ function useMetronome(initialPreferences = {}) {
     subdivision,
     soundPreset,
     volume,
+    acento,
     currentBeat,
     loading,
     error,
@@ -313,6 +343,7 @@ function useMetronome(initialPreferences = {}) {
     updateSubdivision,
     updateSoundPreset,
     updateVolume,
+    updateAcento,
     testSound,
     tapTempo,
     incrementBpm,

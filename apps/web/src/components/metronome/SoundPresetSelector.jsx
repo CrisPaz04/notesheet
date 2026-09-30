@@ -13,7 +13,12 @@ const PRESET_ICONS = {
   woodBlock: 'cube',
   hiHat: 'disc',
   rimshot: 'lightning',
-  softClick: 'speaker-low'
+  softClick: 'speaker-low',
+  claves: 'music-note-simple',
+  cencerro: 'bell',
+  palmas: 'hands-clapping',
+  bombo: 'circle',
+  electronico: 'wave-square'
 };
 
 function SoundPresetSelector({
@@ -31,7 +36,7 @@ function SoundPresetSelector({
             key={key}
             className={`sound-preset-btn ${currentPreset === key ? 'active' : ''}`}
             onClick={() => onPresetSelect(key)}
-            disabled={isPlaying}
+            aria-pressed={currentPreset === key}
             title={preset.description}
           >
             <Icono nombre={PRESET_ICONS[key] || "music-note"} className="preset-icon" />
@@ -43,6 +48,7 @@ function SoundPresetSelector({
         className="btn-test-sound mt-3"
         onClick={onTestSound}
         disabled={isPlaying}
+        title={isPlaying ? 'Ya está sonando' : undefined}
       >
         <Icono nombre="speaker-high" className="me-2" />
         Probar Sonido

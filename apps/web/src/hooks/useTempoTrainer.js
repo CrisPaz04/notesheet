@@ -99,12 +99,17 @@ function useTempoTrainer(metronomeEngine, updateBpm, isMetronomePlaying) {
     };
   }, [metronomeEngine, isActive, isPaused, handleMeasureComplete]);
 
-  // Stop training when metronome stops
+  // Se para al pararse el metrónomo: cuando pasa de sonar a no sonar. No
+  // basta "no suena": al empezar el entrenamiento con el metrónomo parado
+  // (lo arranca él), durante un instante está activo y aún en silencio, y se
+  // cortaba nada más empezar.
+  const sonabaRef = useRef(isMetronomePlaying);
   useEffect(() => {
-    if (!isMetronomePlaying && isActive) {
+    if (sonabaRef.current && !isMetronomePlaying && isActive) {
       setIsActive(false);
       setIsPaused(false);
     }
+    sonabaRef.current = isMetronomePlaying;
   }, [isMetronomePlaying, isActive]);
 
   /**

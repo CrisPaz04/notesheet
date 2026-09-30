@@ -75,6 +75,37 @@
   margin-top: var(--spacing-sm);
 }
 
+/* "♩ = 125": la figura y el igual, pequeños, a la izquierda del número */
+.bpm-fila {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+}
+
+.bpm-figura {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  color: var(--text-light-secondary);
+  font-size: 1.6rem;
+  font-weight: 600;
+}
+
+.bpm-figura .figura-ritmica {
+  height: 1.6em;
+  width: auto;
+}
+
+/* El tempo clásico que corresponde: "Allegro" */
+.bpm-tempo-clasico {
+  margin-top: 0.35rem;
+  color: var(--text-light-primary);
+  font-size: 1.25rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
 /* Beat Visualizer */
 .metronome-visualizer {
   margin: var(--spacing-xl) 0;
@@ -119,6 +150,23 @@
 .beat-indicator.active .beat-number {
   color: var(--bg-dark-primary);
   font-weight: 700;
+}
+
+/* El tiempo acentuado se ve también parado: borde del color del tema y el
+   signo de acento (>) encima */
+.beat-indicator.accent {
+  border-color: rgba(var(--color-primary-rgb), 0.6);
+}
+
+.beat-acento {
+  position: absolute;
+  top: -1.35rem;
+  left: 50%;
+  transform: translateX(-50%) scaleY(0.75);
+  color: var(--color-primary);
+  font-size: 1.1rem;
+  font-weight: 700;
+  line-height: 1;
 }
 
 .beat-indicator.accent.active {
@@ -182,6 +230,61 @@
 .metronome-controls-range-labels {
   color: var(--text-light-muted);
   font-size: 0.85rem;
+}
+
+/* Compás y acento, lado a lado */
+.metronome-compas-acento {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+/* Las subdivisiones: la figura y su nombre, en una rejilla de tres */
+.metronome-subdivisiones {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.4rem;
+}
+
+.metronome-subdivision {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  min-height: 4.2rem;
+  padding: 0.55rem 0.25rem 0.45rem;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  background: var(--bg-dark-tertiary);
+  color: var(--text-light-primary);
+  transition: var(--transition-fast);
+}
+
+.metronome-subdivision:hover:not(.activa) {
+  border-color: var(--border-light-hover);
+  background: rgba(var(--overlay-rgb), 0.1);
+}
+
+.metronome-subdivision .figura-ritmica {
+  height: 1.9rem;
+  width: auto;
+}
+
+.metronome-subdivision span {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-light-secondary);
+}
+
+.metronome-subdivision.activa {
+  border-color: var(--color-primary);
+  background: var(--color-primary);
+  color: var(--bg-dark-primary);
+}
+
+.metronome-subdivision.activa span {
+  color: var(--bg-dark-primary);
 }
 
 /* Hint text */
@@ -397,12 +500,13 @@
 
 .presets-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: var(--spacing-sm);
 }
 
 .tempo-preset-btn {
-  padding: var(--spacing-md);
+  padding: 0.6rem 0.3rem;
+  min-width: 0;
   background: var(--bg-dark-tertiary);
   border: 1px solid var(--border-light);
   border-radius: var(--radius-md);
@@ -435,8 +539,11 @@
 
 .preset-name {
   font-weight: 600;
-  font-size: 0.9rem;
-  margin-bottom: 0.25rem;
+  font-size: 0.8rem;
+  margin-bottom: 0.2rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .preset-bpm {

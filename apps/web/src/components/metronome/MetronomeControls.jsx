@@ -5,24 +5,30 @@
  */
 
 import { TIME_SIGNATURES, SUBDIVISIONS } from '@notesheet/core/src/audio/metronomeEngine';
+import { BPM_MIN, BPM_MAX, bpmAPosicion, posicionABpm } from '@notesheet/core/src/audio/temposClasicos';
 import { rellenoDeslizador } from "../../utils/rellenoDeslizador";
 import Desplegable from "../Desplegable";
 import Icono from "../Icono";
+import FiguraRitmica from "./FiguraRitmica";
 
+// Todo se puede cambiar sonando: el motor lo aplica desde el siguiente click
 function MetronomeControls({
   bpm,
   timeSignature,
   subdivision,
   volume,
-  isPlaying,
+  acento,
+  totalBeats,
   onBpmChange,
   onTimeSignatureChange,
   onSubdivisionChange,
   onVolumeChange,
+  onAcentoChange,
   onIncrement,
   onDecrement,
   onTapTempo
 }) {
+  const posicion = bpmAPosicion(bpm);
   return (
     <div className="metronome-controls">
       {/* BPM Control */}
@@ -43,8 +49,9 @@ function MetronomeControls({
             className="form-control text-center"
             value={bpm}
             onChange={(e) => onBpmChange(e.target.value)}
-            min="40"
-            max="240"
+            min={BPM_MIN}
+            max={BPM_MAX}
+            aria-label="Tempo en BPM"
             style={{ maxWidth: '80px' }}
           />
 
@@ -57,21 +64,20 @@ function MetronomeControls({
           </button>
         </div>
 
+        {/* En escala logarítmica: de 15 a 500 en línea recta, lo que se usa de
+            verdad (60–180) quedaría en un tercio del recorrido */}
         <input
           type="range"
           className="form-range"
-          value={bpm}
-          onChange={(e) => onBpmChange(e.target.value)}
-          min="40"
-          max="240"
-          style={rellenoDeslizador(bpm, 40, 240)}
+          value={posicion}
+          onChange={(e) => onBpmChange(posicionABpm(Number(e.target.value)))}
+          min="0"
+          max="1000"
+          aria-label="Tempo"
+          aria-valuetext={`${bpm} BPM`}
+          style={rellenoDeslizador(posicion, 0, 1000)}
         />
 
-        <div className="d-flex justify-content-between metronome-controls-range-labels">
-          <span>40</span>
-          <span>120</span>
-          <span>240</span>
-        </div>
       </div>
 
       {/* Volume Control */}
@@ -92,49 +98,54 @@ function MetronomeControls({
             max="1"
             step="0.05"
             style={rellenoDeslizador(volume, 0, 1)}
+            aria-label="Volumen"
+            aria-valuetext={`${Math.round(volume * 100)}%`}
           />
           <Icono nombre="speaker-high" className="text-secondary" />
         </div>
-        <div className="text-center metronome-controls-hint">
-          {Math.round(volume * 100)}%
-        </div>
       </div>
 
-      {/* Time Signature */}
-      <div className="mb-4">
-        <label className="form-label-modern">Compás</label>
-        <Desplegable
-          value={timeSignature}
-          onChange={onTimeSignatureChange}
-          disabled={isPlaying}
-          ariaLabel="Compás"
-          opciones={Object.keys(TIME_SIGNATURES).map((sig) => ({ value: sig, label: sig }))}
-        />
-        {isPlaying && (
-          <div className="metronome-controls-hint mt-1">
-            <Icono nombre="info" className="me-1" />
-            Pausa para cambiar el compás
-          </div>
-        )}
+      {/* Compás y acento: el compás es cuántos tiempos tiene; el acento, cuál
+          suena más fuerte (o ninguno) */}
+      <div className="metronome-compas-acento mb-4">
+        <div>
+          <label className="form-label-modern">Compás</label>
+          <Desplegable
+            value={timeSignature}
+            onChange={onTimeSignatureChange}
+            ariaLabel="Compás"
+            opciones={Object.keys(TIME_SIGNATURES).map((sig) => ({ value: sig, label: sig }))}
+          />
+        </div>
+        <div>
+          <label className="form-label-modern">Acento</label>
+          <Desplegable
+            value={String(acento)}
+            onChange={(v) => onAcentoChange(Number(v))}
+            ariaLabel="Acento"
+            opciones={[
+              { value: "0", label: "Sin acento" },
+              ...Array.from({ length: totalBeats }, (_, i) => ({ value: String(i + 1), label: `En el ${i + 1}` }))
+            ]}
+          />
+        </div>
       </div>
 
       {/* Subdivision */}
       <div className="mb-4">
         <label className="form-label-modern">Subdivisión</label>
-        <div className="btn-group w-100" role="group">
-          {Object.entries(SUBDIVISIONS).map(([key, { name, icon }]) => (
+        <div className="metronome-subdivisiones" role="group" aria-label="Subdivisión">
+          {Object.entries(SUBDIVISIONS).map(([key, { name }]) => (
             <button
               key={key}
               type="button"
-              className={`btn ${
-                subdivision === key ? 'btn-primary' : 'btn-outline-secondary'
-              }`}
+              className={`metronome-subdivision${subdivision === key ? ' activa' : ''}`}
               onClick={() => onSubdivisionChange(key)}
+              aria-pressed={subdivision === key}
               title={name}
             >
-              <span style={{ fontSize: '1.5rem', lineHeight: '1' }}>
-                {icon}
-              </span>
+              <FiguraRitmica tipo={key} />
+              <span>{name}</span>
             </button>
           ))}
         </div>

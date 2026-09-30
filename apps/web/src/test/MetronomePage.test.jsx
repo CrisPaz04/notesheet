@@ -10,6 +10,7 @@ vi.mock('@notesheet/core/src/audio/metronomeEngine', () => {
       this.setSubdivision = vi.fn();
       this.setSoundPreset = vi.fn();
       this.setVolume = vi.fn();
+      this.setAcento = vi.fn();
       this.playTestSound = vi.fn().mockResolvedValue(undefined);
       this.start = vi.fn();
       this.stop = vi.fn();
@@ -41,7 +42,7 @@ const { default: Metronome } = await import('../pages/Metronome');
 
 // El número grande de la tarjeta principal (la clase la pone Metronome.jsx)
 const bpmEnPantalla = async () => {
-  await screen.findByRole('button', { name: /Iniciar/ });
+  await screen.findByRole('button', { name: /^Iniciar$/ });
   return document.querySelector('.bpm-value').textContent;
 };
 
@@ -75,13 +76,44 @@ describe('Metronome (página)', () => {
   });
 });
 
+describe('Metronome (página): tempo, acento y entrenador', () => {
+  it('debajo del tempo dice el tempo clásico que le corresponde', async () => {
+    mockGetMetronomePreferences.mockResolvedValue({ bpm: 90, timeSignature: '4/4' });
+    render(<Metronome />);
+    await bpmEnPantalla();
+    expect(document.querySelector('.bpm-tempo-clasico')).toHaveTextContent('Andante');
+  });
+
+  it('tiene el control de acento, junto al compás', async () => {
+    mockGetMetronomePreferences.mockResolvedValue({ bpm: 90, timeSignature: '4/4' });
+    render(<Metronome />);
+    await bpmEnPantalla();
+    expect(screen.getByRole('combobox', { name: 'Acento' })).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: 'Compás' })).not.toHaveAttribute('aria-disabled', 'true');
+  });
+
+  // Antes pedía iniciar el metrónomo primero
+  it('"Iniciar entrenamiento" arranca el metrónomo en el tempo inicial', async () => {
+    mockGetMetronomePreferences.mockResolvedValue({ bpm: 100, timeSignature: '4/4' });
+    render(<Metronome />);
+    await bpmEnPantalla();
+
+    fireEvent.click(screen.getByRole('button', { name: /Iniciar entrenamiento/ }));
+
+    expect(await screen.findByRole('button', { name: /^Pausar$/ })).toBeInTheDocument();
+    expect(document.querySelector('.bpm-value').textContent).toBe('80');
+    // Y el entrenamiento sigue en marcha: no se corta al no haber sonado antes
+    expect(screen.getByRole('button', { name: /Detener/ })).toBeInTheDocument();
+  });
+});
+
 describe('Metronome simplificado (panel flotante)', () => {
   const valor = () => document.querySelector('.metronome-mini-valor strong').textContent;
 
   it('arranca con el tempo de la canción y deja subir y bajar', async () => {
     mockGetMetronomePreferences.mockResolvedValue({ bpm: 90 });
     render(<Metronome compact mini tempoInicial={72} />);
-    await screen.findByRole('button', { name: /Iniciar/ });
+    await screen.findByRole('button', { name: /^Iniciar$/ });
 
     expect(valor()).toBe('72');
     fireEvent.click(screen.getByRole('button', { name: 'Subir 5 BPM' }));
@@ -93,7 +125,7 @@ describe('Metronome simplificado (panel flotante)', () => {
   it('solo trae lo de tocar: sin presets, sonidos ni entrenador', async () => {
     mockGetMetronomePreferences.mockResolvedValue({});
     render(<Metronome compact mini compasInicial="6/8" />);
-    await screen.findByRole('button', { name: /Iniciar/ });
+    await screen.findByRole('button', { name: /^Iniciar$/ });
 
     expect(screen.getByRole('combobox', { name: 'Compás' })).toHaveAttribute('data-valor', '6/8');
     expect(screen.getByRole('button', { name: /Tap/ })).toBeInTheDocument();

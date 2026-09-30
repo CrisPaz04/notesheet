@@ -1,4 +1,5 @@
 import Icono from "../Icono";
+import { BPM_MIN, BPM_MAX } from "@notesheet/core/src/audio/temposClasicos";
 /**
  * Tempo Trainer Component
  *
@@ -26,6 +27,7 @@ function TempoTrainer({
 
   // Training is available when metronome is playing and training is active
   const canControl = isMetronomePlaying && isActive;
+  const invalido = config.startBpm >= config.targetBpm;
 
   return (
     <div className="tempo-trainer">
@@ -46,9 +48,9 @@ function TempoTrainer({
                   className="form-control-modern trainer-input"
                   value={config.startBpm}
                   onChange={(e) => handleInputChange('startBpm', e.target.value)}
-                  min="40"
-                  max="200"
-                  disabled={isMetronomePlaying}
+                  min={BPM_MIN}
+                  max={BPM_MAX}
+                  aria-label="Tempo inicial"
                 />
                 <span className="trainer-input-unit">BPM</span>
               </div>
@@ -64,9 +66,9 @@ function TempoTrainer({
                   className="form-control-modern trainer-input"
                   value={config.targetBpm}
                   onChange={(e) => handleInputChange('targetBpm', e.target.value)}
-                  min="50"
-                  max="240"
-                  disabled={isMetronomePlaying}
+                  min={BPM_MIN}
+                  max={BPM_MAX}
+                  aria-label="Tempo objetivo"
                 />
                 <span className="trainer-input-unit">BPM</span>
               </div>
@@ -85,7 +87,7 @@ function TempoTrainer({
                   onChange={(e) => handleInputChange('incrementBpm', e.target.value)}
                   min="1"
                   max="20"
-                  disabled={isMetronomePlaying}
+                  aria-label="BPM de incremento"
                 />
                 <span className="trainer-input-unit">BPM cada</span>
                 <input
@@ -95,14 +97,14 @@ function TempoTrainer({
                   onChange={(e) => handleInputChange('barsPerIncrement', e.target.value)}
                   min="1"
                   max="16"
-                  disabled={isMetronomePlaying}
+                  aria-label="Compases por incremento"
                 />
                 <span className="trainer-input-unit">compases</span>
               </div>
             </div>
           </div>
 
-          {config.startBpm >= config.targetBpm && (
+          {invalido && (
             <div className="trainer-warning mb-3">
               <Icono nombre="warning" className="me-1" />
               El tempo inicial debe ser menor que el objetivo
@@ -112,10 +114,11 @@ function TempoTrainer({
           <button
             className="btn-trainer-start"
             onClick={onStart}
-            disabled={!isMetronomePlaying || config.startBpm >= config.targetBpm}
+            disabled={invalido}
           >
+            {/* Si el metrónomo está parado, lo arranca también */}
             <Icono nombre="play" peso="fill" className="me-2" />
-            {isMetronomePlaying ? 'Iniciar Entrenamiento' : 'Inicia el metrónomo primero'}
+            Iniciar entrenamiento
           </button>
         </div>
       ) : (

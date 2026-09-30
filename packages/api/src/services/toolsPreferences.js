@@ -14,7 +14,11 @@ export const getMetronomePreferences = async (userId) => {
       bpm: preferences.metronomeLastBPM || 120,
       timeSignature: preferences.metronomeLastTimeSignature || '4/4',
       subdivision: preferences.metronomeLastSubdivision || 'quarter',
-      soundPreset: preferences.metronomeSoundPreset || 'classic'
+      soundPreset: preferences.metronomeSoundPreset || 'classic',
+      // El volumen se guardaba en el dispositivo pero no en el perfil
+      volume: typeof preferences.metronomeVolume === 'number' ? preferences.metronomeVolume : 0.7,
+      // 0 es "sin acento", así que no vale `||`
+      acento: Number.isInteger(preferences.metronomeAcento) ? preferences.metronomeAcento : 1
     };
   } catch (error) {
     console.error("Error getting metronome preferences:", error);
@@ -23,7 +27,9 @@ export const getMetronomePreferences = async (userId) => {
       bpm: 120,
       timeSignature: '4/4',
       subdivision: 'quarter',
-      soundPreset: 'classic'
+      soundPreset: 'classic',
+      volume: 0.7,
+      acento: 1
     };
   }
 };
@@ -57,6 +63,14 @@ export const saveMetronomePreferences = async (userId, metronomePrefs) => {
       preferencesToUpdate.metronomeSoundPreset = metronomePrefs.soundPreset;
     }
 
+    if (metronomePrefs.volume !== undefined) {
+      preferencesToUpdate.metronomeVolume = metronomePrefs.volume;
+    }
+
+    if (metronomePrefs.acento !== undefined) {
+      preferencesToUpdate.metronomeAcento = metronomePrefs.acento;
+    }
+
     return await updateUserPreferences(userId, preferencesToUpdate);
   } catch (error) {
     console.error("Error saving metronome preferences:", error);
@@ -66,6 +80,11 @@ export const saveMetronomePreferences = async (userId, metronomePrefs) => {
 
 /**
  * Obtiene las preferencias del afinador del usuario
+ *
+ * `verNotasComo` es el instrumento cuyas notas enseña (o "concierto"). Si el
+ * músico no lo ha elegido en el afinador, el de su perfil: una trompeta
+ * piensa en sus notas, no en las de concierto.
+ *
  * @param {string} userId - ID del usuario
  * @returns {Object} Objeto con las preferencias del afinador
  */
@@ -75,22 +94,14 @@ export const getTunerPreferences = async (userId) => {
 
     return {
       referenceFrequency: preferences.tunerReferenceFrequency || 440,
-      lastInstrument: preferences.tunerLastInstrument || 'bb_trumpet',
-      showConcertPitch: preferences.tunerShowConcertPitch !== undefined
-        ? preferences.tunerShowConcertPitch
-        : true,
-      stringModeEnabled: preferences.tunerStringModeEnabled || false,
-      selectedTuning: preferences.tunerSelectedTuning || 'guitar_standard'
+      verNotasComo: preferences.tunerVerNotasComo || preferences.defaultInstrument || 'concierto'
     };
   } catch (error) {
     console.error("Error getting tuner preferences:", error);
     // Return defaults on error
     return {
       referenceFrequency: 440,
-      lastInstrument: 'bb_trumpet',
-      showConcertPitch: true,
-      stringModeEnabled: false,
-      selectedTuning: 'guitar_standard'
+      verNotasComo: 'concierto'
     };
   }
 };
@@ -100,8 +111,7 @@ export const getTunerPreferences = async (userId) => {
  * @param {string} userId - ID del usuario
  * @param {Object} tunerPrefs - Objeto con las preferencias del afinador
  * @param {number} tunerPrefs.referenceFrequency - Frecuencia de referencia (A4)
- * @param {string} tunerPrefs.lastInstrument - Último instrumento seleccionado
- * @param {boolean} tunerPrefs.showConcertPitch - Mostrar tono de concierto
+ * @param {string} tunerPrefs.verNotasComo - Instrumento cuyas notas enseña, o "concierto"
  * @returns {Object} Objeto con todas las preferencias actualizadas
  */
 export const saveTunerPreferences = async (userId, tunerPrefs) => {
@@ -112,20 +122,8 @@ export const saveTunerPreferences = async (userId, tunerPrefs) => {
       preferencesToUpdate.tunerReferenceFrequency = tunerPrefs.referenceFrequency;
     }
 
-    if (tunerPrefs.lastInstrument !== undefined) {
-      preferencesToUpdate.tunerLastInstrument = tunerPrefs.lastInstrument;
-    }
-
-    if (tunerPrefs.showConcertPitch !== undefined) {
-      preferencesToUpdate.tunerShowConcertPitch = tunerPrefs.showConcertPitch;
-    }
-
-    if (tunerPrefs.stringModeEnabled !== undefined) {
-      preferencesToUpdate.tunerStringModeEnabled = tunerPrefs.stringModeEnabled;
-    }
-
-    if (tunerPrefs.selectedTuning !== undefined) {
-      preferencesToUpdate.tunerSelectedTuning = tunerPrefs.selectedTuning;
+    if (tunerPrefs.verNotasComo !== undefined) {
+      preferencesToUpdate.tunerVerNotasComo = tunerPrefs.verNotasComo;
     }
 
     return await updateUserPreferences(userId, preferencesToUpdate);

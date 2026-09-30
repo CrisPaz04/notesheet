@@ -6,6 +6,12 @@
  */
 
 import { getAudioContext, resumeAudioContext } from './audioContext';
+import { limitarBpm } from './temposClasicos';
+
+// Cuánto se sube cada click sobre la ganancia de su sonido. Con los valores
+// de antes el metrónomo se quedaba corto al lado de una banda; el compresor
+// de la salida evita que los más fuertes saturen.
+const REFUERZO = 2.2;
 
 // Time signature definitions
 export const TIME_SIGNATURES = {
@@ -13,19 +19,44 @@ export const TIME_SIGNATURES = {
   '3/4': { beats: 3, noteValue: 4 },
   '4/4': { beats: 4, noteValue: 4 },
   '5/4': { beats: 5, noteValue: 4 },
-  '6/8': { beats: 6, noteValue: 8 },
+  // Los compuestos, como Soundcorset: el tiempo es la negra con puntillo (6/8
+  // son 2 tiempos), el BPM cuenta esos tiempos y las corcheas se oyen con el
+  // tresillo. Antes eran 6 "tiempos" de negra con puntillo cada uno: un 6/8
+  // duraba como tres compases de 3/4.
+  '6/8': { beats: 2, noteValue: 8, compuesto: true },
+  // 7/8 no es compuesto: 7 corcheas, y el BPM cuenta corcheas
   '7/8': { beats: 7, noteValue: 8 },
-  '9/8': { beats: 9, noteValue: 8 },
-  '12/8': { beats: 12, noteValue: 8 }
+  '9/8': { beats: 3, noteValue: 8, compuesto: true },
+  '12/8': { beats: 4, noteValue: 8, compuesto: true }
 };
 
-// Subdivision types
+// Subdivisiones. Cada una es un patrón: dónde suena cada click dentro del
+// tiempo (0 = en el tiempo, 0.5 = a la mitad). Así caben las que no son
+// partes iguales: el saltillo (corchea con puntillo y semicorchea) y la
+// galopa (corchea y dos semicorcheas). `clicksPerBeat` se queda por
+// compatibilidad: es el largo del patrón.
+const subdivision = (name, pattern) => ({ name, pattern, clicksPerBeat: pattern.length });
 export const SUBDIVISIONS = {
-  quarter: { name: 'Negras', icon: '♩', clicksPerBeat: 1 },
-  eighth: { name: 'Corcheas', icon: '♪', clicksPerBeat: 2 },
-  triplet: { name: 'Tresillos', icon: '♪³', clicksPerBeat: 3 },
-  sixteenth: { name: 'Semicorcheas', icon: '♬', clicksPerBeat: 4 }
+  quarter: subdivision('Negras', [0]),
+  eighth: subdivision('Corcheas', [0, 1 / 2]),
+  triplet: subdivision('Tresillos', [0, 1 / 3, 2 / 3]),
+  sixteenth: subdivision('Semicorcheas', [0, 1 / 4, 1 / 2, 3 / 4]),
+  saltillo: subdivision('Saltillo', [0, 3 / 4]),
+  galopa: subdivision('Galopa', [0, 1 / 2, 3 / 4])
 };
+
+/**
+ * Cómo suena un click: 'acento' (el tiempo acentuado), 'pulso' (los demás
+ * tiempos) o 'subdivision' (lo que cae entre tiempos, más suave).
+ *
+ * @param {number} tiempo - Tiempo del compás, desde 0
+ * @param {number} paso - Click dentro del tiempo, desde 0
+ * @param {number} acento - Tiempo acentuado, desde 1; 0 es sin acento
+ */
+export function nivelDelClick(tiempo, paso, acento) {
+  if (paso > 0) return 'subdivision';
+  return acento > 0 && tiempo === acento - 1 ? 'acento' : 'pulso';
+}
 
 // Sound presets with different oscillator types and frequencies
 export const SOUND_PRESETS = {
@@ -51,15 +82,19 @@ export const SOUND_PRESETS = {
     regularGain: 0.18,
     oscillatorType: 'triangle'
   },
+  // Ruido filtrado: un hi-hat de verdad no tiene nota (antes era una onda
+  // cuadrada a 3000 Hz, que sonaba a pitido)
   hiHat: {
     name: 'Hi-Hat',
     description: 'Sonido brillante y agudo',
-    accentFrequency: 3000,
-    regularFrequency: 2500,
-    accentDuration: 0.03,
-    regularDuration: 0.02,
-    accentGain: 0.25,
-    regularGain: 0.12,
+    tipo: 'ruido',
+    filtro: 'highpass',
+    accentFrequency: 8000,
+    regularFrequency: 7000,
+    accentDuration: 0.06,
+    regularDuration: 0.04,
+    accentGain: 0.5,
+    regularGain: 0.3,
     oscillatorType: 'square'
   },
   rimshot: {
@@ -83,6 +118,65 @@ export const SOUND_PRESETS = {
     accentGain: 0.2,
     regularGain: 0.1,
     oscillatorType: 'sine'
+  },
+  claves: {
+    name: 'Claves',
+    description: 'Dos palos de madera: seco y agudo',
+    accentFrequency: 2500,
+    regularFrequency: 2100,
+    accentDuration: 0.03,
+    regularDuration: 0.022,
+    accentGain: 0.32,
+    regularGain: 0.18,
+    oscillatorType: 'sine'
+  },
+  cencerro: {
+    name: 'Cencerro',
+    description: 'Metálico, se oye sobre la banda',
+    tipo: 'cencerro',
+    accentFrequency: 800,
+    regularFrequency: 680,
+    accentDuration: 0.25,
+    regularDuration: 0.15,
+    accentGain: 0.3,
+    regularGain: 0.17,
+    oscillatorType: 'square'
+  },
+  palmas: {
+    name: 'Palmas',
+    description: 'Una palmada',
+    tipo: 'palmas',
+    filtro: 'bandpass',
+    accentFrequency: 1300,
+    regularFrequency: 1100,
+    accentDuration: 0.14,
+    regularDuration: 0.1,
+    accentGain: 0.7,
+    regularGain: 0.4,
+    oscillatorType: 'square'
+  },
+  bombo: {
+    name: 'Bombo',
+    description: 'Grave, se siente más que se oye',
+    tipo: 'bombo',
+    accentFrequency: 160,
+    regularFrequency: 130,
+    accentDuration: 0.3,
+    regularDuration: 0.2,
+    accentGain: 0.9,
+    regularGain: 0.6,
+    oscillatorType: 'sine'
+  },
+  electronico: {
+    name: 'Electrónico',
+    description: 'Pitido de metrónomo digital',
+    accentFrequency: 1760,
+    regularFrequency: 880,
+    accentDuration: 0.06,
+    regularDuration: 0.05,
+    accentGain: 0.14,
+    regularGain: 0.09,
+    oscillatorType: 'square'
   }
 };
 
@@ -94,7 +188,12 @@ class MetronomeEngine {
     this.tempo = 120; // BPM
     this.timeSignature = TIME_SIGNATURES['4/4'];
     this.subdivision = 'quarter';
+    // El tiempo acentuado, desde 1; 0 es sin acento
+    this.acento = 1;
+    // Tiempo del compás en curso, click dentro de ese tiempo y cuándo empezó
     this.currentBeat = 0;
+    this.paso = 0;
+    this.inicioDelTiempo = 0.0;
     this.nextNoteTime = 0.0;
     this.scheduleAheadTime = 0.1; // Schedule 100ms ahead
     this.schedulerInterval = 25; // Check every 25ms
@@ -107,6 +206,9 @@ class MetronomeEngine {
 
     // Sound preset
     this.soundPreset = 'classic';
+    this.tipo = 'oscilador';
+    this.filtro = null;
+    this.bufferRuido = null;
     this.oscillatorType = SOUND_PRESETS.classic.oscillatorType;
 
     // Sound parameters (initialized from classic preset)
@@ -132,7 +234,16 @@ class MetronomeEngine {
     if (!this.masterGainNode && this.audioContext) {
       this.masterGainNode = this.audioContext.createGain();
       this.masterGainNode.gain.value = this.volume;
-      this.masterGainNode.connect(this.audioContext.destination);
+      // Un limitador a la salida: deja subir el volumen sin que el bombo o
+      // las palmas acentuadas distorsionen
+      const limitador = this.audioContext.createDynamicsCompressor();
+      limitador.threshold.value = -6;
+      limitador.knee.value = 3;
+      limitador.ratio.value = 12;
+      limitador.attack.value = 0.001;
+      limitador.release.value = 0.08;
+      this.masterGainNode.connect(limitador);
+      limitador.connect(this.audioContext.destination);
     }
     return this.audioContext;
   }
@@ -158,7 +269,7 @@ class MetronomeEngine {
    * Set tempo in BPM
    */
   setTempo(bpm) {
-    this.tempo = Math.max(40, Math.min(240, bpm));
+    this.tempo = limitarBpm(bpm);
   }
 
   /**
@@ -167,9 +278,28 @@ class MetronomeEngine {
   setTimeSignature(timeSignature) {
     if (TIME_SIGNATURES[timeSignature]) {
       this.timeSignature = TIME_SIGNATURES[timeSignature];
-      // Reset beat counter when changing time signature
-      this.currentBeat = 0;
+      if (!this.isPlaying) {
+        this.currentBeat = 0;
+        this.paso = 0;
+      } else if (this.currentBeat >= this.timeSignature.beats) {
+        // Sonando, se sigue contando; si con el compás nuevo ya se pasó del
+        // último tiempo, el siguiente es el 1
+        this.currentBeat = 0;
+      }
     }
+  }
+
+  /**
+   * El tiempo que suena acentuado (desde 1), o 0 para que no se acentúe
+   * ninguno. Se puede cambiar sonando: vale desde el siguiente click.
+   */
+  setAcento(acento) {
+    const n = Number(acento);
+    this.acento = Number.isInteger(n) && n >= 0 ? n : 1;
+  }
+
+  getAcento() {
+    return this.acento;
   }
 
   /**
@@ -178,6 +308,8 @@ class MetronomeEngine {
   setSubdivision(subdivision) {
     if (SUBDIVISIONS[subdivision]) {
       this.subdivision = subdivision;
+      // Si el patrón nuevo es más corto, se sigue desde el próximo tiempo
+      if (this.paso >= SUBDIVISIONS[subdivision].pattern.length) this.paso = 0;
     }
   }
 
@@ -188,6 +320,8 @@ class MetronomeEngine {
     if (SOUND_PRESETS[presetId]) {
       const preset = SOUND_PRESETS[presetId];
       this.soundPreset = presetId;
+      this.tipo = preset.tipo || 'oscilador';
+      this.filtro = preset.filtro || null;
       this.oscillatorType = preset.oscillatorType;
       this.accentFrequency = preset.accentFrequency;
       this.regularFrequency = preset.regularFrequency;
@@ -211,81 +345,128 @@ class MetronomeEngine {
   async playTestSound() {
     this.init();
     await resumeAudioContext();
-    this.scheduleNote(this.audioContext.currentTime + 0.05, true, false);
+    // El acento y un tiempo normal, para oír la diferencia
+    const t = this.audioContext.currentTime + 0.05;
+    this.scheduleNote(t, 'acento');
+    this.scheduleNote(t + 0.4, 'pulso');
   }
 
   /**
    * Calculate the time between beats in seconds
    */
   getSecondPerBeat() {
-    // 60 seconds / BPM = seconds per beat
-    // Adjust for note value (4/4 uses quarter notes, 6/8 uses eighth notes)
-    const baseInterval = 60.0 / this.tempo;
-
-    // For 6/8, 9/8, 12/8 time signatures, the beat is the dotted quarter
-    if (this.timeSignature.noteValue === 8) {
-      return baseInterval * 1.5; // Dotted quarter = 1.5 * quarter
-    }
-
-    return baseInterval;
+    // El BPM cuenta los tiempos que se ven: negras en x/4, negras con puntillo
+    // en 6/8, 9/8 y 12/8, corcheas en 7/8
+    return 60.0 / this.tempo;
   }
 
   /**
-   * Calculate interval for subdivisions
+   * Programa un click. `nivel` es 'acento', 'pulso' o 'subdivision'
+   * (`nivelDelClick`); por compatibilidad, `true` cuenta como acento.
    */
-  getSubdivisionInterval() {
-    const clicksPerBeat = SUBDIVISIONS[this.subdivision].clicksPerBeat;
-    return this.getSecondPerBeat() / clicksPerBeat;
-  }
-
-  /**
-   * Schedule a single click sound
-   */
-  scheduleNote(time, isAccent, subdivision = false) {
+  scheduleNote(time, nivel = 'pulso') {
+    if (nivel === true) nivel = 'acento';
+    if (nivel === false) nivel = 'pulso';
     const ctx = this.audioContext;
+    const acento = nivel === 'acento';
+    const frecuencia = acento ? this.accentFrequency : this.regularFrequency;
+    const duracion = acento ? this.accentDuration : this.regularDuration;
+    const ganancia = REFUERZO * (nivel === 'subdivision'
+      ? this.regularGain * 0.5
+      : (acento ? this.accentGain : this.regularGain));
 
-    // Create oscillator for the click
-    const osc = ctx.createOscillator();
-    const gainNode = ctx.createGain();
+    // La envolvente: sube de golpe y se apaga
+    const envolvente = ctx.createGain();
+    envolvente.gain.setValueAtTime(0, time);
+    envolvente.gain.linearRampToValueAtTime(ganancia, time + 0.001);
+    envolvente.gain.exponentialRampToValueAtTime(0.001, time + duracion);
+    envolvente.connect(this.masterGainNode || ctx.destination);
 
-    // Set oscillator type from preset
-    osc.type = this.oscillatorType;
+    if (this.tipo === 'ruido' || this.tipo === 'palmas') {
+      this.sonarRuido(time, frecuencia, duracion, envolvente, ganancia);
+    } else if (this.tipo === 'cencerro') {
+      // Dos cuadradas desafinadas entre sí, por un paso banda: el cencerro
+      // de las cajas de ritmo
+      const filtro = ctx.createBiquadFilter();
+      filtro.type = 'bandpass';
+      filtro.frequency.value = frecuencia * 1.4;
+      filtro.Q.value = 1.2;
+      filtro.connect(envolvente);
+      for (const f of [frecuencia, frecuencia * 1.48]) {
+        const osc = ctx.createOscillator();
+        osc.type = 'square';
+        osc.frequency.value = f;
+        osc.connect(filtro);
+        osc.start(time);
+        osc.stop(time + duracion);
+      }
+    } else if (this.tipo === 'bombo') {
+      // Una senoidal que cae de tono muy deprisa
+      const osc = ctx.createOscillator();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(frecuencia, time);
+      osc.frequency.exponentialRampToValueAtTime(45, time + duracion * 0.5);
+      osc.connect(envolvente);
+      osc.start(time);
+      osc.stop(time + duracion);
+    } else {
+      const osc = ctx.createOscillator();
+      osc.type = this.oscillatorType;
+      osc.frequency.value = frecuencia;
+      osc.connect(envolvente);
+      osc.start(time);
+      osc.stop(time + duracion);
+    }
+  }
 
-    // Set frequency and gain based on accent
-    osc.frequency.value = isAccent ? this.accentFrequency : this.regularFrequency;
-    const duration = isAccent ? this.accentDuration : this.regularDuration;
-    const peakGain = subdivision ? this.regularGain * 0.5 : (isAccent ? this.accentGain : this.regularGain);
-
-    // Create envelope (attack and decay)
-    gainNode.gain.setValueAtTime(0, time);
-    gainNode.gain.linearRampToValueAtTime(peakGain, time + 0.001); // Quick attack
-    gainNode.gain.exponentialRampToValueAtTime(0.01, time + duration); // Exponential decay
-
-    // Connect nodes through master gain
-    osc.connect(gainNode);
-    gainNode.connect(this.masterGainNode || ctx.destination);
-
-    // Start and stop
-    osc.start(time);
-    osc.stop(time + duration);
+  // Ruido blanco filtrado (hi-hat, palmas). Las palmas repiten el golpe tres
+  // veces muy seguidas, que es lo que las distingue de un golpe de ruido
+  sonarRuido(time, frecuencia, duracion, envolvente, ganancia) {
+    const ctx = this.audioContext;
+    if (!this.bufferRuido || this.bufferRuido.sampleRate !== ctx.sampleRate) {
+      const largo = Math.floor(ctx.sampleRate * 0.5);
+      this.bufferRuido = ctx.createBuffer(1, largo, ctx.sampleRate);
+      const datos = this.bufferRuido.getChannelData(0);
+      for (let i = 0; i < largo; i++) datos[i] = Math.random() * 2 - 1;
+    }
+    const fuente = ctx.createBufferSource();
+    fuente.buffer = this.bufferRuido;
+    const filtro = ctx.createBiquadFilter();
+    filtro.type = this.filtro || 'highpass';
+    filtro.frequency.value = frecuencia;
+    if (this.tipo === 'palmas') {
+      filtro.Q.value = 0.9;
+      envolvente.gain.cancelScheduledValues(time);
+      envolvente.gain.setValueAtTime(0, time);
+      for (const d of [0, 0.011, 0.022]) {
+        envolvente.gain.setValueAtTime(ganancia, time + d);
+        envolvente.gain.exponentialRampToValueAtTime(ganancia * 0.3, time + d + 0.009);
+      }
+      envolvente.gain.exponentialRampToValueAtTime(0.001, time + duracion);
+    }
+    fuente.connect(filtro);
+    filtro.connect(envolvente);
+    fuente.start(time);
+    fuente.stop(time + duracion);
   }
 
   /**
-   * Advance to next note
+   * Avanza al siguiente click del patrón: dentro del tiempo o, al acabarlo,
+   * al primero del tiempo siguiente
    */
   nextNote() {
-    const subdivisionClicks = SUBDIVISIONS[this.subdivision].clicksPerBeat;
-    const interval = this.getSubdivisionInterval();
+    const patron = SUBDIVISIONS[this.subdivision].pattern;
+    const segundosPorTiempo = this.getSecondPerBeat();
 
-    // Advance time
-    this.nextNoteTime += interval;
+    this.paso++;
+    if (this.paso >= patron.length) {
+      this.paso = 0;
+      this.inicioDelTiempo += segundosPorTiempo;
+      this.currentBeat++;
+    }
+    this.nextNoteTime = this.inicioDelTiempo + patron[this.paso] * segundosPorTiempo;
 
-    // Advance beat counter
-    this.currentBeat++;
-
-    // Wrap beat counter based on time signature and subdivision
-    const totalClicks = this.timeSignature.beats * subdivisionClicks;
-    if (this.currentBeat >= totalClicks) {
+    if (this.currentBeat >= this.timeSignature.beats) {
       this.currentBeat = 0;
       this.measureCount++;
 
@@ -323,60 +504,21 @@ class MetronomeEngine {
   }
 
   /**
-   * Check if current note is an accent (downbeat)
-   */
-  isAccent(beatNumber) {
-    const subdivisionClicks = SUBDIVISIONS[this.subdivision].clicksPerBeat;
-
-    // First beat of the measure is always accent
-    if (beatNumber === 0) return true;
-
-    // For subdivisions, only accent the main beats
-    if (this.subdivision !== 'quarter') {
-      return beatNumber % subdivisionClicks === 0;
-    }
-
-    return false;
-  }
-
-  /**
-   * Check if current note is a subdivision (not a main beat)
-   */
-  isSubdivision(beatNumber) {
-    if (this.subdivision === 'quarter') return false;
-
-    const subdivisionClicks = SUBDIVISIONS[this.subdivision].clicksPerBeat;
-    return beatNumber % subdivisionClicks !== 0;
-  }
-
-  /**
-   * Get the main beat number (for visual display)
-   */
-  getMainBeatNumber(beatNumber) {
-    const subdivisionClicks = SUBDIVISIONS[this.subdivision].clicksPerBeat;
-    return Math.floor(beatNumber / subdivisionClicks);
-  }
-
-  /**
    * Scheduler - called at regular intervals to schedule upcoming notes
    */
   scheduler() {
     // Schedule all notes that need to play before next scheduler call
     while (this.nextNoteTime < this.audioContext.currentTime + this.scheduleAheadTime) {
-      const isAccentBeat = this.isAccent(this.currentBeat);
-      const isSubBeat = this.isSubdivision(this.currentBeat);
+      const nivel = nivelDelClick(this.currentBeat, this.paso, this.acento);
+      this.scheduleNote(this.nextNoteTime, nivel);
 
-      // Schedule the audio
-      this.scheduleNote(this.nextNoteTime, isAccentBeat, isSubBeat);
-
-      // Notify callback for visual sync (only for main beats)
-      if (this.onBeatCallback && !isSubBeat) {
-        const mainBeat = this.getMainBeatNumber(this.currentBeat);
-        // Use setTimeout to sync visual with audio
+      // Las luces, solo en los tiempos (no en las subdivisiones)
+      if (this.onBeatCallback && this.paso === 0) {
+        const tiempo = this.currentBeat;
         const delay = (this.nextNoteTime - this.audioContext.currentTime) * 1000;
         setTimeout(() => {
           if (this.onBeatCallback) {
-            this.onBeatCallback(mainBeat, this.timeSignature.beats);
+            this.onBeatCallback(tiempo, this.timeSignature.beats);
           }
         }, delay);
       }
@@ -400,7 +542,9 @@ class MetronomeEngine {
     this.isPlaying = true;
     this.onBeatCallback = onBeatCallback;
     this.currentBeat = 0;
-    this.nextNoteTime = this.audioContext.currentTime + 0.05; // Start slightly in the future
+    this.paso = 0;
+    this.inicioDelTiempo = this.audioContext.currentTime + 0.05; // Start slightly in the future
+    this.nextNoteTime = this.inicioDelTiempo;
 
     // Start the scheduler
     this.schedulerTimer = setInterval(() => {
@@ -422,6 +566,7 @@ class MetronomeEngine {
     }
 
     this.currentBeat = 0;
+    this.paso = 0;
     this.measureCount = 0;
 
     if (this.onBeatCallback) {

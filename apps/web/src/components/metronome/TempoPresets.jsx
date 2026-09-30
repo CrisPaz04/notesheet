@@ -1,40 +1,29 @@
 /**
  * Tempo Presets Component
  *
- * Provides quick access to common tempo markings
+ * Los nombres clásicos del tempo. Se marca el que corresponde al tempo que
+ * suena (su tramo, no solo el número exacto del botón), y se pueden tocar
+ * sonando.
  */
 
-const TEMPO_PRESETS = [
-  { name: 'Grave', bpm: 40 },
-  { name: 'Largo', bpm: 50 },
-  { name: 'Adagio', bpm: 70 },
-  { name: 'Andante', bpm: 90 },
-  { name: 'Moderato', bpm: 110 },
-  { name: 'Allegro', bpm: 140 },
-  { name: 'Presto', bpm: 180 },
-  { name: 'Prestissimo', bpm: 210 }
-];
+import { TEMPOS_CLASICOS, tempoClasico } from '@notesheet/core/src/audio/temposClasicos';
 
-function TempoPresets({ currentBpm, onPresetSelect, isPlaying }) {
-  // Check if current BPM matches a preset (within ±2 BPM tolerance)
-  const isPresetActive = (presetBpm) => {
-    return Math.abs(currentBpm - presetBpm) <= 2;
-  };
+function TempoPresets({ currentBpm, onPresetSelect }) {
+  const actual = tempoClasico(currentBpm).nombre;
 
   return (
     <div className="tempo-presets">
-      <label className="form-label-modern mb-3">Tempo Clásicos</label>
+      <label className="form-label-modern mb-3">Tempos clásicos</label>
       <div className="presets-grid">
-        {TEMPO_PRESETS.map((preset) => (
+        {TEMPOS_CLASICOS.map((preset) => (
           <button
-            key={preset.name}
-            className={`tempo-preset-btn ${
-              isPresetActive(preset.bpm) ? 'active' : ''
-            }`}
+            key={preset.nombre}
+            type="button"
+            className={`tempo-preset-btn ${preset.nombre === actual ? 'active' : ''}`}
             onClick={() => onPresetSelect(preset.bpm)}
-            disabled={isPlaying}
+            aria-pressed={preset.nombre === actual}
           >
-            <div className="preset-name">{preset.name}</div>
+            <div className="preset-name">{preset.nombre}</div>
             <div className="preset-bpm">{preset.bpm} BPM</div>
           </button>
         ))}

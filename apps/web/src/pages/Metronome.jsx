@@ -18,6 +18,8 @@ import SoundPresetSelector from '../components/metronome/SoundPresetSelector';
 import TempoTrainer from '../components/metronome/TempoTrainer';
 import Desplegable from '../components/Desplegable';
 import Icono from "../components/Icono";
+import FiguraRitmica from "../components/metronome/FiguraRitmica";
+import { tempoClasico } from '@notesheet/core/src/audio/temposClasicos';
 
 /**
  * Carga las preferencias y, solo cuando las tiene, monta el metrónomo.
@@ -92,6 +94,14 @@ function Metronome({ compact = false, mini = false, tempoInicial = null, compasI
   return <MetronomeCuerpo compact={compact} mini={mini} initialPreferences={iniciales} />;
 }
 
+// La figura que cuenta el BPM: negra, negra con puntillo en los compuestos
+// (6/8, 9/8, 12/8) o corchea en 7/8
+const figuraDelTiempo = (compas) => {
+  const c = TIME_SIGNATURES[compas];
+  if (c?.compuesto) return 'negraConPuntillo';
+  return c?.noteValue === 8 ? 'corchea' : 'quarter';
+};
+
 function MetronomeCuerpo({ compact, mini, initialPreferences }) {
   const {
     isPlaying,
@@ -100,15 +110,18 @@ function MetronomeCuerpo({ compact, mini, initialPreferences }) {
     subdivision,
     soundPreset,
     volume,
+    acento,
     currentBeat,
     loading,
     error,
+    start,
     toggle,
     updateBpm,
     updateTimeSignature,
     updateSubdivision,
     updateSoundPreset,
     updateVolume,
+    updateAcento,
     testSound,
     tapTempo,
     incrementBpm,
@@ -125,6 +138,12 @@ function MetronomeCuerpo({ compact, mini, initialPreferences }) {
     updateBpm,
     isPlaying
   );
+
+  // El entrenamiento arranca el metrónomo si está parado: antes había que
+  // iniciarlo primero, y con él sonando no se podían tocar los números
+  const empezarEntrenamiento = async () => {
+    if (tempoTrainer.startTraining() && !isPlaying) await start();
+  };
 
   // Versión simplificada para el panel flotante: lo que se toca en vivo
   // (tempo, compás, empezar y parar). Lo demás está en la página completa.
@@ -148,15 +167,14 @@ function MetronomeCuerpo({ compact, mini, initialPreferences }) {
           currentBeat={currentBeat}
           totalBeats={timeSignatureBeats}
           isPlaying={isPlaying}
+          acento={acento}
         />
 
         <div className="metronome-mini-fila">
-          {/* El compás solo se cambia en pausa, como en la página completa */}
           <Desplegable
             className="desplegable--compacto"
             value={timeSignature}
             onChange={updateTimeSignature}
-            disabled={isPlaying}
             ariaLabel="Compás"
             opciones={Object.keys(TIME_SIGNATURES).map((c) => ({ value: c, label: c }))}
           />
@@ -202,22 +220,19 @@ function MetronomeCuerpo({ compact, mini, initialPreferences }) {
               </div>
             )}
 
-            {/* BPM Display */}
+            {/* "♩ = 125" y debajo el tempo clásico que le corresponde */}
             <div className="text-center mb-4">
               <div className="bpm-display">
-                <div
-                  className="bpm-value"
-                  style={{
-                    fontSize: '4rem',
-                    fontWeight: '700',
-                    color: 'var(--color-primary)'
-                  }}
-                >
-                  {bpm}
+                <div className="bpm-fila">
+                  <span className="bpm-figura" aria-hidden="true">
+                    <FiguraRitmica tipo={figuraDelTiempo(timeSignature)} />
+                    <span>=</span>
+                  </span>
+                  <div className="bpm-value" aria-label={`${bpm} BPM`}>{bpm}</div>
                 </div>
-                <div className="bpm-label text-secondary">BPM</div>
+                <div className="bpm-tempo-clasico">{tempoClasico(bpm).nombre}</div>
                 <div className="text-secondary small mt-2">
-                  {timeSignature} • {subdivisionName}
+                  {timeSignature} • {subdivisionName}{acento === 0 ? ' • Sin acento' : ''}
                 </div>
               </div>
             </div>
@@ -227,6 +242,7 @@ function MetronomeCuerpo({ compact, mini, initialPreferences }) {
               currentBeat={currentBeat}
               totalBeats={timeSignatureBeats}
               isPlaying={isPlaying}
+              acento={acento}
             />
 
             {/* Main Control Button */}
@@ -264,35 +280,22 @@ function MetronomeCuerpo({ compact, mini, initialPreferences }) {
               timeSignature={timeSignature}
               subdivision={subdivision}
               volume={volume}
-              isPlaying={isPlaying}
+              acento={acento}
+              totalBeats={timeSignatureBeats}
               onBpmChange={updateBpm}
               onTimeSignatureChange={updateTimeSignature}
               onSubdivisionChange={updateSubdivision}
               onVolumeChange={updateVolume}
+              onAcentoChange={updateAcento}
               onIncrement={incrementBpm}
               onDecrement={decrementBpm}
               onTapTempo={tapTempo}
             />
           </div>
 
+          {/* El entrenador, justo después de los controles: es de lo que más
+              se usa al estudiar */}
           <div className="card p-4 mb-4">
-            <TempoPresets
-              currentBpm={bpm}
-              onPresetSelect={setPreset}
-              isPlaying={isPlaying}
-            />
-          </div>
-
-          <div className="card p-4 mb-4">
-            <SoundPresetSelector
-              currentPreset={soundPreset}
-              onPresetSelect={updateSoundPreset}
-              onTestSound={testSound}
-              isPlaying={isPlaying}
-            />
-          </div>
-
-          <div className="card p-4">
             <TempoTrainer
               config={tempoTrainer.config}
               onConfigChange={tempoTrainer.updateConfig}
@@ -301,10 +304,26 @@ function MetronomeCuerpo({ compact, mini, initialPreferences }) {
               currentBpm={tempoTrainer.currentTrainingBpm}
               progress={tempoTrainer.progress}
               hasReachedTarget={tempoTrainer.hasReachedTarget}
-              onStart={tempoTrainer.startTraining}
+              onStart={empezarEntrenamiento}
               onTogglePause={tempoTrainer.togglePause}
               onStop={tempoTrainer.stopTraining}
               isMetronomePlaying={isPlaying}
+            />
+          </div>
+
+          <div className="card p-4 mb-4">
+            <TempoPresets
+              currentBpm={bpm}
+              onPresetSelect={setPreset}
+            />
+          </div>
+
+          <div className="card p-4">
+            <SoundPresetSelector
+              currentPreset={soundPreset}
+              onPresetSelect={updateSoundPreset}
+              onTestSound={testSound}
+              isPlaying={isPlaying}
             />
           </div>
         </div>
@@ -314,8 +333,8 @@ function MetronomeCuerpo({ compact, mini, initialPreferences }) {
       {!compact && (
         <div className="metronome-help-text mt-4">
           <Icono nombre="info" className="me-2" />
-          <strong>Tip:</strong> Puedes ajustar el tempo, volumen y subdivisión mientras el
-          metrónomo está activo. Solo el compás requiere pausar primero.
+          <strong>Tip:</strong> Todo se puede cambiar mientras suena: tempo, compás, acento,
+          subdivisión y sonido. El cambio se oye desde el siguiente click.
         </div>
       )}
       </div>

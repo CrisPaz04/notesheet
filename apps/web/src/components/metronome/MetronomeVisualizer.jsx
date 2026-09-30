@@ -4,11 +4,12 @@
  * Displays beat indicators with visual feedback
  */
 
-function MetronomeVisualizer({ currentBeat, totalBeats, isPlaying }) {
+// `acento`: el tiempo acentuado, desde 1; 0 es ninguno
+function MetronomeVisualizer({ currentBeat, totalBeats, isPlaying, acento = 1 }) {
   // Generate beat indicators based on time signature
   const beatIndicators = Array.from({ length: totalBeats }, (_, index) => {
     const isActive = isPlaying && index === currentBeat;
-    const isAccent = index === 0; // First beat is always accent
+    const isAccent = acento > 0 && index === acento - 1;
 
     return (
       <div
@@ -17,6 +18,8 @@ function MetronomeVisualizer({ currentBeat, totalBeats, isPlaying }) {
           isAccent ? 'accent' : ''
         }`}
       >
+        {/* El signo de acento (>) sobre el tiempo acentuado */}
+        {isAccent && <span className="beat-acento" aria-label="acentuado">&gt;</span>}
         <div className="beat-number">{index + 1}</div>
       </div>
     );

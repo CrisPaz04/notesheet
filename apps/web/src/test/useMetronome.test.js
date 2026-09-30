@@ -16,6 +16,7 @@ vi.mock('@notesheet/core/src/audio/metronomeEngine', () => {
       this.setSubdivision = vi.fn();
       this.setSoundPreset = vi.fn();
       this.setVolume = vi.fn();
+      this.setAcento = vi.fn();
       this.playTestSound = vi.fn().mockResolvedValue(undefined);
       this.start = vi.fn(async (cb) => {
         this.playing = true;
@@ -34,11 +35,12 @@ vi.mock('@notesheet/core/src/audio/metronomeEngine', () => {
     TIME_SIGNATURES: {
       '4/4': { beats: 4, name: '4/4' },
       '3/4': { beats: 3, name: '3/4' },
-      '6/8': { beats: 6, name: '6/8' }
+      '6/8': { beats: 2, name: '6/8', compuesto: true }
     },
     SUBDIVISIONS: {
       quarter: { name: 'Negras' },
-      eighth: { name: 'Corcheas' }
+      eighth: { name: 'Corcheas' },
+      triplet: { name: 'Tresillos' }
     },
     SOUND_PRESETS: {
       classic: { name: 'Clásico' },
@@ -185,16 +187,24 @@ describe('useMetronome', () => {
       expect(ultimoEngine().setTempo).toHaveBeenCalledWith(150);
     });
 
-    it('lo limita a un mínimo de 40', () => {
+    it('lo limita a un mínimo de 15', () => {
       const { result } = renderHook(() => useMetronome());
       act(() => result.current.updateBpm(10));
-      expect(result.current.bpm).toBe(40);
+      expect(result.current.bpm).toBe(15);
     });
 
-    it('lo limita a un máximo de 240', () => {
+    it('lo limita a un máximo de 500', () => {
       const { result } = renderHook(() => useMetronome());
+      act(() => result.current.updateBpm(600));
+      expect(result.current.bpm).toBe(500);
+    });
+
+    it('admite los extremos', () => {
+      const { result } = renderHook(() => useMetronome());
+      act(() => result.current.updateBpm(15));
+      expect(result.current.bpm).toBe(15);
       act(() => result.current.updateBpm(500));
-      expect(result.current.bpm).toBe(240);
+      expect(result.current.bpm).toBe(500);
     });
 
     it('cae a 120 ante un valor no numérico', () => {
@@ -329,19 +339,26 @@ describe('useMetronome', () => {
       expect(result.current.bpm).toBe(120);
     });
 
-    it('ignora un tempo por debajo del mínimo', () => {
+    it('ignora un tempo por encima del máximo', () => {
       const { result } = renderHook(() => useMetronome());
       act(() => result.current.updateBpm(100));
 
-      // 1900 ms entre toques -> ~32 BPM, por debajo del mínimo de 40.
-      // El intervalo se queda por debajo de los 2 s de inactividad a
-      // propósito: si no, saltaría el reinicio de la serie y nunca se
-      // llegaría a evaluar el rango.
+      // 100 ms entre toques -> 600 BPM, por encima de 500
       act(() => result.current.tapTempo());
-      act(() => { vi.advanceTimersByTime(1900); });
+      act(() => { vi.advanceTimersByTime(100); });
       act(() => result.current.tapTempo());
 
       expect(result.current.bpm).toBe(100);
+    });
+
+    // Antes la serie se olvidaba a los 2 s y no se podía marcar nada por
+    // debajo de 30 BPM
+    it('se puede marcar un tempo lento, hasta el mínimo', () => {
+      const { result } = renderHook(() => useMetronome());
+      act(() => result.current.tapTempo());
+      act(() => { vi.advanceTimersByTime(3000); });
+      act(() => result.current.tapTempo());
+      expect(result.current.bpm).toBe(20);
     });
 
     it('olvida los toques tras el tiempo de espera', () => {
@@ -352,10 +369,60 @@ describe('useMetronome', () => {
       act(() => result.current.tapTempo());
       expect(result.current.bpm).toBe(100);
 
-      // Pasan más de 2 s: la serie se reinicia y un toque suelto no calcula nada
-      act(() => { vi.advanceTimersByTime(2500); });
+      // Pasan más de 4,1 s: la serie se reinicia y un toque suelto no calcula nada
+      act(() => { vi.advanceTimersByTime(4500); });
       act(() => result.current.tapTempo());
       expect(result.current.bpm).toBe(100);
+    });
+  });
+
+  // Qué tiempo suena más fuerte: 1 por defecto, 0 para ninguno
+  describe('acento', () => {
+    it('arranca en el 1 y se lo pasa al engine', () => {
+      const { result } = renderHook(() => useMetronome());
+      expect(result.current.acento).toBe(1);
+      expect(ultimoEngine().setAcento).toHaveBeenCalledWith(1);
+    });
+
+    it('se puede quitar (0) y se guarda', () => {
+      const { result } = renderHook(() => useMetronome());
+      act(() => result.current.updateAcento(0));
+      expect(result.current.acento).toBe(0);
+      expect(ultimoEngine().setAcento).toHaveBeenLastCalledWith(0);
+      expect(JSON.parse(localStorage.getItem('metronomePreferences')).acento).toBe(0);
+    });
+
+    it('respeta el guardado, también el 0', () => {
+      const { result } = renderHook(() => useMetronome({ acento: 0 }));
+      expect(result.current.acento).toBe(0);
+    });
+
+    it('con un compás de menos tiempos, el que quedaría fuera vuelve al 1', () => {
+      const { result } = renderHook(() => useMetronome());
+      act(() => result.current.updateTimeSignature('6/8'));
+      act(() => result.current.updateAcento(5));
+      act(() => result.current.updateTimeSignature('3/4'));
+      expect(result.current.acento).toBe(1);
+    });
+
+    it('en 6/8 las negras pasan al tresillo (si no, solo se oiría el pulso)', () => {
+      const { result } = renderHook(() => useMetronome());
+      act(() => result.current.updateTimeSignature('6/8'));
+      expect(result.current.subdivision).toBe('triplet');
+    });
+
+    it('una subdivisión elegida no se toca al pasar a 6/8', () => {
+      const { result } = renderHook(() => useMetronome());
+      act(() => result.current.updateSubdivision('eighth'));
+      act(() => result.current.updateTimeSignature('6/8'));
+      expect(result.current.subdivision).toBe('eighth');
+    });
+
+    it('"sin acento" se mantiene al cambiar de compás', () => {
+      const { result } = renderHook(() => useMetronome());
+      act(() => result.current.updateAcento(0));
+      act(() => result.current.updateTimeSignature('3/4'));
+      expect(result.current.acento).toBe(0);
     });
   });
 
