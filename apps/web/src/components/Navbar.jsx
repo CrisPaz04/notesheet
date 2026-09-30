@@ -27,6 +27,15 @@ function Navbar() {
     };
   }, []);
 
+  // Al cambiar de vista, el menú desplegado (tablet y móvil) se cierra: se
+  // quedaba abierto tapando media pantalla de la vista nueva. Bootstrap mira
+  // la clase `show` para saber si está abierto, así que basta con quitarla.
+  useEffect(() => {
+    document.getElementById("navbarNav")?.classList.remove("show");
+    document.querySelector(".navbar-toggler-custom")?.setAttribute("aria-expanded", "false");
+    setIsUserDropdownOpen(false);
+  }, [location.pathname]);
+
   const handleLogout = async () => {
     try {
       await logout();

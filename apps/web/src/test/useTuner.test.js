@@ -7,7 +7,7 @@ import { renderHook, act, waitFor } from '@testing-library/react';
 // es justo lo que interesa comprobar.
 const engineInstances = [];
 // Permite simular que el usuario deniega el micrófono
-const engineConfig = { initializeError: null };
+const engineConfig = { initializeError: null, contexto: null };
 
 vi.mock('@notesheet/core/src/audio/tunerEngine', () => {
   class FakeTunerEngine {
@@ -16,8 +16,11 @@ vi.mock('@notesheet/core/src/audio/tunerEngine', () => {
         if (engineConfig.initializeError) throw engineConfig.initializeError;
       });
       this.setReferenceFrequency = vi.fn();
-      this.start = vi.fn((cb) => { this.pitchCallback = cb; });
-      this.stop = vi.fn();
+      this.isRunning = false;
+      this.audioContext = engineConfig.contexto;
+      this.start = vi.fn((cb) => { this.pitchCallback = cb; this.isRunning = true; });
+      this.stop = vi.fn(() => { this.isRunning = false; });
+      this.liberarMicrofono = vi.fn(() => { this.isRunning = false; });
       this.destroy = vi.fn();
       this.playReferenceTone = vi.fn();
       this.stopReferenceTone = vi.fn();
@@ -57,6 +60,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   engineInstances.length = 0;
   engineConfig.initializeError = null;
+  engineConfig.contexto = null;
   mockAuth.currentUser = null;
   mockSavePrefs.mockResolvedValue({});
   mockGetUserPreferences.mockResolvedValue({});
@@ -66,7 +70,38 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.useRealTimers();
+  delete navigator.permissions;
+  ponerVisibilidad('visible');
 });
+
+// El permiso del micrófono tal como lo contaría el navegador
+const darPermiso = (state) => {
+  Object.defineProperty(navigator, 'permissions', {
+    configurable: true,
+    value: { query: vi.fn(async () => ({ state })) }
+  });
+};
+
+const ponerVisibilidad = (estado) => {
+  Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => estado });
+};
+const cambiarVisibilidad = async (estado) => {
+  ponerVisibilidad(estado);
+  await act(async () => { document.dispatchEvent(new Event('visibilitychange')); });
+};
+
+// Un AudioContext que el navegador deja en pausa hasta un toque
+const contextoEnPausa = () => {
+  const oyentes = new Set();
+  const ctx = {
+    state: 'suspended',
+    resume: vi.fn(async () => {}),
+    addEventListener: (_, fn) => oyentes.add(fn),
+    removeEventListener: (_, fn) => oyentes.delete(fn),
+    arrancar() { this.state = 'running'; oyentes.forEach((fn) => fn()); }
+  };
+  return ctx;
+};
 
 describe('useTuner', () => {
   describe('estado inicial', () => {
@@ -512,6 +547,98 @@ describe('useTuner', () => {
         'user-1',
         expect.objectContaining({ referenceFrequency: 442 })
       );
+    });
+  });
+
+  describe('siempre escuchando (arranque solo y pestaña oculta)', () => {
+    it('con el permiso ya dado, escucha nada más abrirse', async () => {
+      darPermiso('granted');
+      const { result } = renderHook(() => useTuner());
+      await waitFor(() => expect(result.current.isRunning).toBe(true));
+      expect(engine().initialize).toHaveBeenCalledTimes(1);
+    });
+
+    // Si no, el aviso del navegador saltaría sin que nadie lo pidiera
+    it.each(['prompt', 'denied'])('con el permiso en "%s", espera al botón', async (estado) => {
+      darPermiso(estado);
+      const { result } = renderHook(() => useTuner());
+      await act(async () => { await Promise.resolve(); });
+      expect(navigator.permissions.query).toHaveBeenCalled();
+      expect(result.current.isRunning).toBe(false);
+      expect(engineInstances).toHaveLength(0);
+    });
+
+    it('si el navegador no deja consultar el permiso, espera al botón', async () => {
+      const { result } = renderHook(() => useTuner());
+      await act(async () => { await Promise.resolve(); });
+      expect(result.current.isRunning).toBe(false);
+    });
+
+    it('arrancarSolo: false no arranca aunque haya permiso', async () => {
+      darPermiso('granted');
+      const { result } = renderHook(() => useTuner({}, { arrancarSolo: false }));
+      await act(async () => { await Promise.resolve(); });
+      expect(result.current.isRunning).toBe(false);
+    });
+
+    it('con la pestaña oculta suelta el micrófono, y al volver escucha otra vez', async () => {
+      darPermiso('granted');
+      const { result } = renderHook(() => useTuner());
+      await waitFor(() => expect(result.current.isRunning).toBe(true));
+
+      await cambiarVisibilidad('hidden');
+      expect(engine().liberarMicrofono).toHaveBeenCalledTimes(1);
+      expect(result.current.isRunning).toBe(false);
+
+      await cambiarVisibilidad('visible');
+      await waitFor(() => expect(result.current.isRunning).toBe(true));
+      // El micrófono se pidió de nuevo (se había soltado)
+      expect(engine().initialize).toHaveBeenCalledTimes(2);
+    });
+
+    it('detenido a mano, al volver a la pestaña sigue parado', async () => {
+      const { result } = renderHook(() => useTuner());
+      await arrancar(result);
+      act(() => result.current.stop());
+
+      await cambiarVisibilidad('hidden');
+      await cambiarVisibilidad('visible');
+      await act(async () => { await Promise.resolve(); });
+      expect(result.current.isRunning).toBe(false);
+      expect(engine().liberarMicrofono).not.toHaveBeenCalled();
+    });
+
+    it('abierto con la pestaña oculta, empieza a escuchar al mostrarse', async () => {
+      darPermiso('granted');
+      ponerVisibilidad('hidden');
+      const { result } = renderHook(() => useTuner());
+      await act(async () => { await Promise.resolve(); });
+      expect(result.current.isRunning).toBe(false);
+
+      await cambiarVisibilidad('visible');
+      await waitFor(() => expect(result.current.isRunning).toBe(true));
+    });
+
+    it('con el audio en pausa avisa, y el primer toque lo reanuda', async () => {
+      const ctx = contextoEnPausa();
+      engineConfig.contexto = ctx;
+      const { result } = renderHook(() => useTuner());
+      await arrancar(result);
+      expect(result.current.esperaToque).toBe(true);
+
+      ctx.resume.mockClear();
+      act(() => { document.dispatchEvent(new Event('pointerdown')); });
+      expect(ctx.resume).toHaveBeenCalledTimes(1);
+
+      act(() => ctx.arrancar());
+      expect(result.current.esperaToque).toBe(false);
+    });
+
+    it('con el audio ya en marcha no hay aviso', async () => {
+      engineConfig.contexto = { state: 'running', resume: vi.fn() };
+      const { result } = renderHook(() => useTuner());
+      await arrancar(result);
+      expect(result.current.esperaToque).toBe(false);
     });
   });
 });

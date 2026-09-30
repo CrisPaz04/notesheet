@@ -212,19 +212,18 @@ class TunerEngine {
   }
 
   /**
-   * Clean up resources
+   * Deja de escuchar y suelta el micrófono (se apaga el indicador del
+   * sistema). Los tonos de referencia siguen funcionando; para volver a
+   * escuchar hay que llamar otra vez a `initialize()`.
    */
-  destroy() {
+  liberarMicrofono() {
     this.stop();
-    this.stopReferenceTone();
 
-    // Stop microphone
     if (this.mediaStream) {
       this.mediaStream.getTracks().forEach(track => track.stop());
       this.mediaStream = null;
     }
 
-    // Disconnect nodes
     if (this.microphone) {
       this.microphone.disconnect();
       this.microphone = null;
@@ -235,8 +234,16 @@ class TunerEngine {
       this.analyser = null;
     }
 
-    this.audioContext = null;
     this.dataArray = null;
+  }
+
+  /**
+   * Clean up resources
+   */
+  destroy() {
+    this.liberarMicrofono();
+    this.stopReferenceTone();
+    this.audioContext = null;
   }
 
   /**

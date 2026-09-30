@@ -83,11 +83,23 @@ function Tuner({ compact = false, mini = false }) {
   return <TunerCuerpo compact={compact} mini={mini} initialPreferences={initialPreferences} />;
 }
 
+// El navegador deja el audio en pausa si la página se abrió sin tocar nada
+// (recargando, desde un enlace): el primer toque en cualquier parte lo arranca
+function AvisoToque() {
+  return (
+    <div className="tuner-aviso-toque" role="status">
+      <Icono nombre="hand-tap" className="me-2" />
+      Toca la pantalla para empezar a escuchar
+    </div>
+  );
+}
+
 function TunerCuerpo({ compact, mini, initialPreferences }) {
   const {
     isRunning,
     loading,
     error,
+    esperaToque,
     detectedNote,
     notaConcierto,
     detectedFrequency,
@@ -147,6 +159,7 @@ function TunerCuerpo({ compact, mini, initialPreferences }) {
     return (
       <div className="tuner-mini">
         {error && <div className="alert alert-danger py-2 small" role="alert">{error}</div>}
+        {esperaToque && <AvisoToque />}
 
         <div className="tuner-mini-lectura">
           <span className="tuner-mini-nota" style={{ color }}>
@@ -199,6 +212,8 @@ function TunerCuerpo({ compact, mini, initialPreferences }) {
         {/* Main Tuner Display */}
         <div className="col-lg-8">
           <div className="tuner-card card p-4">
+            {esperaToque && <AvisoToque />}
+
             {/* Error Display */}
             {error && (
               <div className="alert alert-danger mb-4" role="alert">

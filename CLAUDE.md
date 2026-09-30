@@ -459,7 +459,7 @@ SPA (el orden importa).
 ## Notes
 
 - No TypeScript - pure JavaScript
-- Vitest configured; 1870 tests in `apps/web/src/test/` (run with `npm run test:run`)
+- Vitest configured; 1880 tests in `apps/web/src/test/` (run with `npm run test:run`)
 - Los tests se validan con **mutaciones**: se rompe el código a propósito y se comprueba
   que algún test falla. Ha destapado cuatro tests que pasaban por la razón equivocada,
   y un bug de verdad en `scores.js` (las voces se ordenaban como texto, así que la 10
@@ -622,11 +622,22 @@ SPA (el orden importa).
   pulsar Iniciar, y sin eso el tono no sonaba): las doce notas una vez, las alteradas
   oscuras como teclas negras, y la octava aparte (recordada en el dispositivo). El modo
   cuerdas se quitó.
+  **Escucha sin pulsar nada** (`useTuner`): al abrirse (página o panel flotante) arranca
+  solo si el micrófono **ya** tiene permiso (`utils/permisoMicrofono.js`; con 'prompt'
+  el aviso saltaría sin pedirlo, así que queda el botón). Con la página oculta (otra
+  pestaña, pantalla apagada) **suelta el micrófono** (`liberarMicrofono` del engine: se
+  apaga el indicador del sistema) y al volver escucha otra vez, salvo que se detuviera a
+  mano. Si el navegador deja el audio en pausa (se abrió recargando, sin ningún toque),
+  sale "Toca la pantalla para empezar a escuchar" y el primer toque lo reanuda. En
+  iPhone, con el micrófono abierto el metrónomo y el piano pueden sonar más bajo: es
+  cosa del sistema.
   Los tests (`afinadorDeteccion.test.js`) usan señales sintéticas con armónicos y
   están validados con mutaciones. Para verlo sin micrófono, en la consola antes de
   pulsar Iniciar: sustituir `navigator.mediaDevices.getUserMedia` por una función que
   devuelva el `stream` de un `createMediaStreamDestination` alimentado por un
-  oscilador `sawtooth`.
+  oscilador `sawtooth` (y `navigator.permissions` por uno que diga 'granted' para ver el
+  arranque solo). El panel del navegador de Claude cuenta como página oculta cuando no
+  está a la vista: ahí el afinador se para solo, y es lo correcto.
 - **Tablet en vertical no es un móvil.** La banda usa sobre todo tablets (iPad de 768 px,
   Samsung de 800). Lo que apila de uno en uno (una canción por fila, botones en columna,
   datos en tarjetas sueltas) va con `@media (max-width: 575.98px)`, no con 768: con 768

@@ -17,10 +17,17 @@ import { useAuth } from '../context/AuthContext';
 import useNotacionPreferida from './useNotacionPreferida';
 import { saveTunerPreferences } from '@notesheet/api';
 import { TRANSPOSING_INSTRUMENTS, VER_EN_CONCIERTO, semitonosAEscrito } from '@notesheet/core';
+import { permisoMicrofono } from '../utils/permisoMicrofono';
 
 const SAVE_DEBOUNCE_MS = 500; // Debounce Firebase saves
 
-function useTuner(initialPreferences = {}) {
+/**
+ * @param {Object} [initialPreferences]
+ * @param {Object} [opciones]
+ * @param {boolean} [opciones.arrancarSolo=true] - Escuchar nada más abrirse si
+ *   el permiso del micrófono ya está dado
+ */
+function useTuner(initialPreferences = {}, { arrancarSolo = true } = {}) {
   const { currentUser } = useAuth();
 
   // State
@@ -28,6 +35,9 @@ function useTuner(initialPreferences = {}) {
   const [isInitialized, setIsInitialized] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  // El navegador tiene el audio en pausa hasta que se toque la página (se
+  // abrió recargando o desde un enlace, sin ningún toque dentro de la app)
+  const [esperaToque, setEsperaToque] = useState(false);
 
   // Detection state
   const [detectedFrequency, setDetectedFrequency] = useState(null);
@@ -61,6 +71,10 @@ function useTuner(initialPreferences = {}) {
   // frontera entre dos notas ni en el borde de "Afinado"
   const notaAnteriorRef = useRef(null);
   const estadoAnteriorRef = useRef(null);
+  // Escuchaba cuando la página se ocultó: al volver, vuelve a escuchar
+  const pausadoAlOcultarRef = useRef(false);
+  // Un arranque en curso (pedir el micrófono tarda): evita dos a la vez
+  const arrancandoRef = useRef(false);
 
   // Initialize engine
   useEffect(() => {
@@ -156,43 +170,124 @@ function useTuner(initialPreferences = {}) {
   }, [handlePitchDetection]);
 
   /**
+   * Si el navegador dejó el audio en pausa (no hubo ningún toque en la
+   * página), se avisa y el primer toque en cualquier parte lo reanuda.
+   */
+  const quitarEsperaRef = useRef(null);
+  const vigilarAudioEnPausa = useCallback((ctx) => {
+    if (!ctx || ctx.state === 'running' || !ctx.resume) return;
+    quitarEsperaRef.current?.();
+    setEsperaToque(true);
+    const reanudar = () => { ctx.resume().catch(() => {}); };
+    const alCambiar = () => {
+      if (ctx.state === 'running') quitar();
+    };
+    const quitar = () => {
+      document.removeEventListener('pointerdown', reanudar, true);
+      document.removeEventListener('keydown', reanudar, true);
+      ctx.removeEventListener?.('statechange', alCambiar);
+      quitarEsperaRef.current = null;
+      setEsperaToque(false);
+    };
+    document.addEventListener('pointerdown', reanudar, true);
+    document.addEventListener('keydown', reanudar, true);
+    ctx.addEventListener?.('statechange', alCambiar);
+    quitarEsperaRef.current = quitar;
+    // Si el navegador lo permite (se llegó tocando algo en la app), sale solo
+    reanudar();
+  }, []);
+  useEffect(() => () => quitarEsperaRef.current?.(), []);
+
+  /**
    * Start the tuner
    */
   const start = useCallback(async () => {
-    const listo = isInitialized || await initialize();
-    if (!listo || !engineRef.current || isRunning) return;
-
+    if (isRunning || arrancandoRef.current) return;
+    arrancandoRef.current = true;
     try {
+      const listo = isInitialized || await initialize();
+      if (!listo || !engineRef.current) return;
+
       setError(null);
       // Envoltorio estable: siempre delega en la versión vigente del callback
       engineRef.current.start((frequency) => handlePitchDetectionRef.current(frequency));
       setIsRunning(true);
+      vigilarAudioEnPausa(engineRef.current.audioContext);
     } catch (err) {
       console.error('Error starting tuner:', err);
       setError('No se pudo iniciar el afinador. ' + err.message);
+    } finally {
+      arrancandoRef.current = false;
     }
-  }, [isInitialized, isRunning, initialize]);
+  }, [isInitialized, isRunning, initialize, vigilarAudioEnPausa]);
+
+  const startRef = useRef(start);
+  useEffect(() => {
+    startRef.current = start;
+  }, [start]);
 
   /**
    * Stop the tuner
    */
+  const limpiarLectura = () => {
+    notaAnteriorRef.current = null;
+    estadoAnteriorRef.current = null;
+    setDetectedFrequency(null);
+    setDetectedNote(null);
+    setCentsDeviation(0);
+    setTuningStatus('detecting');
+  };
+
   const stop = useCallback(() => {
     if (!engineRef.current || !isRunning) return;
 
     try {
       engineRef.current.stop();
       setIsRunning(false);
-      notaAnteriorRef.current = null;
-      estadoAnteriorRef.current = null;
-      setDetectedFrequency(null);
-      setDetectedNote(null);
-      setCentsDeviation(0);
-      setTuningStatus('detecting');
+      limpiarLectura();
+      // Detenido a mano: al volver a la pestaña no se reanuda
+      pausadoAlOcultarRef.current = false;
     } catch (err) {
       console.error('Error stopping tuner:', err);
       setError('No se pudo detener el afinador. ' + err.message);
     }
   }, [isRunning]);
+
+  // Arranca solo al abrirse, si el micrófono ya tiene permiso (si no, el
+  // aviso del navegador saltaría sin pedirlo: queda el botón)
+  useEffect(() => {
+    if (!arrancarSolo) return undefined;
+    let vivo = true;
+    permisoMicrofono().then((estado) => {
+      if (!vivo || estado !== 'granted') return;
+      if (document.visibilityState === 'hidden') pausadoAlOcultarRef.current = true;
+      else startRef.current();
+    });
+    return () => { vivo = false; };
+  }, [arrancarSolo]);
+
+  // Con la página oculta (otra pestaña, pantalla apagada) suelta el
+  // micrófono: el indicador del sistema se apaga y no escucha a nadie. Al
+  // volver, si escuchaba, vuelve a escuchar.
+  useEffect(() => {
+    const alCambiar = () => {
+      const engine = engineRef.current;
+      if (document.visibilityState === 'hidden') {
+        if (engine?.isRunning) {
+          engine.liberarMicrofono();
+          pausadoAlOcultarRef.current = true;
+          setIsRunning(false);
+          setIsInitialized(false);
+          limpiarLectura();
+        }
+      } else if (pausadoAlOcultarRef.current) {
+        pausadoAlOcultarRef.current = false;
+        startRef.current();
+      }
+    };
+    document.addEventListener('visibilitychange', alCambiar);
+    return () => document.removeEventListener('visibilitychange', alCambiar);
+  }, []);
 
   /**
    * Toggle tuner on/off
@@ -309,6 +404,7 @@ function useTuner(initialPreferences = {}) {
     isInitialized,
     loading,
     error,
+    esperaToque,
 
     // Detection results
     detectedFrequency,
