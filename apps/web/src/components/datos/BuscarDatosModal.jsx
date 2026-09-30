@@ -101,6 +101,15 @@ function BuscarDatosModal({ isOpen, onClose, titulo, artista, versiones = [], no
   const nada = estado === "listo" && !resultado.grabaciones.length && !resultado.tempos.length;
   const erroresFuente = Object.entries(resultado.errores || {});
 
+  // Los pasos se numeran según lo que haya: si GetSongBPM no trae la canción
+  // (pasa con mucho repertorio en español) no hay paso de tempo, y se leía
+  // "1" y luego "3"
+  const hayGrabaciones = resultado.grabaciones.length > 0;
+  const hayTempos = resultado.tempos.length > 0;
+  const pasoTempo = hayGrabaciones ? 2 : 1;
+  const pasoDatos = 1 + Number(hayGrabaciones) + Number(hayTempos);
+  const sinTempo = estado === "listo" && hayGrabaciones && !hayTempos && !resultado.errores?.getsongbpm;
+
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Buscar datos de la grabación original" size="large">
       <div className="buscar-datos">
@@ -168,9 +177,16 @@ function BuscarDatosModal({ isOpen, onClose, titulo, artista, versiones = [], no
           </fieldset>
         )}
 
+        {sinTempo && (
+          <p className="buscar-datos-nota">
+            GetSongBPM no tiene el tempo ni la tonalidad de esta canción. El tempo lo puedes
+            sacar tú con «Tap», junto al campo Tempo.
+          </p>
+        )}
+
         {resultado.tempos.length > 0 && (
           <fieldset className="buscar-datos-grupo">
-            <legend>2. Tempo y tonalidad</legend>
+            <legend>{pasoTempo}. Tempo y tonalidad</legend>
             {resultado.tempos.map((r, i) => (
               <label key={`${r.id}-${i}`} className="buscar-datos-opcion">
                 <input
@@ -196,17 +212,19 @@ function BuscarDatosModal({ isOpen, onClose, titulo, artista, versiones = [], no
 
         {opciones.length > 0 && (
           <fieldset className="buscar-datos-grupo buscar-datos-grupo-opciones">
-            <legend>3. Qué datos usar</legend>
+            <legend>{pasoDatos}. Qué datos usar</legend>
             {opciones.map((o) => (
               <label key={o.clave} className="buscar-datos-opcion">
                 <input type="checkbox" checked={marcada(o.clave)} onChange={() => alternar(o.clave)} />
                 <span>{o.texto}</span>
               </label>
             ))}
-            <p className="buscar-datos-nota">
-              La tonalidad es la de la grabación, en concierto: no cambia la tonalidad de la
-              canción en NoteSheet, que sigue siendo la que ya tiene.
-            </p>
+            {opciones.some((o) => o.clave === "tono") && (
+              <p className="buscar-datos-nota">
+                La tonalidad es la de la grabación, en concierto: no cambia la tonalidad de la
+                canción en NoteSheet, que sigue siendo la que ya tiene.
+              </p>
+            )}
           </fieldset>
         )}
 

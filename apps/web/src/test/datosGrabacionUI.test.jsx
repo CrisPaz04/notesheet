@@ -119,6 +119,41 @@ describe('BuscarDatosModal', () => {
     expect(screen.queryByRole('checkbox', { name: /Versión de/ })).not.toBeInTheDocument();
   });
 
+  // Pasa con mucho repertorio en español: MusicBrainz e iTunes la tienen y
+  // GetSongBPM no
+  it('sin tempo de GetSongBPM lo dice, y los pasos siguen seguidos', async () => {
+    const user = userEvent.setup();
+    mockBuscar.mockResolvedValue({ ...RESULTADO, tempos: [] });
+    const { onAplicar } = abrir();
+    await screen.findByText('1. ¿Cuál es vuestra grabación?');
+    expect(screen.getByText(/GetSongBPM no tiene el tempo ni la tonalidad/)).toBeInTheDocument();
+
+    await user.click(screen.getAllByRole('radio', { name: /Agnus Dei/ })[0]);
+    expect(screen.getByText('2. Qué datos usar')).toBeInTheDocument();
+    // Sin tonalidad propuesta, la nota sobre la tonalidad sobra
+    expect(screen.queryByText(/no cambia la tonalidad de la canción/)).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Aplicar' }));
+    expect(onAplicar.mock.calls[0][0]).toMatchObject({
+      grabacion: { artista: 'Marco Barrientos', album: 'Muéstrame Tu Gloria', tonoConcierto: null, bpm: null },
+      versiones: ['Marco Barrientos']
+    });
+    expect(onAplicar.mock.calls[0][0].tempo).toBeUndefined();
+  });
+
+  it('si GetSongBPM falló no dice que no tiene la canción', async () => {
+    mockBuscar.mockResolvedValue({ ...RESULTADO, tempos: [], errores: { getsongbpm: 'caído' } });
+    abrir();
+    expect(await screen.findByText(/No se pudo consultar GetSongBPM/)).toBeInTheDocument();
+    expect(screen.queryByText(/GetSongBPM no tiene el tempo/)).not.toBeInTheDocument();
+  });
+
+  it('solo con tempo (sin grabaciones), el tempo es el paso 1', async () => {
+    mockBuscar.mockResolvedValue({ ...RESULTADO, grabaciones: [] });
+    abrir();
+    expect(await screen.findByText('1. Tempo y tonalidad')).toBeInTheDocument();
+  });
+
   it('si no encuentra nada lo dice y ofrece los enlaces "Ver en…"', async () => {
     mockBuscar.mockResolvedValue({ grabaciones: [], tempos: [], errores: {} });
     abrir({ titulo: 'Al que hizo los cielos', artista: 'Elim' });
