@@ -340,6 +340,14 @@
     backdrop-filter: blur(10px);
   }
   
+  /* La tarjeta de la lista, sin el desenfoque de fondo: `backdrop-filter` hace
+     que el `position: fixed` de la canción que se arrastra se mida desde la
+     tarjeta y no desde la pantalla (y que la tarjeta la recorte). Sobre el
+     fondo liso de la página el desenfoque no se ve de todos modos. */
+  .playlist-editor-main .playlist-editor-card {
+    backdrop-filter: none;
+  }
+
   .playlist-editor-card-header {
     background: rgba(var(--overlay-rgb), 0.03);
     border-bottom: 1px solid var(--border-light);
@@ -404,8 +412,129 @@
   
   /* Available Songs List */
   .available-songs-list {
-    max-height: 400px;
+    max-height: min(55vh, 520px);
     overflow-y: auto;
+  }
+
+  /* El buscador de "Añadir canciones" (SelectorDeCanciones) */
+  .selector-canciones-cabeza {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid var(--border-light);
+  }
+
+  .selector-canciones-buscador {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0 0.75rem;
+    border: 1px solid var(--border-light-hover);
+    border-radius: var(--radius-md);
+    background: rgba(var(--overlay-rgb), 0.04);
+    color: var(--text-light-muted);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .selector-canciones-buscador:focus-within {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(var(--color-primary-rgb), 0.15);
+  }
+
+  .selector-canciones-buscador input {
+    flex: 1;
+    min-width: 0;
+    padding: 0.65rem 0;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: var(--text-light-primary);
+    font-size: 0.95rem;
+  }
+
+  .selector-canciones-buscador input::placeholder {
+    color: var(--text-light-muted);
+  }
+
+  /* La X propia del navegador sobra: ya hay un botón para borrar */
+  .selector-canciones-buscador input::-webkit-search-cancel-button {
+    display: none;
+  }
+
+  .selector-canciones-borrar {
+    display: flex;
+    padding: 0.25rem;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--text-light-muted);
+    cursor: pointer;
+  }
+
+  .selector-canciones-borrar:hover {
+    background: rgba(var(--overlay-rgb), 0.08);
+    color: var(--text-light-primary);
+  }
+
+  .selector-canciones-tipos {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+
+  .selector-canciones-tipo {
+    padding: 0.3rem 0.85rem;
+    border: 1px solid var(--border-light);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--text-light-secondary);
+    font-size: 0.8rem;
+    font-weight: 500;
+    transition: var(--transition-fast);
+  }
+
+  .selector-canciones-tipo:hover {
+    border-color: rgba(var(--color-primary-rgb), 0.5);
+    color: var(--text-light-primary);
+  }
+
+  .selector-canciones-tipo.activo {
+    border-color: var(--color-primary);
+    background: rgba(var(--color-primary-rgb), 0.15);
+    color: var(--color-primary);
+  }
+
+  /* Qué hace Enter o qué se acaba de añadir. Solo está cuando dice algo: con
+     un hueco reservado quedaba una franja vacía bajo los tipos */
+  .selector-canciones-pista {
+    margin: -0.25rem 0 0;
+    color: var(--text-light-muted);
+    font-size: 0.8rem;
+  }
+
+  .selector-canciones-pista strong {
+    color: var(--color-primary);
+    font-weight: 600;
+  }
+
+  .selector-canciones-pista .icono {
+    color: var(--color-primary);
+  }
+
+  /* La que añadiría Enter */
+  .available-song-item.primera {
+    box-shadow: inset 3px 0 0 var(--color-primary);
+    background: rgba(var(--color-primary-rgb), 0.06);
+  }
+
+  .available-song-esta {
+    display: inline-flex;
+    align-items: center;
+    color: var(--color-primary);
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
   }
   
   .available-song-item {
@@ -428,8 +557,8 @@
   }
   
   .available-song-item.disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
+    opacity: 0.6;
+    cursor: default;
   }
   
   .available-song-content {
@@ -483,10 +612,12 @@
     background: rgba(var(--overlay-rgb), 0.05);
   }
   
+  /* Sin `transform` propio: el de la librería (en línea) es el que la mueve.
+     Fondo opaco, porque ya no va sobre la tarjeta sino sobre lo que haya. */
   .selected-song-item.dragging {
-    background: rgba(var(--color-primary-rgb), 0.1);
-    border-color: rgba(var(--color-primary-rgb), 0.3);
-    transform: rotate(2deg);
+    border: 1px solid rgba(var(--color-primary-rgb), 0.4);
+    border-radius: var(--radius-md);
+    background: linear-gradient(rgba(var(--color-primary-rgb), 0.12), rgba(var(--color-primary-rgb), 0.12)), var(--bg-dark-primary);
     box-shadow: var(--shadow-medium);
   }
   

@@ -16,6 +16,7 @@ export * from './music/importarPdfs';
 export * from './music/keySuggestion';
 export * from './music/versiones';
 export * from './music/datosCancion';
+export * from './music/busqueda';
 
 // Audio utilities
 export * from './audio/audioContext';

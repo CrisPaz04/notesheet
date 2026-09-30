@@ -6,7 +6,7 @@ import {
   getPlaylistsWithSong,
   removeSongFromPlaylists
 } from "@notesheet/api";
-import { identificarTonalidad, nombrarTonalidad } from "@notesheet/core";
+import { identificarTonalidad, nombrarTonalidad, normalizarBusqueda, puntuarCancion, compararTitulos } from "@notesheet/core";
 import { useAuth } from "../context/AuthContext";
 import { getUserDisplayName } from "../utils/userHelpers";
 import { mensajeDeBorrado } from "../utils/avisoBorrado";
@@ -20,16 +20,6 @@ import Icono from "../components/Icono";
 const ORDENES = ["nuevas", "az", "za"];
 const VISTAS = ["cards", "list"];
 
-// Minúsculas y sin tildes, para que la búsqueda no dependa de cómo se escriba
-const normalizarBusqueda = (texto) => (texto || "")
-  .toLowerCase()
-  .normalize("NFD")
-  .replace(/[̀-ͯ]/g, "");
-
-// Ordenar por título con las reglas del español: "Alégrate" va entre "Alabaré"
-// y "Alístate", no al final por llevar tilde. `numeric` hace que "Salmo 3"
-// vaya antes que "Salmo 21" y no al revés, que es lo que da comparar texto.
-const porTitulo = new Intl.Collator("es", { sensitivity: "base", numeric: true });
 
 // Pestañas de tipo → valor de `song.type`
 const TIPOS = { jubilo: "Júbilo", adoracion: "Adoración", moderada: "Moderada" };
@@ -104,27 +94,10 @@ function Dashboard() {
 
     // Filtrar por término de búsqueda
     if (searchTerm) {
-      // Se normaliza para que "corazon" encuentre "corazón": nadie escribe
-      // tildes buscando, y la letra de las canciones va acentuada.
+      // Sin tildes, por título, artista, álbum, tipo, tonalidad o un verso de
+      // la letra: la misma búsqueda que el selector de las listas (busqueda.js)
       const termino = normalizarBusqueda(searchTerm);
-
-      filtered = filtered.filter(song =>
-        normalizarBusqueda(song.title).includes(termino) ||
-        normalizarBusqueda(song.key).includes(termino) ||
-        // Quien lee en C-D-E busca "Bm", no "SIm"
-        (notacion === "english" && normalizarBusqueda(nombrarTonalidad(song.key, notacion)).includes(termino)) ||
-        normalizarBusqueda(song.type).includes(termino) ||
-        normalizarBusqueda(song.version).includes(termino) ||
-        normalizarBusqueda(song.album).includes(termino) ||
-        // La letra ya se guarda en cada canción: buscar por un verso suelto
-        // es como el músico recuerda una canción cuyo título no sabe.
-        //
-        // Solo a partir de 4 letras, porque los nombres de nota (DO, RE, MI,
-        // FA, SOL, LA, SI) aparecen dentro de cualquier palabra: buscar "RE"
-        // devolvía "siempRE" y "adoraRÉ". Con 4 o más, quien escribe busca
-        // una frase, no una tonalidad.
-        (termino.length >= 4 && normalizarBusqueda(song.lyricsOnly).includes(termino))
-      );
+      filtered = filtered.filter(song => puntuarCancion(song, termino, { notacion }) > 0);
     }
 
     if (keyFilter) {
@@ -150,7 +123,7 @@ function Dashboard() {
     if (sortOrder !== "nuevas") {
       const sentido = sortOrder === "za" ? -1 : 1;
       filtered = [...filtered].sort(
-        (a, b) => sentido * porTitulo.compare(a.title || "", b.title || "")
+        (a, b) => sentido * compararTitulos(a, b)
       );
     }
 

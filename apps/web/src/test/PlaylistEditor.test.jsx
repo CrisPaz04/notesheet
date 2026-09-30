@@ -185,6 +185,72 @@ describe('PlaylistEditor', () => {
     });
   });
 
+  // Con 120 canciones no se puede bajar hasta encontrar cada una
+  describe('buscar para añadir', () => {
+    const visibles = () =>
+      [...document.querySelectorAll('.available-song-title')].map((el) => el.textContent);
+
+    it('filtra por lo escrito, sin tildes', async () => {
+      const user = userEvent.setup();
+      await renderNueva();
+      await user.type(screen.getByRole('searchbox', { name: 'Buscar canción' }), 'esta sentado');
+      expect(visibles()).toEqual(['Al Que Está Sentado']);
+    });
+
+    it('Enter añade la primera, vacía el buscador y dice cuál fue', async () => {
+      const user = userEvent.setup();
+      await renderNueva();
+      const buscador = screen.getByRole('searchbox', { name: 'Buscar canción' });
+      await user.type(buscador, 'sublime');
+      expect(screen.getByText(/Enter añade/)).toHaveTextContent('Enter añade Sublime Gracia');
+
+      await user.keyboard('{Enter}');
+
+      expect(tituloEnLista()).toEqual(['Sublime Gracia']);
+      expect(buscador).toHaveValue('');
+      expect(buscador).toHaveFocus();
+      expect(screen.getByText(/Añadida/)).toHaveTextContent('Añadida Sublime Gracia');
+    });
+
+    it('Enter se salta las que ya están en la lista', async () => {
+      const user = userEvent.setup();
+      await renderNueva();
+      await user.click(botonDisponible('Al Que Está Sentado'));
+      // "do" encaja primero con "Al Que Está Sentado" (en el título) y después
+      // con "Cristo Vive" (tonalidad DO): como la primera ya está, va la otra
+      await user.type(screen.getByRole('searchbox', { name: 'Buscar canción' }), 'do{Enter}');
+      expect(tituloEnLista()).toEqual(['Al Que Está Sentado', 'Cristo Vive']);
+    });
+
+    it('la ya añadida sigue a la vista, marcada "En la lista"', async () => {
+      const user = userEvent.setup();
+      await renderNueva();
+      await user.click(botonDisponible('Cristo Vive'));
+      expect(botonDisponible('Cristo Vive')).toHaveTextContent('En la lista');
+      expect(botonDisponible('Cristo Vive')).toBeDisabled();
+    });
+
+    it('filtra por tipo', async () => {
+      const user = userEvent.setup();
+      await renderNueva();
+      await user.click(screen.getByRole('button', { name: 'Adoración' }));
+      expect(visibles()).toEqual(['Sublime Gracia']);
+      await user.click(screen.getByRole('button', { name: 'Todas' }));
+      expect(visibles()).toHaveLength(3);
+    });
+
+    it('dice cuándo no encuentra nada, y Escape borra la búsqueda', async () => {
+      const user = userEvent.setup();
+      await renderNueva();
+      const buscador = screen.getByRole('searchbox', { name: 'Buscar canción' });
+      await user.type(buscador, 'zzz');
+      expect(screen.getByText(/Ninguna canción coincide con «zzz»/)).toBeInTheDocument();
+      await user.keyboard('{Escape}');
+      expect(buscador).toHaveValue('');
+      expect(visibles()).toHaveLength(3);
+    });
+  });
+
   describe('tonalidad por canción', () => {
     it('toma la tonalidad original de la canción', async () => {
       const user = userEvent.setup();

@@ -1,5 +1,5 @@
 // apps/web/src/pages/PlaylistEditor.jsx
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { createPlaylist, getPlaylistById, updatePlaylist, getAllSongs, publishOwnSongs } from "@notesheet/api";
@@ -11,6 +11,8 @@ import { emparejarSetlist, isPdfSong, nombrarTonalidad, limpiarMensajeDirector }
 import useNotacionPreferida from "../hooks/useNotacionPreferida";
 import Desplegable from "../components/Desplegable";
 import Icono from "../components/Icono";
+import SelectorDeCanciones from "../components/listas/SelectorDeCanciones";
+import { estiloCancionArrastrable } from "../utils/estiloCancionArrastrable";
 
 function PlaylistEditor() {
   const [name, setName] = useState("");
@@ -43,6 +45,7 @@ function PlaylistEditor() {
     changeKey,
     handleDragEnd
   } = useSelectedSongs();
+  const idsEnLista = useMemo(() => new Set(selectedSongs.map((s) => s.id)), [selectedSongs]);
 
   // Al cargar, verifica si es una playlist nueva o existente
   useEffect(() => {
@@ -311,8 +314,10 @@ function PlaylistEditor() {
             {/* Detalles de la Lista */}
             <div className="playlist-editor-card">
               <div className="playlist-editor-card-header">
-                <Icono nombre="gear" className="me-2" />
-                Detalles de la Lista
+                <div>
+                  <Icono nombre="gear" className="me-2" />
+                  Detalles de la Lista
+                </div>
               </div>
               <div className="playlist-editor-card-body">
                 <div className="form-group-modern mb-3">
@@ -373,11 +378,33 @@ function PlaylistEditor() {
               </div>
             </div>
             
+            {/* Añadir canciones: el buscador va antes que la lista del
+                director, que suele usarse una vez y ocupa mucho */}
+            <div className="playlist-editor-card">
+              <div className="playlist-editor-card-header">
+                <div>
+                  <Icono nombre="plus-circle" className="me-2" />
+                  Añadir canciones
+                </div>
+                <span className="badge bg-primary">{availableSongs.length}</span>
+              </div>
+              <div className="playlist-editor-card-body p-0">
+                <SelectorDeCanciones
+                  canciones={availableSongs}
+                  enLista={idsEnLista}
+                  onAnadir={addSong}
+                  notacion={notacion}
+                />
+              </div>
+            </div>
+
             {/* Importar la lista que el director manda por WhatsApp */}
             <div className="playlist-editor-card">
               <div className="playlist-editor-card-header">
-                <Icono nombre="chat-text" className="me-2" />
-                Pegar lista del director
+                <div>
+                  <Icono nombre="chat-text" className="me-2" />
+                  Pegar lista del director
+                </div>
               </div>
               <div className="playlist-editor-card-body">
                 {mensajeDirector && !resultadoImport && (
@@ -389,7 +416,7 @@ function PlaylistEditor() {
                       </span>
                       <button
                         type="button"
-                        className="btn-playlist-secondary btn-sm"
+                        className="btn-playlist-action"
                         onClick={() => setMensajeDirector(null)}
                       >
                         Quitar
@@ -415,7 +442,7 @@ function PlaylistEditor() {
                     </div>
                     <button
                       type="button"
-                      className="btn-playlist-primary mt-2"
+                      className="btn-playlist-action btn-playlist-primary d-inline-flex mt-2"
                       disabled={!textoImport.trim()}
                       onClick={interpretarLista}
                     >
@@ -459,7 +486,7 @@ function PlaylistEditor() {
                     <div className="import-acciones mt-3">
                       <button
                         type="button"
-                        className="btn-playlist-primary"
+                        className="btn-playlist-action btn-playlist-primary"
                         onClick={aplicarImport}
                       >
                         <Icono nombre="plus-circle" className="me-2" />
@@ -467,7 +494,7 @@ function PlaylistEditor() {
                       </button>
                       <button
                         type="button"
-                        className="btn-playlist-secondary ms-2"
+                        className="btn-playlist-action"
                         onClick={() => setResultadoImport(null)}
                       >
                         Cancelar
@@ -475,42 +502,6 @@ function PlaylistEditor() {
                     </div>
                   </div>
                 )}
-              </div>
-            </div>
-
-            {/* Canciones Disponibles */}
-            <div className="playlist-editor-card">
-              <div className="playlist-editor-card-header">
-                <Icono nombre="music-notes" className="me-2" />
-                Canciones Disponibles
-                <span className="badge bg-secondary ms-2">{availableSongs.length}</span>
-              </div>
-              <div className="playlist-editor-card-body p-0">
-                <div className="available-songs-list">
-                  {availableSongs.length === 0 ? (
-                    <div className="empty-state-small">
-                      <Icono nombre="music-notes" />
-                      <p>No hay canciones disponibles</p>
-                    </div>
-                  ) : (
-                    availableSongs.map(song => (
-                      <button
-                        key={song.id}
-                        className={`available-song-item ${selectedSongs.some(s => s.id === song.id) ? 'disabled' : ''}`}
-                        onClick={() => addSong(song)}
-                        disabled={selectedSongs.some(s => s.id === song.id)}
-                      >
-                        <div className="available-song-content">
-                          <div className="available-song-title">{song.title || "Sin título"}</div>
-                          <div className="available-song-meta">{nombrarTonalidad(song.key, notacion) || "Sin tonalidad"} • {song.type || "Sin tipo"}</div>
-                        </div>
-                        {!selectedSongs.some(s => s.id === song.id) && (
-                          <Icono nombre="plus-circle" className="available-song-add" />
-                        )}
-                      </button>
-                    ))
-                  )}
-                </div>
               </div>
             </div>
           </div>
@@ -552,11 +543,7 @@ function PlaylistEditor() {
                                   ref={provided.innerRef}
                                   {...provided.draggableProps}
                                   className={`selected-song-item ${snapshot.isDragging ? 'dragging' : ''}`}
-                                  style={{
-                                    ...provided.draggableProps.style,
-                                    zIndex: 1000 - index, // Z-index dinámico basado en la posición
-                                    position: 'relative'
-                                  }}
+                                  style={estiloCancionArrastrable(provided.draggableProps.style, snapshot.isDragging, index)}
                                 >
                                   <div className="selected-song-drag" {...provided.dragHandleProps}>
                                     <Icono nombre="dots-six-vertical" />
