@@ -60,7 +60,19 @@ export default defineConfig(({ mode }) => {
           // ya trae su propia caché en IndexedDB y la autenticación necesita
           // llegar siempre a la red.
           navigateFallbackDenylist: [/^\/__/, /\/[^/?]+\.[^/]+$/],
-          runtimeCaching: [],
+          // Las grabaciones del piano y la trompeta no van en el precache (~3 MB
+          // que no necesita quien no abre el piano): se guardan la primera vez que se
+          // piden, y desde ahí suenan también sin conexión
+          runtimeCaching: [
+            {
+              urlPattern: ({ url }) => url.pathname.startsWith('/audio/'),
+              handler: 'CacheFirst',
+              options: {
+                cacheName: 'piano-muestras',
+                expiration: { maxEntries: 40 }
+              }
+            }
+          ],
           cleanupOutdatedCaches: true,
           clientsClaim: true,
           skipWaiting: true

@@ -414,3 +414,127 @@
   font-size: 0.7rem;
   color: var(--text-light-secondary);
 }
+
+/* --- El piano: anclado abajo y centrado, más ancho que los laterales ------ */
+.panel-flotante--suelto.panel-flotante--piano {
+  width: min(760px, calc(100vw - 2rem));
+}
+
+.piano {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+/* Las blancas en rejilla; las negras encima, cada una tras su blanca */
+.piano-teclado {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(var(--blancas), 1fr);
+  height: 110px;
+  touch-action: none;
+  user-select: none;
+}
+
+.piano-blanca {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  min-width: 0;
+  padding: 0 0 0.45rem;
+  border: 1px solid rgba(0, 0, 0, 0.35);
+  border-radius: 0 0 6px 6px;
+  background: linear-gradient(#fdfdfb, #ecebe6);
+  color: #555;
+  font-size: 0.68rem;
+  font-weight: 600;
+  touch-action: none;
+}
+
+.piano-blanca small {
+  font-size: 0.8em;
+  opacity: 0.7;
+}
+
+.piano-blanca.pulsada {
+  background: linear-gradient(#d9ddc9, rgba(var(--color-primary-rgb), 0.85));
+  color: #1e2220;
+}
+
+.piano-negra {
+  position: absolute;
+  top: 0;
+  left: calc(var(--tras) * 100% / var(--blancas) - (100% / var(--blancas)) * 0.3);
+  z-index: 1;
+  width: calc(100% / var(--blancas) * 0.6);
+  height: 60%;
+  border: 1px solid #000;
+  border-radius: 0 0 4px 4px;
+  background: linear-gradient(#3a3a3a, #111);
+  touch-action: none;
+}
+
+.piano-negra.pulsada {
+  background: linear-gradient(rgba(var(--color-primary-rgb), 0.7), var(--color-primary-dark));
+}
+
+.piano-octava {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  color: var(--text-light-secondary);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.piano-octava-btn {
+  display: flex;
+  padding: 0.3rem 0.5rem;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--text-light-primary);
+}
+
+.piano-octava-btn:disabled {
+  opacity: 0.35;
+}
+
+.piano-cargando {
+  color: var(--text-light-muted);
+  font-weight: 400;
+}
+
+/* Con qué suena el teclado: Piano | Trompeta */
+.piano-sonido {
+  display: flex;
+  margin-right: auto;
+  border: 1px solid var(--border-light);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.piano-sonido-btn {
+  padding: 0.25rem 0.75rem;
+  border: 0;
+  background: transparent;
+  color: var(--text-light-secondary);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.piano-sonido-btn.activo {
+  background: rgba(var(--color-primary-rgb), 0.18);
+  color: var(--color-primary);
+}
+
+/* Las teclas que el instrumento elegido no alcanza (la trompeta, por abajo y
+   por arriba) */
+.piano-blanca.fuera {
+  opacity: 0.35;
+}
+
+.piano-negra.fuera {
+  opacity: 0.45;
+}

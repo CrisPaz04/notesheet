@@ -98,7 +98,9 @@ archivo** (si se cae la red a mitad, lo subido queda apuntado) y le crea a cada 
 su casilla en `voices`, de donde el editor saca las pestañas. Dos entradas:
 "Subir varios PDF" en el editor de una canción en PDF, y la página **Importar
 partituras** (`/partituras/importar`, acceso en el Dashboard), que toma la carpeta
-entera: una canción por autor y título, añadida a la propia del mismo título si la
+entera, con los botones o **arrastrándola** a la página (`utils/archivosSoltados.js`
+entra en las subcarpetas; las entradas hay que pedirlas dentro del evento, antes de
+cualquier `await`, y `readEntries` devuelve por tandas): una canción por autor y título, añadida a la propia del mismo título si la
 hay (solo propias: las reglas no dejan escribir las ajenas) o creada nueva. La
 `Score` (partitura completa) no se sube. Siempre se enseña el reparto antes de subir.
 Cada canción nueva trae **abiertos sus datos** (el mismo formulario que el editor,
@@ -455,7 +457,7 @@ SPA (el orden importa).
 ## Notes
 
 - No TypeScript - pure JavaScript
-- Vitest configured; 1780 tests in `apps/web/src/test/` (run with `npm run test:run`)
+- Vitest configured; 1850 tests in `apps/web/src/test/` (run with `npm run test:run`)
 - Los tests se validan con **mutaciones**: se rompe el código a propósito y se comprueba
   que algún test falla. Ha destapado cuatro tests que pasaban por la razón equivocada,
   y un bug de verdad en `scores.js` (las voces se ordenaban como texto, así que la 10
@@ -528,6 +530,21 @@ SPA (el orden importa).
 - Para comparar tonalidades usa `mismaTonalidad` / `identificarTonalidad`
   (`transposition.js`), no el texto: "RE#m" y "MIbm" son la misma, y "RE" y
   "REm" no. El filtro de tonalidad del Dashboard se apoya en eso.
+- **Buscar canciones** es una sola función para toda la app (`busqueda.js` en core:
+  `buscarCanciones`, `puntuarCancion`): sin tildes, por título, "Versión de", álbum,
+  tipo, tonalidad (en C-D-E también) o un verso de la letra (desde 4 letras: los
+  nombres de nota están dentro de cualquier palabra). Puntúa para poner primero lo más
+  probable: título igual, que empiece así, una palabra del título, el artista... El
+  Dashboard filtra con ella; el editor de listas la usa en "Añadir canciones"
+  (`components/listas/SelectorDeCanciones.jsx`), donde **Enter** añade la primera que
+  no esté ya en la lista y vacía el buscador, para armar una lista sin soltar el
+  teclado. Antes era el repertorio entero y había que bajar hasta cada canción.
+- **Reordenar canciones arrastrando** (editor de listas, `@hello-pangea/dnd`): la fila
+  arrastrada va con `position: fixed` y su sitio en la pantalla. Dos cosas la mandaban
+  abajo a la derecha: un `position: relative` en línea encima del estilo de la librería
+  (ahora `utils/estiloCancionArrastrable.js` no toca nada mientras se arrastra) y el
+  `backdrop-filter` de la tarjeta, que hace que `fixed` se mida desde ella. Ningún
+  antepasado de la lista puede llevar `transform`, `filter` ni `backdrop-filter`.
 - La lista que el director manda por WhatsApp se interpreta en
   `packages/core/src/music/setlist.js`. Las líneas sueltas tipo "Mi m" son la tonalidad
   del bloque, no canciones; y el director suele nombrar la canción por un fragmento de la
@@ -536,8 +553,24 @@ SPA (el orden importa).
   entre paréntesis se prueba por separado ("(yo tengo gozo)" puede ser el título bueno y
   "(Coalo)" ruido); si coincide con el "Versión de" de la canción ("Coalo" → Coalo
   Zamorano) desempata entre dos con el mismo título, sin subir la puntuación.
-- Herramientas flotantes (`components/herramientas/`): lista, afinador, metrónomo y
-  círculo de quintas en la lista, la sesión en vivo y la canción. Son paneles, **no
+- **El metrónomo** (`metronomeEngine.js` en core): cada subdivisión es un **patrón** de
+  dónde suena cada click dentro del tiempo (`pattern`), así caben el saltillo
+  (`[0, 3/4]`) y la galopa (`[0, 1/2, 3/4]`), no solo partes iguales. Cada click es
+  'acento', 'pulso' o 'subdivision' (`nivelDelClick`); el acento es el tiempo que elige
+  el músico (1 por defecto, **0 = sin acento**), guardado como `metronomeAcento`. Todo
+  se cambia **sonando** (compás, acento, sonidos, tempos): el motor lo aplica desde el
+  siguiente click. Tempo de **15 a 500** (`temposClasicos.js`, aparte del motor porque
+  los tests de pantalla lo sustituyen entero), con el deslizador en escala logarítmica y
+  el nombre clásico debajo del número (`tempoClasico`: tramos seguidos, sin solapes).
+  Los compases compuestos van **como Soundcorset**: 6/8, 9/8 y 12/8 son 2, 3 y 4
+  tiempos de negra con puntillo, el BPM los cuenta ("♩. =") y al elegirlos las negras
+  pasan a tresillo; 7/8 son 7 corcheas ("♪ ="). Antes cada tiempo de x/8 duraba una
+  negra con puntillo. Los clicks van ×2,2 con un limitador a la salida. Las figuras de las subdivisiones
+  están dibujadas en SVG (`FiguraRitmica.jsx`). El Entrenador de tempo arranca el
+  metrónomo si está parado, y se corta solo cuando el metrónomo **pasa** de sonar a
+  parar (con "no suena" se cortaba al empezar).
+- Herramientas flotantes (`components/herramientas/`): lista, afinador, metrónomo,
+  círculo de quintas y piano en la lista, la sesión en vivo y la canción. Son paneles, **no
   modales**: no tapan ni bloquean el scroll. Cada uno va pegado a un lado y a una altura
   (se recuerdan por dispositivo), se arrastran por la cabecera y al soltar se pegan al
   lado más cercano; si pisan a otro, se aparta el otro (`colocarPaneles.js`, puro y con
@@ -545,7 +578,18 @@ SPA (el orden importa).
   móvil sale uno cada vez, abajo, sin arrastre. El afinador y el metrónomo
   del panel son **versiones simplificadas** (`mini` en `Tuner.jsx` / `Metronome.jsx`, con
   el mismo motor y preferencias). El círculo de quintas es solo una imagen de referencia,
-  sin interacción. En la sesión en vivo, tocar una canción del panel mueve **solo** la
+  sin interacción. El **piano** (`Piano.jsx`) es el único anclado **abajo y centrado**
+  (no se arrastra; los laterales se quedan encima de él): dos octavas (una en el
+  móvil), suena mientras se mantiene la tecla y admite varios dedos. Suena con
+  **grabaciones reales** (`lib/pianoMuestras.js`, archivos en `public/audio/`, créditos
+  en `public/audio/LEEME.txt` y en el pie): piano Salamander (CC BY 3.0, 29 muestras de
+  DO1 a DO8) o trompeta VSCO 2 CE (CC0, 10 muestras de FA3 a DO6; esa librería nombra
+  las octavas una más abajo, ya corregido). Una muestra cada 3–4 semitonos y las teclas
+  de en medio se afinan con `playbackRate`. Se descargan al elegir el instrumento la
+  primera vez (mientras, suena un sintetizador) y el service worker las guarda para
+  usarlas sin conexión (`runtimeCaching` en `vite.config.js`; no van en el precache).
+  Con la trompeta, las teclas fuera de su registro se atenúan y no suenan.
+  En la sesión en vivo, tocar una canción del panel mueve **solo** la
   pantalla de ese músico; el índice de arriba es el que mueve a la banda. Ahí el
   panel enseña la tonalidad **en la que lee ese músico** (la "Tú" de la tarjeta),
   no la de la banda.
@@ -566,6 +610,16 @@ SPA (el orden importa).
   3. **Pantalla**: la aguja y la marca del panel se deslizan con `useValorSuave`, que
      escribe en el DOM en cada fotograma sin renders de React; el historial es un
      canvas con el eje X en tiempo, que corre a velocidad constante.
+  Las notas se ven **como las lee el instrumento** que elija el músico ("Ver las notas
+  como", por defecto el de su perfil) o en concierto: `semitonosAEscrito`
+  (`instruments.js`) da lo que se escribe por encima de lo que suena, con la octava real
+  (saxo tenor +14, barítono +21, guitarra +12); cuando no coinciden, sale también la de
+  concierto ("· suena SIb3"). Antes había un interruptor "tono de concierto" que se
+  guardaba y no se aplicaba. Los tonos de referencia van en esas mismas notas y **no
+  necesitan el micrófono**: el engine se crea al primer uso (antes solo existía tras
+  pulsar Iniciar, y sin eso el tono no sonaba): las doce notas una vez, las alteradas
+  oscuras como teclas negras, y la octava aparte (recordada en el dispositivo). El modo
+  cuerdas se quitó.
   Los tests (`afinadorDeteccion.test.js`) usan señales sintéticas con armónicos y
   están validados con mutaciones. Para verlo sin micrófono, en la consola antes de
   pulsar Iniciar: sustituir `navigator.mediaDevices.getUserMedia` por una función que

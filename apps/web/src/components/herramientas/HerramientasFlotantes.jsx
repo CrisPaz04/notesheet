@@ -3,6 +3,7 @@ import { lazyConRecarga } from "../../lib/lazyConRecarga";
 import useHerramientas, { esPantallaEstrecha } from "../../hooks/useHerramientas";
 import PanelLista from "./PanelLista";
 import CirculoQuintas from "./CirculoQuintas";
+import Piano from "./Piano";
 import { acotar, alturaInicial, ladoPorPosicion, separar } from "./colocarPaneles";
 import Icono from "../Icono";
 
@@ -15,8 +16,11 @@ const HERRAMIENTAS = {
   lista: { titulo: "Lista", icono: "list-numbers", lado: "derecha" },
   quintas: { titulo: "Círculo de quintas", icono: "compass", lado: "derecha" },
   afinador: { titulo: "Afinador", icono: "waveform", lado: "izquierda" },
-  metronomo: { titulo: "Metrónomo", icono: "metronome", lado: "izquierda" }
+  metronomo: { titulo: "Metrónomo", icono: "metronome", lado: "izquierda" },
+  // El piano no va a un lado: ancho, abajo y centrado, encima de la barra
+  piano: { titulo: "Piano", icono: "piano-keys", lado: "abajo" }
 };
+const esDeAbajo = (id) => HERRAMIENTAS[id].lado === "abajo";
 
 // Lo que no pueden tapar: arriba un margen, abajo la barra de herramientas
 const MARGEN_ARRIBA = 8;
@@ -87,7 +91,7 @@ function PanelFlotante({ id, lado, onCerrar, onCambiarLado, arrastrable, cabecer
 
 /**
  * Herramientas a mano mientras se lee: la lista del servicio, el afinador,
- * el metrónomo y el círculo de quintas.
+ * el metrónomo, el círculo de quintas y el piano (este, abajo y centrado).
  *
  * Son paneles **flotantes, no ventanas modales**: no tapan la pantalla ni
  * bloquean el desplazamiento, porque se usan tocando, con la partitura
@@ -123,6 +127,16 @@ function HerramientasFlotantes({
 
   const disponibles = Object.keys(HERRAMIENTAS).filter((id) => id !== "lista" || lista);
   const visibles = abiertos.filter((id) => disponibles.includes(id));
+  // Los que van a los lados; el de abajo (el piano) no se mueve
+  const laterales = visibles.filter((id) => !esDeAbajo(id));
+
+  // Con el piano abierto, los laterales no pueden bajar hasta la barra: se
+  // quedan encima de él
+  const limitesAhora = () => {
+    const lim = limites();
+    const abajo = visibles.filter(esDeAbajo).reduce((alto, id) => alto + (nodos.current[id]?.offsetHeight || 0) + 8, 0);
+    return { ...lim, maxBottom: lim.maxBottom - abajo };
+  };
 
   const ladoDe = useCallback(
     (id) => posiciones[id]?.lado || HERRAMIENTAS[id].lado,
@@ -135,11 +149,11 @@ function HerramientasFlotantes({
   // la última vez) se meten dentro.
   useLayoutEffect(() => {
     if (estrecha) return;
-    const lim = limites();
+    const lim = limitesAhora();
     const cambios = {};
     const colocados = [];
 
-    visibles.forEach((id) => {
+    laterales.forEach((id) => {
       const top = posiciones[id]?.top;
       if (Number.isFinite(top)) {
         const dentro = acotar(top, altoDe(id), lim);
@@ -148,7 +162,7 @@ function HerramientasFlotantes({
       }
     });
 
-    visibles.forEach((id) => {
+    laterales.forEach((id) => {
       if (Number.isFinite(posiciones[id]?.top)) return;
       const lado = ladoDe(id);
       const top = alturaInicial(colocados.filter((p) => p.lado === lado), altoDe(id), lim);
@@ -163,9 +177,9 @@ function HerramientasFlotantes({
 
   /** Deja `id` en `lado` a la altura `top`, apartando a los que pise. */
   const soltarEn = (id, lado, top) => {
-    const lim = limites();
+    const lim = limitesAhora();
     const alto = altoDe(id);
-    const delLado = visibles
+    const delLado = laterales
       .filter((otro) => otro !== id && ladoDe(otro) === lado)
       .map((otro) => ({ id: otro, top: posiciones[otro]?.top ?? lim.minTop, alto: altoDe(otro) }));
 
@@ -184,7 +198,7 @@ function HerramientasFlotantes({
   const reubicarRef = useRef(null);
   reubicarRef.current = (id) => {
     const pos = posiciones[id];
-    if (arrastre || !Number.isFinite(pos?.top)) return;
+    if (arrastre || esDeAbajo(id) || !Number.isFinite(pos?.top)) return;
     soltarEn(id, ladoDe(id), pos.top);
   };
 
@@ -204,10 +218,10 @@ function HerramientasFlotantes({
   const reacomodarRef = useRef(null);
   reacomodarRef.current = () => {
     if (arrastre) return;
-    const lim = limites();
+    const lim = limitesAhora();
     const cambios = {};
     ["izquierda", "derecha"].forEach((lado) => {
-      const delLado = visibles
+      const delLado = laterales
         .filter((id) => ladoDe(id) === lado && Number.isFinite(posiciones[id]?.top))
         .map((id) => ({ id, alto: altoDe(id), top: acotar(posiciones[id].top, altoDe(id), lim) }))
         .sort((a, b) => a.top - b.top);
@@ -264,6 +278,8 @@ function HerramientasFlotantes({
         );
       case "quintas":
         return <CirculoQuintas notacion={notacion} />;
+      case "piano":
+        return <Piano notacion={notacion} />;
       case "afinador":
         return <Tuner compact={true} mini={true} />;
       case "metronomo":
@@ -281,6 +297,7 @@ function HerramientasFlotantes({
   };
 
   const estiloPanel = (id) => {
+    if (esDeAbajo(id)) return { left: "50%", bottom: ESPACIO_BARRA, transform: "translateX(-50%)" };
     if (arrastre?.id === id) return { left: arrastre.x, top: arrastre.y, right: "auto" };
     const top = posiciones[id]?.top;
     const lado = ladoDe(id);
@@ -308,14 +325,14 @@ function HerramientasFlotantes({
       <PanelFlotante
         id={id}
         lado={ladoDe(id)}
-        arrastrable={!estrecha}
+        arrastrable={!estrecha && !esDeAbajo(id)}
         onCerrar={() => cerrar(id)}
         onCambiarLado={() => soltarEn(
           id,
           ladoDe(id) === "izquierda" ? "derecha" : "izquierda",
           posiciones[id]?.top ?? limites().minTop
         )}
-        cabeceraProps={estrecha ? {} : cabeceraProps(id)}
+        cabeceraProps={estrecha || esDeAbajo(id) ? {} : cabeceraProps(id)}
       >
         {contenido(id)}
       </PanelFlotante>

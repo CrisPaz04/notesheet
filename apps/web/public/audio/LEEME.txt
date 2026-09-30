@@ -1,0 +1,13 @@
+Grabaciones del piano de las herramientas flotantes (apps/web/src/lib/pianoMuestras.js).
+
+piano/  Salamander Grand Piano V3, grabado por Alexander Holm (Yamaha C5).
+        Licencia: Creative Commons Attribution 3.0 (CC BY 3.0)
+        https://creativecommons.org/licenses/by/3.0/
+        MP3 de la versión que distribuye Tone.js (https://tonejs.github.io/audio/salamander/):
+        una cada tres semitonos, de DO1 a DO8.
+
+trompeta/  VSCO 2 Community Edition, de Versilian Studios (Sam Gossner y Simon Dalzell).
+           Licencia: CC0 (dominio público). https://github.com/sgossner/VSCO-2-CE
+           Notas largas sin vibrato (Brass/Trumpet/sus, intensidad v3), convertidas a MP3
+           mono de 6 s. Esa librería nombra las octavas una más abajo ("A4" suena a 880 Hz);
+           aquí llevan su nombre real: de FA3 a DO6.

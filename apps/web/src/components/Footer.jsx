@@ -56,6 +56,26 @@ function Footer() {
             >
               GetSongBPM
             </a>
+            {" · "}
+            {/* La licencia (CC BY 3.0) de las grabaciones del piano pide citarlas */}
+            Sonidos del piano: piano,{" "}
+            <a
+              href="https://creativecommons.org/licenses/by/3.0/"
+              className="footer-link"
+              target="_blank"
+              rel="noopener"
+            >
+              Salamander Grand Piano, de Alexander Holm (CC BY 3.0)
+            </a>
+            {"; trompeta: "}
+            <a
+              href="https://versilian-studios.com/vsco-community/"
+              className="footer-link"
+              target="_blank"
+              rel="noopener"
+            >
+              VSCO 2 CE, de Versilian Studios
+            </a>
           </p>
         </div>
       </div>
