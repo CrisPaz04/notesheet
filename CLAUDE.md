@@ -463,7 +463,7 @@ SPA (el orden importa).
 ## Notes
 
 - No TypeScript - pure JavaScript
-- Vitest configured; 1915 tests in `apps/web/src/test/` (run with `npm run test:run`)
+- Vitest configured; 1918 tests in `apps/web/src/test/` (run with `npm run test:run`)
 - Los tests se validan con **mutaciones**: se rompe el código a propósito y se comprueba
   que algún test falla. Ha destapado cuatro tests que pasaban por la razón equivocada,
   y un bug de verdad en `scores.js` (las voces se ordenaban como texto, así que la 10
@@ -479,8 +479,11 @@ SPA (el orden importa).
 - **Ortografía** (`packages/core/src/music/ortografia.js`): cómo se escribe cada nota, SIb o
   LA#. Sale de la **tonalidad en la que se lee**, no de la nota de partida: bemoles en las
   de bemoles, sostenidos en las de sostenidos, y en DO (o sin tonalidad, como el afinador)
-  la de banda: DO#, MIb, FA#, LAb, SIb. En las menores, la sensible con sostenido (DO# en
-  REm, SOL# en LAm). Nunca MI#, SI#, FAb ni DOb. Una tonalidad transpuesta toma su nombre
+  la de banda: DO#, MIb, FA#, LAb, SIb. **Estricta**: cada nota de la escala con su letra,
+  como la pide la armadura (FA# mayor lleva MI#, SOLb mayor DOb, DO# mayor MI# y SI#); las
+  que no son de la escala, según la armadura. En las menores, la sensible sube la séptima
+  letra (DO# en REm, SOL# en LAm). Nunca dobles alteraciones: donde harían falta (la
+  sensible de SOL#m es FA##) va el nombre sencillo (SOL). Una tonalidad transpuesta toma su nombre
   habitual, el de menos alteraciones (`transposeKeyBySemitones`: DO de trompeta es SIb de
   concierto, no LA#); en los empates FA#/SOLb y RE#m/MIbm decide la armadura de partida.
   `renderSongContent` y `renderChordChart` mueven el contenido **de una vez** (tonalidad +
@@ -492,6 +495,9 @@ SPA (el orden importa).
   (`packages/core/src/music/chords.js`). No amplíes los regex de notas para
   cubrir sufijos: la letra en español se destroza ("Amor" -> "LAmor"). Usa
   `isChordLine` / `splitChordSegment` / `mapChordLine`.
+- El repositorio es **público a propósito** (portafolio), y el repertorio (`repertorio.json`,
+  con las 118 melodías) **se queda en él**: está decidido, no es un pendiente. En la app
+  está cerrado (los invitados solo leen su sesión, ver Security Rules).
 - El repertorio de la banda (118 canciones sacadas de las partituras) vive en
   `scripts/repertorio/repertorio.json` y lo comprueba
   `apps/web/src/test/repertorio.test.js` contra el pipeline real. Si tocas
@@ -721,12 +727,6 @@ ahorra volver a buscarlo.
     ellos), "Buscar datos" en el editor, el recuadro "Datos de la grabación
     original" en el visor y los enlaces "Ver en…". Sigue el paso 2 (YouTube para
     practicar).
-- **El repertorio en GitHub**: el repo es **público a propósito** (portafolio) y
-  versiona `scripts/repertorio/repertorio.json` con las 118 melodías. En la app ya
-  está cerrado (los invitados solo leen su sesión, ver Security Rules). Queda
-  decidir si se saca el archivo del repo; sacarlo del árbol no lo saca del
-  historial.
-
 ### Acordes: el sitio ya está, falta el contenido
 
 Las canciones ya pueden llevar su hoja de acordes (`acordes`, ver Modelo de datos),

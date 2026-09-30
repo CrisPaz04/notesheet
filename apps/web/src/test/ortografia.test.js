@@ -5,6 +5,7 @@ import {
   nombreDeTonalidad,
   leerTonalidad,
   ORTOGRAFIA_NEUTRA,
+  nombrarNota,
   transposeKeyBySemitones,
   getVisualKeyForInstrument,
   renderSongContent,
@@ -43,6 +44,34 @@ describe('ortografía: cómo se escribe cada nota en una tonalidad', () => {
     // El resto, como su relativa mayor
     expect(ortografiaDe('REm')[10]).toBe('SIb');
     expect(ortografiaDe('MIm')[6]).toBe('FA#');
+  });
+
+  // Ortografía estricta: cada grado de la escala con su letra, como la armadura
+  it('las notas de la escala se escriben como las pide la armadura', () => {
+    const escala = (key, grados) => grados.map((t) => ortografiaDe(key)[t]);
+    // FA# mayor: FA# SOL# LA# SI DO# RE# MI# (no FA)
+    expect(escala('FA#', [6, 8, 10, 11, 1, 3, 5])).toEqual(['FA#', 'SOL#', 'LA#', 'SI', 'DO#', 'RE#', 'MI#']);
+    // SOLb mayor: SOLb LAb SIb DOb REb MIb FA (no SI)
+    expect(escala('SOLb', [6, 8, 10, 11, 1, 3, 5])).toEqual(['SOLb', 'LAb', 'SIb', 'DOb', 'REb', 'MIb', 'FA']);
+    // DO# mayor, si la banda la escribe así: MI# y SI#
+    expect(escala('DO#', [5, 0])).toEqual(['MI#', 'SI#']);
+    // RE#m (relativa de FA#) también lleva MI#
+    expect(ortografiaDe('RE#m')[5]).toBe('MI#');
+    // MIbm (relativa de SOLb) lleva DOb
+    expect(ortografiaDe('MIbm')[11]).toBe('DOb');
+  });
+
+  it('nunca dobles alteraciones: la sensible de SOL#m (FA##) se escribe SOL', () => {
+    expect(ortografiaDe('SOL#m')[7]).toBe('SOL');
+    expect(ortografiaDe('RE#m')[2]).toBe('RE'); // DO## sería la sensible
+    for (const key of ['DO', 'FA#', 'SOLb', 'DO#', 'LA#', 'SOL#m', 'RE#m', 'LA#m', 'MIbm']) {
+      for (const nombre of ortografiaDe(key)) expect(nombre, key).not.toMatch(/##|bb/);
+    }
+  });
+
+  it('en anglosajona también: E#, Cb', () => {
+    expect(nombrarNota(5, ortografiaDe('FA#'), 'english')).toBe('E#');
+    expect(nombrarNota(11, ortografiaDe('SOLb'), 'english')).toBe('Cb');
   });
 
   it('una tonalidad escrita con la alteración poco habitual se respeta', () => {

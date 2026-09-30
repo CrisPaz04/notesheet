@@ -31,18 +31,34 @@ const MENORES = ['DOm', 'DO#m', 'REm', 'MIbm', 'MIm', 'FAm', 'FA#m', 'SOLm', 'SO
 // Las mayores con sostenidos en la armadura; las demás que no son DO, bemoles
 const MAYORES_CON_SOSTENIDOS = new Set(['SOL', 'RE', 'LA', 'MI', 'SI', 'FA#', 'DO#', 'SOL#', 'RE#', 'LA#', 'MI#', 'SI#']);
 
-const INDICE_LATINO = {
-  DO: 0, RE: 2, MI: 4, FA: 5, SOL: 7, LA: 9, SI: 11
-};
-const INDICE_INGLES = {
-  C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11
-};
+// Las siete letras y su tecla sin alteración
+const LETRAS = ['DO', 'RE', 'MI', 'FA', 'SOL', 'LA', 'SI'];
+const NATURALES = [0, 2, 4, 5, 7, 9, 11];
+const LETRA_LATINA = { DO: 0, RE: 1, MI: 2, FA: 3, SOL: 4, LA: 5, SI: 6 };
+const LETRA_INGLESA = { C: 0, D: 1, E: 2, F: 3, G: 4, A: 5, B: 6 };
+
+// Los grados de la escala mayor, en semitonos desde la tónica
+const ESCALA_MAYOR = [0, 2, 4, 5, 7, 9, 11];
+
+/**
+ * Una letra alterada para que suene en una tecla: SI en la tecla de DO es
+ * "SI#", DO en la de SI es "DOb". null si haría falta doble alteración.
+ */
+function conLetra(letra, tecla) {
+  let d = (((tecla - NATURALES[letra]) % 12) + 12) % 12;
+  if (d > 6) d -= 12;
+  if (d === 0) return LETRAS[letra];
+  if (d === 1) return `${LETRAS[letra]}#`;
+  if (d === -1) return `${LETRAS[letra]}b`;
+  return null;
+}
 
 /**
  * Lee una tonalidad escrita a mano ("SIb", "Bbm", "fa#m", "RE#m").
  *
  * @param {string} key
- * @returns {{indice: number, menor: boolean, alteracion: '#'|'b'|''}|null}
+ * @returns {{indice: number, menor: boolean, alteracion: '#'|'b'|'', letra: number}|null}
+ *   `letra`: 0 = DO … 6 = SI
  */
 export function leerTonalidad(key) {
   const texto = (key || '').trim();
@@ -51,10 +67,10 @@ export function leerTonalidad(key) {
   const m = latina || inglesa;
   if (!m) return null;
 
-  const raiz = latina ? INDICE_LATINO[m[1].toUpperCase()] : INDICE_INGLES[m[1]];
+  const letra = latina ? LETRA_LATINA[m[1].toUpperCase()] : LETRA_INGLESA[m[1]];
   const alteracion = m[2] || '';
   const desplazamiento = alteracion === '#' ? 1 : alteracion === 'b' ? -1 : 0;
-  return { indice: (raiz + desplazamiento + 12) % 12, menor: Boolean(m[3]), alteracion };
+  return { indice: (NATURALES[letra] + desplazamiento + 12) % 12, menor: Boolean(m[3]), alteracion, letra };
 }
 
 /**
@@ -104,14 +120,17 @@ function direccionDe(key) {
 /**
  * Cómo se escribe cada una de las doce notas leyendo en una tonalidad.
  *
- * - Mayores: sostenidos si la armadura lleva sostenidos, bemoles si lleva
- *   bemoles, y la neutra en DO.
- * - Menores: las de su relativa mayor, pero la sensible (un semitono por
- *   debajo de la tónica) va con sostenido: en REm se escribe DO#, no REb; en
+ * - Las notas de la escala, **como las pide la armadura**, una letra por
+ *   grado: FA# mayor lleva MI# (no FA), SOLb mayor lleva DOb (no SI), DO#
+ *   mayor lleva MI# y SI#.
+ * - Las que no son de la escala: sostenidos si la armadura lleva sostenidos,
+ *   bemoles si lleva bemoles, y la neutra en DO.
+ * - Menores: las de su relativa mayor, y la sensible (un semitono por debajo
+ *   de la tónica) sube la séptima letra: en REm se escribe DO#, no REb; en
  *   LAm, SOL#, no LAb. Es la nota de la menor armónica, la que más sale.
  *
- * No escribe MI#, SI#, FAb ni DOb aunque la armadura los pida (FA# mayor tiene
- * MI#): en la banda se lee mejor la tecla por su nombre de siempre.
+ * Nunca dobles alteraciones: donde la escala pediría una (la sensible de
+ * SOL#m es FA##), se usa el nombre sencillo de la tecla (SOL).
  *
  * @param {string} key - La tonalidad en la que se va a leer
  * @returns {string[]|null} Doce nombres (índice = tecla), o null si no se
@@ -137,18 +156,30 @@ export function ortografiaDe(key) {
   if (t.alteracion === '#' && base !== SOSTENIDOS) base = SOSTENIDOS;
   if (t.alteracion === 'b' && base !== BEMOLES) base = BEMOLES;
 
-  if (!t.menor) return base;
-
+  // Las notas de la escala de la mayor (o de la relativa mayor), cada una
+  // con su letra: la relativa mayor está una tercera más arriba, dos letras
   const nombres = [...base];
-  const sensible = (t.indice + 11) % 12;
-  nombres[sensible] = SOSTENIDOS[sensible];
+  const letraMayor = t.menor ? (t.letra + 2) % 7 : t.letra;
+  ESCALA_MAYOR.forEach((semitonos, grado) => {
+    const tecla = (relativaMayor + semitonos) % 12;
+    const nombre = conLetra((letraMayor + grado) % 7, tecla);
+    if (nombre) nombres[tecla] = nombre;
+  });
+
+  if (t.menor) {
+    const sensible = (t.indice + 11) % 12;
+    const nombre = conLetra((t.letra + 6) % 7, sensible);
+    if (nombre) nombres[sensible] = nombre;
+  }
   return nombres;
 }
 
 /** Las doce notas en anglosajona, en el mismo orden que las latinas */
 const A_INGLES = {
   DO: 'C', 'DO#': 'C#', REb: 'Db', RE: 'D', 'RE#': 'D#', MIb: 'Eb', MI: 'E', FA: 'F',
-  'FA#': 'F#', SOLb: 'Gb', SOL: 'G', 'SOL#': 'G#', LAb: 'Ab', LA: 'A', 'LA#': 'A#', SIb: 'Bb', SI: 'B'
+  'FA#': 'F#', SOLb: 'Gb', SOL: 'G', 'SOL#': 'G#', LAb: 'Ab', LA: 'A', 'LA#': 'A#', SIb: 'Bb', SI: 'B',
+  // Las que pide alguna armadura (FA# mayor, SOLb mayor…)
+  'MI#': 'E#', 'SI#': 'B#', FAb: 'Fb', DOb: 'Cb'
 };
 
 /**
