@@ -53,7 +53,7 @@ function Navbar() {
   const currentThemeInfo = getCurrentThemeInfo();
 
   return (
-    <nav className="navbar navbar-expand-lg navbar-dark-custom">
+    <nav className="navbar navbar-expand-md navbar-dark-custom">
       <div className="container">
         <Link className="navbar-brand-custom" to={currentUser ? "/dashboard" : "/"}>
           <Icono nombre="music-notes" className="me-2" />

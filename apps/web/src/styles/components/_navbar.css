@@ -293,7 +293,9 @@
 }
 
 /* Mobile responsive */
-@media (max-width: 768px) {
+/* Menú plegado (hamburguesa): solo en el móvil. La tablet en vertical (768 px
+   en adelante) ya lleva la barra desplegada, con íconos. */
+@media (max-width: 767.98px) {
   .navbar-nav-custom {
     background: var(--bg-dark-primary);
     border-radius: 12px;
@@ -326,12 +328,13 @@
     margin-top: 0.5rem;
   }
 }
-/* Escritorio y tablet en horizontal (992–1399 px): con la cuenta abierta son
-   seis enlaces y el usuario, y con sus nombres solo caben en el contenedor
-   de 1320 px (o se partían en dos renglones, o aplastaban el logo). Ahí van
-   solo los íconos; el nombre queda para los lectores de pantalla y en el
-   `title`. */
-@media (min-width: 992px) and (max-width: 1399.98px) {
+/* Tablet y escritorio (768–1399 px): con la cuenta abierta son seis enlaces
+   y el usuario, y con sus nombres solo caben en el contenedor de 1320 px (o
+   se partían en dos renglones, o aplastaban el logo). Ahí van solo los
+   íconos; el nombre queda para los lectores de pantalla y en el `title`.
+   Antes, por debajo de 992 salía la hamburguesa aunque en una tablet en
+   vertical los íconos caben. */
+@media (min-width: 768px) and (max-width: 1399.98px) {
   .navbar-nav-custom--cuenta .nav-link-texto {
     position: absolute;
     width: 1px;
@@ -358,4 +361,12 @@
 
 .navbar-nav-custom .nav-link {
   white-space: nowrap;
+}
+
+/* En la tablet en vertical, tampoco el nombre del usuario: solo sus
+   iniciales (el nombre sigue en el menú que se abre) */
+@media (min-width: 768px) and (max-width: 991.98px) {
+  .navbar-nav-custom--cuenta .user-info {
+    display: none;
+  }
 }

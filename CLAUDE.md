@@ -469,7 +469,7 @@ SPA (el orden importa).
 ## Notes
 
 - No TypeScript - pure JavaScript
-- Vitest configured; 1925 tests in `apps/web/src/test/` (run with `npm run test:run`)
+- Vitest configured; 1928 tests in `apps/web/src/test/` (run with `npm run test:run`)
 - Los tests se validan con **mutaciones**: se rompe el código a propósito y se comprueba
   que algún test falla. Ha destapado cuatro tests que pasaban por la razón equivocada,
   y un bug de verdad en `scores.js` (las voces se ordenaban como texto, así que la 10
@@ -608,7 +608,9 @@ SPA (el orden importa).
   móvil sale uno cada vez, abajo, sin arrastre. El afinador y el metrónomo
   del panel son **versiones simplificadas** (`mini` en `Tuner.jsx` / `Metronome.jsx`, con
   el mismo motor y preferencias). El círculo de quintas es solo una imagen de referencia,
-  sin interacción. El **piano** (`Piano.jsx`) es el único anclado **abajo y centrado**
+  sin interacción; la armadura de cada tonalidad va en un pentagrama en clave de sol
+  (dos en las tres de abajo: el de sostenidos y el de bemoles), dibujado con trazos y no
+  con caracteres, porque el de la clave no viene en todas las tablets. El **piano** (`Piano.jsx`) es el único anclado **abajo y centrado**
   (no se arrastra; los laterales se quedan encima de él): dos octavas (una en el
   móvil), suena mientras se mantiene la tecla y admite varios dedos. Suena con
   **grabaciones reales** (`lib/pianoMuestras.js`, archivos en `public/audio/`, créditos
@@ -674,10 +676,12 @@ SPA (el orden importa).
   `.container` ocupa el ancho (`_bootstrap-theme.css`): Bootstrap lo dejaba en 720, y en
   una Tab S8 Ultra en vertical (~924 px) sobraban más de 100 px a cada lado. Las
   acciones rápidas del Dashboard van 4 por fila o 2×2, nunca `auto-fit` (salían 3 y una
-  sola). El menú, entre 992 y
-  1399 px, enseña solo los íconos: con la cuenta abierta son seis enlaces y con sus
+  sola). El menú va desplegado
+  desde 768 px (`navbar-expand-md`; la hamburguesa, solo en el móvil) y entre 768 y
+  1399 px enseña solo los íconos: con la cuenta abierta son seis enlaces y con sus
   nombres solo caben en el contenedor de 1320 px (si no, se partían o aplastaban el
-  logo, que lleva `white-space: nowrap` y no se encoge).
+  logo, que lleva `white-space: nowrap` y no se encoge). Por debajo de 992, del usuario
+  solo las iniciales.
 - **Textos de la interfaz en español normal**: mayúscula solo al principio ("Mis listas",
   "Nueva canción", "Sistema de notación"), no en cada palabra. Los nombres propios
   (Dashboard, NoteSheet, Hz) se quedan igual.
