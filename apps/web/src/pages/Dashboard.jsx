@@ -6,7 +6,7 @@ import {
   getPlaylistsWithSong,
   removeSongFromPlaylists
 } from "@notesheet/api";
-import { identificarTonalidad, nombrarTonalidad, normalizarBusqueda, puntuarCancion, compararTitulos } from "@notesheet/core";
+import { identificarTonalidad, nombrarTonalidad, normalizarBusqueda, puntuarCancion, compararTitulos, compararPorCambios } from "@notesheet/core";
 import { useAuth } from "../context/AuthContext";
 import { getUserDisplayName } from "../utils/userHelpers";
 import { mensajeDeBorrado } from "../utils/avisoBorrado";
@@ -32,17 +32,14 @@ function Dashboard() {
   const [searchTerm, setSearchTerm] = useState("");
   // Pestañas: el tipo de canción (Adoración, Júbilo, Moderada)
   const [activeFilter, setActiveFilter] = useState("all");
-  // "mine" o "recent", en su propio desplegable junto al de tonalidad. Antes
-  // eran pestañas al lado de los tipos, y como solo había una activa no se
-  // podía pedir "mis canciones de Adoración".
-  const [origenFilter, setOrigenFilter] = useState("");
   // Guarda la tonalidad identificada ("11m"), no el texto: así "RE#m" y
   // "MIbm" caen en la misma opción aunque cada una se escribiera distinta.
   const [keyFilter, setKeyFilter] = useState("");
   // Tarjetas o lista. Se recuerda en este dispositivo, como el orden: quien
   // prefiere la lista la quiere siempre, no volver a elegirla en cada visita.
   const [viewMode, setViewMode] = usePreferenciaLocal("dashboardVista", "cards", VISTAS);
-  // "nuevas" respeta el orden en que llegan de Firestore (createdAt desc).
+  // "nuevas" son los últimos cambios primero (crearla cuenta como cambio).
+  // El valor se llama así porque ya está guardado en los dispositivos.
   // Se recuerda en este dispositivo: quien ordena alfabéticamente lo quiere
   // así siempre, y volver a pulsarlo cada vez que se abre el Dashboard sobra.
   const [sortOrder, setSortOrder] = usePreferenciaLocal(
@@ -105,23 +102,19 @@ function Dashboard() {
       filtered = filtered.filter(song => identificarTonalidad(song.key) === keyFilter);
     }
 
-    if (origenFilter === "mine") {
-      filtered = filtered.filter(song => song.isOwn);
-    } else if (origenFilter === "recent") {
-      const oneWeekAgo = new Date();
-      oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-      filtered = filtered.filter(song => song.updatedAt && song.updatedAt.toDate() > oneWeekAgo);
-    }
-
     // Filtrar por tipo
     if (TIPOS[activeFilter]) {
       filtered = filtered.filter(song => song.type === TIPOS[activeFilter]);
     }
 
-    // Ordenar alfabéticamente si toca. Se copia antes de ordenar porque
-    // `filtered` puede ser el propio array de estado cuando no hay ni búsqueda
-    // ni filtro: `sort` ordena en el sitio y estaría mutando el estado.
-    if (sortOrder !== "nuevas") {
+    // Se copia antes de ordenar porque `filtered` puede ser el propio array de
+    // estado cuando no hay ni búsqueda ni filtro: `sort` ordena en el sitio y
+    // estaría mutando el estado. Los últimos cambios se ordenan aquí y no por
+    // la consulta: llegan dos (las propias y las compartidas) y cada una venía
+    // ordenada por su cuenta, y además por fecha de creación.
+    if (sortOrder === "nuevas") {
+      filtered = [...filtered].sort(compararPorCambios);
+    } else {
       const sentido = sortOrder === "za" ? -1 : 1;
       filtered = [...filtered].sort(
         (a, b) => sentido * compararTitulos(a, b)
@@ -129,7 +122,7 @@ function Dashboard() {
     }
 
     return filtered;
-  }, [songs, searchTerm, keyFilter, origenFilter, activeFilter, sortOrder, notacion]);
+  }, [songs, searchTerm, keyFilter, activeFilter, sortOrder, notacion]);
 
   const getGreeting = () => {
     const greetings = [
@@ -321,19 +314,6 @@ function Dashboard() {
               />
             </div>
           )}
-          <div className="key-filter-wrap">
-            <Desplegable
-              className="desplegable--pildora"
-              ariaLabel="Mostrar canciones"
-              value={origenFilter}
-              onChange={setOrigenFilter}
-              opciones={[
-                { value: "", label: "Todas las canciones" },
-                { value: "mine", label: "Solo las mías" },
-                { value: "recent", label: "Editadas esta semana" }
-              ]}
-            />
-          </div>
         </div>
 
         {/* Mis canciones */}
@@ -378,13 +358,13 @@ function Dashboard() {
                 <button
                   className={`view-toggle-btn ${sortOrder === 'nuevas' ? 'active' : ''}`}
                   onClick={() => setSortOrder('nuevas')}
-                  title="Nuevas primero"
-                  aria-label="Nuevas primero"
+                  title="Últimos cambios primero"
+                  aria-label="Últimos cambios primero"
                   aria-pressed={sortOrder === 'nuevas'}
                 >
-                  {/* Un icono de ordenar, no un reloj: el reloj se confundía
-                      con el filtro "Editadas esta semana", que filtra en vez
-                      de ordenar. */}
+                  {/* Crearla o editarla cuenta como cambio. Hace lo que hacía
+                      el filtro "Editadas esta semana", que se quitó: lo de
+                      esta semana queda arriba sin esconder lo demás. */}
                   <Icono nombre="orden-nuevas" />
                 </button>
                 <button

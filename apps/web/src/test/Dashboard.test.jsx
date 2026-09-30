@@ -362,25 +362,11 @@ describe('Dashboard', () => {
       });
     });
 
-    const mostrar = () => screen.getByRole('combobox', { name: 'Mostrar canciones' });
-
-    it('Mías y Recientes ya no son pestañas: van en el desplegable "Mostrar"', async () => {
+    // Lo hace el orden "Últimos cambios primero", sin esconder el resto
+    it('ya no hay filtro de "Mostrar" (mías, editadas esta semana)', async () => {
       await renderDashboard();
-      const tabs = document.querySelector('.filter-tabs');
-      expect(within(tabs).queryByRole('button', { name: 'Mías' })).toBeNull();
-      expect(within(tabs).queryByRole('button', { name: 'Recientes' })).toBeNull();
-      expect(mostrar()).toHaveTextContent('Todas las canciones');
-    });
-
-    it('"Editadas esta semana" deja solo lo de la última semana', async () => {
-      const user = userEvent.setup();
-      await renderDashboard();
-      await elegirEnDesplegable(user, mostrar(), 'Editadas esta semana');
-
-      await waitFor(() => {
-        // Sublime Gracia se actualizó hace 30 días
-        expect(tituloVisibles()).toEqual(['Cristo Vive', 'Al Que Está Sentado']);
-      });
+      expect(screen.queryByRole('combobox', { name: 'Mostrar canciones' })).toBeNull();
+      expect(screen.queryByText('Editadas esta semana')).toBeNull();
     });
 
     it('Todas vuelve a mostrarlo todo', async () => {
@@ -392,21 +378,6 @@ describe('Dashboard', () => {
 
       await clickFiltro(user, 'Todas');
       await waitFor(() => expect(tituloVisibles()).toHaveLength(3));
-    });
-
-    it('"Editadas esta semana" se combina con una pestaña de tipo', async () => {
-      const user = userEvent.setup();
-      await renderDashboard();
-      await elegirEnDesplegable(user, mostrar(), 'Editadas esta semana');
-      await clickFiltro(user, 'Júbilo');
-
-      await waitFor(() => expect(tituloVisibles()).toEqual(['Cristo Vive']));
-
-      // Y "Todas" quita solo el tipo, no el otro filtro
-      await clickFiltro(user, 'Todas');
-      await waitFor(() => {
-        expect(tituloVisibles()).toEqual(['Cristo Vive', 'Al Que Está Sentado']);
-      });
     });
 
     it('combina búsqueda y filtro de categoría', async () => {
@@ -435,20 +406,6 @@ describe('Dashboard', () => {
       await renderDashboard();
       // Solo las tres propias llevan botón de eliminar
       expect(document.querySelectorAll('.song-delete-btn')).toHaveLength(3);
-    });
-
-    it('"Solo las mías" deja fuera el repertorio ajeno', async () => {
-      const user = userEvent.setup();
-      await renderDashboard();
-
-      await elegirEnDesplegable(
-        user, screen.getByRole('combobox', { name: 'Mostrar canciones' }), 'Solo las mías'
-      );
-
-      await waitFor(() => {
-        expect(screen.queryByText('Renuévame')).not.toBeInTheDocument();
-      });
-      expect(tituloVisibles()).toHaveLength(3);
     });
 
     it('la búsqueda también encuentra canciones ajenas', async () => {
@@ -697,15 +654,34 @@ describe('Dashboard', () => {
   });
 
   describe('orden alfabético', () => {
-    // El orden en que llegan de Firestore es `createdAt desc`, y el Dashboard
-    // lo respeta hasta que se pide otra cosa. `tituloVisibles` filtra sobre
-    // SONGS, así que aquí se lee el DOM directamente para ver el orden real.
+    // De entrada, los últimos cambios primero (updatedAt; crearla cuenta).
+    // `tituloVisibles` filtra sobre SONGS, así que aquí se lee el DOM
+    // directamente para ver el orden real.
     const ordenEnPantalla = () =>
       [...document.querySelectorAll('.recent-item-title, .list-item-title')].map((n) => n.textContent.trim());
 
-    it('de entrada respeta el orden en que llegan', async () => {
+    it('de entrada, los últimos cambios primero', async () => {
       await renderDashboard();
-      expect(ordenEnPantalla()).toEqual(['Cristo Vive', 'Sublime Gracia', 'Al Que Está Sentado']);
+      // Cristo Vive hace 1 día, Al Que Está Sentado hace 2, Sublime Gracia hace 30
+      expect(ordenEnPantalla()).toEqual(['Cristo Vive', 'Al Que Está Sentado', 'Sublime Gracia']);
+    });
+
+    // Llegan en dos consultas (las propias y las compartidas), cada una
+    // ordenada por su cuenta: antes salían todas las propias antes que
+    // cualquier compartida, aunque esta fuera más reciente
+    it('las compartidas se mezclan por fecha con las propias', async () => {
+      mockGetAllSongs.mockResolvedValue([...SONGS, AJENA]);
+      await renderDashboard();
+      expect(ordenEnPantalla()).toEqual(['Cristo Vive', 'Al Que Está Sentado', 'Renuévame', 'Sublime Gracia']);
+    });
+
+    it('crearla cuenta como cambio: sin updatedAt vale la de creación', async () => {
+      mockGetAllSongs.mockResolvedValue([
+        ...SONGS,
+        { id: '9', title: 'Recién creada', key: 'LA', type: 'Júbilo', version: '', isOwn: true, public: true, createdAt: timestamp(hace(0)) }
+      ]);
+      await renderDashboard();
+      expect(ordenEnPantalla()[0]).toBe('Recién creada');
     });
 
     it('ordena de la A a la Z', async () => {
@@ -730,17 +706,17 @@ describe('Dashboard', () => {
       });
     });
 
-    it('se puede volver al orden de entrada', async () => {
+    it('se puede volver a los últimos cambios', async () => {
       const user = userEvent.setup();
       await renderDashboard();
 
       await user.click(screen.getByRole('button', { name: 'Ordenar de la Z a la A' }));
       await waitFor(() => expect(ordenEnPantalla()[0]).toBe('Sublime Gracia'));
 
-      await user.click(screen.getByRole('button', { name: 'Nuevas primero' }));
+      await user.click(screen.getByRole('button', { name: 'Últimos cambios primero' }));
 
       await waitFor(() => {
-        expect(ordenEnPantalla()).toEqual(['Cristo Vive', 'Sublime Gracia', 'Al Que Está Sentado']);
+        expect(ordenEnPantalla()).toEqual(['Cristo Vive', 'Al Que Está Sentado', 'Sublime Gracia']);
       });
     });
 
@@ -826,7 +802,7 @@ describe('Dashboard', () => {
     it('ignora un orden guardado que no existe', async () => {
       localStorage.setItem('dashboardOrden', 'por-tonalidad-inventada');
       await renderDashboard();
-      expect(ordenEnPantalla()).toEqual(['Cristo Vive', 'Sublime Gracia', 'Al Que Está Sentado']);
+      expect(ordenEnPantalla()).toEqual(['Cristo Vive', 'Al Que Está Sentado', 'Sublime Gracia']);
     });
 
     it('funciona aunque localStorage falle (incógnito)', async () => {

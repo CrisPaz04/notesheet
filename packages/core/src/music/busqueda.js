@@ -22,6 +22,23 @@ export const normalizarBusqueda = (texto) => (texto || '')
 const porTitulo = new Intl.Collator('es', { sensitivity: 'base', numeric: true });
 export const compararTitulos = (a, b) => porTitulo.compare(a?.title || '', b?.title || '');
 
+// Cuándo se tocó una canción por última vez, en milisegundos. Crearla cuenta
+// como cambio: al crearla se guarda `updatedAt` junto a `createdAt`, y si
+// alguna vieja no lo tuviera, vale la de creación. Acepta un Timestamp de
+// Firestore o una fecha.
+const enMs = (fecha) => {
+  if (!fecha) return 0;
+  const d = typeof fecha.toDate === 'function' ? fecha.toDate() : fecha;
+  const ms = d instanceof Date ? d.getTime() : new Date(d).getTime();
+  return Number.isNaN(ms) ? 0 : ms;
+};
+export const momentoDelUltimoCambio = (cancion) =>
+  enMs(cancion?.updatedAt) || enMs(cancion?.createdAt);
+
+/** Para ordenar: la tocada más recientemente primero; a igualdad, por título */
+export const compararPorCambios = (a, b) =>
+  momentoDelUltimoCambio(b) - momentoDelUltimoCambio(a) || compararTitulos(a, b);
+
 /**
  * Cuánto encaja una canción con lo buscado: 0 si no encaja, y más cuanto
  * mejor, para poner primero lo más probable (lo que se añade con Enter).
