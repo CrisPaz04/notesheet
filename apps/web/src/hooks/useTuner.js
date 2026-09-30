@@ -16,7 +16,7 @@ import { notaConHisteresis, estadoAfinacion } from '@notesheet/core/src/audio/se
 import { useAuth } from '../context/AuthContext';
 import useNotacionPreferida from './useNotacionPreferida';
 import { saveTunerPreferences } from '@notesheet/api';
-import { TRANSPOSING_INSTRUMENTS, STRING_TUNINGS } from '@notesheet/core';
+import { TRANSPOSING_INSTRUMENTS, VER_EN_CONCIERTO, semitonosAEscrito } from '@notesheet/core';
 
 const SAVE_DEBOUNCE_MS = 500; // Debounce Firebase saves
 
@@ -32,7 +32,6 @@ function useTuner(initialPreferences = {}) {
   // Detection state
   const [detectedFrequency, setDetectedFrequency] = useState(null);
   const [detectedNote, setDetectedNote] = useState(null);
-  const [detectedNoteLatin, setDetectedNoteLatin] = useState(null);
   const [centsDeviation, setCentsDeviation] = useState(0);
   const [tuningStatus, setTuningStatus] = useState('detecting'); // 'flat', 'sharp', 'in-tune', 'detecting'
 
@@ -40,13 +39,11 @@ function useTuner(initialPreferences = {}) {
   const [referenceFrequency, setReferenceFrequency] = useState(
     initialPreferences.referenceFrequency || 440
   );
-  const [currentInstrument, setCurrentInstrument] = useState(
-    initialPreferences.lastInstrument || 'bb_trumpet'
-  );
-  const [showConcertPitch, setShowConcertPitch] = useState(
-    initialPreferences.showConcertPitch !== undefined
-      ? initialPreferences.showConcertPitch
-      : true
+  // Cómo se nombran las notas: las que suenan ("concierto") o las que lee un
+  // instrumento (el DO de la trompeta suena SIb). Antes había un interruptor
+  // "tono de concierto" que se guardaba pero no se aplicaba en ningún sitio.
+  const [verNotasComo, setVerNotasComo] = useState(
+    initialPreferences.verNotasComo || VER_EN_CONCIERTO
   );
   // La del perfil, compartida con el resto de la app (useNotacionPreferida)
   const [notationSystem, setNotationSystem] = useNotacionPreferida(currentUser);
@@ -54,17 +51,12 @@ function useTuner(initialPreferences = {}) {
   // Reference tone state
   const [isPlayingTone, setIsPlayingTone] = useState(false);
 
-  // String mode state
-  const [stringModeEnabled, setStringModeEnabled] = useState(
-    initialPreferences.stringModeEnabled || false
-  );
-  const [selectedTuning, setSelectedTuning] = useState(
-    initialPreferences.selectedTuning || 'guitar_standard'
-  );
-  const [selectedString, setSelectedString] = useState(null);
   const [detectedMidi, setDetectedMidi] = useState(null);
 
   const engineRef = useRef(null);
+  // Lo último que se guardó (o con lo que arrancó): sin esto guardaba ya al
+  // montar, como le pasaba al metrónomo
+  const ultimoGuardadoRef = useRef(null);
   // La nota y el estado de la lectura anterior: con ellos no parpadean en la
   // frontera entre dos notas ni en el borde de "Afinado"
   const notaAnteriorRef = useRef(null);
@@ -80,29 +72,39 @@ function useTuner(initialPreferences = {}) {
     };
   }, []);
 
+  // El engine se crea al primer uso: los tonos de referencia lo necesitan sin
+  // micrófono. Antes solo existía tras pedir el micrófono al pulsar Iniciar,
+  // así que tocar un tono sin haber iniciado el afinador no hacía nada.
+  const motor = useCallback(() => {
+    if (!engineRef.current) engineRef.current = new TunerEngine();
+    return engineRef.current;
+  }, []);
+
   /**
    * Initialize tuner and request microphone access
+   * @returns {Promise<boolean>} Si quedó listo para escuchar
    */
   const initialize = useCallback(async () => {
-    if (isInitialized || engineRef.current) return;
+    if (isInitialized) return true;
 
     try {
       setLoading(true);
       setError(null);
 
-      const engine = new TunerEngine();
+      const engine = motor();
       await engine.initialize();
       engine.setReferenceFrequency(referenceFrequency);
 
-      engineRef.current = engine;
       setIsInitialized(true);
+      return true;
     } catch (err) {
       console.error('Error initializing tuner:', err);
       setError(err.message);
+      return false;
     } finally {
       setLoading(false);
     }
-  }, [isInitialized, referenceFrequency]);
+  }, [isInitialized, referenceFrequency, motor]);
 
   /**
    * Pitch detection callback
@@ -114,7 +116,6 @@ function useTuner(initialPreferences = {}) {
         estadoAnteriorRef.current = null;
         setDetectedFrequency(null);
         setDetectedNote(null);
-        setDetectedNoteLatin(null);
         setCentsDeviation(0);
         setTuningStatus('detecting');
         setDetectedMidi(null);
@@ -140,7 +141,6 @@ function useTuner(initialPreferences = {}) {
 
       // Set note names
       setDetectedNote(midiToNoteName(midiNote));
-      setDetectedNoteLatin(midiToNoteNameLatin(midiNote));
     },
     [referenceFrequency]
   );
@@ -159,11 +159,8 @@ function useTuner(initialPreferences = {}) {
    * Start the tuner
    */
   const start = useCallback(async () => {
-    if (!isInitialized) {
-      await initialize();
-    }
-
-    if (!engineRef.current || isRunning) return;
+    const listo = isInitialized || await initialize();
+    if (!listo || !engineRef.current || isRunning) return;
 
     try {
       setError(null);
@@ -189,7 +186,6 @@ function useTuner(initialPreferences = {}) {
       estadoAnteriorRef.current = null;
       setDetectedFrequency(null);
       setDetectedNote(null);
-      setDetectedNoteLatin(null);
       setCentsDeviation(0);
       setTuningStatus('detecting');
     } catch (err) {
@@ -222,19 +218,12 @@ function useTuner(initialPreferences = {}) {
   }, []);
 
   /**
-   * Update instrument selection
+   * Las notas de qué instrumento se enseñan, o `VER_EN_CONCIERTO`
    */
-  const updateInstrument = useCallback((instrumentId) => {
-    if (TRANSPOSING_INSTRUMENTS[instrumentId]) {
-      setCurrentInstrument(instrumentId);
+  const updateVerNotasComo = useCallback((id) => {
+    if (id === VER_EN_CONCIERTO || TRANSPOSING_INSTRUMENTS[id]) {
+      setVerNotasComo(id);
     }
-  }, []);
-
-  /**
-   * Toggle concert pitch display
-   */
-  const toggleConcertPitch = useCallback(() => {
-    setShowConcertPitch((prev) => !prev);
   }, []);
 
   /**
@@ -248,11 +237,9 @@ function useTuner(initialPreferences = {}) {
    * Play reference tone for a specific note
    */
   const playReferenceTone = useCallback((frequency) => {
-    if (!engineRef.current) return;
-
-    engineRef.current.playReferenceTone(frequency);
+    motor().playReferenceTone(frequency);
     setIsPlayingTone(true);
-  }, []);
+  }, [motor]);
 
   /**
    * Stop reference tone
@@ -277,45 +264,23 @@ function useTuner(initialPreferences = {}) {
     }
   }, [isPlayingTone, detectedNote, detectedMidi, referenceFrequency, playReferenceTone, stopReferenceTone]);
 
-  /**
-   * Toggle string mode
-   */
-  const toggleStringMode = useCallback((enabled) => {
-    setStringModeEnabled(enabled);
-    if (!enabled) {
-      setSelectedString(null);
-    }
-  }, []);
-
-  /**
-   * Update selected tuning
-   */
-  const updateSelectedTuning = useCallback((tuningId) => {
-    if (STRING_TUNINGS[tuningId]) {
-      setSelectedTuning(tuningId);
-      setSelectedString(null); // Reset selected string when tuning changes
-    }
-  }, []);
-
-  /**
-   * Update selected string
-   */
-  const updateSelectedString = useCallback((stringIndex) => {
-    setSelectedString(stringIndex);
-  }, []);
-
   // Save preferences to Firebase (with localStorage fallback) - debounced
   useEffect(() => {
-    const preferences = {
-      referenceFrequency,
-      lastInstrument: currentInstrument,
-      showConcertPitch,
-      stringModeEnabled,
-      selectedTuning
-    };
+    const preferences = { referenceFrequency, verNotasComo };
+
+    const texto = JSON.stringify(preferences);
+    if (ultimoGuardadoRef.current === null || ultimoGuardadoRef.current === texto) {
+      ultimoGuardadoRef.current = texto;
+      return undefined;
+    }
+    ultimoGuardadoRef.current = texto;
 
     // Save to localStorage immediately (optimistic update)
-    localStorage.setItem('tunerPreferences', JSON.stringify(preferences));
+    try {
+      localStorage.setItem('tunerPreferences', texto);
+    } catch {
+      // Sin almacenamiento (incógnito) queda Firebase
+    }
 
     // Debounce Firebase save
     const timeoutId = setTimeout(async () => {
@@ -329,14 +294,14 @@ function useTuner(initialPreferences = {}) {
     }, SAVE_DEBOUNCE_MS);
 
     return () => clearTimeout(timeoutId);
-  }, [referenceFrequency, currentInstrument, showConcertPitch, stringModeEnabled, selectedTuning, currentUser]);
+  }, [referenceFrequency, verNotasComo, currentUser]);
 
-  // Calculate displayed note (considering instrument transposition)
-  const displayedNote = detectedNote
-    ? notationSystem === 'latin'
-      ? detectedNoteLatin
-      : detectedNote
-    : null;
+  // La nota en la notación elegida y como la lee el instrumento elegido. La
+  // de concierto se enseña aparte cuando no coinciden.
+  const nombrar = (midi) => (notationSystem === 'latin' ? midiToNoteNameLatin(midi) : midiToNoteName(midi));
+  const semitonosEscritos = semitonosAEscrito(verNotasComo);
+  const displayedNote = detectedNote ? nombrar(detectedMidi + semitonosEscritos) : null;
+  const notaConcierto = detectedNote && semitonosEscritos !== 0 ? nombrar(detectedMidi) : null;
 
   return {
     // State
@@ -348,23 +313,19 @@ function useTuner(initialPreferences = {}) {
     // Detection results
     detectedFrequency,
     detectedNote: displayedNote,
+    notaConcierto,
     detectedMidi,
     centsDeviation,
     tuningStatus,
 
     // Settings
     referenceFrequency,
-    currentInstrument,
-    showConcertPitch,
+    verNotasComo,
+    semitonosEscritos,
     notationSystem,
 
     // Reference tone
     isPlayingTone,
-
-    // String mode
-    stringModeEnabled,
-    selectedTuning,
-    selectedString,
 
     // Controls
     initialize,
@@ -372,18 +333,11 @@ function useTuner(initialPreferences = {}) {
     stop,
     toggle,
     updateReferenceFrequency,
-    updateInstrument,
-    toggleConcertPitch,
+    updateVerNotasComo,
     toggleNotationSystem,
     playReferenceTone,
     stopReferenceTone,
-    toggleReferenceTone,
-    toggleStringMode,
-    updateSelectedTuning,
-    updateSelectedString,
-
-    // Helpers
-    instrumentName: TRANSPOSING_INSTRUMENTS[currentInstrument]?.name || 'Trompeta en Sib'
+    toggleReferenceTone
   };
 }
 

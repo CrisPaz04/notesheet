@@ -127,6 +127,34 @@ export const vistaPreferida = (instrumentId, { hayLetra = false, hayAcordes = fa
 export const supportsCapo = (instrumentId) =>
   Boolean(TRANSPOSING_INSTRUMENTS[instrumentId]?.capo);
 
+// Lo que suena y lo que se lee sin transponer ("ver las notas en concierto")
+export const VER_EN_CONCIERTO = 'concierto';
+
+// Los que se escriben una o más octavas por encima de lo que da la
+// referencia de Sib (`transposition` solo sirve para el nombre de la nota)
+const ESCRITO_CON_OCTAVA = {
+  bb_tenor_sax: 14, // novena mayor
+  eb_baritone_sax: 21, // octava y sexta mayor
+  c_guitar: 12,
+  c_bass: 12
+};
+
+/**
+ * Cuántos semitonos por encima de lo que **suena** está lo que **lee** un
+ * instrumento: la trompeta en Sib lee un tono más alto (su DO suena SIb), el
+ * saxo alto una sexta mayor, la guitarra una octava. Es lo que usa el
+ * afinador para decir la nota como la llama el músico, con su octava.
+ *
+ * @param {string} instrumentId - O `VER_EN_CONCIERTO`
+ * @returns {number}
+ */
+export const semitonosAEscrito = (instrumentId) => {
+  if (instrumentId in ESCRITO_CON_OCTAVA) return ESCRITO_CON_OCTAVA[instrumentId];
+  const t = TRANSPOSING_INSTRUMENTS[instrumentId]?.transposition;
+  // La referencia de Sib lee 2 por encima de lo que suena
+  return t === undefined ? 0 : (((2 + t) % 12) + 12) % 12;
+};
+
 // Agrupaciones lógicas para el selector de UI
 export const INSTRUMENT_GROUPS = [
   {

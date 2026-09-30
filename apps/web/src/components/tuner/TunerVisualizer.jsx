@@ -5,7 +5,6 @@
  */
 
 import { useRef } from 'react';
-import { getStringFrequency } from '@notesheet/core';
 import useValorSuave from '../../hooks/useValorSuave';
 
 // "LA4" -> ["LA", "4"]: la octava va pequeña, como en los afinadores de verdad
@@ -14,17 +13,15 @@ const partirNota = (nota) => {
   return m ? [m[1], m[2]] : [nota, ''];
 };
 
+// `notaConcierto`: la que suena, si la que se enseña es la de un instrumento
+// transpositor (la trompeta ve DO4 y suena SIb3)
 function TunerVisualizer({
   detectedNote,
+  notaConcierto,
   detectedFrequency,
   centsDeviation,
   tuningStatus,
-  isRunning,
-  // String mode props
-  stringModeEnabled,
-  targetString,
-  notationSystem,
-  referenceFrequency
+  isRunning
 }) {
   // La aguja se mueve sola hacia su sitio (useValorSuave), escribiendo el giro
   // en el SVG: -50..+50 cents son -90..+90 grados, el arco entero. Antes
@@ -66,26 +63,8 @@ function TunerVisualizer({
     }
   };
 
-  // Get target note display name
-  const getTargetNoteName = () => {
-    if (!targetString) return null;
-    return notationSystem === 'latin' ? targetString.noteLatin : targetString.note;
-  };
-
-  const targetNoteName = getTargetNoteName();
-  const targetFreq = targetString ? getStringFrequency(targetString.midi, referenceFrequency) : null;
-
   return (
     <div className={`tuner-visualizer${detectedNote && tuningStatus === 'in-tune' ? ' tuner-visualizer--afinado' : ''}`}>
-      {/* Target Note Display (String Mode) */}
-      {stringModeEnabled && targetString && (
-        <div className="tuner-target-display">
-          <span className="tuner-target-label">Afinando cuerda:</span>
-          <span className="tuner-target-note">{targetNoteName}</span>
-          <span className="tuner-target-freq">{targetFreq?.toFixed(1)} Hz</span>
-        </div>
-      )}
-
       {/* Note Display */}
       <div className="tuner-note-display">
         <div
@@ -94,10 +73,11 @@ function TunerVisualizer({
         >
           {detectedNote
             ? <>{nombreNota}<span className="tuner-note-octava">{octava}</span></>
-            : (stringModeEnabled && targetString ? targetNoteName : (isRunning ? '♪' : '--'))}
+            : (isRunning ? '♪' : '--')}
         </div>
         <div className="tuner-frequency">
-          {detectedFrequency ? `${detectedFrequency.toFixed(1)} Hz` : (targetFreq ? `Objetivo: ${targetFreq.toFixed(1)} Hz` : '--- Hz')}
+          {detectedFrequency ? `${detectedFrequency.toFixed(1)} Hz` : '--- Hz'}
+          {notaConcierto && <span className="tuner-concierto"> · suena {notaConcierto}</span>}
         </div>
       </div>
 

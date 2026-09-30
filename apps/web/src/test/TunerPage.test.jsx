@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, act } from '@testing-library/react';
+import { render, screen, act, fireEvent, within } from '@testing-library/react';
 
 // TunerEngine necesita getUserMedia y AnalyserNode, que no existen en jsdom
 vi.mock('@notesheet/core/src/audio/tunerEngine', () => {
@@ -35,10 +35,7 @@ const { default: Tuner } = await import('../pages/Tuner');
 
 const PREFS = {
   referenceFrequency: 442,
-  lastInstrument: 'eb_alto_sax',
-  showConcertPitch: false,
-  stringModeEnabled: true,
-  selectedTuning: 'bass_standard'
+  verNotasComo: 'eb_alto_sax'
 };
 
 // El LA de referencia que enseña la caja numérica de TunerControls
@@ -63,6 +60,53 @@ beforeEach(() => {
 });
 
 describe('Tuner (página)', () => {
+  it('ya no tiene modo cuerdas', async () => {
+    mockGetTunerPreferences.mockResolvedValue(PREFS);
+    render(<Tuner />);
+    await diapasonEnPantalla();
+    expect(screen.queryByText(/Modo Cuerdas/)).not.toBeInTheDocument();
+  });
+
+  it('pregunta en qué notas se ven, con el instrumento guardado', async () => {
+    mockGetTunerPreferences.mockResolvedValue(PREFS);
+    render(<Tuner />);
+    await diapasonEnPantalla();
+    expect(screen.getByRole('combobox', { name: 'Ver las notas como' })).toHaveTextContent('Saxofón Alto en Mib');
+    // Y lo explica: el DO del saxo alto suena MIb
+    expect(screen.getByText(/su DO suena MIb/)).toBeInTheDocument();
+  });
+
+  it('los tonos de referencia se pueden tocar sin haber iniciado el afinador', async () => {
+    mockGetTunerPreferences.mockResolvedValue({ referenceFrequency: 440, verNotasComo: 'concierto' });
+    render(<Tuner />);
+    await diapasonEnPantalla();
+    const la = screen.getByRole('button', { name: 'LA' });
+    expect(la).toBeEnabled();
+    fireEvent.click(la);
+    expect(la).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  // Las doce notas una vez, con las alteradas, y la octava aparte
+  it('los tonos: doce notas y un selector de octava', async () => {
+    mockGetTunerPreferences.mockResolvedValue({ referenceFrequency: 440, verNotasComo: 'concierto' });
+    render(<Tuner />);
+    await diapasonEnPantalla();
+    const notas = [...document.querySelectorAll('.reference-note-btn')].map((b) => b.textContent);
+    expect(notas).toEqual(['DO', 'DO#', 'RE', 'RE#', 'MI', 'FA', 'FA#', 'SOL', 'SOL#', 'LA', 'LA#', 'SI']);
+
+    // El LA en la octava 4 es el del diapasón; en la 3, una octava abajo
+    expect(screen.getByRole('button', { name: 'LA' })).toHaveAttribute('title', 'LA4 · 440.0 Hz');
+    fireEvent.click(within(screen.getByRole('group', { name: 'Octava' })).getByRole('button', { name: '3' }));
+    expect(screen.getByRole('button', { name: 'LA' })).toHaveAttribute('title', 'LA3 · 220.0 Hz');
+  });
+
+  it('en las notas de la trompeta, su LA4 suena SOL4', async () => {
+    mockGetTunerPreferences.mockResolvedValue({ referenceFrequency: 440, verNotasComo: 'bb_trumpet' });
+    render(<Tuner />);
+    await diapasonEnPantalla();
+    expect(screen.getByRole('button', { name: 'LA' })).toHaveAttribute('title', 'LA4 (suena SOL4) · 392.0 Hz');
+  });
+
   it('arranca con el diapasón guardado en las preferencias', async () => {
     mockGetTunerPreferences.mockResolvedValue(PREFS);
     render(<Tuner />);
@@ -81,11 +125,9 @@ describe('Tuner (página)', () => {
     await diapasonEnPantalla();
     await dejarPasarElGuardado();
 
-    expect(JSON.parse(localStorage.getItem('tunerPreferences'))).toEqual(PREFS);
-    // Si se guarda algo, que sea lo que ya tenía: nunca 440 ni la trompeta
-    for (const [, guardadas] of mockSaveTunerPreferences.mock.calls) {
-      expect(guardadas).toEqual(PREFS);
-    }
+    // Abrirlo no es un cambio: no se guarda nada (y menos 440 o concierto)
+    expect(localStorage.getItem('tunerPreferences')).toBeNull();
+    expect(mockSaveTunerPreferences).not.toHaveBeenCalled();
   });
 
   it('sin sesión, arranca con las de localStorage', async () => {

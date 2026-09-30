@@ -79,29 +79,19 @@ describe('useTuner', () => {
       expect(result.current.error).toBeNull();
     });
 
-    it('usa 440 Hz y trompeta en Sib por defecto', () => {
+    it('usa 440 Hz y las notas de concierto por defecto', () => {
       const { result } = renderHook(() => useTuner());
       expect(result.current.referenceFrequency).toBe(440);
-      expect(result.current.currentInstrument).toBe('bb_trumpet');
-      expect(result.current.showConcertPitch).toBe(true);
+      expect(result.current.verNotasComo).toBe('concierto');
       expect(result.current.notationSystem).toBe('latin');
     });
 
     it('respeta las preferencias iniciales', () => {
       const { result } = renderHook(() =>
-        useTuner({
-          referenceFrequency: 442,
-          lastInstrument: 'f_horn',
-          showConcertPitch: false,
-          stringModeEnabled: true,
-          selectedTuning: 'bass_standard'
-        })
+        useTuner({ referenceFrequency: 442, verNotasComo: 'f_horn' })
       );
       expect(result.current.referenceFrequency).toBe(442);
-      expect(result.current.currentInstrument).toBe('f_horn');
-      expect(result.current.showConcertPitch).toBe(false);
-      expect(result.current.stringModeEnabled).toBe(true);
-      expect(result.current.selectedTuning).toBe('bass_standard');
+      expect(result.current.verNotasComo).toBe('f_horn');
     });
   });
 
@@ -356,33 +346,72 @@ describe('useTuner', () => {
     });
   });
 
-  describe('instrumento y ajustes', () => {
-    it('cambia de instrumento y expone su nombre', () => {
-      const { result } = renderHook(() => useTuner());
-      act(() => { result.current.updateInstrument('f_horn'); });
+  // Antes había un interruptor "tono de concierto" que se guardaba pero no
+  // cambiaba nada: la nota salía siempre en concierto
+  describe('ver las notas como un instrumento', () => {
+    it('la trompeta en Sib ve un tono más arriba: el SIb que suena es su DO', async () => {
+      const { result } = renderHook(() => useTuner({ verNotasComo: 'bb_trumpet' }));
+      await arrancar(result);
+      detectar(233.08); // SIb3 de concierto
 
-      expect(result.current.currentInstrument).toBe('f_horn');
-      expect(result.current.instrumentName).toBeTruthy();
-      expect(result.current.instrumentName).not.toBe('Trompeta en Sib');
+      expect(result.current.detectedNote).toBe('DO4');
+      expect(result.current.notaConcierto).toBe('LA#3');
+      // Los cents y el MIDI siguen siendo los de lo que suena
+      expect(result.current.detectedMidi).toBe(58);
+      expect(result.current.tuningStatus).toBe('in-tune');
+    });
+
+    it('el saxo alto ve una sexta mayor arriba', async () => {
+      const { result } = renderHook(() => useTuner({ verNotasComo: 'eb_alto_sax' }));
+      await arrancar(result);
+      detectar(261.63); // DO4 de concierto
+      expect(result.current.detectedNote).toBe('LA4');
+    });
+
+    it('en concierto no hay nota aparte', async () => {
+      const { result } = renderHook(() => useTuner());
+      await arrancar(result);
+      detectar(440);
+      expect(result.current.detectedNote).toBe('LA4');
+      expect(result.current.notaConcierto).toBeNull();
+    });
+
+    it('se cambia con el afinador escuchando, y la nota cambia al momento', async () => {
+      const { result } = renderHook(() => useTuner());
+      await arrancar(result);
+      detectar(233.08);
+      act(() => { result.current.updateVerNotasComo('bb_trumpet'); });
+      expect(result.current.detectedNote).toBe('DO4');
     });
 
     it('ignora un instrumento desconocido', () => {
       const { result } = renderHook(() => useTuner());
-      act(() => { result.current.updateInstrument('ocarina'); });
-      expect(result.current.currentInstrument).toBe('bb_trumpet');
-    });
-
-    it('alterna la afinación de concierto', () => {
-      const { result } = renderHook(() => useTuner());
-      act(() => { result.current.toggleConcertPitch(); });
-      expect(result.current.showConcertPitch).toBe(false);
-
-      act(() => { result.current.toggleConcertPitch(); });
-      expect(result.current.showConcertPitch).toBe(true);
+      act(() => { result.current.updateVerNotasComo('ocarina'); });
+      expect(result.current.verNotasComo).toBe('concierto');
     });
   });
 
   describe('tono de referencia', () => {
+    // Antes solo sonaba tras haber iniciado el afinador (pedir el micrófono)
+    it('suena sin haber iniciado el afinador, y sin pedir el micrófono', () => {
+      const { result } = renderHook(() => useTuner());
+
+      act(() => { result.current.playReferenceTone(440); });
+
+      expect(engine().playReferenceTone).toHaveBeenCalledWith(440);
+      expect(engine().initialize).not.toHaveBeenCalled();
+      expect(result.current.isPlayingTone).toBe(true);
+    });
+
+    it('iniciar el afinador después usa el mismo engine y sí pide el micrófono', async () => {
+      const { result } = renderHook(() => useTuner());
+      act(() => { result.current.playReferenceTone(440); });
+      await arrancar(result);
+      expect(engineInstances).toHaveLength(1);
+      expect(engine().initialize).toHaveBeenCalledTimes(1);
+      expect(result.current.isRunning).toBe(true);
+    });
+
     it('lo reproduce y lo detiene', async () => {
       const { result } = renderHook(() => useTuner());
       await arrancar(result);
@@ -431,45 +460,26 @@ describe('useTuner', () => {
     });
   });
 
-  describe('modo cuerdas', () => {
-    it('se activa y se desactiva', () => {
-      const { result } = renderHook(() => useTuner());
-
-      act(() => { result.current.toggleStringMode(true); });
-      expect(result.current.stringModeEnabled).toBe(true);
-
-      act(() => { result.current.toggleStringMode(false); });
-      expect(result.current.stringModeEnabled).toBe(false);
-    });
-
-    it('al desactivarlo olvida la cuerda seleccionada', () => {
-      const { result } = renderHook(() => useTuner());
-      act(() => { result.current.toggleStringMode(true); });
-      act(() => { result.current.updateSelectedString(2); });
-      expect(result.current.selectedString).toBe(2);
-
-      act(() => { result.current.toggleStringMode(false); });
-      expect(result.current.selectedString).toBeNull();
-    });
-
-    it('cambiar de afinación resetea la cuerda', () => {
-      const { result } = renderHook(() => useTuner());
-      act(() => { result.current.updateSelectedString(3); });
-
-      act(() => { result.current.updateSelectedTuning('bass_standard'); });
-
-      expect(result.current.selectedTuning).toBe('bass_standard');
-      expect(result.current.selectedString).toBeNull();
-    });
-
-    it('ignora una afinación desconocida', () => {
-      const { result } = renderHook(() => useTuner());
-      act(() => { result.current.updateSelectedTuning('inventada'); });
-      expect(result.current.selectedTuning).toBe('guitar_standard');
-    });
-  });
-
   describe('preferencias', () => {
+    it('al montar no guarda nada: los valores con que arranca no son un cambio', () => {
+      vi.useFakeTimers();
+      mockAuth.currentUser = { uid: 'user-1' };
+      renderHook(() => useTuner({ referenceFrequency: 442, verNotasComo: 'bb_trumpet' }));
+      act(() => { vi.advanceTimersByTime(1000); });
+
+      expect(mockSavePrefs).not.toHaveBeenCalled();
+      expect(localStorage.getItem('tunerPreferences')).toBeNull();
+    });
+
+    it('guarda cómo se ven las notas', () => {
+      const { result } = renderHook(() => useTuner());
+      act(() => { result.current.updateVerNotasComo('eb_alto_sax'); });
+      expect(JSON.parse(localStorage.getItem('tunerPreferences'))).toEqual({
+        referenceFrequency: 440,
+        verNotasComo: 'eb_alto_sax'
+      });
+    });
+
     it('guarda en localStorage al cambiar un ajuste', () => {
       const { result } = renderHook(() => useTuner());
       act(() => { result.current.updateReferenceFrequency(442); });

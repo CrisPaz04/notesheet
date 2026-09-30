@@ -205,3 +205,20 @@ describe('estadoAfinacion', () => {
     expect(estadoAfinacion(-7.5, 'in-tune')).toBe('flat');
   });
 });
+
+describe('semitonosAEscrito (qué lee cada instrumento)', () => {
+  it('con la octava real de cada uno', async () => {
+    const { semitonosAEscrito, TRANSPOSING_INSTRUMENTS } = await import('@notesheet/core');
+    const esperados = {
+      bb_trumpet: 2, bb_clarinet: 2, bb_soprano_sax: 2, bb_trombone: 2,
+      bb_tenor_sax: 14, eb_alto_sax: 9, eb_baritone_sax: 21, f_horn: 7,
+      c_flute: 0, c_piano: 0, c_voice: 0, c_guitar: 12, c_bass: 12
+    };
+    // Si se añade un instrumento, que se decida aquí también
+    expect(Object.keys(esperados).sort()).toEqual(Object.keys(TRANSPOSING_INSTRUMENTS).sort());
+    for (const [id, semitonos] of Object.entries(esperados)) {
+      expect(semitonosAEscrito(id), id).toBe(semitonos);
+    }
+    expect(semitonosAEscrito('concierto')).toBe(0);
+  });
+});

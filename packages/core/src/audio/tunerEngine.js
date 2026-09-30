@@ -154,6 +154,12 @@ class TunerEngine {
       this.stopReferenceTone();
     }
 
+    // Los tonos no necesitan el micrófono: si el afinador no se ha iniciado,
+    // se toma aquí el contexto de audio
+    if (!this.audioContext) {
+      this.audioContext = getAudioContext();
+    }
+
     // Resume audio context if suspended (browser autoplay policy)
     if (this.audioContext.state === 'suspended') {
       this.audioContext.resume();

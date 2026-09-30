@@ -8,7 +8,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { getTunerPreferences } from '@notesheet/api';
-import { STRING_TUNINGS } from '@notesheet/core';
 import useTuner from '../hooks/useTuner';
 import useValorSuave from '../hooks/useValorSuave';
 import usePitchHistory from '../hooks/usePitchHistory';
@@ -16,7 +15,6 @@ import TunerVisualizer from '../components/tuner/TunerVisualizer';
 import TunerControls from '../components/tuner/TunerControls';
 import ReferenceToneGenerator from '../components/tuner/ReferenceToneGenerator';
 import PitchHistoryGraph from '../components/tuner/PitchHistoryGraph';
-import StringModeSelector from '../components/tuner/StringModeSelector';
 import Icono from "../components/Icono";
 
 /**
@@ -91,26 +89,21 @@ function TunerCuerpo({ compact, mini, initialPreferences }) {
     loading,
     error,
     detectedNote,
+    notaConcierto,
     detectedFrequency,
-    detectedMidi,
     centsDeviation,
     tuningStatus,
     referenceFrequency,
-    showConcertPitch,
+    verNotasComo,
+    semitonosEscritos,
     notationSystem,
     isPlayingTone,
-    stringModeEnabled,
-    selectedTuning,
-    selectedString,
     toggle,
     updateReferenceFrequency,
-    toggleConcertPitch,
+    updateVerNotasComo,
     toggleNotationSystem,
     playReferenceTone,
-    stopReferenceTone,
-    toggleStringMode,
-    updateSelectedTuning,
-    updateSelectedString
+    stopReferenceTone
   } = useTuner(initialPreferences);
 
   // La marca de la barra del panel se desliza sola (useValorSuave): -50..+50
@@ -217,14 +210,11 @@ function TunerCuerpo({ compact, mini, initialPreferences }) {
             {/* Tuner Visualizer */}
             <TunerVisualizer
               detectedNote={detectedNote}
+              notaConcierto={notaConcierto}
               detectedFrequency={detectedFrequency}
               centsDeviation={centsDeviation}
               tuningStatus={tuningStatus}
               isRunning={isRunning}
-              stringModeEnabled={stringModeEnabled}
-              targetString={stringModeEnabled && selectedString !== null ? STRING_TUNINGS[selectedTuning]?.strings[selectedString] : null}
-              notationSystem={notationSystem}
-              referenceFrequency={referenceFrequency}
             />
 
             {/* Pitch History Graph - in main display */}
@@ -270,28 +260,11 @@ function TunerCuerpo({ compact, mini, initialPreferences }) {
           <div className="card p-4 mb-4">
             <TunerControls
               referenceFrequency={referenceFrequency}
-              showConcertPitch={showConcertPitch}
               notationSystem={notationSystem}
-              isRunning={isRunning}
+              verNotasComo={verNotasComo}
               onReferenceFrequencyChange={updateReferenceFrequency}
-              onToggleConcertPitch={toggleConcertPitch}
               onToggleNotationSystem={toggleNotationSystem}
-            />
-          </div>
-
-          <div className="card p-4 mb-4">
-            <StringModeSelector
-              stringModeEnabled={stringModeEnabled}
-              selectedTuning={selectedTuning}
-              selectedString={selectedString}
-              notationSystem={notationSystem}
-              referenceFrequency={referenceFrequency}
-              detectedMidi={detectedMidi}
-              centsDeviation={centsDeviation}
-              isRunning={isRunning}
-              onToggleStringMode={toggleStringMode}
-              onTuningChange={updateSelectedTuning}
-              onStringSelect={updateSelectedString}
+              onVerNotasComoChange={updateVerNotasComo}
             />
           </div>
 
@@ -299,10 +272,10 @@ function TunerCuerpo({ compact, mini, initialPreferences }) {
             <ReferenceToneGenerator
               referenceFrequency={referenceFrequency}
               notationSystem={notationSystem}
+              semitonosEscritos={semitonosEscritos}
               onPlayTone={playReferenceTone}
               onStopTone={stopReferenceTone}
               isPlaying={isPlayingTone}
-              isRunning={isRunning}
             />
           </div>
         </div>
