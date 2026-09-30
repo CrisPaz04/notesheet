@@ -36,7 +36,6 @@ import {
 import { useAuth } from "../context/AuthContext";
 import LoadingSpinner from "../components/LoadingSpinner";
 import HerramientasFlotantes from "../components/herramientas/HerramientasFlotantes";
-import useHerramientas from "../hooks/useHerramientas";
 import useSwipeViews from "../hooks/useSwipeViews";
 import useFontSizePreference from "../hooks/useFontSizePreference";
 import { recordarNotacionEnDispositivo } from "../hooks/useNotacionPreferida";
@@ -113,10 +112,6 @@ function SongView() {
   const [showInstrumentDropdown, setShowInstrumentDropdown] = useState(false);
   const [showNotationDropdown, setShowNotationDropdown] = useState(false);
   const [showVariantDropdown, setShowVariantDropdown] = useState(false);
-
-  // Metrónomo, afinador y círculo de quintas en paneles flotantes: se
-  // pueden usar sin dejar de ver la canción, que con una ventana modal no.
-  const herramientas = useHerramientas();
 
   const { id } = useParams();
   const { currentUser, canEditSongs } = useAuth();
@@ -729,7 +724,7 @@ function SongView() {
                       {selectedVoiceKey
                         ? (esPdf ? scoreVoicesList : availableVoicesList)
                             .find(v => v.id === selectedVoiceKey)?.label || "Voz"
-                        : "Seleccionar Voz"}
+                        : "Seleccionar voz"}
                     </span>
                     <Icono nombre={showVoiceDropdown ? "caret-up" : "caret-down"} />
                   </button>
@@ -1006,26 +1001,6 @@ function SongView() {
 
               {/* Botones de acción */}
               <div className="action-buttons-song">
-                <button
-                  className="btn-song-action"
-                  onClick={() => herramientas.alternar("metronomo")}
-                  aria-pressed={herramientas.estaAbierto("metronomo")}
-                  title="Metrónomo"
-                >
-                  <Icono nombre="metronome" />
-                  Metrónomo
-                </button>
-
-                <button
-                  className="btn-song-action"
-                  onClick={() => herramientas.alternar("afinador")}
-                  aria-pressed={herramientas.estaAbierto("afinador")}
-                  title="Afinador"
-                >
-                  <Icono nombre="waveform" />
-                  Afinador
-                </button>
-
                 {/* En un PDF lo que hay en pantalla son canvas, y solo están
                     pintadas las páginas cercanas a la vista: imprimir desde
                     aquí saldría medio en blanco. El visor del dispositivo lo
@@ -1249,14 +1224,13 @@ function SongView() {
        </div>
      </div>
 
-     {/* Metrónomo y afinador se abren con los botones de arriba; en la
-         barra solo queda lo que no tiene botón propio. El metrónomo arranca
-         con el tempo y el compás de la canción, si los tiene. */}
+     {/* Todas las herramientas en la barra flotante, como en la lista y la
+         sesión en vivo (antes metrónomo y afinador eran botones de la barra
+         de la canción). El metrónomo arranca con el tempo y el compás de la
+         canción, si los tiene. */}
      <HerramientasFlotantes
-       herramientas={herramientas}
        notacion={notationSystem}
        metronomo={{ tempoInicial: song?.tempo || null, compasInicial: song?.compas || null }}
-       ocultarBotones={["metronomo", "afinador"]}
      />
    </div>
  );

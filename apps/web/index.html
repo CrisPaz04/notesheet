@@ -23,6 +23,17 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="NoteSheet" />
+
+    <!-- El tema del músico antes de pintar nada: si esperaba a la app, cada
+         carga enseñaba un instante el tema por defecto (azul marino) -->
+    <script>
+      try {
+        var tema = localStorage.getItem("theme");
+        if (tema) document.documentElement.setAttribute("data-bs-theme", tema);
+      } catch (e) {
+        // Sin almacenamiento: la app pone el tema al arrancar
+      }
+    </script>
   </head>
   <body>
     <!-- Lo que ve quien abre la web sin JavaScript, y el HTML que descargan

@@ -25,10 +25,10 @@ function JoinLive() {
 
   return (
     <div className="live-container">
-      <form className="live-message" onSubmit={entrar}>
+      <form className="live-message live-message--entrar" onSubmit={entrar}>
         <Icono nombre="broadcast" className="live-message-icon" />
         <h2>Entrar a una sesión</h2>
-        <p>Teclea el código que te pasaron.</p>
+        <p>Ingresa el código de la sesión.</p>
 
         <input
           type="text"
@@ -48,8 +48,13 @@ function JoinLive() {
           className="btn-live btn-live-primary"
           disabled={!isValidSessionCode(codigo)}
         >
+          <Icono nombre="sign-in" />
           Entrar
         </button>
+
+        <p className="live-message-footnote">
+          Si te llegó un enlace, ábrelo directamente: entra solo.
+        </p>
       </form>
     </div>
   );

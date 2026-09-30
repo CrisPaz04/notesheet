@@ -163,7 +163,7 @@ function Register() {
                 id="confirmPassword"
                 type="password"
                 className="form-control"
-                placeholder="Confirmar Contraseña"
+                placeholder="Confirmar contraseña"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 autoComplete="new-password"
@@ -171,7 +171,7 @@ function Register() {
               />
               <label htmlFor="confirmPassword">
                 <Icono nombre="shield-check" className="me-2" />
-                Confirmar Contraseña
+                Confirmar contraseña
               </label>
             </div>
 
@@ -188,7 +188,7 @@ function Register() {
               ) : (
                 <>
                   <Icono nombre="user-check" className="me-2" />
-                  Crear Cuenta
+                  Crear cuenta
                 </>
               )}
             </button>

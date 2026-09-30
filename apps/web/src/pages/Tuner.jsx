@@ -247,7 +247,7 @@ function TunerCuerpo({ compact, mini, initialPreferences }) {
                 ) : (
                   <>
                     <Icono nombre={isRunning ? "stop" : "microphone"} peso="fill" className="me-2" />
-                    {isRunning ? 'Detener' : 'Iniciar Afinación'}
+                    {isRunning ? 'Detener' : 'Iniciar afinación'}
                   </>
                 )}
               </button>

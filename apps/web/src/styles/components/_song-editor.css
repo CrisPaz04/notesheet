@@ -547,17 +547,20 @@
     padding: 1.5rem 0;
   }
   
-  @media (max-width: 768px) {
+  /* Solo el móvil: en una tablet en vertical caben dos campos por fila */
+  @media (max-width: 575.98px) {
     .metadata-grid {
       grid-template-columns: 1fr;
     }
-    
-    .voice-form {
-      grid-template-columns: 1fr;
-    }
-    
+
     .action-buttons {
       flex-direction: column;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .voice-form {
+      grid-template-columns: 1fr;
     }
     
     .editor-tabs {

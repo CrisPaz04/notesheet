@@ -64,52 +64,67 @@ function Navbar() {
         </button>
         
         <div className="collapse navbar-collapse" id="navbarNav">
-          <ul className="navbar-nav navbar-nav-custom ms-auto">
+          <ul className={`navbar-nav navbar-nav-custom ms-auto${currentUser ? " navbar-nav-custom--cuenta" : ""}`}>
             {currentUser ? (
               <>
                 <li className="nav-item">
                   <Link 
                     className={`nav-link ${isActive('/dashboard') ? 'active' : ''}`} 
                     to="/dashboard"
+                    title="Dashboard"
                   >
-                    <Icono nombre="metronome" />
-                    Dashboard
+                    <Icono nombre="squares-four" />
+                    <span className="nav-link-texto">Dashboard</span>
                   </Link>
                 </li>
                 <li className="nav-item">
                   <Link 
                     className={`nav-link ${isActive('/songs/new') ? 'active' : ''}`} 
                     to="/songs/new"
+                    title="Nueva canción"
                   >
                     <Icono nombre="plus-circle" />
-                    Nueva Canción
+                    <span className="nav-link-texto">Nueva canción</span>
                   </Link>
                 </li>
                 <li className="nav-item">
                   <Link
                     className={`nav-link ${isActive('/playlists') ? 'active' : ''}`}
                     to="/playlists"
+                    title="Mis listas"
                   >
                     <Icono nombre="playlist" />
-                    Mis Listas
+                    <span className="nav-link-texto">Mis listas</span>
                   </Link>
                 </li>
                 <li className="nav-item">
                   <Link
                     className={`nav-link ${isActive('/metronome') ? 'active' : ''}`}
                     to="/metronome"
+                    title="Metrónomo"
                   >
                     <Icono nombre="metronome" />
-                    Metrónomo
+                    <span className="nav-link-texto">Metrónomo</span>
                   </Link>
                 </li>
                 <li className="nav-item">
                   <Link
                     className={`nav-link ${isActive('/tuner') ? 'active' : ''}`}
                     to="/tuner"
+                    title="Afinador"
                   >
                     <Icono nombre="waveform" />
-                    Afinador
+                    <span className="nav-link-texto">Afinador</span>
+                  </Link>
+                </li>
+                <li className="nav-item">
+                  <Link
+                    className={`nav-link ${isActive('/live') ? 'active' : ''}`}
+                    to="/live"
+                    title="En vivo"
+                  >
+                    <Icono nombre="broadcast" />
+                    <span className="nav-link-texto">En vivo</span>
                   </Link>
                 </li>
                 <li className="nav-item user-dropdown" ref={dropdownRef}>
@@ -172,7 +187,7 @@ function Navbar() {
                         onClick={handleLogout}
                       >
                         <Icono nombre="sign-out" />
-                        <span>Cerrar Sesión</span>
+                        <span>Cerrar sesión</span>
                       </button>
                     </div>
                   )}
@@ -184,27 +199,30 @@ function Navbar() {
                   <Link 
                     className={`nav-link ${isActive('/') ? 'active' : ''}`} 
                     to="/"
+                    title="Inicio"
                   >
                     <Icono nombre="house" />
-                    Inicio
+                    <span className="nav-link-texto">Inicio</span>
                   </Link>
                 </li>
                 <li className="nav-item">
                   <Link 
                     className={`nav-link ${isActive('/login') ? 'active' : ''}`} 
                     to="/login"
+                    title="Iniciar sesión"
                   >
                     <Icono nombre="sign-in" />
-                    Iniciar Sesión
+                    <span className="nav-link-texto">Iniciar sesión</span>
                   </Link>
                 </li>
                 <li className="nav-item">
                   <Link 
                     className={`nav-link ${isActive('/register') ? 'active' : ''}`} 
                     to="/register"
+                    title="Registrarse"
                   >
                     <Icono nombre="user-plus" />
-                    Registrarse
+                    <span className="nav-link-texto">Registrarse</span>
                   </Link>
                 </li>
               </>

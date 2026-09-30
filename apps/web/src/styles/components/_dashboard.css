@@ -437,12 +437,44 @@
       grid-template-columns: repeat(2, 1fr);
     }
 
-    .recent-grid {
-      grid-template-columns: 1fr;
-    }
-
     .welcome-title {
       font-size: 1.5rem;
+    }
+
+    /* Show delete button on mobile (no hover) */
+    .song-delete-btn {
+      opacity: 1;
+    }
+  }
+  /* Solo el móvil: una canción por fila y la cabecera de la lista apilada.
+     Antes era hasta 768 px, y en una tablet en vertical salía una sola
+     columna de canciones con media pantalla vacía. */
+  @media (max-width: 575.98px) {
+    /* Las cuatro acciones en dos filas cortas: con el título de h3 cada
+       tarjeta medía casi 300 px y ocupaban la pantalla entera */
+    .action-grid {
+      gap: 0.75rem;
+    }
+
+    .action-card {
+      padding: 1rem 0.75rem;
+    }
+
+    .action-icon {
+      font-size: 1.75rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .action-title {
+      font-size: 1.05rem;
+    }
+
+    .action-description {
+      font-size: 0.8rem;
+    }
+
+    .recent-grid {
+      grid-template-columns: 1fr;
     }
 
     .content-header {
@@ -451,16 +483,8 @@
     }
 
     .content-header-left,
-    .content-header-right {
-      justify-content: center;
-    }
-
+    .content-header-right,
     .filter-tabs {
       justify-content: center;
-    }
-
-    /* Show delete button on mobile (no hover) */
-    .song-delete-btn {
-      opacity: 1;
     }
   }

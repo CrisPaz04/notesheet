@@ -13,6 +13,7 @@ import Desplegable from "../components/Desplegable";
 import Icono from "../components/Icono";
 import SelectorDeCanciones from "../components/listas/SelectorDeCanciones";
 import { estiloCancionArrastrable } from "../utils/estiloCancionArrastrable";
+import { diaParaInput, hoyParaInput } from "../utils/fechas";
 
 function PlaylistEditor() {
   const [name, setName] = useState("");
@@ -65,9 +66,7 @@ function PlaylistEditor() {
           await loadPlaylist(id);
         } else {
           // Si es nueva, establecer la fecha de hoy
-          const today = new Date();
-          const formattedDate = today.toISOString().split('T')[0];
-          setDate(formattedDate);
+          setDate(hoyParaInput());
           setLoading(false);
         }
       } catch (error) {
@@ -95,9 +94,7 @@ function PlaylistEditor() {
       
       // Formatear la fecha para el input date
       if (playlist.date) {
-        const dateObj = playlist.date.toDate();
-        const formattedDate = dateObj.toISOString().split('T')[0];
-        setDate(formattedDate);
+        setDate(diaParaInput(playlist.date));
       }
       
       setIsPublic(playlist.public || false);
@@ -274,13 +271,23 @@ function PlaylistEditor() {
             <div>
               <h1 className="playlists-title">
                 <Icono nombre="music-notes" />
-                {isNewPlaylist ? "Nueva Lista" : "Editar Lista"}
+                {isNewPlaylist ? "Nueva lista" : "Editar lista"}
               </h1>
               <p className="playlists-subtitle">
                 {isNewPlaylist ? "Crea una nueva lista para organizar tus canciones" : "Modifica tu lista existente"}
               </p>
             </div>
             
+            <div className="d-flex gap-2 flex-wrap justify-content-end">
+            {/* Como en el editor de canciones: salir sin guardar */}
+            <button
+              type="button"
+              className="btn-playlist-action"
+              onClick={() => navigate(isNewPlaylist ? "/playlists" : `/playlists/${id}`)}
+            >
+              <Icono nombre="arrow-left" className="me-2" />
+              Cancelar
+            </button>
             <button 
               className="btn-playlist-primary btn-playlist-action" 
               onClick={handleSave}
@@ -298,6 +305,7 @@ function PlaylistEditor() {
                 </>
               )}
             </button>
+            </div>
           </div>
         </div>
 
@@ -311,12 +319,12 @@ function PlaylistEditor() {
         <div className="playlist-editor-grid fade-in-delay">
           {/* Sidebar */}
           <div className="playlist-editor-sidebar">
-            {/* Detalles de la Lista */}
+            {/* Detalles de la lista */}
             <div className="playlist-editor-card">
               <div className="playlist-editor-card-header">
                 <div>
                   <Icono nombre="gear" className="me-2" />
-                  Detalles de la Lista
+                  Detalles de la lista
                 </div>
               </div>
               <div className="playlist-editor-card-body">
@@ -497,7 +505,8 @@ function PlaylistEditor() {
                         className="btn-playlist-action"
                         onClick={() => setResultadoImport(null)}
                       >
-                        Cancelar
+                        <Icono nombre="arrow-left" className="me-2" />
+                        Volver al mensaje
                       </button>
                     </div>
                   </div>
@@ -512,7 +521,7 @@ function PlaylistEditor() {
               <div className="playlist-editor-card-header">
                 <div>
                   <Icono nombre="list-numbers" className="me-2" />
-                  Canciones en la Lista
+                  Canciones en la lista
                 </div>
                 <span className="badge bg-primary">{selectedSongs.length} canciones</span>
               </div>

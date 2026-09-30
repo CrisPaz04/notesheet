@@ -236,7 +236,7 @@ describe('Dashboard', () => {
       await user.type(screen.getByPlaceholderText('Buscar canciones...'), 'zzzz');
       await screen.findByText('No se encontraron canciones');
 
-      await user.click(screen.getByRole('button', { name: 'Limpiar Filtros' }));
+      await user.click(screen.getByRole('button', { name: 'Limpiar filtros' }));
 
       await waitFor(() => {
         expect(tituloVisibles()).toHaveLength(3);
@@ -319,7 +319,7 @@ describe('Dashboard', () => {
       await elegirEnDesplegable(user, selector(), 'RE');
       await user.click(screen.getByRole('button', { name: 'Júbilo' }));
       await screen.findByText('No se encontraron canciones');
-      await user.click(screen.getByRole('button', { name: 'Limpiar Filtros' }));
+      await user.click(screen.getByRole('button', { name: 'Limpiar filtros' }));
 
       expect(tituloVisibles()).toHaveLength(3);
       expect(valorDe(selector())).toBe('');

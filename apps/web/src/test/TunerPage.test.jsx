@@ -40,7 +40,7 @@ const PREFS = {
 
 // El LA de referencia que enseña la caja numérica de TunerControls
 const diapasonEnPantalla = async () => {
-  await screen.findByRole('button', { name: /Iniciar Afinación/ });
+  await screen.findByRole('button', { name: /Iniciar afinación/ });
   return screen.getByRole('spinbutton').value;
 };
 

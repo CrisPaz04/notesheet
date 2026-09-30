@@ -3,7 +3,7 @@ import { useState, useRef, useEffect } from 'react';
 import { TRANSPOSING_INSTRUMENTS } from "@notesheet/core";
 import Icono from "./Icono";
 
-function PreferencesInstrumentSelector({ value, onChange, label = "Instrumento Predeterminado" }) {
+function PreferencesInstrumentSelector({ value, onChange, label = "Instrumento predeterminado" }) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
 
@@ -44,7 +44,7 @@ function PreferencesInstrumentSelector({ value, onChange, label = "Instrumento P
         {isOpen && (
           <div className="key-dropdown-menu">
             <div className="key-group">
-              <div className="key-group-header">Instrumentos Disponibles</div>
+              <div className="key-group-header">Instrumentos disponibles</div>
               {Object.entries(TRANSPOSING_INSTRUMENTS).map(([id, instrument], index) => (
                 <div key={id}>
                   <div className="key-pair">

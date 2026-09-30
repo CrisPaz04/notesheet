@@ -68,7 +68,7 @@ function TunerControls({
 
       {/* Notation System Toggle */}
       <div className="mb-4">
-        <label className="form-label-modern">Sistema de Notación</label>
+        <label className="form-label-modern">Sistema de notación</label>
         <div className="btn-group w-100" role="group">
           <button
             type="button"

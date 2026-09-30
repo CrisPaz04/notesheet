@@ -629,6 +629,18 @@
 
 .live-message .live-input { max-width: 320px; }
 
+/* Entrar con el código: una tarjeta del ancho de un formulario, no de la
+   lista entera, y el botón del ancho del código */
+.live-container > .live-message--entrar {
+  max-width: 480px;
+  margin-top: var(--spacing-xl);
+}
+
+.live-message--entrar .btn-live {
+  width: 100%;
+  max-width: 320px;
+}
+
 .live-input-code {
   text-align: center;
   font-family: ui-monospace, "SFMono-Regular", Menlo, monospace;

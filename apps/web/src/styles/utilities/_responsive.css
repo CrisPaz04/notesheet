@@ -23,34 +23,8 @@
       max-width: 300px;
     }
   
-    /* Dashboard responsive */
-    .action-grid {
-      grid-template-columns: repeat(2, 1fr);
-    }
-    
-    .recent-grid {
-      grid-template-columns: 1fr;
-    }
-    
-    .welcome-title {
-      font-size: 1.5rem;
-    }
-  
-    /* Content header responsive */
-    .content-header {
-      flex-direction: column;
-      align-items: stretch;
-    }
-    
-    .content-header-left,
-    .content-header-right {
-      justify-content: center;
-    }
-    
-    .filter-tabs {
-      justify-content: center;
-    }
-  
+    /* El Dashboard lleva lo suyo en components/_dashboard.css */
+
     /* Navbar responsive */
     .navbar-nav-custom {
       background: var(--bg-dark-primary);

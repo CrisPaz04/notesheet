@@ -45,7 +45,24 @@
   
   .cta-buttons {
     gap: 1rem;
-    margin-bottom: 3rem;
+    margin-bottom: 1.25rem;
+  }
+
+  /* Entrar a una sesión con el código, sin cuenta */
+  .hero-live-link {
+    margin-bottom: 2.5rem;
+    color: var(--text-light-muted);
+    font-size: 0.95rem;
+  }
+
+  .hero-live-link a {
+    color: var(--color-primary);
+    font-weight: 600;
+    text-decoration: none;
+  }
+
+  .hero-live-link a:hover {
+    text-decoration: underline;
   }
   
   .btn-hero-primary {

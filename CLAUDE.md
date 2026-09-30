@@ -459,7 +459,7 @@ SPA (el orden importa).
 ## Notes
 
 - No TypeScript - pure JavaScript
-- Vitest configured; 1852 tests in `apps/web/src/test/` (run with `npm run test:run`)
+- Vitest configured; 1870 tests in `apps/web/src/test/` (run with `npm run test:run`)
 - Los tests se validan con **mutaciones**: se rompe el código a propósito y se comprueba
   que algún test falla. Ha destapado cuatro tests que pasaban por la razón equivocada,
   y un bug de verdad en `scores.js` (las voces se ordenaban como texto, así que la 10
@@ -627,6 +627,26 @@ SPA (el orden importa).
   pulsar Iniciar: sustituir `navigator.mediaDevices.getUserMedia` por una función que
   devuelva el `stream` de un `createMediaStreamDestination` alimentado por un
   oscilador `sawtooth`.
+- **Tablet en vertical no es un móvil.** La banda usa sobre todo tablets (iPad de 768 px,
+  Samsung de 800). Lo que apila de uno en uno (una canción por fila, botones en columna,
+  datos en tarjetas sueltas) va con `@media (max-width: 575.98px)`, no con 768: con 768
+  la tablet en vertical recibía el diseño de teléfono y en la canción la música empezaba
+  casi dos pantallas más abajo. En 768 solo se ajustan tamaños. El menú, entre 992 y
+  1399 px, enseña solo los íconos: con la cuenta abierta son seis enlaces y con sus
+  nombres solo caben en el contenedor de 1320 px (si no, se partían o aplastaban el
+  logo, que lleva `white-space: nowrap` y no se encoge).
+- **Textos de la interfaz en español normal**: mayúscula solo al principio ("Mis listas",
+  "Nueva canción", "Sistema de notación"), no en cada palabra. Los nombres propios
+  (Dashboard, NoteSheet, Hz) se quedan igual.
+- **Fechas** (`utils/fechas.js`): la de una lista es un día, guardado como medianoche UTC,
+  así que se lee y se enseña en UTC (`formatearDiaLista`, `diaParaInput`); en hora local
+  en Honduras salía el día anterior. `hoyParaInput` da el hoy del reloj del músico (con
+  `toISOString` era mañana a partir de las 18:00). Todas las fechas, en `es-ES`.
+- **Toda vista tiene un acceso**: `rutasAccesibles.test.js` comprueba que cada ruta fija
+  de `App.jsx` tiene un enlace en algún sitio. `/live` (entrar con el código) está en el
+  menú ("En vivo") y en la portada, para quien no tiene cuenta.
+- El tema guardado se pone en `index.html` antes de cargar la app; si no, cada carga
+  enseñaba un instante el tema por defecto (azul marino).
 - Offline: Firestore usa `persistentLocalCache` y la app es una PWA instalable
   (`vite-plugin-pwa`). El service worker **no** debe interceptar Firebase: Firestore ya
   tiene su caché y la autenticación necesita red.

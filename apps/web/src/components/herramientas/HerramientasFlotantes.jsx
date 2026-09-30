@@ -103,23 +103,17 @@ function PanelFlotante({ id, lado, onCerrar, onCambiarLado, arrastrable, cabecer
  * Cerrar el panel del afinador o del metrónomo los para: se desmontan.
  *
  * @param {Object} props
- * @param {Object} [props.herramientas] - Lo que devuelve `useHerramientas`,
- *   si la vista quiere abrir paneles desde sus propios botones
  * @param {Object|null} [props.lista] - `{ mensaje, canciones, activaId, onIr }`;
  *   sin ella no hay botón de lista
  * @param {{tempoInicial?: number, compasInicial?: string}} [props.metronomo]
  * @param {string} [props.notacion]
- * @param {string[]} [props.ocultarBotones] - Los que ya tiene la vista a mano
  */
 function HerramientasFlotantes({
-  herramientas,
   lista = null,
   metronomo = {},
-  notacion = "latin",
-  ocultarBotones = []
+  notacion = "latin"
 }) {
-  const propias = useHerramientas();
-  const { abiertos, alternar, cerrar, posiciones, colocar } = herramientas || propias;
+  const { abiertos, alternar, cerrar, posiciones, colocar } = useHerramientas();
   const estrecha = usePantallaEstrecha();
 
   const nodos = useRef({});
@@ -310,7 +304,6 @@ function HerramientasFlotantes({
     };
   };
 
-  const botones = disponibles.filter((id) => !ocultarBotones.includes(id));
 
   const paneles = visibles.map((id) => (
     <section
@@ -341,7 +334,7 @@ function HerramientasFlotantes({
 
   return (
     <>
-      {botones.length > 0 && <div className="barra-herramientas-hueco" aria-hidden="true" />}
+      {disponibles.length > 0 && <div className="barra-herramientas-hueco" aria-hidden="true" />}
 
       {paneles.length > 0 && (
         estrecha
@@ -349,9 +342,9 @@ function HerramientasFlotantes({
           : <div className="paneles-sueltos no-print">{paneles}</div>
       )}
 
-      {botones.length > 0 && (
+      {disponibles.length > 0 && (
         <nav className="barra-herramientas no-print" aria-label="Herramientas">
-          {botones.map((id) => (
+          {disponibles.map((id) => (
             <button
               key={id}
               type="button"

@@ -28,7 +28,7 @@ function SoundPresetSelector({
 }) {
   return (
     <div className="sound-presets">
-      <label className="form-label-modern mb-3">Sonido del Click</label>
+      <label className="form-label-modern mb-3">Sonido del click</label>
       <div className="sound-presets-grid">
         {Object.entries(SOUND_PRESETS).map(([key, preset]) => (
           <button

@@ -51,6 +51,27 @@
   --bs-btn-disabled-border-color: var(--color-primary);
 }
 
+/* Los secundarios (los −/+ del tempo, el tap tempo, la notación del
+   afinador) salían en el gris de Bootstrap en todos los temas: aquí, las
+   superficies del tema, como los botones propios de la app */
+.btn-secondary,
+.btn-outline-secondary {
+  --bs-btn-color: var(--text-light-primary);
+  --bs-btn-bg: rgba(var(--overlay-rgb), 0.05);
+  --bs-btn-border-color: var(--border-light);
+  --bs-btn-hover-color: var(--text-light-primary);
+  --bs-btn-hover-bg: rgba(var(--overlay-rgb), 0.1);
+  --bs-btn-hover-border-color: var(--border-light-hover);
+  --bs-btn-focus-shadow-rgb: var(--color-primary-rgb);
+  --bs-btn-active-color: var(--text-light-primary);
+  --bs-btn-active-bg: rgba(var(--overlay-rgb), 0.15);
+  --bs-btn-active-border-color: var(--border-light-hover);
+  --bs-btn-disabled-color: var(--text-light-muted);
+  --bs-btn-disabled-bg: transparent;
+  --bs-btn-disabled-border-color: var(--border-light);
+}
+
+
 /* El texto de .bg-primary es blanco fijo; con acentos claros (el menta del
    oscuro, el amarillo del newspaper-dark) no se leía. */
 .badge.bg-primary {

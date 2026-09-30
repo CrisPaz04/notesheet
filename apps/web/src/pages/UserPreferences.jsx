@@ -130,7 +130,7 @@ function UserPreferences() {
         <div className="preferences-header fade-in">
           <h1 className="preferences-title">
             <Icono nombre="gear" />
-            Preferencias de Usuario
+            Preferencias de usuario
           </h1>
           <p className="preferences-subtitle">
             Personaliza tu experiencia en NoteSheet
@@ -158,25 +158,25 @@ function UserPreferences() {
         <div className="preferences-content fade-in-delay">
           <form onSubmit={handleSave}>
             <div className="preferences-grid">
-              {/* Preferencias de Visualización */}
+              {/* Preferencias de visualización */}
               <div className="preferences-card slide-up">
                 <div className="preferences-card-header">
                   <Icono nombre="eye" className="me-2" />
-                  Preferencias de Visualización
+                  Preferencias de visualización
                 </div>
                 <div className="preferences-card-body">
                 <PreferencesInstrumentSelector
                   value={preferences.defaultInstrument}
                   onChange={(value) => handleChange("defaultInstrument", value)}
                 />
-                <div className="form-help-text">
+                <div className="form-help-text mb-4">
                   Este instrumento se seleccionará por defecto al abrir una canción.
                 </div>
                   
                   <div className="form-group-modern mb-4">
                     <label className="form-label-modern">
                       <Icono nombre="text-aa" className="me-2" />
-                      Sistema de Notación
+                      Sistema de notación
                     </label>
                     <div className="notation-options">
                       <div className="notation-option">
@@ -191,7 +191,7 @@ function UserPreferences() {
                         />
                         <label htmlFor="pref-notation-latin-only" className="notation-label">
                           <div className="notation-preview">DO-RE-MI</div>
-                          <div className="notation-name">Notación Latina</div>
+                          <div className="notation-name">Notación latina</div>
                         </label>
                       </div>
                       
@@ -207,7 +207,7 @@ function UserPreferences() {
                         />
                         <label htmlFor="pref-notation-english-only" className="notation-label">
                           <div className="notation-preview">C-D-E</div>
-                          <div className="notation-name">Notación Anglosajona</div>
+                          <div className="notation-name">Notación anglosajona</div>
                         </label>
                       </div>
                     </div>
@@ -256,7 +256,7 @@ function UserPreferences() {
                   <div className="form-group-modern mb-4">
                     <label htmlFor="pref-font-size-slider" className="form-label-modern">
                       <Icono nombre="text-aa" className="me-2" />
-                      Tamaño de Fuente: <span className="font-size-value">{preferences.defaultFontSize}px</span>
+                      Tamaño de fuente: <span className="font-size-value">{preferences.defaultFontSize}px</span>
                     </label>
                     <div className="font-size-control">
                       <div className="font-size-preview" style={{ fontSize: `${preferences.defaultFontSize * 0.8}px` }}>
@@ -286,21 +286,21 @@ function UserPreferences() {
               <div className="preferences-card slide-up-delay">
                 <div className="preferences-card-header">
                   <Icono nombre="palette" className="me-2" />
-                  Temas de Apariencia
+                  Temas de apariencia
                 </div>
                 <div className="preferences-card-body">
                   <div className="form-group-modern">
                     <label className="form-label-modern">
                       <Icono nombre="paint-brush" className="me-2" />
-                      Seleccionar Tema
+                      Seleccionar tema
                     </label>
                     
                     {Object.entries(themesByCategory).map(([category, themes]) => (
                       <div key={category} className="theme-category">
                         <div className="theme-category-title">
-                          {category === 'classic' && 'Temas Clásicos'}
-                          {category === 'rainforest' && 'Temas de Bosque'}
-                          {category === 'newspaper' && 'Temas de Periódico'}
+                          {category === 'classic' && 'Temas clásicos'}
+                          {category === 'rainforest' && 'Temas de bosque'}
+                          {category === 'newspaper' && 'Temas de periódico'}
                         </div>
                         
                         <div className="theme-options-grid">
@@ -354,12 +354,12 @@ function UserPreferences() {
                 {saving ? (
                   <>
                     <span className="spinner-border spinner-border-sm me-2" role="status"></span>
-                    Guardando Preferencias...
+                    Guardando preferencias...
                   </>
                 ) : (
                   <>
                     <Icono nombre="check-circle" className="me-2" />
-                    Guardar Preferencias
+                    Guardar preferencias
                   </>
                 )}
               </button>

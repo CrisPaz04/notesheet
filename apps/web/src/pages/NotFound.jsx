@@ -42,7 +42,7 @@ function NotFound() {
               className="btn-notfound-primary"
             >
               <Icono nombre="house" className="me-2" />
-              Volver al Inicio
+              Volver al inicio
             </Link>
             
             <Link 

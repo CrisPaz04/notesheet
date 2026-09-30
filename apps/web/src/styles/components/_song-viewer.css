@@ -405,27 +405,75 @@
     }
   }
   
+  /* Tablet en vertical y móvil. Los datos van en rejilla y los botones en
+     fila (envolviendo): antes iban uno por renglón hasta 768 px, y en una
+     tablet en vertical la música empezaba casi dos pantallas más abajo. */
   @media (max-width: 768px) {
     .controls-row {
       flex-direction: column;
       align-items: stretch;
     }
     
-    .controls-group {
+    .controls-group,
+    .action-buttons-song {
       justify-content: center;
-      flex-wrap: wrap;
     }
     
     .song-meta-grid {
-      grid-template-columns: 1fr;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.75rem;
+    }
+
+    .song-meta-item {
+      padding: 0.75rem 0.5rem;
+    }
+
+    .song-meta-label {
+      font-size: 0.75rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .song-meta-value {
+      font-size: 1rem;
     }
     
     .song-title-main {
       font-size: 2rem;
     }
-    
-    .action-buttons-song {
-      flex-direction: column;
+  }
+
+  @media (max-width: 575.98px) {
+    .song-header,
+    .controls-toolbar {
+      padding: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .song-meta-grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.5rem;
+    }
+
+    .song-title-main {
+      font-size: 1.75rem;
+    }
+
+    .btn-song-action {
+      padding: 0.6rem 0.85rem;
+    }
+
+    /* Dos rellenos de 2rem y 1,5rem dejaban la línea de notas en la mitad
+       del ancho, y se partía en dos renglones */
+    .song-view {
+      padding: 1rem 0.5rem;
+    }
+
+    .song-section-content {
+      padding: 1rem 0.75rem;
+    }
+
+    .song-section-modern {
+      margin-bottom: 1.5rem;
     }
   }
 
@@ -461,6 +509,7 @@
 .song-album-line {
   display: flex;
   align-items: center;
+  justify-content: center; /* bajo el título, que va centrado */
   flex-wrap: wrap;
   gap: 0.25rem;
   margin-top: -0.5rem;

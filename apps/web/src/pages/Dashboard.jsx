@@ -16,6 +16,7 @@ import usePreferenciaLocal from "../hooks/usePreferenciaLocal";
 import useNotacionPreferida from "../hooks/useNotacionPreferida";
 import Desplegable from "../components/Desplegable";
 import Icono from "../components/Icono";
+import { formatearFechaCorta } from "../utils/fechas";
 
 const ORDENES = ["nuevas", "az", "za"];
 const VISTAS = ["cards", "list"];
@@ -249,7 +250,7 @@ function Dashboard() {
         <div className="quick-actions fade-in-delay">
           <h2 className="section-title">
             <Icono nombre="lightning" />
-            Acciones Rápidas
+            Acciones rápidas
           </h2>
 
           <div className="action-grid stagger-animation">
@@ -258,7 +259,7 @@ function Dashboard() {
                 <div className="action-icon">
                   <Icono nombre="music-notes-plus" />
                 </div>
-                <h3 className="action-title">Nueva Canción</h3>
+                <h3 className="action-title">Nueva canción</h3>
                 <p className="action-description">Crear una canción desde cero</p>
               </Link>
             )}
@@ -277,7 +278,7 @@ function Dashboard() {
               <div className="action-icon">
                 <Icono nombre="playlist" />
               </div>
-              <h3 className="action-title">Nueva Lista</h3>
+              <h3 className="action-title">Nueva lista</h3>
               <p className="action-description">Organizar canciones para un servicio</p>
             </Link>
 
@@ -285,7 +286,7 @@ function Dashboard() {
               <div className="action-icon">
                 <Icono nombre="list-bullets" />
               </div>
-              <h3 className="action-title">Mis Listas</h3>
+              <h3 className="action-title">Mis listas</h3>
               <p className="action-description">Ver todas tus listas</p>
             </Link>
           </div>
@@ -335,13 +336,13 @@ function Dashboard() {
           </div>
         </div>
 
-        {/* Mis Canciones */}
+        {/* Mis canciones */}
         <div className="recent-section slide-up-delay">
           <div className="content-header">
             <div className="content-header-left">
               <h2 className="section-title mb-0">
                 <Icono nombre="music-notes" />
-                Mis Canciones
+                Mis canciones
               </h2>
               
               <div className="filter-tabs">
@@ -446,7 +447,7 @@ function Dashboard() {
               {canEditSongs() && (
                 <Link to="/songs/new" className="btn-primary-dashboard btn-animated">
                   <Icono nombre="plus-circle" className="me-2" />
-                  Crear Mi Primera Canción
+                  Crear mi primera canción
                 </Link>
               )}
             </div>
@@ -467,7 +468,7 @@ function Dashboard() {
                 }}
                 className="btn-primary-dashboard btn-animated"
               >
-                Limpiar Filtros
+                Limpiar filtros
               </button>
             </div>
           ) : (
@@ -504,7 +505,7 @@ function Dashboard() {
 
                       <div className="recent-item-meta">
                         {song.updatedAt ?
-                          `Actualizado: ${new Date(song.updatedAt.toDate()).toLocaleDateString()}` :
+                          `Actualizada el ${formatearFechaCorta(song.updatedAt)}` :
                           "Fecha desconocida"
                         }
                       </div>
@@ -538,7 +539,7 @@ function Dashboard() {
                       </div>
                       <div className="list-item-date">
                         {song.updatedAt ?
-                          new Date(song.updatedAt.toDate()).toLocaleDateString() :
+                          formatearFechaCorta(song.updatedAt) :
                           "Sin fecha"
                         }
                       </div>

@@ -702,15 +702,13 @@
     border-color: rgba(220, 53, 69, 0.5);
   }
   
-  @media (max-width: 768px) {
+  /* Solo el móvil: en una tablet en vertical caben dos listas por fila y la
+     canción en un renglón */
+  @media (max-width: 575.98px) {
     .playlists-grid {
       grid-template-columns: 1fr;
     }
-    
-    .playlist-view-meta {
-      gap: 1rem;
-    }
-    
+
     .playlist-song-item {
       flex-direction: column;
       align-items: flex-start;
@@ -724,6 +722,12 @@
     .playlist-song-key {
       margin-left: 0;
       align-self: flex-end;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .playlist-view-meta {
+      gap: 1rem;
     }
     
     .playlist-editor-grid {

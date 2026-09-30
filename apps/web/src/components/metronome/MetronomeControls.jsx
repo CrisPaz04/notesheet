@@ -151,14 +151,14 @@ function MetronomeControls({
         </div>
       </div>
 
-      {/* Tap Tempo */}
+      {/* Tap tempo */}
       <div className="mb-3">
         <button
           className="btn-tap-tempo w-100"
           onClick={onTapTempo}
         >
           <Icono nombre="hand-tap" className="me-2" />
-          Tap Tempo
+          Tap tempo
         </button>
         <div className="metronome-controls-hint text-center mt-2">
           Toca el botón al ritmo deseado (mínimo 2 veces)

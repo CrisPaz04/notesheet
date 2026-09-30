@@ -14,9 +14,9 @@
   padding: 2rem;
   margin-bottom: 2rem;
   backdrop-filter: blur(10px);
-  text-align: center;
 }
 
+/* A la izquierda, como la cabecera de Mis Listas, Metrónomo y Afinador */
 .preferences-title {
   color: var(--text-light-primary);
   font-size: 2rem;
@@ -24,7 +24,6 @@
   margin-bottom: 0.5rem;
   display: flex;
   align-items: center;
-  justify-content: center;
   gap: var(--spacing-sm);
 }
 
@@ -469,10 +468,12 @@
     gap: 1.5rem;
   }
   
-  .notation-options {
-    grid-template-columns: 1fr;
-  }
-  
+}
+
+/* Las opciones de notación y de tema, de dos en dos hasta el móvil: en una
+   tablet en vertical, una por fila ocupaban una pantalla entera */
+@media (max-width: 575.98px) {
+  .notation-options,
   .theme-options-grid {
     grid-template-columns: 1fr;
   }

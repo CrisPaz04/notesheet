@@ -29,6 +29,7 @@ import { SeccionesCancion, AvisoVista } from "../components/SeccionesCancion";
 import useAlineacionTexto from "../hooks/useAlineacionTexto";
 import HerramientasFlotantes from "../components/herramientas/HerramientasFlotantes";
 import Icono from "../components/Icono";
+import { formatearDiaLista } from "../utils/fechas";
 
 function PlaylistView() {
   const [playlist, setPlaylist] = useState(null);
@@ -249,15 +250,7 @@ function PlaylistView() {
   };
 
   // Formatear fecha
-  const formatDate = (date) => {
-    if (!date) return "Sin fecha";
-    return new Date(date.toDate()).toLocaleDateString('es-ES', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-  };
+  const formatDate = (date) => formatearDiaLista(date, { conDia: true });
 
   if (loading) {
     return (
@@ -293,7 +286,7 @@ function PlaylistView() {
             <h2 className="text-white mb-4">Lista no encontrada</h2>
             <Link to="/playlists" className="btn-playlist-primary btn-playlist-action">
               <Icono nombre="arrow-left" className="me-2" />
-              Volver a Mis Listas
+              Volver a mis listas
             </Link>
           </div>
         </div>
@@ -315,7 +308,7 @@ function PlaylistView() {
             </span>
             <span className={`playlist-visibility-badge ${playlist.public ? 'public' : 'private'}`}>
               <Icono nombre={playlist.public ? "globe" : "lock"} className="me-1" />
-              {playlist.public ? 'Lista Pública' : 'Lista Privada'}
+              {playlist.public ? 'Lista pública' : 'Lista privada'}
             </span>
             <span>
               <Icono nombre="music-notes" className="me-1" />
@@ -330,7 +323,7 @@ function PlaylistView() {
             <div className="controls-group">
               <h2 className="section-title mb-0">
                 <Icono nombre="list-numbers" />
-                Lista de Canciones
+                Lista de canciones
               </h2>
             </div>
             
@@ -434,7 +427,7 @@ function PlaylistView() {
               {currentUser && currentUser.uid === playlist.creatorId && (
                 <Link to={`/playlists/${id}/edit`} className="btn-playlist-primary btn-playlist-action">
                   <Icono nombre="plus-circle" className="me-2" />
-                  Agregar Canciones
+                  Añadir canciones
                 </Link>
               )}
             </div>
@@ -443,7 +436,7 @@ function PlaylistView() {
               <div className="playlist-songs-header">
                 <h3 className="section-title">
                   <Icono nombre="music-notes" className="me-2" />
-                  Canciones de la Lista
+                  Canciones de la lista
                 </h3>
               </div>
               

@@ -550,7 +550,7 @@ function SongEditor() {
     });
 
     // Letra y acordes al final: no son voces
-    tabs.push({ id: "lyrics", label: "Solo Letra", icon: "microphone-stage" });
+    tabs.push({ id: "lyrics", label: "Solo letra", icon: "microphone-stage" });
     tabs.push({ id: "acordes", label: "Acordes", icon: "guitar" });
 
     return (
@@ -606,7 +606,7 @@ function SongEditor() {
             onClick={() => setShowVoicesManager(!showVoicesManager)}
           >
             <Icono nombre="plus-circle" />
-            <span className="ms-1">{showVoicesManager ? 'Cancelar' : 'Añadir Voz'}</span>
+            <span className="ms-1">{showVoicesManager ? 'Cancelar' : 'Añadir voz'}</span>
           </button>
         )}
       </div>
@@ -663,7 +663,7 @@ function SongEditor() {
             <div>
               <h1 className="editor-title">
                 <Icono nombre="music-notes" />
-                {isNewSong ? "Nueva Canción" : "Editar Canción"}
+                {isNewSong ? "Nueva canción" : "Editar canción"}
               </h1>
               <p className="editor-subtitle">
                 {isNewSong ? "Crea una nueva canción desde cero" : "Modifica tu canción existente"}
@@ -673,7 +673,7 @@ function SongEditor() {
             <div className="action-buttons">
               <button 
                 className="btn-editor-secondary"
-                onClick={() => navigate("/dashboard")}
+                onClick={() => navigate(isNewSong ? "/dashboard" : `/songs/${id}`)}
               >
                 <Icono nombre="arrow-left" className="me-2" />
                 Cancelar
@@ -709,7 +709,7 @@ function SongEditor() {
         {/* Preview de la canción */}
         <div className="song-preview-card fade-in-delay">
           <div className="song-preview-header">
-            <h2 className="song-preview-title">{title || "Nueva Canción"}</h2>
+            <h2 className="song-preview-title">{title || "Nueva canción"}</h2>
             <div className="song-preview-meta">
               <span><Icono nombre="music-note" className="me-1" />{type}</span>
               <span><Icono nombre="key" className="me-1" />{key}</span>
@@ -722,7 +722,7 @@ function SongEditor() {
         <div className="metadata-section slide-up">
           <h3 className="section-title mb-3">
             <Icono nombre="tag" />
-            Información de la Canción
+            Información de la canción
           </h3>
 
           <CamposCancion
@@ -751,7 +751,7 @@ function SongEditor() {
               <div className="form-group-modern">
                 <label className="form-label-modern" htmlFor="song-instrumento-principal">
                   <Icono nombre="music-notes" />
-                  Instrumento Principal
+                  Instrumento principal
                 </label>
                 <Desplegable
                   id="song-instrumento-principal"
@@ -816,7 +816,7 @@ function SongEditor() {
             <div className="voice-manager">
               <h4 className="voice-manager-header">
                 <Icono nombre="plus-circle" />
-                Añadir Nueva Voz
+                Añadir nueva voz
               </h4>
               <div className="voice-form">
                 <div className="form-group-modern">
@@ -829,7 +829,7 @@ function SongEditor() {
                   />
                 </div>
                 <div className="form-group-modern">
-                  <label className="form-label-modern" htmlFor="nueva-voz-numero">Número de Voz</label>
+                  <label className="form-label-modern" htmlFor="nueva-voz-numero">Número de voz</label>
                   <Desplegable
                     id="nueva-voz-numero"
                     value={newVoiceNumber}

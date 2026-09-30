@@ -58,7 +58,7 @@ function ReferenceToneGenerator({
     <div className="reference-tone-generator">
       <label className="form-label-modern mb-3">
         <Icono nombre="waveform" className="me-2" />
-        Tonos de Referencia
+        Tonos de referencia
       </label>
 
       <div className="reference-notes-grid">

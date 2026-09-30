@@ -104,7 +104,7 @@ describe('SongEditor', () => {
     await renderEditor();
     expect(pestana(1)).toBeInTheDocument();
     expect(pestana(2)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Solo Letra/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Solo letra/ })).toBeInTheDocument();
   });
 
   it('abre la voz primaria al cargar', async () => {
@@ -290,7 +290,7 @@ describe('SongEditor: letra de una canción que no la tiene guardada', () => {
     });
     await renderEditor();
 
-    await user.click(screen.getByRole('button', { name: /Solo Letra/ }));
+    await user.click(screen.getByRole('button', { name: /Solo letra/ }));
 
     expect(screen.getByLabelText('editor')).toHaveValue(
       // La línea de notas deja un hueco, como en el resto de la app
@@ -301,7 +301,7 @@ describe('SongEditor: letra de una canción que no la tiene guardada', () => {
   it('ya no ofrece el botón de generarla', async () => {
     const user = userEvent.setup();
     await renderEditor();
-    await user.click(screen.getByRole('button', { name: /Solo Letra/ }));
+    await user.click(screen.getByRole('button', { name: /Solo letra/ }));
     expect(screen.queryByRole('button', { name: /Generar letra/ })).not.toBeInTheDocument();
   });
 });

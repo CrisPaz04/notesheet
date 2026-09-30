@@ -17,6 +17,9 @@
   background-clip: text;
   text-decoration: none;
   margin-right: 2rem;
+  /* El logo nunca se parte ni se encoge: si el menú no cabe, cede el menú */
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .navbar-brand-custom:hover {
@@ -322,4 +325,37 @@
     width: 100%;
     margin-top: 0.5rem;
   }
+}
+/* Escritorio y tablet en horizontal (992–1399 px): con la cuenta abierta son
+   seis enlaces y el usuario, y con sus nombres solo caben en el contenedor
+   de 1320 px (o se partían en dos renglones, o aplastaban el logo). Ahí van
+   solo los íconos; el nombre queda para los lectores de pantalla y en el
+   `title`. */
+@media (min-width: 992px) and (max-width: 1399.98px) {
+  .navbar-nav-custom--cuenta .nav-link-texto {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  /* Sin el texto al lado hay sitio: íconos más grandes y botones cuadrados,
+     del alto de la barra */
+  .navbar-nav-custom--cuenta .nav-link i {
+    margin-right: 0;
+    font-size: 1.4rem;
+  }
+
+  .navbar-nav-custom--cuenta .nav-link {
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    padding: 0 !important;
+  }
+}
+
+.navbar-nav-custom .nav-link {
+  white-space: nowrap;
 }

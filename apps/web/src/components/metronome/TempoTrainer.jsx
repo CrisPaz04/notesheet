@@ -33,7 +33,7 @@ function TempoTrainer({
     <div className="tempo-trainer">
       <label className="form-label-modern mb-3">
         <Icono nombre="chart-line-up" className="me-2" />
-        Entrenador de Tempo
+        Entrenador de tempo
       </label>
 
       {!isActive ? (

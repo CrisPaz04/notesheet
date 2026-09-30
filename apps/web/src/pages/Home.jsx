@@ -20,13 +20,21 @@ function Home() {
           <div className="d-flex cta-buttons">
             <Link to="/register" className="btn-hero-primary">
               <Icono nombre="rocket-launch" className="me-2" />
-              Comenzar Gratis
+              Comenzar gratis
             </Link>
             <Link to="/login" className="btn-hero-secondary">
               <Icono nombre="sign-in" className="me-2" />
-              Iniciar Sesión
+              Iniciar sesión
             </Link>
           </div>
+          {/* Quien solo recibió el código de una sesión (sin el enlace) */}
+          <p className="hero-live-link">
+            ¿Te pasaron un código?{" "}
+            <Link to="/live">
+              <Icono nombre="broadcast" className="me-1" />
+              Entrar a una sesión en vivo
+            </Link>
+          </p>
           
           {/* Stats */}
           <div className="row text-center mt-4">
@@ -81,7 +89,7 @@ function Home() {
       <section className="features-section">
         <div className="container">
           <div className="text-center mb-5">
-            <h2 className="features-heading mb-3">Funcionalidades Principales</h2>
+            <h2 className="features-heading mb-3">Funcionalidades principales</h2>
             <p className="text-muted">Todo lo que necesitas para tu ministerio musical</p>
           </div>
           
@@ -91,7 +99,7 @@ function Home() {
                 <div className="feature-icon">
                   <Icono nombre="music-notes" />
                 </div>
-                <h3 className="feature-title">Notación Simple</h3>
+                <h3 className="feature-title">Notación simple</h3>
                 <p className="feature-description">
                   Escribe tus canciones usando nuestra notación sencilla. 
                   Compatible con DO-RE-MI y C-D-E.
@@ -104,7 +112,7 @@ function Home() {
                 <div className="feature-icon">
                   <Icono nombre="arrows-clockwise" />
                 </div>
-                <h3 className="feature-title">Transposición Automática</h3>
+                <h3 className="feature-title">Transposición automática</h3>
                 <p className="feature-description">
                   Cambia la tonalidad de cualquier canción con un click. 
                   Perfecto para diferentes voces e instrumentos.
@@ -117,7 +125,7 @@ function Home() {
                 <div className="feature-icon">
                   <Icono nombre="playlist" />
                 </div>
-                <h3 className="feature-title">Listas Organizadas</h3>
+                <h3 className="feature-title">Listas organizadas</h3>
                 <p className="feature-description">
                   Crea listas para tus servicios. Organiza por fecha, 
                   evento o cualquier criterio que necesites.

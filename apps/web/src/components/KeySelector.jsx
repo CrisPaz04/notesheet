@@ -63,7 +63,7 @@ function KeySelector({ value, onChange, label = "Tonalidad", notacion = "latin" 
         {isOpen && (
           <div className="key-dropdown-menu">
             <div className="key-group">
-              <div className="key-group-header">Tonalidades Relativas</div>
+              <div className="key-group-header">Tonalidades relativas</div>
               {RELATIVE_KEYS.map((pair, index) => (
                 <div key={index}>
                   <div className="key-pair">

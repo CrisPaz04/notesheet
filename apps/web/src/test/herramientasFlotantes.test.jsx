@@ -92,12 +92,6 @@ describe('HerramientasFlotantes', () => {
     expect(within(circulo).getByText('Em')).toBeInTheDocument();
     expect(within(circulo).queryByRole('button')).toBeNull();
   });
-
-  it('se pueden ocultar los botones que la vista ya tiene', () => {
-    render(<HerramientasFlotantes ocultarBotones={['afinador', 'metronomo']} />);
-    expect(screen.queryByRole('button', { name: 'Afinador' })).toBeNull();
-    expect(screen.getByRole('button', { name: 'Círculo de quintas' })).toBeInTheDocument();
-  });
 });
 
 describe('Panel "Lista"', () => {

@@ -503,13 +503,13 @@ voy a perder la compostura`;
       });
     });
 
-    it('cancelar vuelve al cuadro de texto', async () => {
+    it('volver al mensaje vuelve al cuadro de texto', async () => {
       mockGetAllSongs.mockResolvedValue(conLetras);
       const user = userEvent.setup();
       await renderNueva();
 
       await interpretar(user, 'Cristo Vive');
-      await user.click(await screen.findByRole('button', { name: 'Cancelar' }));
+      await user.click(await screen.findByRole('button', { name: 'Volver al mensaje' }));
 
       expect(screen.getByLabelText('Lista del director')).toBeInTheDocument();
     });

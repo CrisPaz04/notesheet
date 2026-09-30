@@ -48,7 +48,7 @@ beforeEach(() => {
 
 const renderPrefs = async () => {
   render(<UserPreferences />);
-  await screen.findByRole('button', { name: /Guardar Preferencias/i });
+  await screen.findByRole('button', { name: /Guardar preferencias/i });
 };
 
 // Los radios y el slider se localizan por id: los textos llevan tildes y
@@ -58,7 +58,7 @@ const elegirNotacion = async (user, sistema) => {
 };
 
 const guardar = async (user) => {
-  await user.click(screen.getByRole('button', { name: /Guardar Preferencias/i }));
+  await user.click(screen.getByRole('button', { name: /Guardar preferencias/i }));
   await waitFor(() => expect(mockUpdateUserPreferences).toHaveBeenCalled());
   return mockUpdateUserPreferences.mock.calls.at(-1)[1];
 };
@@ -131,7 +131,7 @@ describe('UserPreferences', () => {
       const user = userEvent.setup();
       await renderPrefs();
 
-      await user.click(screen.getByRole('button', { name: /Guardar Preferencias/i }));
+      await user.click(screen.getByRole('button', { name: /Guardar preferencias/i }));
 
       expect(await screen.findByText(/Error al guardar preferencias/i)).toBeInTheDocument();
     });

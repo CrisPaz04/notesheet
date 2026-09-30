@@ -5,6 +5,7 @@ import { getAllPlaylists, deletePlaylist } from "@notesheet/api";
 import { useAuth } from "../context/AuthContext";
 import LoadingSpinner from "../components/LoadingSpinner";
 import Icono from "../components/Icono";
+import { formatearDiaLista, formatearFechaCorta } from "../utils/fechas";
 
 function PlaylistsList() {
   const [playlists, setPlaylists] = useState([]);
@@ -47,14 +48,7 @@ function PlaylistsList() {
   };
 
   // Formatear fecha
-  const formatDate = (date) => {
-    if (!date) return "Sin fecha";
-    return new Date(date.toDate()).toLocaleDateString('es-ES', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-  };
+  const formatDate = (date) => formatearDiaLista(date);
 
   if (loading) {
     return (
@@ -78,7 +72,7 @@ function PlaylistsList() {
             <div>
               <h1 className="playlists-title">
                 <Icono nombre="playlist" />
-                Mis Listas
+                Mis listas
               </h1>
               <p className="playlists-subtitle">
                 Organiza tus canciones para diferentes servicios y eventos
@@ -87,7 +81,7 @@ function PlaylistsList() {
             
             <Link to="/playlists/new" className="btn-playlist-primary btn-playlist-action">
               <Icono nombre="plus-circle" />
-              Nueva Lista
+              Nueva lista
             </Link>
           </div>
         </div>
@@ -112,7 +106,7 @@ function PlaylistsList() {
             </p>
             <Link to="/playlists/new" className="btn-playlist-primary btn-playlist-action">
               <Icono nombre="plus-circle" className="me-2" />
-              Crear Mi Primera Lista
+              Crear mi primera lista
             </Link>
           </div>
         ) : (
@@ -145,7 +139,7 @@ function PlaylistsList() {
                       <Icono nombre="clock" />
                       <span>
                         {playlist.updatedAt ? 
-                          `Actualizado ${new Date(playlist.updatedAt.toDate()).toLocaleDateString()}` : 
+                          `Actualizada el ${formatearFechaCorta(playlist.updatedAt)}` : 
                           "Sin actualizaciones"
                         }
                       </span>

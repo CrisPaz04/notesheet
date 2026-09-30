@@ -45,7 +45,7 @@ function TypeSelector({ value, onChange, label = "Tipo" }) {
         {isOpen && (
           <div className="key-dropdown-menu">
             <div className="key-group">
-              <div className="key-group-header">Tipos de Canción</div>
+              <div className="key-group-header">Tipos de canción</div>
               {SONG_TYPES.map((type, index) => (
                 <div key={index}>
                   <div className="key-pair">

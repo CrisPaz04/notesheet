@@ -164,7 +164,7 @@ function Login() {
               ) : (
                 <>
                   <Icono nombre="sign-in" className="me-2" />
-                  Iniciar Sesión
+                  Iniciar sesión
                 </>
               )}
             </button>
