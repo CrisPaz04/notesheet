@@ -1,14 +1,108 @@
 // apps/web/src/pages/PlaylistsList.jsx
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { getAllPlaylists, deletePlaylist } from "@notesheet/api";
+import { getAllPlaylists, getPublicPlaylists, deletePlaylist } from "@notesheet/api";
 import { useAuth } from "../context/AuthContext";
 import LoadingSpinner from "../components/LoadingSpinner";
 import Icono from "../components/Icono";
 import { formatearDiaLista, formatearFechaCorta } from "../utils/fechas";
 
+/**
+ * Una lista en su tarjeta. Las propias se editan y se borran; las de la banda
+ * (públicas de otros músicos) solo se abren: las reglas solo dejan tocarlas a
+ * quien las creó. Desde dentro se puede igualmente abrir una sesión en vivo.
+ */
+function TarjetaLista({ playlist, propia, onDelete }) {
+  return (
+    <div className="playlist-card">
+      <div className="playlist-card-header">
+        <h3 className="playlist-card-title">
+          <Icono nombre="music-notes" />
+          {playlist.name || "Lista sin nombre"}
+        </h3>
+        <div className="playlist-card-meta">
+          <span>
+            <Icono nombre="calendar-blank" className="me-1" />
+            {formatearDiaLista(playlist.date)}
+          </span>
+          {propia ? (
+            <span className={`playlist-visibility-badge ${playlist.public ? 'public' : 'private'}`}>
+              {playlist.public ? 'Pública' : 'Privada'}
+            </span>
+          ) : (
+            playlist.creatorName && (
+              <span className="playlist-card-autor">
+                <Icono nombre="user" className="me-1" />
+                {playlist.creatorName}
+              </span>
+            )
+          )}
+        </div>
+      </div>
+
+      <div className="playlist-card-body">
+        <div className="playlist-stats">
+          <div className="playlist-stat">
+            <Icono nombre="music-notes" />
+            <span>{playlist.songs?.length || 0} canciones</span>
+          </div>
+          <div className="playlist-stat">
+            <Icono nombre="clock" />
+            <span>
+              {playlist.updatedAt ?
+                `Actualizada el ${formatearFechaCorta(playlist.updatedAt)}` :
+                "Sin actualizaciones"
+              }
+            </span>
+          </div>
+        </div>
+
+        {playlist.songs && playlist.songs.length > 0 && (
+          <div className="playlist-card-description">
+            <strong>Últimas canciones:</strong> {' '}
+            {playlist.songs.slice(0, 3).map(song => song.title).join(', ')}
+            {playlist.songs.length > 3 && '...'}
+          </div>
+        )}
+      </div>
+
+      <div className="playlist-card-footer">
+        <Link
+          to={`/playlists/${playlist.id}`}
+          className="btn-playlist-primary btn-playlist-action"
+        >
+          <Icono nombre="eye" />
+          Ver
+        </Link>
+
+        {propia && (
+          <div className="playlist-actions">
+            <Link
+              to={`/playlists/${playlist.id}/edit`}
+              className="btn-playlist-action"
+            >
+              <Icono nombre="pencil-simple" />
+              Editar
+            </Link>
+            <button
+              onClick={() => onDelete(playlist.id, playlist.name)}
+              className="btn-playlist-action btn-playlist-danger"
+            >
+              <Icono nombre="trash" />
+              Eliminar
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function PlaylistsList() {
   const [playlists, setPlaylists] = useState([]);
+  // Las públicas de otros músicos. Antes no salían en ninguna parte: una
+  // lista pública solo se abría con su enlace.
+  const [deLaBanda, setDeLaBanda] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const { currentUser } = useAuth();
@@ -18,8 +112,16 @@ function PlaylistsList() {
     const fetchPlaylists = async () => {
       try {
         if (currentUser) {
-          const fetchedPlaylists = await getAllPlaylists(currentUser.uid);
-          setPlaylists(fetchedPlaylists);
+          // Las de la banda no deben tumbar las propias: si fallan, no salen
+          const [propias, publicas] = await Promise.all([
+            getAllPlaylists(currentUser.uid),
+            getPublicPlaylists().catch((err) => {
+              console.error("Error fetching public playlists:", err);
+              return [];
+            })
+          ]);
+          setPlaylists(propias);
+          setDeLaBanda(publicas.filter((p) => p.creatorId !== currentUser.uid));
         }
       } catch (error) {
         setError("Error al cargar las listas: " + error.message);
@@ -47,15 +149,12 @@ function PlaylistsList() {
     }
   };
 
-  // Formatear fecha
-  const formatDate = (date) => formatearDiaLista(date);
-
   if (loading) {
     return (
       <div className="playlists-container">
         <div className="container">
-          <LoadingSpinner 
-            text="Cargando listas..." 
+          <LoadingSpinner
+            text="Cargando listas..."
             subtext="Organizando tu música"
           />
         </div>
@@ -78,7 +177,7 @@ function PlaylistsList() {
                 Organiza tus canciones para diferentes servicios y eventos
               </p>
             </div>
-            
+
             <Link to="/playlists/new" className="btn-playlist-primary btn-playlist-action">
               <Icono nombre="plus-circle" />
               Nueva lista
@@ -101,7 +200,7 @@ function PlaylistsList() {
             </div>
             <h3 className="empty-playlists-title">¡Comienza a organizar tu música!</h3>
             <p className="empty-playlists-description">
-              Aún no tienes listas. Crea tu primera lista para organizar canciones por servicio, 
+              Aún no tienes listas. Crea tu primera lista para organizar canciones por servicio,
               evento o cualquier criterio que necesites.
             </p>
             <Link to="/playlists/new" className="btn-playlist-primary btn-playlist-action">
@@ -112,78 +211,26 @@ function PlaylistsList() {
         ) : (
           <div className="playlists-grid fade-in-delay">
             {playlists.map((playlist) => (
-              <div key={playlist.id} className="playlist-card">
-                <div className="playlist-card-header">
-                  <h3 className="playlist-card-title">
-                    <Icono nombre="music-notes" />
-                    {playlist.name || "Lista sin nombre"}
-                  </h3>
-                  <div className="playlist-card-meta">
-                    <span>
-                      <Icono nombre="calendar-blank" className="me-1" />
-                      {formatDate(playlist.date)}
-                    </span>
-                    <span className={`playlist-visibility-badge ${playlist.public ? 'public' : 'private'}`}>
-                      {playlist.public ? 'Pública' : 'Privada'}
-                    </span>
-                  </div>
-                </div>
-                
-                <div className="playlist-card-body">
-                  <div className="playlist-stats">
-                    <div className="playlist-stat">
-                      <Icono nombre="music-notes" />
-                      <span>{playlist.songs?.length || 0} canciones</span>
-                    </div>
-                    <div className="playlist-stat">
-                      <Icono nombre="clock" />
-                      <span>
-                        {playlist.updatedAt ? 
-                          `Actualizada el ${formatearFechaCorta(playlist.updatedAt)}` : 
-                          "Sin actualizaciones"
-                        }
-                      </span>
-                    </div>
-                  </div>
-                  
-                  {playlist.songs && playlist.songs.length > 0 && (
-                    <div className="playlist-card-description">
-                      <strong>Últimas canciones:</strong> {' '}
-                      {playlist.songs.slice(0, 3).map(song => song.title).join(', ')}
-                      {playlist.songs.length > 3 && '...'}
-                    </div>
-                  )}
-                </div>
-                
-                <div className="playlist-card-footer">
-                  <Link 
-                    to={`/playlists/${playlist.id}`} 
-                    className="btn-playlist-primary btn-playlist-action"
-                  >
-                    <Icono nombre="eye" />
-                    Ver
-                  </Link>
-                  
-                  <div className="playlist-actions">
-                    <Link 
-                      to={`/playlists/${playlist.id}/edit`} 
-                      className="btn-playlist-action"
-                    >
-                      <Icono nombre="pencil-simple" />
-                      Editar
-                    </Link>
-                    <button
-                      onClick={() => handleDelete(playlist.id, playlist.name)}
-                      className="btn-playlist-action btn-playlist-danger"
-                    >
-                      <Icono nombre="trash" />
-                      Eliminar
-                    </button>
-                  </div>
-                </div>
-              </div>
+              <TarjetaLista key={playlist.id} playlist={playlist} propia onDelete={handleDelete} />
             ))}
           </div>
+        )}
+
+        {deLaBanda.length > 0 && (
+          <section className="playlists-banda fade-in-delay" aria-labelledby="titulo-banda">
+            <h2 id="titulo-banda" className="section-title">
+              <Icono nombre="users" />
+              De la banda
+            </h2>
+            <p className="playlists-banda-descripcion">
+              Las listas públicas de otros músicos. Puedes abrirlas, leerlas e iniciar una sesión en vivo.
+            </p>
+            <div className="playlists-grid">
+              {deLaBanda.map((playlist) => (
+                <TarjetaLista key={playlist.id} playlist={playlist} propia={false} />
+              ))}
+            </div>
+          </section>
         )}
       </div>
     </div>

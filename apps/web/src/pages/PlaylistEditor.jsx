@@ -179,6 +179,10 @@ function PlaylistEditor() {
         public: isPublic,
         songs: selectedSongs,
         creatorId: currentUser.uid,
+        // Para "De la banda" en Mis listas: las reglas no dejan leer el perfil
+        // de otro músico, así que su nombre viaja con la lista. Solo el de la
+        // cuenta, nunca algo sacado del correo.
+        creatorName: currentUser.displayName?.trim() || null,
         mensajeDirector: limpiarMensajeDirector(mensajeDirector)
       };
 

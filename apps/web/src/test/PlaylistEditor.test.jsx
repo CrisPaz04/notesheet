@@ -481,6 +481,27 @@ voy a perder la compostura`;
       expect(mockCreatePlaylist.mock.calls[0][0].mensajeDirector).toBeNull();
     });
 
+    // Para "De la banda" en Mis listas: el perfil de otro no se puede leer
+    it('guarda el nombre de quien la crea', async () => {
+      mockAuth.currentUser = { uid: 'user-1', displayName: ' Cristhian Paz ', email: 'c.paz@correo.com' };
+      const user = userEvent.setup();
+      await renderNueva();
+      await user.type(screen.getByPlaceholderText('Nombre de la lista'), 'Domingo');
+      await user.click(screen.getByRole('button', { name: /Guardar/i }));
+      await waitFor(() => expect(mockCreatePlaylist).toHaveBeenCalled());
+      expect(mockCreatePlaylist.mock.calls[0][0].creatorName).toBe('Cristhian Paz');
+    });
+
+    it('sin nombre en la cuenta no guarda ninguno (ni la parte del correo)', async () => {
+      mockAuth.currentUser = { uid: 'user-1', email: 'c.paz@correo.com' };
+      const user = userEvent.setup();
+      await renderNueva();
+      await user.type(screen.getByPlaceholderText('Nombre de la lista'), 'Domingo');
+      await user.click(screen.getByRole('button', { name: /Guardar/i }));
+      await waitFor(() => expect(mockCreatePlaylist).toHaveBeenCalled());
+      expect(mockCreatePlaylist.mock.calls[0][0].creatorName).toBeNull();
+    });
+
     it('al editar, conserva el mensaje que ya tenía la lista', async () => {
       routeParams.id = 'p1';
       mockGetPlaylistById.mockResolvedValue({

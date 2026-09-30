@@ -803,3 +803,25 @@
   font-size: 0.85rem;
   color: var(--text-light-secondary);
 }
+
+/* "De la banda": las listas públicas de otros músicos, debajo de las propias */
+.playlists-banda {
+  margin-top: 2.5rem;
+}
+
+.playlists-banda .section-title {
+  margin-bottom: 0.25rem;
+}
+
+.playlists-banda-descripcion {
+  color: var(--text-light-muted);
+  font-size: 0.9rem;
+  margin-bottom: 1.25rem;
+}
+
+.playlist-card-autor {
+  display: inline-flex;
+  align-items: center;
+  color: var(--text-light-secondary);
+  font-size: 0.85rem;
+}

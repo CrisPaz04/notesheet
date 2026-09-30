@@ -301,7 +301,13 @@ en Storage, nunca la URL de descarga).
 - La interfaz solo debe ofrecer editar o borrar cuando `isOwn`; las reglas lo imponen
   igual, pero no conviene ofrecer lo que va a fallar.
 
-**playlists**: `creatorId`, `public`, `date`, `songs[]`, `mensajeDirector`. Cada entrada de
+**playlists**: `creatorId`, `creatorName`, `public`, `date`, `songs[]`, `mensajeDirector`.
+
+Las públicas de otros músicos salen en "Mis listas", en el apartado **"De la banda"**
+(`getPublicPlaylists`, solo para abrir: editar y borrar son del creador). `creatorName` es
+para enseñar quién la hizo, porque las reglas no dejan leer el perfil de otro: se guarda al
+guardar la lista, solo el `displayName` de la cuenta (nunca algo sacado del correo); las
+anteriores no lo tienen hasta que su creador las vuelva a guardar. Cada entrada de
 `songs` lleva su propia `key` y `originalKey`: una canción dentro de una lista se puede
 transponer para esa ocasión sin tocar la del repertorio.
 
@@ -463,7 +469,7 @@ SPA (el orden importa).
 ## Notes
 
 - No TypeScript - pure JavaScript
-- Vitest configured; 1918 tests in `apps/web/src/test/` (run with `npm run test:run`)
+- Vitest configured; 1925 tests in `apps/web/src/test/` (run with `npm run test:run`)
 - Los tests se validan con **mutaciones**: se rompe el código a propósito y se comprueba
   que algún test falla. Ha destapado cuatro tests que pasaban por la razón equivocada,
   y un bug de verdad en `scores.js` (las voces se ordenaban como texto, así que la 10
