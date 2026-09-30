@@ -79,6 +79,30 @@ describe('ImportarPartituras', () => {
     expect(within(cancion('Alégrense')).getByText('Con nombres de notas')).toBeInTheDocument();
   });
 
+  it('se puede soltar la carpeta en la zona de arrastre', async () => {
+    render(<ImportarPartituras />);
+    await waitFor(() => expect(mockGetAllSongs).toHaveBeenCalled());
+    const zona = screen.getByText('Arrastra aquí la carpeta de partituras').closest('section');
+
+    fireEvent.dragOver(zona);
+    expect(screen.getByText('Suéltala aquí')).toBeInTheDocument();
+    // Sin entradas de carpeta (como en jsdom): se usan los archivos sueltos
+    fireEvent.drop(zona, { dataTransfer: { items: [], files: CARPETA } });
+
+    expect(await screen.findByRole('button', { name: /Importar 3 canciones/ })).toBeInTheDocument();
+    expect(screen.getByText('Arrastra aquí la carpeta de partituras')).toBeInTheDocument();
+  });
+
+  it('la explicación de los nombres se pliega al elegir archivos', async () => {
+    render(<ImportarPartituras />);
+    await waitFor(() => expect(mockGetAllSongs).toHaveBeenCalled());
+    const explicacion = screen.getByText('Cómo se leen los nombres').closest('details');
+    expect(explicacion).toHaveAttribute('open');
+
+    fireEvent.change(screen.getByTestId('importar-carpeta'), { target: { files: CARPETA } });
+    expect(explicacion).not.toHaveAttribute('open');
+  });
+
   it('añade a la existente, crea las demás y dice cómo fue', async () => {
     await elegir(CARPETA);
     fireEvent.click(screen.getByRole('button', { name: /Importar 3 canciones \(4 PDF\)/ }));
