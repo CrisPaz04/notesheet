@@ -74,3 +74,8 @@ firestore-debug.log
 storage-debug.log
 firebase-debug.log
 ui-debug.log
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/

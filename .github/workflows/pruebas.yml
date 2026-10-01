@@ -1,0 +1,65 @@
+# Todo lo que comprueba el proyecto, en cada push y en cada PR: el lint, los
+# tests de piezas sueltas (Vitest), las reglas de Firestore y Storage contra
+# los emuladores, y los de punta a punta (Playwright) también contra los
+# emuladores. Nada usa el proyecto de Firebase de verdad: todo es "demo-…".
+name: Pruebas
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+concurrency:
+  group: pruebas-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pruebas:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      # Los emuladores de Firebase son Java
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Emuladores en caché
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/firebase/emulators
+          key: emuladores-firebase-${{ runner.os }}
+
+      - run: npm ci
+
+      - name: Lint
+        run: npm run lint --workspace=web
+
+      - name: Tests (Vitest)
+        run: npm run test:run
+
+      - name: Reglas de Firestore y Storage
+        run: npm run test:reglas
+
+      - name: Navegador para Playwright
+        run: npx playwright install --with-deps chromium
+
+      - name: Tests de punta a punta
+        run: npm run test:e2e
+
+      - name: Informe de Playwright (si algo falló)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: informe-playwright
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 14

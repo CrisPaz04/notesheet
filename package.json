@@ -18,7 +18,8 @@
     "ios": "cd apps/mobile && npm run ios",
     "test": "cd apps/web && npm run test",
     "test:run": "cd apps/web && npm run test:run",
-    "test:reglas": "npx firebase-tools emulators:exec --only firestore,storage --project demo-notesheet \"node --test scripts/reglas/reglas.test.mjs\""
+    "test:reglas": "npx firebase-tools emulators:exec --only firestore,storage --project demo-notesheet \"node --test scripts/reglas/reglas.test.mjs\"",
+    "test:e2e": "npx firebase-tools emulators:exec --only auth,firestore,storage --project demo-notesheet \"npx playwright test\""
   },
   "keywords": [
     "music",
@@ -30,6 +31,7 @@
   "author": "",
   "license": "MIT",
   "devDependencies": {
-    "@firebase/rules-unit-testing": "^4.0.1"
+    "@firebase/rules-unit-testing": "^4.0.1",
+    "@playwright/test": "^1.63.0"
   }
 }

@@ -1,13 +1,14 @@
 // packages/api/src/firebase/config.js
 import { initializeApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
+import { getAuth, connectAuthEmulator } from 'firebase/auth';
 import {
   getFirestore,
   initializeFirestore,
   persistentLocalCache,
-  persistentMultipleTabManager
+  persistentMultipleTabManager,
+  connectFirestoreEmulator
 } from 'firebase/firestore';
-import { getStorage } from 'firebase/storage';
+import { getStorage, connectStorageEmulator } from 'firebase/storage';
 
 // Configuración de Firebase para la aplicación web
 // Las credenciales se obtienen de variables de entorno por seguridad
@@ -59,5 +60,18 @@ const createDb = () => {
 
 const db = createDb();
 const storage = getStorage(app);
+
+// Los tests de punta a punta (e2e/) corren contra los emuladores de Firebase,
+// nunca contra el proyecto de verdad. Solo con VITE_EMULADORES=1, y además el
+// proyecto tiene que ser uno de demostración ("demo-…"): si por error se
+// arrancara con el .env real, se para aquí en vez de escribir en producción.
+if (import.meta.env.VITE_EMULADORES === '1') {
+  if (!String(firebaseConfig.projectId || '').startsWith('demo-')) {
+    throw new Error('Con VITE_EMULADORES=1 el proyecto tiene que ser "demo-…", no el real');
+  }
+  connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true });
+  connectFirestoreEmulator(db, '127.0.0.1', 8080);
+  connectStorageEmulator(storage, '127.0.0.1', 9199);
+}
 
 export { app, auth, db, storage };

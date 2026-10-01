@@ -124,6 +124,7 @@ npm run web                   # Start web dev server (localhost:5173)
 npm run web:red               # El mismo, en la red local y con HTTPS: para probar en la tablet
 npm run test:run              # Run the test suite
 npm run test:reglas           # Reglas de Firestore y Storage contra los emuladores (pide Java)
+npm run test:e2e              # De punta a punta (Playwright) contra los emuladores (pide Java)
 npm run lint --workspace=web  # ESLint check
 
 # From apps/web/
@@ -184,9 +185,11 @@ packages/ui/          # Shared UI components (planned)
 (`contraste-*`, todo a 7:1: sol en la pantalla o poca vista), Escenario (`escenario-*`,
 el oscuro en negro puro y ámbar para cultos con poca luz), Latón, Madera, Púrpura, Vino y
 Océano. La lista está en `useThemeWithAuth.js` (`AVAILABLE_THEMES` y `THEME_FAMILIES`) y
-cada uno define las mismas variables en `base/_variables.css`. Los catorce nuevos son
-**solo variables**: las reglas base de los componentes ya las usan, así que no hace falta
-copiar por tema las ~40 reglas que arrastran los seis primeros. Para añadir uno: sus
+cada uno define las mismas variables en `base/_variables.css`. Todos son **solo
+variables**: los componentes (menú, cuenta, campos, desplegables…) tienen sus reglas una
+sola vez, con variables, al final de ese archivo. Antes cada uno de los seis primeros
+temas las repetía con sus colores a mano (unas 940 líneas); se quitaron comparando antes y
+después los estilos calculados de esos componentes en los seis. Para añadir uno: sus
 variables (con contraste comprobado), su miniatura y su familia; `temas.test.js` falla si
 falta algo. El id acaba en `-light` o `-dark`: de eso cuelgan las reglas comunes de los
 claros (`$="light"`) y el `color-scheme`. **No escribas colores a mano** en una regla
@@ -449,6 +452,33 @@ el CLI puede quitarlas.
 Los índices compuestos viven en `firestore.indexes.json` y hay que desplegarlos **antes**
 de subir código que dependa de una consulta nueva, o la app falla al cargar.
 
+## Pruebas de punta a punta y CI
+
+`npm run test:e2e` arranca los emuladores de Firebase (Auth, Firestore y Storage, con las
+reglas de verdad) y luego Playwright (`playwright.config.mjs`, tests en `e2e/`), que levanta
+su propio servidor de Vite en el puerto 5199 con `VITE_EMULADORES=1` y un proyecto
+`demo-notesheet`. `packages/api/src/firebase/config.js` solo se conecta a los emuladores
+con esa variable, y **se niega** si el proyecto no es `demo-…`: así un `.env` real nunca
+acaba recibiendo datos de prueba. Los datos se siembran por la API REST de los emuladores
+(`e2e/emuladores.js`, con `Bearer owner`, que se salta las reglas) y se vacían antes de
+cada test. Hoy cubren la portada y el domingo entero con dos navegadores: el director abre
+la sesión desde su lista, un músico sin cuenta entra con el código y, cuando el director
+cambia la tonalidad, a él le cambia sola. Validado rompiendo el cambio de tonalidad: falla.
+
+`.github/workflows/pruebas.yml` corre en cada push y PR: lint, Vitest, reglas y punta a
+punta. Si falla, deja el informe de Playwright (capturas y traza) como artefacto.
+
+## Registro de errores (Sentry)
+
+`lib/sentry.js`. Solo se activa con `VITE_SENTRY_DSN` (variable de Netlify; el DSN va en el
+JavaScript público y está en `SECRETS_SCAN_OMIT_KEYS`). Sin él no hace nada: desarrollo,
+tests y CI. React 19 le pasa sus errores con los ganchos de `createRoot`
+(`opcionesDeRaiz`). **Sin datos personales**: `sendDefaultPii: false` y del usuario solo
+el uid (`ponerUsuarioEnSentry`), nunca correo ni nombre. La versión es el commit
+(`COMMIT_REF` de Netlify, `__VERSION__` en el código). Con `SENTRY_AUTH_TOKEN`,
+`SENTRY_ORG` y `SENTRY_PROJECT` en Netlify, el build sube los source maps y los borra del
+sitio publicado; sin token no se generan.
+
 ## Environment Variables
 
 Vite requires `VITE_` prefix. Firebase credentials go in the **repo-root** `.env` (see `.env.example`);
@@ -497,7 +527,7 @@ SPA (el orden importa).
 ## Notes
 
 - No TypeScript - pure JavaScript
-- Vitest configured; 2006 tests in `apps/web/src/test/` (run with `npm run test:run`)
+- Vitest configured; 2015 tests in `apps/web/src/test/` (run with `npm run test:run`)
 - Los tests se validan con **mutaciones**: se rompe el código a propósito y se comprueba
   que algún test falla. Ha destapado cuatro tests que pasaban por la razón equivocada,
   y un bug de verdad en `scores.js` (las voces se ordenaban como texto, así que la 10
@@ -740,6 +770,14 @@ SPA (el orden importa).
   trompeta, saxo alto, corno y flauta). Después, el domingo en tres pasos (numerados
   porque son una secuencia) y lo que hay en el atril. Sin ejemplos en inglés ni cifras de
   plantilla ("12+ · ∞ · 100%"): `Home.test.jsx` lo vigila.
+- **Navegación con teclado** (`components/NavegacionAccesible.jsx`): el primer Tab lleva a
+  "Saltar al contenido" (`#contenido`, el `<main>`), y al cambiar de pantalla el foco pasa
+  al contenido; si no, se quedaba en el enlace del menú. Compara con la ruta anterior y
+  no con "la primera vez": en desarrollo React monta los efectos dos veces.
+- **El Dashboard pinta por tandas**: 24 canciones y el resto al acercarse al final
+  (`IntersectionObserver`; sin él, todas). Crear las 120 tarjetas de golpe eran ~100 ms
+  de pantalla trabada en un PC. Buscar y filtrar miran todas. Las tarjetas llevan
+  `content-visibility: auto`, y la rejilla ya no anima cada tarjeta al entrar.
 - **Toda vista tiene un acceso**: `rutasAccesibles.test.js` comprueba que cada ruta fija
   de `App.jsx` tiene un enlace en algún sitio. `/live` (entrar con el código) está en el
   menú ("En vivo") y en la portada, para quien no tiene cuenta.
