@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { cwd } from 'node:process';
 import { join } from 'node:path';
-import { AVAILABLE_THEMES, THEME_FAMILIES } from '../hooks/useThemeWithAuth';
+import { AVAILABLE_THEMES, THEME_FAMILIES } from '../lib/temas';
 
 // Un tema está entero cuando tiene sus variables, su miniatura en
 // Preferencias y el título de su familia. Sin este test se podía añadir uno a
