@@ -302,3 +302,28 @@ describe('nombrarTonalidad', () => {
     expect(nombrarTonalidad(undefined, 'english')).toBeUndefined();
   });
 });
+
+describe('normalizarCabeceras: una cabecera en mayúsculas pasa a mayúscula inicial', () => {
+  it('## SOLO → ## Solo, y las de varias palabras igual', async () => {
+    const { normalizarCabeceras } = await import('@notesheet/core');
+    expect(normalizarCabeceras('## SOLO\nDO RE')).toBe('## Solo\nDO RE');
+    expect(normalizarCabeceras('## ARREGLO INTERMEDIO')).toBe('## Arreglo intermedio');
+    expect(normalizarCabeceras('## INTRO 2')).toBe('## Intro 2');
+    expect(normalizarCabeceras('## ÚLTIMO CORO')).toBe('## Último coro');
+  });
+
+  it('la tonalidad entre corchetes no se toca', async () => {
+    const { normalizarCabeceras } = await import('@notesheet/core');
+    expect(normalizarCabeceras('## CORO [SIm]')).toBe('## Coro [SIm]');
+    expect(normalizarCabeceras('## [DO#m]')).toBe('## [DO#m]');
+  });
+
+  it('deja como están las que ya mezclan, las que no son cabecera y las notas', async () => {
+    const { normalizarCabeceras } = await import('@notesheet/core');
+    // `## A B`: letras sueltas (partes de un arreglo), no una palabra en mayúsculas
+    const texto = '## Solo de Juan\n##\n##CORO\n### CORO\n## A B\nDO RE MI\nALELUYA';
+    expect(normalizarCabeceras(texto)).toBe(texto);
+    expect(normalizarCabeceras('')).toBe('');
+    expect(normalizarCabeceras(undefined)).toBe(undefined);
+  });
+});

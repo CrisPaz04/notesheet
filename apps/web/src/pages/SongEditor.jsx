@@ -29,7 +29,8 @@ import {
   partirEnTramos,
   getVisualKeyForInstrument,
   CHORDS_SOURCE_INSTRUMENT,
-  tonalidadesDe
+  tonalidadesDe,
+  normalizarCabeceras
 } from "@notesheet/core";
 import KeySelector from "../components/KeySelector";
 import LoadingSpinner from "../components/LoadingSpinner";
@@ -312,14 +313,16 @@ function SongEditor() {
 
     // Las notas se guardan en su forma única ("Do Re" → "DO RE"): el texto
     // guardado salía mezclado según quién lo escribiera. Solo las líneas de
-    // notas; la letra no se toca.
+    // notas; la letra no se toca. Y las cabeceras en mayúsculas, con mayúscula
+    // inicial ("## SOLO" → "## Solo").
+    const normalizar = (texto) => normalizarCabeceras(normalizarNotas(texto));
     const voicesNormalizadas = Object.fromEntries(
       Object.entries(voices || {}).map(([instrumento, porVoz]) => [
         instrumento,
-        Object.fromEntries(Object.entries(porVoz || {}).map(([n, texto]) => [n, normalizarNotas(texto)]))
+        Object.fromEntries(Object.entries(porVoz || {}).map(([n, texto]) => [n, normalizar(texto)]))
       ])
     );
-    const acordesNormalizados = normalizarNotas(acordes);
+    const acordesNormalizados = normalizar(acordes);
 
     // Get the primary voice content
     const primaryContent = voicesNormalizadas[primaryInstrument]?.[primaryVoiceNumber] || "";
@@ -366,7 +369,8 @@ function SongEditor() {
           const todas = esPdf ? [] : tonalidadesDe(primaryContent, key);
           return todas.length > 1 ? todas : null;
         })(),
-        lyricsOnly,
+        // En la letra solo las cabeceras: sus líneas no son notas
+        lyricsOnly: normalizarCabeceras(lyricsOnly),
         acordes: acordesNormalizados,
         voices: voicesNormalizadas,
         format,

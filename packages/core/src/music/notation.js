@@ -215,3 +215,30 @@ export const extractLyricsOnly = (content) => {
   
   return result.trim();
 };
+// "## Título" con, opcionalmente, una tonalidad entre corchetes al final
+// (ver `modulaciones.js`), que no se toca
+const CABECERA = /^(##\s+)(.*?)(\s*\[[^\]\n]*\])?(\s*)$/;
+
+/**
+ * Una cabecera escrita entera en mayúsculas pasa a mayúscula inicial, como el
+ * resto de textos de la app: `## SOLO` → `## Solo`, `## CORO [SIm]` →
+ * `## Coro [SIm]`. Las que ya mezclan mayúsculas y minúsculas
+ * (`## Solo de Juan`) se dejan como están, y el resto del texto también.
+ *
+ * Es lo que hace el editor al guardar. Los títulos se ven como se escriben
+ * (sin `text-transform`), y había canciones con `## SOLO` o `## INTRO`.
+ *
+ * @param {string} texto
+ * @returns {string}
+ */
+export const normalizarCabeceras = (texto) => {
+  if (typeof texto !== 'string' || !texto) return texto;
+  return texto.split('\n').map((linea) => {
+    const m = linea.match(CABECERA);
+    if (!m) return linea;
+    const [, inicio, titulo, corchetes = '', final] = m;
+    const enMayusculas = !/\p{Ll}/u.test(titulo) && /\p{Lu}{2}/u.test(titulo);
+    if (!enMayusculas) return linea;
+    return `${inicio}${titulo.charAt(0)}${titulo.slice(1).toLowerCase()}${corchetes}${final}`;
+  }).join('\n');
+};

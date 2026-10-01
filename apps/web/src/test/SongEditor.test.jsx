@@ -646,3 +646,25 @@ describe('SongEditor: tonalidades para buscar', () => {
     expect(mockUpdateSong.mock.calls.at(-1)[1].tonalidades).toBeNull();
   });
 });
+
+describe('SongEditor: cabeceras en mayúsculas', () => {
+  it('al guardar, ## SOLO pasa a ## Solo en las voces, los acordes y la letra', async () => {
+    const user = userEvent.setup();
+    mockGetSongById.mockResolvedValue({
+      ...SONG,
+      content: '## SOLO\nDO RE',
+      voices: { bb_trumpet: { 1: '## SOLO\nDO RE', 2: '## CORO [MI]\nMI' } },
+      acordes: '## INTRO\nDO SOL',
+      lyricsOnly: '## CORO\nAleluya',
+    });
+    await renderEditor();
+    await user.click(screen.getByRole('button', { name: /^Guardar$/ }));
+
+    await waitFor(() => expect(mockUpdateSong).toHaveBeenCalled());
+    const guardado = mockUpdateSong.mock.calls.at(-1)[1];
+    expect(guardado.content).toBe('## Solo\nDO RE');
+    expect(guardado.voices.bb_trumpet[2]).toBe('## Coro [MI]\nMI');
+    expect(guardado.acordes).toBe('## Intro\nDO SOL');
+    expect(guardado.lyricsOnly).toBe('## Coro\nAleluya');
+  });
+});

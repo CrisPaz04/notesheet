@@ -459,7 +459,9 @@ sesión, así que ahí no se mira además la canción.
 
 Las reglas se prueban con **`npm run test:reglas`** (`scripts/reglas/reglas.test.mjs`,
 `@firebase/rules-unit-testing` 4, que es la que casa con `firebase` 11: la 5 trae la 12
-y duplica el SDK). Validado con mutaciones: quitar cualquiera de los guardias rompe algún
+y duplica el SDK). Por esa cadena llega `@grpc/grpc-js` (el transporte de Firestore en
+Node, no el del navegador): el `overrides` del `package.json` de la raíz lo sube a la
+versión parcheada, que la 1.9 de Firestore 11 tenía dos avisos de Dependabot. Validado con mutaciones: quitar cualquiera de los guardias rompe algún
 test.
 
 Las **políticas TTL** (sobre `expiresAt` en `sessions`, `participants` e `invitados`)
@@ -552,7 +554,7 @@ SPA (el orden importa).
 ## Notes
 
 - No TypeScript - pure JavaScript
-- Vitest configured; 2099 tests in `apps/web/src/test/` (run with `npm run test:run`)
+- Vitest configured; 2103 tests in `apps/web/src/test/` (run with `npm run test:run`)
 - Los tests se validan con **mutaciones**: se rompe el código a propósito y se comprueba
   que algún test falla. Ha destapado cuatro tests que pasaban por la razón equivocada,
   y un bug de verdad en `scores.js` (las voces se ordenaban como texto, así que la 10
@@ -628,7 +630,10 @@ SPA (el orden importa).
   (`getCodemirrorInstance`, callback estable) sin quitarle el foco (`mousedown`
   con `preventDefault`); la lógica es pura, en `utils/insertarEnEditor.js`.
   **Al guardar**, las notas se escriben en su forma única (`normalizarNotas`: "Re" →
-  "RE", "Sib" → "SIb"), solo en las líneas de notas. El 1-10-2026 se pasó lo mismo por
+  "RE", "Sib" → "SIb"), solo en las líneas de notas, y una cabecera escrita entera en
+  mayúsculas pasa a mayúscula inicial (`normalizarCabeceras`, en `notation.js`:
+  `## SOLO` → `## Solo`, `## CORO [SIm]` → `## Coro [SIm]`; las que ya mezclan y las
+  de letras sueltas como `## A B` no se tocan). En "Solo letra", solo las cabeceras. El 1-10-2026 se pasó lo mismo por
   las 120 canciones ya guardadas (y las cabeceras en mayúsculas, `## SOLO` → `## Solo`):
   las copias de antes están en `copias/`, que git ignora (el repositorio es público).
 - Los títulos de sección se ven **como se escribieron**: `.song-section-title` ya no
