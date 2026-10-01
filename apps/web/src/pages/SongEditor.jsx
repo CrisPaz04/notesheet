@@ -1,5 +1,5 @@
 // apps/web/src/pages/SongEditor.jsx
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import {
@@ -160,32 +160,11 @@ function SongEditor() {
     return sugerirTonalidad(textos, key);
   }, [voices, key, format]);
 
-  // Al cargar, verifica si es una canción nueva o existente
-  useEffect(() => {
-    if (id) {
-      setIsNewSong(false);
-      loadSong(id);
-    } else {
-      // Plantilla para una nueva canción - inicializa con Trompeta 1
-      const initialVoiceContent = `## Intro
 
-
-## Verso 1
-
-
-## Coro
-
-`;
-      setVoices({ bb_trumpet: { "1": initialVoiceContent } });
-      setCurrentTab("bb_trumpet-1");
-      setPrimaryInstrument("bb_trumpet");
-      setPrimaryVoiceNumber("1");
-      setInitialLoading(false);
-    }
-  }, [id]);
-
-  // Cargar una canción existente
-  const loadSong = async (songId) => {
+  // Cargar una canción existente. Con useCallback (todo lo que usa son
+  // `set…` de useState, estables) para que el efecto de abajo pueda
+  // depender de ella sin volver a cargar en cada render
+  const loadSong = useCallback(async (songId) => {
     try {
       setInitialLoading(true);
       const song = await getSongById(songId);
@@ -262,7 +241,31 @@ function SongEditor() {
     } finally {
       setInitialLoading(false);
     }
-  };
+  }, [setVoices, setCurrentTab, setPrimaryInstrument, setPrimaryVoiceNumber]);
+
+  // Al cargar, verifica si es una canción nueva o existente
+  useEffect(() => {
+    if (id) {
+      setIsNewSong(false);
+      loadSong(id);
+    } else {
+      // Plantilla para una nueva canción - inicializa con Trompeta 1
+      const initialVoiceContent = `## Intro
+
+
+## Verso 1
+
+
+## Coro
+
+`;
+      setVoices({ bb_trumpet: { "1": initialVoiceContent } });
+      setCurrentTab("bb_trumpet-1");
+      setPrimaryInstrument("bb_trumpet");
+      setPrimaryVoiceNumber("1");
+      setInitialLoading(false);
+    }
+  }, [id, loadSong, setVoices, setCurrentTab, setPrimaryInstrument, setPrimaryVoiceNumber]);
 
 
 

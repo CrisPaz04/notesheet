@@ -359,7 +359,7 @@
   }
   
   .view-hint {
-    color: var(--text-light-muted);
+    color: var(--text-light-secondary);
     font-size: 0.8rem;
   }
   
@@ -526,7 +526,7 @@
 }
 
 :where([data-bs-theme$="light"]) .view-hint {
-  color: var(--text-light-muted);
+  color: var(--text-light-secondary);
 }
 
 :where([data-bs-theme$="light"]) .song-section-title {

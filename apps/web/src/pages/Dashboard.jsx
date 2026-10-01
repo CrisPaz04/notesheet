@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { Link } from "react-router-dom";
 import {
   getAllSongs,
@@ -24,6 +24,11 @@ const VISTAS = ["cards", "list"];
 
 // Pestañas de tipo → valor de `song.type`
 const TIPOS = { jubilo: "Júbilo", adoracion: "Adoración", moderada: "Moderada" };
+
+// Canciones que se pintan de entrada; el resto, en tandas al bajar. Crear las
+// 120 tarjetas del repertorio de golpe eran unos 100 ms de pantalla trabada en
+// un PC, varias veces más en una tablet barata
+const TANDA = 24;
 
 function Dashboard() {
   const [songs, setSongs] = useState([]);
@@ -123,6 +128,29 @@ function Dashboard() {
 
     return filtered;
   }, [songs, searchTerm, keyFilter, activeFilter, sortOrder, notacion]);
+
+  // Carga progresiva: al cambiar la búsqueda, el filtro o el orden se vuelve a
+  // empezar por la primera tanda. Sin IntersectionObserver (los tests, algún
+  // navegador viejo) se pintan todas.
+  const [cuantas, setCuantas] = useState(TANDA);
+  useEffect(() => { setCuantas(TANDA); }, [filteredSongs]);
+  const hayObservador = typeof IntersectionObserver !== "undefined";
+  const visibles = hayObservador ? filteredSongs.slice(0, cuantas) : filteredSongs;
+  const quedan = visibles.length < filteredSongs.length;
+
+  const observador = useRef(null);
+  const centinela = useCallback((nodo) => {
+    observador.current?.disconnect();
+    if (!nodo) return;
+    observador.current = new IntersectionObserver(
+      (entradas) => {
+        if (entradas.some((e) => e.isIntersecting)) setCuantas((c) => c + TANDA * 2);
+      },
+      { rootMargin: "1200px 0px" }
+    );
+    observador.current.observe(nodo);
+  }, []);
+  useEffect(() => () => observador.current?.disconnect(), []);
 
   const getGreeting = () => {
     const greetings = [
@@ -454,8 +482,10 @@ function Dashboard() {
           ) : (
             <>
               {viewMode === 'cards' ? (
-                <div className="recent-grid stagger-animation">
-                  {filteredSongs.map((song) => (
+                <div className="recent-grid">
+                  {/* Sin animación de entrada por tarjeta: con 120 canciones
+                      eran 120 animaciones a la vez al abrir el Dashboard */}
+                  {visibles.map((song) => (
                     <Link
                       to={`/songs/${song.id}`}
                       key={song.id}
@@ -498,7 +528,7 @@ function Dashboard() {
                 </div>
               ) : (
                 <div className="songs-list-view fade-in">
-                  {filteredSongs.map((song, index) => (
+                  {visibles.map((song, index) => (
                     <Link
                       to={`/songs/${song.id}`}
                       key={song.id}
@@ -536,6 +566,8 @@ function Dashboard() {
                   ))}
                 </div>
               )}
+              {/* Al acercarse a este punto se pinta la siguiente tanda */}
+              {quedan && <div ref={centinela} className="dashboard-centinela" aria-hidden="true" />}
             </>
           )}
         </div>

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { render, screen, waitFor, within, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { elegirEnDesplegable, valorDe, opcionesDe } from './utils/desplegable';
 
@@ -877,3 +877,40 @@ describe('Dashboard', () => {
     });
   });
 });
+
+// Con el repertorio entero (120 canciones) crear todas las tarjetas de golpe
+// trababa la pantalla: se pintan por tandas al acercarse al final
+describe('Dashboard: carga progresiva', () => {
+  let alVer;
+  class ObservadorFalso {
+    constructor(cb) { alVer = cb; }
+    observe() {}
+    disconnect() {}
+  }
+  const MUCHAS = Array.from({ length: 60 }, (_, i) => ({
+    id: `m${i}`, title: `Canción ${String(i).padStart(2, '0')}`, key: 'DO', type: 'Júbilo',
+    isOwn: true, public: true, updatedAt: timestamp(hace(i)),
+  }));
+  const tarjetas = () => document.querySelectorAll('.recent-item, .list-item').length;
+
+  beforeEach(() => {
+    vi.stubGlobal('IntersectionObserver', ObservadorFalso);
+    mockGetAllSongs.mockResolvedValue(MUCHAS);
+  });
+
+  it('pinta la primera tanda y la siguiente al acercarse al final', async () => {
+    render(<Dashboard />);
+    await screen.findByText('Canción 00');
+    expect(tarjetas()).toBe(24);
+    act(() => alVer([{ isIntersecting: true }]));
+    expect(tarjetas()).toBe(60);
+  });
+
+  it('al buscar, se busca entre todas, no solo entre las pintadas', async () => {
+    render(<Dashboard />);
+    await screen.findByText('Canción 00');
+    await userEvent.type(screen.getByPlaceholderText(/buscar/i), 'Canción 59');
+    expect(await screen.findByText('Canción 59')).toBeInTheDocument();
+  });
+});
+

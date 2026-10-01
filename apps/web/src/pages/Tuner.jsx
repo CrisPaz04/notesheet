@@ -141,11 +141,12 @@ function TunerCuerpo({ compact, mini, initialPreferences }) {
   }, [isRunning, detectedFrequency, centsDeviation, pitchHistory]);
 
   // Clear history when tuner stops
+  const { clearHistory } = pitchHistory;
   useEffect(() => {
     if (!isRunning) {
-      pitchHistory.clearHistory();
+      clearHistory();
     }
-  }, [isRunning, pitchHistory.clearHistory]);
+  }, [isRunning, clearHistory]);
 
   // Versión simplificada para el panel flotante: la nota, una barra de
   // cents y el botón. La frecuencia de referencia, las cuerdas y los tonos siguen en la

@@ -131,3 +131,28 @@ body {
     scroll-behavior: auto !important;
   }
 }
+
+/* "Saltar al contenido": fuera de la vista hasta que el teclado llega a él */
+.saltar-al-contenido {
+  position: absolute;
+  top: 0.5rem;
+  left: 0.5rem;
+  z-index: 2000;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-md);
+  background: var(--color-primary);
+  color: var(--on-primary);
+  font-weight: 600;
+  text-decoration: none;
+  transform: translateY(-200%);
+}
+
+.saltar-al-contenido:focus {
+  transform: none;
+}
+
+/* El contenido recibe el foco al cambiar de pantalla (para el lector de
+   pantalla), pero no es un control: sin anillo */
+#contenido:focus {
+  outline: none;
+}

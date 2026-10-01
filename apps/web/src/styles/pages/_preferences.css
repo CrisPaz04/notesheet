@@ -195,7 +195,7 @@
 .font-size-labels {
   display: flex;
   justify-content: space-between;
-  color: var(--text-light-muted);
+  color: var(--text-light-secondary);
   font-size: 0.8rem;
 }
 

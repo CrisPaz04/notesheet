@@ -125,6 +125,22 @@
     gap: 1.5rem;
   }
   
+  /* Las tarjetas fuera de la pantalla no se maquetan ni se pintan hasta que
+     se acercan (con el repertorio entero son más de cien). El alto reservado
+     es el de una tarjeta, para que la barra de desplazamiento no salte. */
+  .recent-item,
+  .list-item {
+    content-visibility: auto;
+  }
+
+  .recent-item {
+    contain-intrinsic-size: auto 210px;
+  }
+
+  .list-item {
+    contain-intrinsic-size: auto 72px;
+  }
+
   .recent-item {
     background: rgba(var(--overlay-rgb), 0.05);
     border: 1px solid var(--border-light);
@@ -508,3 +524,9 @@
       justify-content: center;
     }
   }
+
+/* Marca invisible al final de las canciones pintadas: al acercarse, la
+   siguiente tanda (Dashboard.jsx, carga progresiva) */
+.dashboard-centinela {
+  height: 1px;
+}

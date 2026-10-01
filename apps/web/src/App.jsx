@@ -5,6 +5,7 @@ import { AuthProvider } from "./context/AuthContext";
 import { useTheme } from "./hooks/useTheme";
 import { useAuth } from "./context/AuthContext";
 import LoadingSpinner from "./components/LoadingSpinner";
+import { SaltarAlContenido, FocoAlCambiarDePantalla } from "./components/NavegacionAccesible";
 import { lazyConRecarga } from "./lib/lazyConRecarga";
 
 // Páginas (carga diferida: cada ruta viaja en su propio chunk).
@@ -93,10 +94,12 @@ function AppLayout() {
   
   return (
     <div className={`d-flex flex-column min-vh-100 ${theme === 'dark' ? 'bg-dark text-light' : ''}`}>
+      <SaltarAlContenido />
+      <FocoAlCambiarDePantalla />
       {/* Solo mostrar navbar si NO estamos en páginas de auth */}
       {!isAuthPage && <Navbar />}
       
-      <main className={`flex-grow-1 ${isFullScreenPage ? '' : 'container py-4'}`}>
+      <main id="contenido" tabIndex={-1} className={`flex-grow-1 ${isFullScreenPage ? '' : 'container py-4'}`}>
         <Suspense fallback={<LoadingSpinner />}>
         <Routes>
           {/* Todas tus rutas existentes */}

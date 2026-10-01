@@ -27,13 +27,16 @@ function Footer() {
               <Icono nombre="github-logo" className="me-1" />
               GitHub
             </a>
+            {/* Antes un mailto a soporte@notesheet.com, un correo que no
+                existe: lo que se escribiera ahí se perdía */}
             <a
-              href="mailto:soporte@notesheet.com"
+              href="https://github.com/CrisPaz04/notesheet/issues"
               className="footer-link"
-              title="Contacto"
+              target="_blank"
+              rel="noopener noreferrer"
             >
-              <Icono nombre="envelope-simple" className="me-1" />
-              Contacto
+              <Icono nombre="chat-text" className="me-1" />
+              Sugerencias y errores
             </a>
           </div>
         </div>

@@ -70,7 +70,7 @@
   }
   
   .playlist-card-meta {
-    color: var(--text-light-muted);
+    color: var(--text-light-secondary);
     font-size: 0.9rem;
     display: flex;
     align-items: center;
@@ -173,16 +173,18 @@
     box-shadow: 0 5px 15px rgba(var(--color-primary-rgb), 0.3);
   }
   
+  /* El rojo del tema sobre un fondo neutro: sobre su propio tinte rojo
+     bajaba de 4,5:1 en cinco temas */
   .btn-playlist-danger {
-    background: rgba(220, 53, 69, 0.1);
-    border-color: rgba(220, 53, 69, 0.3);
+    background: rgba(var(--overlay-rgb), 0.04);
+    border-color: rgba(var(--overlay-rgb), 0.2);
     color: var(--color-danger);
   }
   
   .btn-playlist-danger:hover {
-    background: rgba(220, 53, 69, 0.2);
+    background: rgba(var(--overlay-rgb), 0.08);
     color: var(--color-danger);
-    border-color: rgba(220, 53, 69, 0.5);
+    border-color: var(--color-danger);
   }
   
   .empty-playlists-state {
