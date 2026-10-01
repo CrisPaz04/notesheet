@@ -479,6 +479,12 @@ el uid (`ponerUsuarioEnSentry`), nunca correo ni nombre. La versión es el commi
 `SENTRY_ORG` y `SENTRY_PROJECT` en Netlify, el build sube los source maps y los borra del
 sitio publicado; sin token no se generan.
 
+`VITE_SENTRY_DSN` ya está en Netlify (todos los contextos; la organización de Sentry es
+`notesheet`). Ojo con el conector de Netlify: al crear una variable pidiendo un contexto y
+un alcance concretos (`production` + `builds`) respondió "upserted" y no guardó nada; con
+los valores por defecto sí. Comprueba siempre con la lista de variables, y recuerda que una
+variable nueva no llega a producción hasta el siguiente deploy.
+
 ## Environment Variables
 
 Vite requires `VITE_` prefix. Firebase credentials go in the **repo-root** `.env` (see `.env.example`);
