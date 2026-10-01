@@ -9,15 +9,24 @@ vi.mock('@sentry/react', () => ({
   reactErrorHandler: (...a) => mockHandler(...a),
 }));
 
-const { iniciarSentry, opcionesDeRaiz, ponerUsuarioEnSentry } = await import('../lib/sentry');
+// sentry.js guarda en el módulo si quedó activo, y en la app se inicia una
+// sola vez. Cada test lo importa de nuevo: si no, el que inicia Sentry lo deja
+// activo para el siguiente, y "sin DSN" solo pasaba si corría el primero.
+let iniciarSentry, opcionesDeRaiz, ponerUsuarioEnSentry;
 
-beforeEach(() => vi.clearAllMocks());
+beforeEach(async () => {
+  vi.clearAllMocks();
+  vi.resetModules();
+  ({ iniciarSentry, opcionesDeRaiz, ponerUsuarioEnSentry } = await import('../lib/sentry'));
+});
 
 describe('registro de errores (Sentry)', () => {
   it('sin DSN no se inicia nada: desarrollo, tests y antes de crear la cuenta', () => {
     expect(iniciarSentry({})).toBe(false);
     expect(mockInit).not.toHaveBeenCalled();
     expect(opcionesDeRaiz()).toEqual({});
+    ponerUsuarioEnSentry({ uid: 'u1' });
+    expect(mockSetUser).not.toHaveBeenCalled();
   });
 
   it('con DSN se inicia, sin datos personales', () => {
