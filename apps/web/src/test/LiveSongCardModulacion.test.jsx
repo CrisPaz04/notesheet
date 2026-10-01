@@ -7,6 +7,10 @@ import { renderSongContent } from '@notesheet/core';
 // Una canción que modula, en la sesión en vivo: un selector por modulación
 // junto al de la tonalidad de la banda, y el "Tú" con las dos tonalidades.
 
+// La tarjeta llega a @notesheet/api por el visor de PDF (usePdfDocument). Sin
+// esto, cargarla inicializa Firebase y, sin .env (CI), falla el archivo entero.
+vi.mock('@notesheet/api', () => ({ getScoreUrl: vi.fn() }));
+
 const { default: LiveSongCard } = await import('../components/live/LiveSongCard');
 
 const DOC = { id: 's1', title: 'Regocíjate Sión', key: 'LAm', content: 'LA SI DO\n## Ascenso [SIm]\nSI DO# RE' };
