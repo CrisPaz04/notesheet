@@ -252,6 +252,28 @@
     gap: var(--spacing-sm);
   }
 
+  /* Un botón desactivado tiene que parecerlo: antes se veía igual que los
+     demás y, como el motivo solo iba en un `title`, en la tablet parecía roto */
+  .btn-song-action:disabled,
+  .btn-playlist-action:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+
+  /* El motivo, en su propia línea al final de la fila de botones */
+  .action-buttons-song .aviso-boton-desactivado {
+    flex-basis: 100%;
+    order: 99;
+  }
+
+  .aviso-boton-desactivado {
+    margin: 0;
+    color: var(--text-light-secondary);
+    font-size: 0.9rem;
+  }
+
   /* Una vista (letra, acordes) de una canción que aún no la tiene */
   .vista-vacia .btn-song-action {
     display: inline-flex;
@@ -424,6 +446,10 @@
     .controls-group,
     .action-buttons-song {
       justify-content: center;
+    }
+
+    .action-buttons-song .aviso-boton-desactivado {
+      text-align: center;
     }
     
     .song-meta-grid {

@@ -61,6 +61,19 @@ describe('abrir una sesión desde una lista', () => {
     expect(screen.getByRole('button')).toBeDisabled();
   });
 
+  // Antes el motivo solo iba en el `title`, que en una tablet no sale nunca, y
+  // el botón desactivado se veía igual que los demás: parecía roto
+  it('con la lista vacía dice por qué, a la vista y ligado al botón', () => {
+    render(<StartLiveButton playlist={{ ...LISTA, songs: [] }} user={USER} />);
+    const motivo = screen.getByText('Añade canciones a la lista para abrir una sesión en vivo.');
+    expect(screen.getByRole('button')).toHaveAccessibleDescription(motivo.textContent);
+  });
+
+  it('con canciones no enseña ningún aviso', () => {
+    render(<StartLiveButton playlist={LISTA} user={USER} />);
+    expect(screen.queryByText(/añade canciones/i)).not.toBeInTheDocument();
+  });
+
   it('avisa si no se pudo abrir y deja reintentar', async () => {
     mockCreateSession.mockRejectedValue(new Error('sin red'));
     render(<StartLiveButton playlist={LISTA} user={USER} />);

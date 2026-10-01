@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useId, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { createSession } from "@notesheet/api";
 import Icono from "../Icono";
@@ -14,6 +14,11 @@ export default function StartLiveButton({ playlist, user, className = "" }) {
   const [abriendo, setAbriendo] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
+  const idMotivo = useId();
+  // Una lista vacía no tiene nada que compartir. El motivo va escrito y ligado
+  // al botón: con solo un `title` no se veía en una tablet, y el botón
+  // desactivado parecía roto ("le doy y no pasa nada")
+  const vacia = !playlist?.songs?.length;
 
   const abrir = async () => {
     setAbriendo(true);
@@ -37,16 +42,19 @@ export default function StartLiveButton({ playlist, user, className = "" }) {
         type="button"
         className={className || "btn-song-action btn-song-primary"}
         onClick={abrir}
-        disabled={abriendo || !playlist?.songs?.length}
-        title={
-          playlist?.songs?.length
-            ? "Abrir una sesión para que todos vean la misma lista"
-            : "Añade canciones a la lista antes de abrir una sesión"
-        }
+        disabled={abriendo || vacia}
+        title={vacia ? undefined : "Abrir una sesión para que todos vean la misma lista"}
+        aria-describedby={vacia ? idMotivo : undefined}
       >
         <Icono nombre="broadcast" />
         {abriendo ? "Abriendo..." : "Sesión en vivo"}
       </button>
+
+      {vacia && (
+        <p id={idMotivo} className="aviso-boton-desactivado">
+          Añade canciones a la lista para abrir una sesión en vivo.
+        </p>
+      )}
 
       {error && (
         <div className="alert alert-danger mt-2" role="alert">{error}</div>
