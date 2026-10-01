@@ -115,3 +115,19 @@ body {
 .icono > svg {
   display: block;
 }
+
+/* "Reducir movimiento" del sistema: fuera las entradas, rebotes y pulsos
+   decorativos (el Dashboard animaba cada tarjeta). Los estados siguen
+   cambiando, solo que sin animación: el pulso del metrónomo es una clase
+   (`.beat-indicator.active`) y se sigue viendo. Los indicadores de carga sí
+   giran: parados no dirían que algo está pasando. */
+@media (prefers-reduced-motion: reduce) {
+  *:not([class*="loading-spinner"]):not(.spinner-border):not(.spinner-grow),
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

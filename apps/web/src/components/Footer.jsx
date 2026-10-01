@@ -9,7 +9,7 @@ function Footer() {
           <div className="footer-identidad">
             <div className="footer-brand">
               <Icono nombre="music-notes" className="footer-brand-icon" />
-              <h5 className="footer-brand-name">NoteSheet</h5>
+              <p className="footer-brand-name">NoteSheet</p>
             </div>
             <p className="footer-text footer-lema">
               Herramienta para músicos de iglesia - Iglesia Misión Cristiana Elim Honduras

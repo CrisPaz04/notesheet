@@ -465,9 +465,9 @@ function Dashboard() {
                         <div className="recent-item-icon">
                           <Icono nombre="music-notes" />
                         </div>
-                        <h4 className="recent-item-title">
+                        <h3 className="recent-item-title">
                           {song.title || "Sin título"}
-                        </h4>
+                        </h3>
                         {canEditSongs() && song.isOwn && (
                           <button
                             className="song-delete-btn"
@@ -509,9 +509,9 @@ function Dashboard() {
                         <Icono nombre="music-notes" />
                       </div>
                       <div className="list-item-content">
-                        <h4 className="list-item-title">
+                        <h3 className="list-item-title">
                           {song.title || "Sin título"}
-                        </h4>
+                        </h3>
                         <p className="list-item-meta">
                           {nombrarTonalidad(song.key, notacion) || "Sin tonalidad"} • {song.type || "Sin tipo"}
                           {song.version && ` • Versión de: ${song.version}`}

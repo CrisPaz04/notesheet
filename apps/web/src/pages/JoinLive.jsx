@@ -27,7 +27,7 @@ function JoinLive() {
     <div className="live-container">
       <form className="live-message live-message--entrar" onSubmit={entrar}>
         <Icono nombre="broadcast" className="live-message-icon" />
-        <h2>Entrar a una sesión</h2>
+        <h1 className="h2">Entrar a una sesión</h1>
         <p>Ingresa el código de la sesión.</p>
 
         <input

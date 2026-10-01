@@ -44,7 +44,7 @@ export default function GuestGate({ code }) {
     <div className="live-container">
       <form className="live-message" onSubmit={entrar}>
         <Icono nombre="music-notes" className="live-message-icon" />
-        <h2>Te invitaron a una sesión</h2>
+        <h1 className="h2">Te invitaron a una sesión</h1>
         <p>
           Código <strong>{code}</strong>. Pon tu nombre para que el resto sepa
           quién eres.

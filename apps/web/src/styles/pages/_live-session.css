@@ -104,7 +104,7 @@
   display: inline-block;
 }
 
-.live-dot.online { background: #22c55e; }
+.live-dot.online { background: var(--color-success); }
 .live-dot.offline { background: var(--text-light-muted); }
 
 /* --- Avisos --- */
@@ -204,8 +204,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 40px;
-  min-height: 40px;
+  min-width: 44px;
+  min-height: 44px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border-light);
   background: transparent;
@@ -567,11 +567,6 @@
   margin: 0;
 }
 
-.live-select-compact {
-  min-height: 38px;
-  font-size: 0.88rem;
-  width: auto;
-}
 
 /* Dos insignias porque son dos cosas distintas: la de concierto es la que
  * comparte la banda, y la "mía" es lo que leo yo con mi instrumento. Cuando
@@ -610,7 +605,8 @@
   margin-top: var(--spacing-xl);
 }
 
-.live-message h2 {
+/* Es el título de la pantalla (h1), con el tamaño de un h2 (`.h2`) */
+.live-message :is(h1, h2) {
   margin: 0;
   color: var(--text-light-primary);
 }

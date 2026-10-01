@@ -155,3 +155,20 @@
     max-width: calc(100% - 2rem);
   }
 }
+
+/* Las utilidades de texto apagado de Bootstrap llevan su gris fijo, que en los
+   temas oscuros se quedaba por debajo de 3:1. Con el del tema. */
+.text-secondary,
+.text-muted {
+  color: var(--text-light-muted) !important;
+}
+
+/* El <code> de Bootstrap es rosa (#d63384): en los temas oscuros apenas se
+   leía (1,9:1). Va con el texto del tema sobre un fondo apenas marcado. */
+code {
+  color: var(--text-light-primary);
+  background: rgba(var(--overlay-rgb), 0.08);
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
+  font-size: 0.9em;
+}

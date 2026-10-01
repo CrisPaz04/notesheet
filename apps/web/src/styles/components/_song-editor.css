@@ -393,7 +393,7 @@
   
   .editor-tab .tab-close:hover {
     background: rgba(220, 53, 69, 0.2);
-    color: #dc3545;
+    color: var(--color-danger);
   }
   
   .editor-content {
@@ -531,7 +531,7 @@
   }
   
   .editor-help-text {
-    color: var(--text-light-muted);
+    color: var(--text-light-secondary);
     font-size: 0.85rem;
     margin-top: var(--spacing-sm);
     padding: 0.75rem;
@@ -607,7 +607,7 @@
 }
 
 .grabacion-resumen-vacia {
-  color: var(--text-light-muted);
+  color: var(--text-light-secondary);
 }
 
 .grabacion-acciones {
@@ -722,6 +722,8 @@
 }
 
 .enlace-ver-en {
+  display: inline-block;
+  padding: 0.3rem 0;
   color: var(--color-primary);
   text-decoration: none;
 }

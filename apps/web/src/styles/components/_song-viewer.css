@@ -40,7 +40,7 @@
   }
   
   .song-meta-label {
-    color: var(--text-light-muted);
+    color: var(--text-light-secondary);
     font-size: 0.85rem;
     font-weight: 500;
     text-transform: uppercase;
@@ -176,6 +176,7 @@
     transition: var(--transition-fast);
     font-size: 1rem;
     min-width: 45px;
+    min-height: 44px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -238,7 +239,7 @@
   
   .view-toggle-btn-song.active {
     background: rgba(var(--color-primary-rgb), 0.2);
-    color: var(--color-primary);
+    color: var(--text-light-primary);
   }
   
   .view-toggle-btn-song:not(:last-child) {
@@ -311,21 +312,27 @@
   .view-dots {
     display: flex;
     justify-content: center;
-    gap: var(--spacing-sm);
+    gap: 0;
     margin-bottom: var(--spacing-sm);
   }
   
+  /* El punto mide 12 px, pero se toca en 28: el relleno no se pinta
+     (background-clip). Con 12 px a secas no llegaba ni al mínimo de 24. */
   .view-dot {
     width: 12px;
     height: 12px;
+    padding: 8px;
+    box-sizing: content-box;
+    background-clip: content-box;
+    border: none;
     border-radius: 50%;
-    background: rgba(var(--overlay-rgb), 0.2);
+    background-color: rgba(var(--overlay-rgb), 0.2);
     cursor: pointer;
     transition: var(--transition-fast);
   }
   
   .view-dot.active {
-    background: var(--color-primary);
+    background-color: var(--color-primary);
     transform: scale(1.2);
   }
   
@@ -545,6 +552,7 @@
 }
 
 .datos-grabacion summary {
+  padding: 0.6rem 0; /* 44 px para tocarlo; la línea sola medía 26 */
   cursor: pointer;
   color: var(--text-light-primary);
   font-weight: 600;
@@ -604,4 +612,8 @@
   gap: 0.5rem;
   color: var(--text-light-secondary);
   font-size: 0.9rem;
+}
+
+.mi-voz .desplegable--compacto .desplegable-boton {
+  min-height: 44px;
 }

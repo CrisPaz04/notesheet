@@ -21,11 +21,13 @@
   box-shadow: var(--shadow-medium);
 }
 
+/* Todo lo que se toca en la barra y en los paneles mide al menos 44 px: se usa
+   en el atril, de pie y a veces con el instrumento en la otra mano */
 .barra-herramientas-btn {
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  min-height: 40px;
+  min-height: 44px;
   padding: 0.4rem 0.85rem;
   border: none;
   border-radius: 999px;
@@ -111,8 +113,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
+  width: 44px;
+  height: 44px;
   border: none;
   border-radius: var(--radius-sm);
   background: transparent;
@@ -174,6 +176,7 @@
 
 .panel-lista-ir {
   cursor: pointer;
+  min-height: 44px; /* cada canción del panel se toca para ir a ella */
 }
 
 .panel-lista-ir:hover {
@@ -249,6 +252,8 @@
   }
 
   .barra-herramientas-btn {
+    min-width: 44px;
+    justify-content: center;
     padding: 0.4rem 0.75rem;
   }
 
@@ -318,8 +323,8 @@
 }
 
 .metronome-mini-paso {
-  min-width: 40px;
-  min-height: 40px;
+  min-width: 44px;
+  min-height: 44px;
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-sm);
   background: transparent;
@@ -344,6 +349,13 @@
 
 .metronome-mini-play {
   margin-left: auto;
+}
+
+/* Tap, Iniciar y el compás: en el panel iban en tamaño pequeño (31 px) */
+.metronome-mini .btn,
+.tuner-mini .btn,
+.metronome-mini .desplegable--compacto .desplegable-boton {
+  min-height: 44px;
 }
 
 .tuner-mini-lectura {
@@ -490,6 +502,10 @@
 
 .piano-octava-btn {
   display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
   padding: 0.3rem 0.5rem;
   border: 1px solid var(--border-light);
   border-radius: var(--radius-md);
@@ -516,7 +532,8 @@
 }
 
 .piano-sonido-btn {
-  padding: 0.25rem 0.75rem;
+  min-height: 44px;
+  padding: 0.25rem 0.9rem;
   border: 0;
   background: transparent;
   color: var(--text-light-secondary);
@@ -526,7 +543,7 @@
 
 .piano-sonido-btn.activo {
   background: rgba(var(--color-primary-rgb), 0.18);
-  color: var(--color-primary);
+  color: var(--text-light-primary);
 }
 
 /* Las teclas que el instrumento elegido no alcanza (la trompeta, por abajo y

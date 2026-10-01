@@ -272,7 +272,7 @@
 }
 
 .metronome-subdivision span {
-  font-size: 0.7rem;
+  font-size: 0.75rem; /* 12 px: a 11 no se leía en el atril */
   font-weight: 600;
   color: var(--text-light-secondary);
 }

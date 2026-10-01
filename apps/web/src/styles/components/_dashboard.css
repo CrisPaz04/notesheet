@@ -167,7 +167,7 @@
   }
   
   .recent-item-preview {
-    color: rgba(var(--overlay-rgb), 0.55);
+    color: var(--text-light-secondary);
     font-size: 0.85rem;
     background: rgba(0, 0, 0, 0.2);
     padding: var(--spacing-sm);
@@ -315,8 +315,10 @@
   }
   
   .filter-tab.active {
+    /* El texto con el del tema y no con el acento: el acento sobre su propio
+       fondo tintado bajaba a 2,8:1 en el tema claro. Lo activo lo marca el fondo. */
     background: rgba(var(--color-primary-rgb), 0.2);
-    color: var(--color-primary);
+    color: var(--text-light-primary);
   }
   
   .filter-tab:hover:not(.active) {
@@ -422,21 +424,32 @@
     border: none;
     color: rgba(var(--overlay-rgb), 0.4);
     padding: 0.5rem;
+    min-width: 44px;
+    min-height: 44px;
     border-radius: var(--radius-sm);
     cursor: pointer;
     transition: var(--transition-fast);
-    opacity: 0;
     margin-left: auto;
   }
 
-  .recent-item:hover .song-delete-btn,
-  .list-item:hover .song-delete-btn {
-    opacity: 1;
+  /* Escondido hasta pasar el ratón solo donde hay ratón. Antes iba por ancho
+     (visible por debajo de 768 px), y en una tablet apaisada o en la Tab S8
+     Ultra el botón era invisible pero se podía tocar. */
+  @media (hover: hover) and (pointer: fine) {
+    .song-delete-btn {
+      opacity: 0;
+    }
+
+    .recent-item:hover .song-delete-btn,
+    .list-item:hover .song-delete-btn,
+    .song-delete-btn:focus-visible {
+      opacity: 1;
+    }
   }
 
   .song-delete-btn:hover {
     background: rgba(220, 53, 69, 0.2);
-    color: #dc3545;
+    color: var(--color-danger);
   }
 
   .list-delete-btn {
@@ -451,11 +464,6 @@
 
     .welcome-title {
       font-size: 1.5rem;
-    }
-
-    /* Show delete button on mobile (no hover) */
-    .song-delete-btn {
-      opacity: 1;
     }
   }
   /* Solo el móvil: una canción por fila y la cabecera de la lista apilada.

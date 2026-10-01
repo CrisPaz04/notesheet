@@ -40,6 +40,7 @@
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+    line-height: 1.2;
     margin: 0;
   }
   
@@ -65,6 +66,12 @@
     text-decoration: none;
     font-size: 0.9rem;
     transition: var(--transition-fast);
+  }
+
+  /* GitHub y Contacto, sueltos: altura para tocarlos (median 23 px) */
+  .footer-links .footer-link {
+    display: inline-block;
+    padding: 0.4rem 0;
   }
   
   .footer-link:hover {

@@ -97,7 +97,15 @@ describe('PlaylistEditor', () => {
 
     it('arranca con la fecha de hoy y la lista vacía', async () => {
       await renderNueva();
-      const hoy = new Date().toISOString().split('T')[0];
+      // El hoy del reloj del músico, no el de UTC: con toISOString este test
+      // fallaba a partir de las 18:00 en Honduras, que es justo el error que
+      // hoyParaInput corrige en la app
+      const ahora = new Date();
+      const hoy = [
+        ahora.getFullYear(),
+        String(ahora.getMonth() + 1).padStart(2, '0'),
+        String(ahora.getDate()).padStart(2, '0'),
+      ].join('-');
       expect(document.querySelector('input[type="date"]')).toHaveValue(hoy);
       expect(screen.getByText('Lista vacía')).toBeInTheDocument();
     });

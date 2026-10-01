@@ -375,7 +375,7 @@ function LiveSession() {
       <div className="live-container">
         <div className="live-message">
           <Icono nombre="question" className="live-message-icon" />
-          <h2>No encontramos esa sesión</h2>
+          <h1 className="h2">No encontramos esa sesión</h1>
           <p>
             El código <strong>{code}</strong> no existe o la sesión ya caducó.
             Pide el enlace otra vez a quien la abrió.
@@ -391,7 +391,7 @@ function LiveSession() {
       <div className="live-container">
         <div className="live-message">
           <Icono nombre="warning" className="live-message-icon" />
-          <h2>Algo va mal con la sesión</h2>
+          <h1 className="h2">Algo va mal con la sesión</h1>
           <p>{error}</p>
         </div>
       </div>
@@ -403,7 +403,7 @@ function LiveSession() {
       <div className="live-container">
         <div className="live-message">
           <Icono nombre="check-circle" className="live-message-icon" />
-          <h2>La sesión terminó</h2>
+          <h1 className="h2">La sesión terminó</h1>
           <p>{session?.name}</p>
           {session?.playlistId && (
             <Link to={`/playlists/${session.playlistId}`} className="btn-live">
