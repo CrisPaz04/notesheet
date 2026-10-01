@@ -28,8 +28,11 @@ describe('registro de errores (Sentry)', () => {
       dsn: 'https://clave@o1.ingest.sentry.io/1',
       environment: 'production',
       release: 'abc123',
-      sendDefaultPii: false,
+      // En la v11 de Sentry, sendDefaultPii ya no cuenta: sin esto, Sentry
+      // infería la IP de cada músico (se vio en el primer error de prueba)
+      dataCollection: { userInfo: false },
     });
+    expect(opciones).not.toHaveProperty('sendDefaultPii');
   });
 
   it('con Sentry activo, React le pasa sus errores', () => {

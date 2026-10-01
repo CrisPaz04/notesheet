@@ -473,7 +473,7 @@ punta. Si falla, deja el informe de Playwright (capturas y traza) como artefacto
 `lib/sentry.js`. Solo se activa con `VITE_SENTRY_DSN` (variable de Netlify; el DSN va en el
 JavaScript público y está en `SECRETS_SCAN_OMIT_KEYS`). Sin él no hace nada: desarrollo,
 tests y CI. React 19 le pasa sus errores con los ganchos de `createRoot`
-(`opcionesDeRaiz`). **Sin datos personales**: `sendDefaultPii: false` y del usuario solo
+(`opcionesDeRaiz`). **Sin datos personales**: `dataCollection: { userInfo: false }` (en la v11 `sendDefaultPii` ya no cuenta, y sin esto se guardaba la IP) y del usuario solo
 el uid (`ponerUsuarioEnSentry`), nunca correo ni nombre. La versión es el commit
 (`COMMIT_REF` de Netlify, `__VERSION__` en el código). Con `SENTRY_AUTH_TOKEN`,
 `SENTRY_ORG` y `SENTRY_PROJECT` en Netlify, el build sube los source maps y los borra del

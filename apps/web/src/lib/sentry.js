@@ -22,7 +22,10 @@ export function iniciarSentry(env, version) {
     dsn,
     environment: env.MODE || "production",
     release: version || undefined,
-    sendDefaultPii: false,
+    // Ni IP ni datos de usuario automáticos. En la v11, `sendDefaultPii` ya no
+    // cuenta: con él, el primer error de prueba llegó con la IP de quien lo
+    // provocó. El id que se pone a mano con setUser sí se manda.
+    dataCollection: { userInfo: false, httpBodies: [] },
     // Ruido de los navegadores que no indica ningún fallo de la app
     ignoreErrors: ["ResizeObserver loop limit exceeded", "ResizeObserver loop completed with undelivered notifications"],
   });
