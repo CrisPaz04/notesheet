@@ -906,6 +906,32 @@ describe('Dashboard: carga progresiva', () => {
     expect(tarjetas()).toBe(60);
   });
 
+  it('al cambiar el orden vuelve a empezar por la primera tanda', async () => {
+    render(<Dashboard />);
+    await screen.findByText('Canción 00');
+    act(() => alVer([{ isIntersecting: true }]));
+    expect(tarjetas()).toBe(60);
+    await userEvent.click(screen.getByRole('button', { name: 'Ordenar de la A a la Z' }));
+    expect(tarjetas()).toBe(24);
+  });
+
+  // Con 1200 px de margen el centinela suele estar ya a la vista al aparecer,
+  // y el observador avisa enseguida. Este falso avisa dentro de observe(), en
+  // el commit, antes de que corran los efectos: un reinicio de la tanda en un
+  // useEffect llegaba después, la pisaba y la lista se quedaba en 24 (fallaba
+  // a veces el test de arriba, según cuándo resolvía findByText).
+  it('si el centinela ya está a la vista al aparecer, no se queda en la primera tanda', async () => {
+    class ObservadorQueYaVe {
+      constructor(cb) { this.cb = cb; }
+      observe() { this.cb([{ isIntersecting: true }]); }
+      disconnect() {}
+    }
+    vi.stubGlobal('IntersectionObserver', ObservadorQueYaVe);
+    render(<Dashboard />);
+    await screen.findByText('Canción 00');
+    await waitFor(() => expect(tarjetas()).toBe(60));
+  });
+
   it('al buscar, se busca entre todas, no solo entre las pintadas', async () => {
     render(<Dashboard />);
     await screen.findByText('Canción 00');

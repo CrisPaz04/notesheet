@@ -135,8 +135,16 @@ function Dashboard() {
   // Carga progresiva: al cambiar la búsqueda, el filtro o el orden se vuelve a
   // empezar por la primera tanda. Sin IntersectionObserver (los tests, algún
   // navegador viejo) se pintan todas.
+  // El reinicio va durante el render y no en un useEffect: el efecto corría en
+  // una tarea posterior, y si el observador avisaba antes, su tanda se sumaba y
+  // el reinicio la pisaba. El centinela seguía a la vista, el observador no
+  // volvía a avisar y la lista se quedaba en 24.
   const [cuantas, setCuantas] = useState(TANDA);
-  useEffect(() => { setCuantas(TANDA); }, [filteredSongs]);
+  const [listaDeLaTanda, setListaDeLaTanda] = useState(filteredSongs);
+  if (listaDeLaTanda !== filteredSongs) {
+    setListaDeLaTanda(filteredSongs);
+    setCuantas(TANDA);
+  }
   const hayObservador = typeof IntersectionObserver !== "undefined";
   const visibles = hayObservador ? filteredSongs.slice(0, cuantas) : filteredSongs;
   const quedan = visibles.length < filteredSongs.length;
