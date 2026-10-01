@@ -1,5 +1,6 @@
 ﻿import { createContext, useState, useEffect, useContext } from 'react';
 import { signIn, signOut, registerUser, authStateListener, signInWithGoogle, getUserRole } from '@notesheet/api';
+import { ponerUsuarioEnSentry } from '../lib/sentry';
 
 // Crear el contexto
 const AuthContext = createContext(null);
@@ -14,6 +15,8 @@ export function AuthProvider({ children }) {
     // Escuchar cambios en el estado de autenticación
     const unsubscribe = authStateListener(async (user) => {
       setCurrentUser(user);
+      // Para Sentry, solo el id de la cuenta (nada si no está activo)
+      ponerUsuarioEnSentry(user);
       if (user) {
         // Cargar el rol del usuario
         const role = await getUserRole(user.uid);

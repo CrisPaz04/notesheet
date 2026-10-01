@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 import basicSsl from '@vitejs/plugin-basic-ssl'
 import { fileURLToPath } from 'node:url'
+import { sentryVitePlugin } from '@sentry/vite-plugin'
 
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
@@ -12,10 +13,24 @@ export default defineConfig(({ mode }) => {
   // autofirmado: la primera vez el navegador avisa y hay que aceptarlo.
   const enRed = mode === 'red'
 
+  // La versión desplegada, para Sentry: Netlify pone el commit en COMMIT_REF
+  const version = process.env.COMMIT_REF || 'dev'
+  // Subir los source maps a Sentry solo si hay token (en Netlify): así un error
+  // apunta a la línea del código de verdad. Se borran del sitio tras subirlos,
+  // para no publicar el código fuente.
+  const subirMapas = Boolean(process.env.SENTRY_AUTH_TOKEN)
+
   return {
     plugins: [
       enRed && basicSsl({ name: 'notesheet-dev' }),
       react(),
+      subirMapas && sentryVitePlugin({
+        org: process.env.SENTRY_ORG,
+        project: process.env.SENTRY_PROJECT,
+        authToken: process.env.SENTRY_AUTH_TOKEN,
+        release: { name: version },
+        sourcemaps: { filesToDeleteAfterUpload: ['./dist/**/*.map'] },
+      }),
       VitePWA({
         // El músico no va a ver un aviso de "hay una versión nueva" en mitad
         // del culto: la app se actualiza sola en la siguiente carga.
@@ -87,7 +102,11 @@ export default defineConfig(({ mode }) => {
     server: enRed ? { host: true } : undefined,
     // El .env vive en la raiz del monorepo, no en apps/web
     envDir: fileURLToPath(new URL('../../', import.meta.url)),
+    define: {
+      __VERSION__: JSON.stringify(version),
+    },
     build: {
+      sourcemap: subirMapas ? 'hidden' : false,
       rollupOptions: {
         output: {
           // Separar dependencias grandes para que no viajen en el bundle inicial

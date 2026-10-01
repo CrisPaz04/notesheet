@@ -9,7 +9,8 @@ export default [
     files: ['**/*.{js,jsx}'],
     languageOptions: {
       ecmaVersion: 2020,
-      globals: globals.browser,
+      // __VERSION__: el commit desplegado, lo pone Vite al compilar (vite.config.js)
+      globals: { ...globals.browser, __VERSION__: 'readonly' },
       parserOptions: {
         ecmaVersion: 'latest',
         ecmaFeatures: { jsx: true },
@@ -26,8 +27,15 @@ export default [
       'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]' }],
       'react-refresh/only-export-components': [
         'warn',
-        { allowConstantExport: true },
+        // useAuth vive junto a su proveedor: separarlo obligaría a cambiar 19
+        // imports y los mocks de los tests, y solo afecta a la recarga en caliente
+        { allowConstantExport: true, allowExportNames: ['useAuth'] },
       ],
     },
+  },
+  // La configuración de Vite corre en Node, no en el navegador
+  {
+    files: ['vite.config.js'],
+    languageOptions: { globals: globals.node },
   },
 ]

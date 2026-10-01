@@ -45,7 +45,7 @@
   # de secretos de Netlify la encontraba en el build y lo paraba con
   # "Exposed secrets detected". Se excluye solo esa variable; el escaneo sigue
   # activo para todas las demas. (Ver PLAN-ACORDES-Y-DATOS.md.)
-  SECRETS_SCAN_OMIT_KEYS = "VITE_GETSONGBPM_API_KEY"
+  SECRETS_SCAN_OMIT_KEYS = "VITE_GETSONGBPM_API_KEY,VITE_SENTRY_DSN"
 
 # Un archivo de /assets que no existe tiene que dar 404, no index.html.
 #

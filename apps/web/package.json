@@ -21,6 +21,7 @@
     "@notesheet/api": "^0.1.0",
     "@notesheet/core": "^0.1.0",
     "@phosphor-icons/react": "^2.1.10",
+    "@sentry/react": "^11.1.0",
     "bootstrap": "^5.3.5",
     "easymde": "^2.20.0",
     "pdfjs-dist": "^4.10.38",
@@ -31,6 +32,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.21.0",
+    "@sentry/vite-plugin": "^5.4.0",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.7",
