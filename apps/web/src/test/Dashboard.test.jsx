@@ -914,3 +914,26 @@ describe('Dashboard: carga progresiva', () => {
   });
 });
 
+
+describe('Dashboard: canciones que modulan', () => {
+  const SION = { ...SONGS[0], id: '20', title: 'Mas tú, Jehová', key: 'SIm', tonalidades: ['SIm', 'DO#m'] };
+
+  it('el filtro ofrece también las tonalidades de las modulaciones, y la encuentra por ellas', async () => {
+    const user = userEvent.setup();
+    mockGetAllSongs.mockResolvedValue([...SONGS, SION]);
+    await renderDashboard();
+
+    const selector = screen.getByRole('combobox', { name: 'Filtrar por tonalidad' });
+    expect(opcionesDe(selector)).toEqual(expect.arrayContaining(['SIm', 'DO#m']));
+    await elegirEnDesplegable(user, selector, 'DO#m');
+    // Las del repertorio de prueba desaparecen y queda la que modula
+    expect(tituloVisibles()).toEqual([]);
+    expect(screen.getByText('Mas tú, Jehová')).toBeInTheDocument();
+  });
+
+  it('la tarjeta enseña todas sus tonalidades', async () => {
+    mockGetAllSongs.mockResolvedValue([...SONGS, SION]);
+    await renderDashboard();
+    expect(screen.getAllByText(/SIm → DO#m/).length).toBeGreaterThan(0);
+  });
+});

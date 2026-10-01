@@ -280,6 +280,25 @@ ausencia, o `"pdf"`), `pdfs` (mapa instrumento → nº de voz → variante → *
 en Storage, nunca la URL de descarga).
 
 - Una canción **sin** campo `public` cuenta como privada. Las nuevas nacen públicas.
+- **Modulaciones** (`packages/core/src/music/modulaciones.js`): una cabecera puede llevar
+  la tonalidad entre corchetes, `## Coro [SIm]` o `## [SIm]`, y desde ahí (hasta la
+  siguiente con corchetes) el texto está escrito en ella, en la misma referencia que el
+  resto (Sib en notas y voces, concierto en `acordes`). Así lo escribía ya la banda: las
+  notas de después van en la tonalidad nueva. `key` sigue siendo la del principio.
+  `renderSongContent` / `renderChordChart` mueven **cada tramo por su cuenta**, con la
+  armadura de su tonalidad, y la sección sale con `tonalidad` aparte del título
+  (`TituloSeccion`: "Ascenso · SIm"); `tonalidadesLeidas` da "LAm → SIm". Sin corchetes
+  el resultado es el de siempre (lo vigila el repertorio, más una propiedad que compara
+  cada tramo con pintarlo suelto). Lo que va entre corchetes y no es tonalidad
+  (`## Solo [2 veces]`) es título. Al guardar, el editor escribe `tonalidades` (todas, si
+  modula; si no, null) para el filtro y la búsqueda (`tonalidadesDeCancion`). El
+  sugeridor de tonalidad solo mira el primer tramo. Las canciones en PDF no modulan.
+- Una entrada de lista o de sesión puede llevar `modulaciones` (nº de modulación →
+  semitonos), con un selector por modulación (`SelectorModulacion`) junto al de la
+  tonalidad. El ajuste se cuenta **desde donde iría moviéndose con la canción**, no desde
+  la del principio: conserva el modo y "sin modulación" lo sigue siendo si luego se
+  cambia `key`. Pasa siempre por `limpiarModulaciones` (sin ceros, acotado a ±6); en vivo,
+  `setModulacion`, que sube `version` como las demás.
 - "Versión de" puede ser **varios nombres**: se guardan en `versiones` (lista) y,
   unidos por comas, en `version`, que es lo que leen las tarjetas, el visor y la
   búsqueda. Las canciones anteriores solo tienen `version`: `leerVersiones`
@@ -533,7 +552,7 @@ SPA (el orden importa).
 ## Notes
 
 - No TypeScript - pure JavaScript
-- Vitest configured; 2015 tests in `apps/web/src/test/` (run with `npm run test:run`)
+- Vitest configured; 2099 tests in `apps/web/src/test/` (run with `npm run test:run`)
 - Los tests se validan con **mutaciones**: se rompe el código a propósito y se comprueba
   que algún test falla. Ha destapado cuatro tests que pasaban por la razón equivocada,
   y un bug de verdad en `scores.js` (las voces se ordenaban como texto, así que la 10
@@ -602,6 +621,18 @@ SPA (el orden importa).
   encaja 0,3 peor que la mejor. `keySuggestion.test.js` fija contra el
   repertorio las cifras con que se eligió el margen: si tocas el perfil o el
   margen y empeoran, salta ahí.
+- **Barra del editor** (`components/cancion/BarraEditor.jsx`): botones para las
+  secciones (`## Coro`…, "Fin de sección" = `##`), las notas en la notación del músico con
+  `#` y `b` que se pegan a la anterior, y "Modulación" (elige la tonalidad, preelegida la
+  del tramo del cursor). Insertan donde está el cursor de CodeMirror
+  (`getCodemirrorInstance`, callback estable) sin quitarle el foco (`mousedown`
+  con `preventDefault`); la lógica es pura, en `utils/insertarEnEditor.js`.
+  **Al guardar**, las notas se escriben en su forma única (`normalizarNotas`: "Re" →
+  "RE", "Sib" → "SIb"), solo en las líneas de notas. El 1-10-2026 se pasó lo mismo por
+  las 120 canciones ya guardadas (y las cabeceras en mayúsculas, `## SOLO` → `## Solo`):
+  las copias de antes están en `copias/`, que git ignora (el repositorio es público).
+- Los títulos de sección se ven **como se escribieron**: `.song-section-title` ya no
+  lleva `text-transform: uppercase`.
 - `SimpleMDE` (`react-simplemde-editor`) necesita `options` **estables**:
   una constante fuera del componente o `useMemo`. Si cambian de identidad
   rehace el editor, y como cada tecla provoca un render, se perdía el foco al
@@ -804,10 +835,14 @@ Trabajo acordado que **todavía no está hecho**. Cada punto se aborda por
 separado; lo que lleva una nota es porque ya se comprobó en el código y
 ahorra volver a buscarlo.
 
-### Modelo de datos
+### Datos
 
-- **Una canción con más de una tonalidad.** A media canción puede haber un
-  ascenso o un descenso, y hoy `key` es un solo valor.
+- **Marcar las modulaciones del repertorio.** La función está hecha, pero ninguna
+  canción de la app la usa todavía. Las claras, por sus notas: Regocíjate Sión
+  (`## Ascenso [SIm]`), Venid aclamemos (`[FA#m]`), Yo me alegro en tu poder
+  (`## Cambio [FA#m]`) y Mas tú, Jehová (`## Do# menor` → `## Modulación [DO#m]`).
+  Regocíjate oh moradora de Sión, de LA a DO (`## Ascenso [DO]`, confirmado por la
+  banda). Cristo vive hoy: su "Ascenso" sigue en FA, no es modulación.
 
 ### Música
 

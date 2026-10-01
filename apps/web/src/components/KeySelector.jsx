@@ -2,24 +2,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { nombrarTonalidad } from "@notesheet/core";
 import Icono from "./Icono";
-
-const RELATIVE_KEYS = [
-  { major: "DO", minor: "LAm" },
-  { major: "SOL", minor: "MIm" },
-  { major: "RE", minor: "SIm" },
-  { major: "LA", minor: "FA#m" },
-  { major: "MI", minor: "DO#m" },
-  { major: "SI", minor: "SOL#m" },
-  { major: "FA#", minor: "RE#m" },
-  { major: "DO#", minor: "LA#m" },
-  { major: "FA", minor: "REm" },
-  { major: "SIb", minor: "SOLm" },
-  { major: "MIb", minor: "DOm" },
-  { major: "LAb", minor: "FAm" },
-  { major: "REb", minor: "SIbm" },
-  { major: "SOLb", minor: "MIbm" },
-  { major: "DOb", minor: "LAbm" }
-];
+import { TONALIDADES_RELATIVAS as RELATIVE_KEYS } from "../lib/tonalidadesRelativas";
 
 // `notacion` solo cambia cómo se ven las tonalidades; el valor sigue en latina
 function KeySelector({ value, onChange, label = "Tonalidad", notacion = "latin" }) {

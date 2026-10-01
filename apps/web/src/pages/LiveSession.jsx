@@ -110,7 +110,7 @@ function LiveSession() {
   const {
     session, songs, activeSongId, activeIndex,
     estado, error, sinRed, participants, isHost,
-    irACancion, cambiarTonalidad,
+    irACancion, cambiarTonalidad, cambiarModulacion,
     moverCancion, agregarCancion, quitarCancion, cerrarSesion, salir,
     anunciarInstrumento, entrado
   } = useLiveSession(code, { user: currentUser });
@@ -592,6 +592,7 @@ function LiveSession() {
             alineacion={alineacion}
             vista={vista}
             onCambiarTonalidad={cambiarTonalidad}
+            onCambiarModulacion={cambiarModulacion}
             onQuitar={quitarCancion}
             onMover={moverCancion}
             onElegirVoz={elegirVoz}

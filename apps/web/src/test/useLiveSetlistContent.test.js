@@ -335,3 +335,14 @@ describe('la tonalidad de la parte de un PDF', () => {
     expect(trompeta.result.current.canciones[1].pdf.displayKey).toBe('SOL');
   });
 });
+
+describe('modulaciones en la sesión', () => {
+  it('aplica el ajuste de la sesión a la modulación', async () => {
+    mockGetSongById.mockResolvedValue({ id: 's3', title: 'Sión', key: 'LAm', content: 'LA SI\n## Ascenso [SIm]\nSI DO#' });
+    const { result } = montar({ songs: [{ id: 's3', key: 'LAm', originalKey: 'LAm', modulaciones: { 1: -2 } }] });
+
+    await waitFor(() => expect(result.current.canciones[0].rendered).toBeTruthy());
+    const secciones = result.current.canciones[0].rendered.formatted.sections;
+    expect(secciones[1]).toMatchObject({ title: 'Ascenso', tonalidad: 'LAm', content: 'LA SI' });
+  });
+});

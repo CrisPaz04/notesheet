@@ -169,7 +169,9 @@ export default function useLiveSetlistContent({
       baseKey: doc.key,
       targetKey: entrada.key || doc.key,
       instrument,
-      notationSystem
+      notationSystem,
+      // A dónde lleva la sesión cada modulación (sin nada, con la canción)
+      modulaciones: entrada.modulaciones || null
     };
     const rendered = renderSongContent(content, opciones);
 

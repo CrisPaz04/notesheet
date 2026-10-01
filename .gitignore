@@ -79,3 +79,6 @@ ui-debug.log
 /test-results/
 /playwright-report/
 /blob-report/
+
+# Copias de seguridad de datos de producción: nunca al repositorio público
+copias/

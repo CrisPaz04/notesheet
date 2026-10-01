@@ -166,6 +166,25 @@ export const mapChordLine = (line, mapRoot) => {
 };
 
 /**
+ * Escribe cada nota latina en su forma única ("Re" → "RE", "Sib" → "SIb"),
+ * solo en las líneas de notas: la letra, las etiquetas ("Violín:") y la
+ * notación C-D-E quedan igual. Cada nota ocupa lo mismo que antes, así que
+ * las columnas alineadas no se descuadran.
+ *
+ * Es lo que hace el editor al guardar. El lector ya pintaba así ("Do" y "DO"
+ * los reconoce los dos), pero el texto guardado salía mezclado según quién lo
+ * hubiera escrito, y era lo que se veía al abrir el editor.
+ *
+ * @param {string} texto
+ * @returns {string}
+ */
+export const normalizarNotas = (texto) => {
+  if (typeof texto !== 'string' || !texto) return texto;
+  // mapChordLine ya pasa la raíz a mayúsculas antes de llamar a mapRoot
+  return texto.split('\n').map((linea) => mapChordLine(linea, (raiz) => raiz)).join('\n');
+};
+
+/**
  * Cuenta las raíces de acorde por sistema de notación en las líneas de acordes.
  * @param {string} content - Contenido de la canción
  * @returns {{latin: number, english: number}}

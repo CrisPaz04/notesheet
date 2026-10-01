@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react";
+import { limpiarModulaciones } from "@notesheet/core";
 
 /**
  * Gestiona las canciones que componen una lista: alta, baja, tonalidad de
@@ -46,6 +47,19 @@ export default function useSelectedSongs(inicial = []) {
     )));
   }, []);
 
+  /**
+   * Lleva una modulación de una canción a otra tonalidad, solo en esta lista.
+   * `ajuste` son semitonos desde donde iría con la canción (0 = como siempre).
+   */
+  const changeModulacion = useCallback((songId, numero, ajuste) => {
+    setSelectedSongs((prev) => prev.map((song) => {
+      if (song.id !== songId) return song;
+      const { modulaciones: _anteriores, ...resto } = song;
+      const modulaciones = limpiarModulaciones({ ...(song.modulaciones || {}), [numero]: ajuste });
+      return modulaciones ? { ...resto, modulaciones } : resto;
+    }));
+  }, []);
+
   /** Mueve una canción de una posición a otra. */
   const moveSong = useCallback((from, to) => {
     setSelectedSongs((prev) => {
@@ -76,6 +90,7 @@ export default function useSelectedSongs(inicial = []) {
     addSong,
     removeSong,
     changeKey,
+    changeModulacion,
     moveSong,
     handleDragEnd,
     isSelected

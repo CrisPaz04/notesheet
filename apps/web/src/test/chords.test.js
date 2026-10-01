@@ -307,3 +307,41 @@ describe('detectNotationSystem con acordes con sufijo', () => {
     expect(detectNotationSystem(ENGLISH_SONG)).toBe('english');
   });
 });
+
+describe('normalizarNotas: cada nota en su forma única al guardar', () => {
+  it('pasa a mayúsculas las notas latinas y deja la alteración en minúscula', async () => {
+    const { normalizarNotas } = await import('@notesheet/core');
+    expect(normalizarNotas('Do#  Si   Mi    Sib')).toBe('DO#  SI   MI    SIb');
+    expect(normalizarNotas('Sol La Si Do')).toBe('SOL LA SI DO');
+  });
+
+  it('no toca la letra, las etiquetas, las cabeceras ni la notación C-D-E', async () => {
+    const { normalizarNotas } = await import('@notesheet/core');
+    const texto = [
+      '## Solo',
+      'Mi alma se goza',
+      'Violín: Si   Sol Fa#',
+      'C G Am F',
+      'La la la, Sol de justicia',
+    ].join('\n');
+    expect(normalizarNotas(texto)).toBe([
+      '## Solo',
+      'Mi alma se goza',
+      'Violín: SI   SOL FA#',
+      'C G Am F',
+      'La la la, Sol de justicia',
+    ].join('\n'));
+  });
+
+  it('respeta las columnas: cada nota ocupa lo mismo que antes', async () => {
+    const { normalizarNotas } = await import('@notesheet/core');
+    const linea = 'Re#  Mi    Re#   Do#';
+    expect(normalizarNotas(linea)).toHaveLength(linea.length);
+  });
+
+  it('deja igual lo que no es texto', async () => {
+    const { normalizarNotas } = await import('@notesheet/core');
+    expect(normalizarNotas('')).toBe('');
+    expect(normalizarNotas(undefined)).toBe(undefined);
+  });
+});

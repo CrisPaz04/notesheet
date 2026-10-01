@@ -831,3 +831,17 @@
   color: var(--text-light-secondary);
   font-size: 0.85rem;
 }
+
+/* Un selector por modulación, junto al de la tonalidad de la canción
+   (SelectorModulacion.jsx): en el editor de listas y en la sesión en vivo */
+.selector-modulacion {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.selector-modulacion-nombre {
+  color: var(--text-light-secondary);
+  font-size: 0.85rem;
+}

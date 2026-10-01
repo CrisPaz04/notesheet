@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { elegirEnDesplegable } from './utils/desplegable';
+import { elegirEnDesplegable, valorDe, opcionesDe } from './utils/desplegable';
 
 // --- Mocks ---
 const mockGetAllSongs = vi.fn();
@@ -712,5 +712,40 @@ voy a perder la compostura`;
 
       expect(await screen.findByText(/Error al cargar la lista/i)).toBeInTheDocument();
     });
+  });
+});
+
+describe('PlaylistEditor: modulaciones', () => {
+  const SION = {
+    id: 's9', title: 'Regocíjate Sión', key: 'LAm', type: 'Júbilo', isOwn: true, public: true,
+    content: 'LA SI DO\n## Ascenso [SIm]\nSI DO# RE'
+  };
+
+  it('cada modulación tiene su selector, y lo elegido se guarda con la lista', async () => {
+    mockGetAllSongs.mockResolvedValue([...SONGS, SION]);
+    const user = userEvent.setup();
+    await renderNueva();
+    await user.type(screen.getByPlaceholderText('Nombre de la lista'), 'Domingo');
+    await user.click(botonDisponible('Regocíjate Sión'));
+
+    const selector = await screen.findByRole('combobox', { name: 'Tonalidad de Ascenso' });
+    expect(valorDe(selector)).toBe('0');
+    expect(opcionesDe(selector)).toContain('SIm · con la canción');
+    expect(opcionesDe(selector)).toContain('LAm · sin modulación');
+
+    await elegirEnDesplegable(user, selector, 'LAm · sin modulación');
+    await user.click(screen.getByRole('button', { name: /Guardar/i }));
+
+    await waitFor(() => expect(mockCreatePlaylist).toHaveBeenCalled());
+    const entrada = mockCreatePlaylist.mock.calls[0][0].songs.find((s) => s.id === 's9');
+    expect(entrada.modulaciones).toEqual({ 1: -2 });
+  });
+
+  it('una canción sin modulaciones no tiene selector', async () => {
+    const user = userEvent.setup();
+    await renderNueva();
+    await user.click(botonDisponible('Cristo Vive'));
+    await waitFor(() => expect(tituloEnLista()).toEqual(['Cristo Vive']));
+    expect(screen.queryByRole('combobox', { name: /^Tonalidad de/ })).not.toBeInTheDocument();
   });
 });

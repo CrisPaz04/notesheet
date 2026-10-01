@@ -8,7 +8,7 @@
 // bugs del selector de voces y de las dobles alteraciones. Aquí vive una
 // sola versión, pura y testeable.
 
-import { getKeyDistance } from './transposition';
+import { getKeyDistance, identificarTonalidad } from './transposition';
 import { convertNotationSystem, formatSong } from './notation';
 import {
   transposeBySemitones,
@@ -19,6 +19,7 @@ import { TRANSPOSING_INSTRUMENTS } from './instruments';
 import { ortografiaDe } from './ortografia';
 import { splitChordSegment } from './chords';
 import { vozParaMusico } from './voces';
+import { partirEnTramos, separarTonalidadDelTitulo } from './modulaciones';
 
 // Las voces se escriben siempre en la tonalidad de trompeta en Sib; el resto
 // de instrumentos se obtiene transponiendo desde esa referencia.
@@ -52,6 +53,80 @@ const trasteDe = (capo) => (Number.isInteger(capo) && capo > 0 ? capo : 0);
 const moverYEscribir = (contenido, semitonos, tonoDeLectura) => {
   if (semitonos % 12 === 0) return contenido;
   return transposeBySemitones(contenido, semitonos, ortografiaDe(tonoDeLectura));
+};
+
+/**
+ * Mueve un texto que puede cambiar de tonalidad a media canción (ver
+ * `modulaciones.js`), tramo a tramo.
+ *
+ * El tramo del principio hace lo de siempre: de `baseKey` a `targetKey`, más
+ * el instrumento, menos la cejilla. Cada modulación ya está escrita en su
+ * tonalidad, así que se mueve lo mismo que la canción, más su `ajuste` si la
+ * lista o la sesión la llevan a otra (`modulaciones`: número de modulación →
+ * semitonos respecto a donde iría sin ajuste). Cada tramo se escribe con la
+ * armadura de la tonalidad en la que se lee, y su cabecera lleva esa
+ * tonalidad entre corchetes, que `separarTonalidadDelTitulo` saca luego del
+ * título.
+ *
+ * Sin modulaciones es exactamente `moverYEscribir` sobre todo el texto.
+ *
+ * @param {string} contenido
+ * @param {Object} opciones
+ * @param {string} opciones.origen - Instrumento en el que está escrito el texto
+ *   (la trompeta en Sib en las notas, la guitarra en los acordes)
+ * @returns {{texto: string, tonalidades: string[]}} El texto movido y la
+ *   tonalidad en la que se lee cada tramo
+ */
+const moverPorTramos = (contenido, { baseKey, targetKey, instrument, capo, origen, modulaciones }) => {
+  const trasteCapo = trasteDe(capo);
+  const desplazamiento = distanciaEntre(baseKey, targetKey);
+  const porInstrumento = transposicionDe(instrument) - transposicionDe(origen) - trasteCapo;
+  // Las tonalidades de los corchetes van en la referencia del texto; las de la
+  // canción (y `getVisualKeyForInstrument`), en la de la trompeta en Sib
+  const aReferencia = transposicionDe(SOURCE_INSTRUMENT) - transposicionDe(origen);
+  const lecturaDe = (enReferencia) =>
+    transposeKeyBySemitones(getVisualKeyForInstrument(enReferencia, instrument), -trasteCapo);
+
+  const tonalidades = [];
+  const partes = partirEnTramos(contenido, baseKey).map((tramo) => {
+    if (!tramo.cabecera) {
+      const lectura = lecturaDe(targetKey || baseKey);
+      tonalidades.push(lectura);
+      return moverYEscribir(tramo.cuerpo, desplazamiento + porInstrumento, lectura);
+    }
+
+    const ajuste = Math.trunc(Number(modulaciones?.[tramo.numero])) || 0;
+    const enReferencia = transposeKeyBySemitones(
+      transposeKeyBySemitones(tramo.key, aReferencia),
+      desplazamiento + ajuste
+    );
+    const lectura = lecturaDe(enReferencia);
+    tonalidades.push(lectura);
+
+    const { titulo } = tramo.cabecera;
+    const cabecera = `## ${titulo ? `${titulo} ` : ''}[${lectura}]`;
+    if (tramo.cuerpo === null) return cabecera;
+    return `${cabecera}\n${moverYEscribir(tramo.cuerpo, desplazamiento + ajuste + porInstrumento, lectura)}`;
+  });
+
+  return { texto: partes.join('\n'), tonalidades };
+};
+
+/** Las tonalidades sin repetir (SIb y LA# son una), en el orden en que se leen. */
+const sinRepetir = (tonalidades) => {
+  const vistas = new Set();
+  return tonalidades.filter((tonalidad) => {
+    const id = identificarTonalidad(tonalidad) ?? tonalidad;
+    if (vistas.has(id)) return false;
+    vistas.add(id);
+    return true;
+  });
+};
+
+/** `formatSong` con la tonalidad de cada modulación aparte del título. */
+const formatearConModulaciones = (texto) => {
+  const formatted = formatSong(texto);
+  return { ...formatted, sections: separarTonalidadDelTitulo(formatted.sections) };
 };
 
 /**
@@ -159,29 +234,30 @@ export const renderSongContent = (content, {
   targetKey,
   instrument = SOURCE_INSTRUMENT,
   notationSystem = 'latin',
-  capo = 0
+  capo = 0,
+  modulaciones = null
 } = {}) => {
   // Un capo negativo o no numérico no significa nada: se ignora.
   const trasteCapo = trasteDe(capo);
   const soundingKey = getVisualKeyForInstrument(targetKey || baseKey, instrument);
   const displayKey = transposeKeyBySemitones(soundingKey, -trasteCapo);
 
-  const semitonos = distanciaEntre(baseKey, targetKey)
-    + transposicionDe(instrument) - transposicionDe(SOURCE_INSTRUMENT)
-    - trasteCapo;
-  let processed = moverYEscribir(content || '', semitonos, displayKey);
+  const { texto, tonalidades } = moverPorTramos(content || '', {
+    baseKey, targetKey, instrument, capo, origen: SOURCE_INSTRUMENT, modulaciones
+  });
 
   // `convertNotationSystem` es idempotente: aplicarla siempre mantiene el
   // sistema elegido aunque la canción se haya escrito en el otro.
-  processed = convertNotationSystem(processed, notationSystem);
-
-  const formatted = formatSong(processed);
+  const formatted = formatearConModulaciones(convertNotationSystem(texto, notationSystem));
 
   return {
     formatted,
     lyricsOnly: extractLyricsSections(formatted),
     displayKey,
-    soundingKey
+    soundingKey,
+    // Las tonalidades en que se lee, de la del principio a la última
+    // modulación: "SIm → DO#m" en la tarjeta. Sin modulaciones, solo una.
+    tonalidadesLeidas: sinRepetir(tonalidades)
   };
 };
 
@@ -215,21 +291,15 @@ export const renderChordChart = (acordes, {
   targetKey,
   instrument = SOURCE_INSTRUMENT,
   notationSystem = 'latin',
-  capo = 0
+  capo = 0,
+  modulaciones = null
 } = {}) => {
   if (!acordes || !acordes.trim()) return null;
 
-  const trasteCapo = trasteDe(capo);
-  const tonoDeLectura = transposeKeyBySemitones(
-    getVisualKeyForInstrument(targetKey || baseKey, instrument),
-    -trasteCapo
-  );
-  const semitonos = distanciaEntre(baseKey, targetKey)
-    + transposicionDe(instrument) - transposicionDe(CHORDS_SOURCE_INSTRUMENT)
-    - trasteCapo;
-
-  const processed = moverYEscribir(acordes, semitonos, tonoDeLectura);
-  return formatSong(convertNotationSystem(processed, notationSystem));
+  const { texto } = moverPorTramos(acordes, {
+    baseKey, targetKey, instrument, capo, origen: CHORDS_SOURCE_INSTRUMENT, modulaciones
+  });
+  return formatearConModulaciones(convertNotationSystem(texto, notationSystem));
 };
 
 const tieneTexto = (formatted) =>
@@ -416,4 +486,38 @@ export const tonalidadDeLaParte = (key, voiceKey, instrument = SOURCE_INSTRUMENT
   if (!key) return key;
   const deLaParte = parseVoiceKey(voiceKey)?.instrumentId || instrument || SOURCE_INSTRUMENT;
   return getVisualKeyForInstrument(key, deLaParte);
+};
+
+/**
+ * Las modulaciones de una canción tal como van en una entrada de lista o de
+ * sesión: a dónde iría cada una moviéndose con la canción (`porDefecto`) y a
+ * dónde va con el ajuste de esa entrada (`tonalidad`). Es lo que enseñan sus
+ * selectores. Las tonalidades, en la misma referencia que `key`.
+ *
+ * Se leen de la voz principal: todas las voces modulan en el mismo sitio. Un
+ * PDF no tiene texto que leer, ni se transpone.
+ *
+ * @param {Object|null} song - La canción del repertorio
+ * @param {string} entryKey - La tonalidad de la canción en esa entrada
+ * @param {Object|null} [ajustes] - `modulaciones` de la entrada
+ * @returns {Array<{numero: number, titulo: string, porDefecto: string, tonalidad: string, ajuste: number}>}
+ */
+export const modulacionesDeLaEntrada = (song, entryKey, ajustes = null) => {
+  if (!song || song.format === 'pdf') return [];
+  const { content } = resolveInitialVoice(song);
+  const desplazamiento = distanciaEntre(song.key, entryKey || song.key);
+
+  return partirEnTramos(content, song.key)
+    .filter((tramo) => tramo.cabecera)
+    .map((tramo) => {
+      const porDefecto = transposeKeyBySemitones(tramo.key, desplazamiento);
+      const ajuste = Math.trunc(Number(ajustes?.[tramo.numero])) || 0;
+      return {
+        numero: tramo.numero,
+        titulo: tramo.cabecera.titulo,
+        porDefecto,
+        tonalidad: transposeKeyBySemitones(porDefecto, ajuste),
+        ajuste
+      };
+    });
 };

@@ -45,6 +45,7 @@ const {
   createSession,
   setActiveSong,
   setSongKey,
+  setModulacion,
   setSessionSongs,
   endSession,
   joinSession,
@@ -529,5 +530,44 @@ describe('subscribeToSession', () => {
     callback({ exists: () => false, metadata: { fromCache: false } });
 
     expect(onChange).toHaveBeenCalledWith(null, { fromCache: false });
+  });
+});
+
+describe('modulaciones en la sesión', () => {
+  const CANCIONES = [
+    { id: 's1', title: 'Sión', key: 'LAm', originalKey: 'LAm' },
+    { id: 's2', title: 'Otra', key: 'DO', originalKey: 'DO' }
+  ];
+
+  it('lleva una modulación a otra tonalidad, solo en esa canción, subiendo la versión en uno', async () => {
+    await setModulacion('ABC123', { songs: CANCIONES, songId: 's1', numero: 1, ajuste: -2, expectedVersion: 4, user: HOST });
+    const escrito = ultimaEscritura(mockUpdateDoc);
+    expect(escrito.songs).toEqual([
+      { id: 's1', title: 'Sión', key: 'LAm', originalKey: 'LAm', modulaciones: { 1: -2 } },
+      { id: 's2', title: 'Otra', key: 'DO', originalKey: 'DO' }
+    ]);
+    expect(escrito.version).toBe(5);
+    expect(escrito.songIds).toEqual(['s1', 's2']);
+  });
+
+  it('volver a 0 la deja moverse con la canción (y no guarda el ajuste)', async () => {
+    const conAjuste = [{ ...CANCIONES[0], modulaciones: { 1: -2, 2: 1 } }, CANCIONES[1]];
+    await setModulacion('ABC123', { songs: conAjuste, songId: 's1', numero: 1, ajuste: 0, expectedVersion: 1, user: HOST });
+    expect(ultimaEscritura(mockUpdateDoc).songs[0].modulaciones).toEqual({ 2: 1 });
+
+    await setModulacion('ABC123', { songs: [{ ...CANCIONES[0], modulaciones: { 1: -2 } }], songId: 's1', numero: 1, ajuste: 0, expectedVersion: 2, user: HOST });
+    expect(ultimaEscritura(mockUpdateDoc).songs[0]).not.toHaveProperty('modulaciones');
+  });
+
+  it('cambiar la tonalidad de la canción conserva sus ajustes', async () => {
+    const conAjuste = [{ ...CANCIONES[0], modulaciones: { 1: -2 } }];
+    await setSongKey('ABC123', { songs: conAjuste, songId: 's1', key: 'SOLm', expectedVersion: 1, user: HOST });
+    expect(ultimaEscritura(mockUpdateDoc).songs[0]).toMatchObject({ key: 'SOLm', modulaciones: { 1: -2 } });
+  });
+
+  it('lo que no es un ajuste válido no llega a la sesión', async () => {
+    const sucio = [{ ...CANCIONES[0], modulaciones: { 1: 'x', abc: 3 } }];
+    await setSongKey('ABC123', { songs: sucio, songId: 's1', key: 'LAm', expectedVersion: 1, user: HOST });
+    expect(ultimaEscritura(mockUpdateDoc).songs[0]).not.toHaveProperty('modulaciones');
   });
 });

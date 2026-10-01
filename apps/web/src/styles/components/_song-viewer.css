@@ -390,8 +390,14 @@
     font-size: 1.25rem;
     font-weight: 600;
     margin-bottom: 1.5rem;
-    text-transform: uppercase;
-    letter-spacing: 1px;
+    /* Sin mayúsculas forzadas: el título se ve como lo escribió la banda
+       ("## Solo" es "Solo", "## Si menor" no es "SI MENOR"). */
+  }
+
+  /* La tonalidad a la que modula, junto al título ("Modulación · DO#m") */
+  .song-section-tonalidad {
+    font-weight: 700;
+    white-space: nowrap;
   }
   
   .song-section-content {

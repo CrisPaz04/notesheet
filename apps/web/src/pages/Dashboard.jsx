@@ -6,7 +6,8 @@ import {
   getPlaylistsWithSong,
   removeSongFromPlaylists
 } from "@notesheet/api";
-import { identificarTonalidad, nombrarTonalidad, normalizarBusqueda, puntuarCancion, compararTitulos, compararPorCambios } from "@notesheet/core";
+import { identificarTonalidad, nombrarTonalidad, normalizarBusqueda, puntuarCancion, compararTitulos, compararPorCambios, tonalidadesDeCancion } from "@notesheet/core";
+import { recorridoTonalidades } from "../utils/recorridoTonalidades";
 import { useAuth } from "../context/AuthContext";
 import { getUserDisplayName } from "../utils/userHelpers";
 import { mensajeDeBorrado } from "../utils/avisoBorrado";
@@ -82,11 +83,12 @@ function Dashboard() {
   // demás. Mayores primero y luego menores, cada grupo en orden cromático.
   const tonalidades = useMemo(() => {
     const porId = new Map();
-    for (const song of songs) {
-      const id = identificarTonalidad(song.key);
+    // Con las de las modulaciones: una canción que modula sale en las dos
+    for (const tonalidad of songs.flatMap(tonalidadesDeCancion)) {
+      const id = identificarTonalidad(tonalidad);
       if (!id) continue;
       // Se muestra como la escribe la primera canción que la trae
-      if (!porId.has(id)) porId.set(id, { id, etiqueta: song.key.trim() });
+      if (!porId.has(id)) porId.set(id, { id, etiqueta: tonalidad.trim() });
     }
     const orden = (id) => parseInt(id, 10) + (id.endsWith("m") ? 12 : 0);
     return [...porId.values()].sort((a, b) => orden(a.id) - orden(b.id));
@@ -104,7 +106,8 @@ function Dashboard() {
     }
 
     if (keyFilter) {
-      filtered = filtered.filter(song => identificarTonalidad(song.key) === keyFilter);
+      filtered = filtered.filter(song =>
+        tonalidadesDeCancion(song).some((tonalidad) => identificarTonalidad(tonalidad) === keyFilter));
     }
 
     // Filtrar por tipo
@@ -510,7 +513,7 @@ function Dashboard() {
                       </div>
 
                       <div className="recent-item-meta">
-                        {nombrarTonalidad(song.key, notacion) || "Sin tonalidad"} • {song.type || "Sin tipo"}
+                        {recorridoTonalidades(tonalidadesDeCancion(song), notacion) || "Sin tonalidad"} • {song.type || "Sin tipo"}
                       </div>
 
                       <div className="recent-item-meta">
@@ -543,7 +546,7 @@ function Dashboard() {
                           {song.title || "Sin título"}
                         </h3>
                         <p className="list-item-meta">
-                          {nombrarTonalidad(song.key, notacion) || "Sin tonalidad"} • {song.type || "Sin tipo"}
+                          {recorridoTonalidades(tonalidadesDeCancion(song), notacion) || "Sin tonalidad"} • {song.type || "Sin tipo"}
                           {song.version && ` • Versión de: ${song.version}`}
                         </p>
                       </div>

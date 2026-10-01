@@ -6,8 +6,9 @@ import { createPlaylist, getPlaylistById, updatePlaylist, getAllSongs, publishOw
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import LoadingSpinner from "../components/LoadingSpinner";
 import PlaylistKeySelector from "../components/PlaylistKeySelector";
+import SelectorModulacion from "../components/SelectorModulacion";
 import useSelectedSongs from "../hooks/useSelectedSongs";
-import { emparejarSetlist, isPdfSong, nombrarTonalidad, limpiarMensajeDirector } from "@notesheet/core";
+import { emparejarSetlist, isPdfSong, nombrarTonalidad, limpiarMensajeDirector, modulacionesDeLaEntrada } from "@notesheet/core";
 import useNotacionPreferida from "../hooks/useNotacionPreferida";
 import Desplegable from "../components/Desplegable";
 import Icono from "../components/Icono";
@@ -44,6 +45,7 @@ function PlaylistEditor() {
     addSong,
     removeSong,
     changeKey,
+    changeModulacion,
     handleDragEnd
   } = useSelectedSongs();
   const idsEnLista = useMemo(() => new Set(selectedSongs.map((s) => s.id)), [selectedSongs]);
@@ -591,6 +593,19 @@ function PlaylistEditor() {
                                             originalKey={song.originalKey}
                                             notacion={notacion}
                                           />
+                                          {modulacionesDeLaEntrada(
+                                            availableSongs.find((c) => c.id === song.id),
+                                            song.key,
+                                            song.modulaciones
+                                          ).map((modulacion) => (
+                                            <SelectorModulacion
+                                              key={modulacion.numero}
+                                              modulacion={modulacion}
+                                              tonalidadInicio={song.key}
+                                              onChange={(ajuste) => changeModulacion(song.id, modulacion.numero, ajuste)}
+                                              notacion={notacion}
+                                            />
+                                          ))}
                                         </>
                                       )}
                                     </div>

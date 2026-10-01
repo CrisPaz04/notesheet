@@ -732,3 +732,79 @@
 .enlace-ver-en:focus-visible {
   text-decoration: underline;
 }
+
+/* Barra para escribir: secciones, notas y modulación (BarraEditor.jsx).
+   44 px de alto: en la tablet se escribe con el dedo. */
+.barra-editor {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm) var(--spacing-md);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-bottom: 1px solid var(--border-light);
+  background: rgba(var(--overlay-rgb), 0.03);
+}
+
+.barra-editor-grupo {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.barra-editor-boton {
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0 0.75rem;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  background: rgba(var(--overlay-rgb), 0.05);
+  color: var(--text-light-primary);
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.barra-editor-boton:hover {
+  background: rgba(var(--color-primary-rgb), 0.1);
+  border-color: rgba(var(--color-primary-rgb), 0.35);
+}
+
+.barra-editor-boton:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.barra-editor-boton--modulacion.activo {
+  border-color: var(--color-primary);
+  background: rgba(var(--color-primary-rgb), 0.15);
+}
+
+/* Las notas, en la letra del texto de la canción */
+.barra-editor-nota {
+  font-family: 'Fira Code', 'Monaco', 'Consolas', monospace;
+  font-weight: 600;
+  padding: 0 0.5rem;
+}
+
+.barra-editor-modulacion {
+  flex-basis: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--spacing-sm);
+}
+
+.barra-editor-ayuda {
+  margin: 0;
+  color: var(--text-light-secondary);
+  font-size: 0.875rem;
+}
+
+.barra-editor-tonalidades {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(64px, 1fr));
+  gap: 0.35rem;
+  width: 100%;
+}
+
+.barra-editor-tonalidades .key-option {
+  min-height: 44px;
+}

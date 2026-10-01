@@ -46,6 +46,8 @@ import useAlineacionTexto from "../hooks/useAlineacionTexto";
 import useNumeroDeVoz from "../hooks/useNumeroDeVoz";
 import DatosGrabacion from "../components/datos/DatosGrabacion";
 import Icono from "../components/Icono";
+import { TituloSeccion } from "../components/SeccionesCancion";
+import { recorridoTonalidades } from "../utils/recorridoTonalidades";
 
 // Trastes donde se pone la cejilla. Más allá del VII ya no queda mástil para
 // tocar cómodo, y la guitarra se queda sin graves.
@@ -85,6 +87,8 @@ function SongView() {
   // --- Tonalidades ---
   const [baseKey, setBaseKey] = useState("");       // tonalidad escrita
   const [displayKey, setDisplayKey] = useState(""); // la que ve el instrumentista
+  // Con modulaciones, todas las que lee, de la del principio a la última
+  const [tonalidadesLeidas, setTonalidadesLeidas] = useState([]);
   const [soundingKey, setSoundingKey] = useState(""); // la que oye la banda (difiere con capo)
   const [targetKey, setTargetKey] = useState("");   // a la que se transpone
 
@@ -221,6 +225,7 @@ function SongView() {
     // Si las notas no traen letra, la de "Solo letra" (una que solo se canta)
     setFormattedLyricsOnly(letraDeLaCancion(rendered.lyricsOnly, lyricsOnly));
     setDisplayKey(rendered.displayKey);
+    setTonalidadesLeidas(rendered.tonalidadesLeidas || []);
     setSoundingKey(rendered.soundingKey);
   };
 
@@ -663,7 +668,9 @@ function SongView() {
                 {/* En un PDF, la de la parte que se ve: el saxo lee su tonalidad */}
                 {esPdf
                   ? (verTonalidad(tonalidadDeLaParte(song.key, score?.voiceKey, currentInstrument)) || "—")
-                  : verTonalidad(displayKey)}
+                  : (tonalidadesLeidas.length > 1
+                    ? recorridoTonalidades(tonalidadesLeidas, notationSystem)
+                    : verTonalidad(displayKey))}
                 {!esPdf && capo > 0 && (
                   <span className="song-meta-nota">
                     {" "}· capo {TRASTES_ROMANOS[capo]}, suena en {verTonalidad(soundingKey)}
@@ -1122,7 +1129,7 @@ function SongView() {
                   <>
                     {formattedSong && formattedSong.sections.map((section, index) => (
                       <div key={index} className="song-section-modern">
-                        {section.title && <h3 className="song-section-title">{section.title}</h3>}
+                        <TituloSeccion section={section} notacion={notationSystem} nivel="h3" />
                         <div className={`song-section-content alinear-${alineacion}`} style={{ fontSize: `${fontSize}px` }}>
                           {section.content}
                         </div>
@@ -1154,7 +1161,7 @@ function SongView() {
                 >
                   {formattedSong.sections.map((section, index) => (
                     <div key={index} className="song-section-modern">
-                      {section.title && <h3 className="song-section-title">{section.title}</h3>}
+                      <TituloSeccion section={section} notacion={notationSystem} nivel="h3" />
                       <div className={`song-section-content alinear-${alineacion}`} style={{ fontSize: `${fontSize}px` }}>
                         {section.content}
                       </div>
@@ -1172,7 +1179,7 @@ function SongView() {
               >
                 {formattedLyricsOnly && formattedLyricsOnly.sections.map((section, index) => (
                   <div key={index} className="song-section-modern">
-                    {section.title && <h3 className="song-section-title">{section.title}</h3>}
+                    <TituloSeccion section={section} notacion={notationSystem} nivel="h3" />
                     <div className={`song-section-content alinear-${alineacion}`} style={{ fontSize: `${fontSize}px` }}>
                       {section.content}
                     </div>
@@ -1203,7 +1210,7 @@ function SongView() {
                 >
                   {formattedAcordes && formattedAcordes.sections.map((section, index) => (
                     <div key={index} className="song-section-modern">
-                      {section.title && <h3 className="song-section-title">{section.title}</h3>}
+                      <TituloSeccion section={section} notacion={notationSystem} nivel="h3" />
                       <div className={`song-section-content alinear-${alineacion}`} style={{ fontSize: `${fontSize}px` }}>
                         {section.content}
                       </div>

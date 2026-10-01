@@ -26,7 +26,8 @@ import AlineacionTexto from "../components/AlineacionTexto";
 import SelectorVista from "../components/SelectorVista";
 import Desplegable from "../components/Desplegable";
 import useNumeroDeVoz from "../hooks/useNumeroDeVoz";
-import { SeccionesCancion, AvisoVista } from "../components/SeccionesCancion";
+import { SeccionesCancion, AvisoVista, TituloSeccion } from "../components/SeccionesCancion";
+import { recorridoTonalidades } from "../utils/recorridoTonalidades";
 import useAlineacionTexto from "../hooks/useAlineacionTexto";
 import HerramientasFlotantes from "../components/herramientas/HerramientasFlotantes";
 import Icono from "../components/Icono";
@@ -113,7 +114,9 @@ function PlaylistView() {
                 // repintar si cambia la notación sin volver a descargar nada.
                 return {
                   ...fullSong,
-                  selectedKey: song.key // Tonalidad seleccionada en la playlist
+                  selectedKey: song.key, // Tonalidad seleccionada en la playlist
+                  // Y a dónde lleva la lista cada modulación
+                  modulaciones: song.modulaciones || null
                 };
               } catch (error) {
                 console.error(`Error loading song ${song.id}:`, error);
@@ -156,7 +159,9 @@ function PlaylistView() {
       baseKey: song.key,
       targetKey: song.selectedKey || song.key,
       instrument: instrumento,
-      notationSystem: notacion
+      notationSystem: notacion,
+      // A dónde lleva esta lista cada modulación (sin nada, se mueven con la canción)
+      modulaciones: song.modulaciones || null
     };
 
     // Un PDF puede traer además letra y acordes, en texto
@@ -175,11 +180,12 @@ function PlaylistView() {
     }
 
     const { content } = resolveVoiceForMusician(song, { instrument: instrumento, voiceNumber: numeroVoz });
-    const { formatted, lyricsOnly, displayKey } = renderSongContent(content, opciones);
+    const { formatted, lyricsOnly, displayKey, tonalidadesLeidas } = renderSongContent(content, opciones);
     return {
       ...song,
       formattedContent: formatted,
       displayKey,
+      tonalidadesLeidas,
       vistas: {
         // Sin notas (una que solo se canta) se enseña la letra (`elegirVista`)
         principal: formatted,
@@ -477,7 +483,9 @@ function PlaylistView() {
                     </div>
                     
                     <div className="playlist-song-key">
-                      {nombrarTonalidad(song.displayKey || song.selectedKey || song.key, notacion) || "?"}
+                      {song.tonalidadesLeidas?.length > 1
+                        ? recorridoTonalidades(song.tonalidadesLeidas, notacion)
+                        : nombrarTonalidad(song.displayKey || song.selectedKey || song.key, notacion) || "?"}
                     </div>
                   </div>
                   
@@ -490,6 +498,7 @@ function PlaylistView() {
                             formatted={song.vistas[song.eleccion.vista]}
                             alineacion={alineacion}
                             fontSize={fontSize}
+                            notacion={notacion}
                           />
                         </div>
                       )}
@@ -519,7 +528,7 @@ function PlaylistView() {
                     <div className="song-content-section">
                       {song.formattedContent.sections.map((section, sectionIndex) => (
                         <div key={sectionIndex} className="song-section-modern">
-                          <h4 className="song-section-title">{section.title}</h4>
+                          <TituloSeccion section={section} notacion={notacion} />
                           <div className={`song-section-content alinear-${alineacion}`} style={{ fontSize: `${fontSize}px` }}>
                             {section.content}
                           </div>

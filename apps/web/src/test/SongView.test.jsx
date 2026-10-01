@@ -618,3 +618,22 @@ describe('SongView: la voz que le toca', () => {
     localStorage.removeItem('numeroDeVoz');
   });
 });
+
+describe('SongView: modulaciones', () => {
+  // Como «Regocíjate Sión»: en LAm, y el ascenso ya escrito en SIm
+  const SION = {
+    ...SONG,
+    key: 'LAm',
+    voices: { bb_trumpet: { 1: '## Verso\nLA SI DO\nCristo vive hoy\n## Ascenso [SIm]\nSI DO# RE' } }
+  };
+
+  it('la sección enseña a qué tonalidad modula, y arriba van las dos', async () => {
+    mockGetSongById.mockResolvedValue(SION);
+    await renderSongView();
+
+    expect(screen.getAllByRole('heading', { name: 'Ascenso, modula a SIm' }).length).toBeGreaterThan(0);
+    expect(screen.getByText('LAm → SIm')).toBeInTheDocument();
+    // Los corchetes nunca se ven
+    expect(document.body.textContent).not.toContain('[SIm]');
+  });
+});

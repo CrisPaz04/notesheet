@@ -90,6 +90,10 @@ const renderEditor = async () => {
 
 // Cada pestaña de voz son dos botones hermanos: el que la elige, que se
 // llama como la voz, y el que la quita ("Quitar Trompeta en Sib 2").
+// El selector de tonalidad de la canción (la barra del editor tiene también
+// botones "RE", "C"…: hay que buscar dentro de él)
+const selectorTonalidad = () => screen.getByText('Tonalidad', { selector: 'label' }).closest('.form-group-modern');
+
 const pestana = (n) => screen.getByRole('button', { name: new RegExp(`^Trompeta.*${n}`) });
 const botonQuitar = (n) => screen.queryByRole('button', { name: new RegExp(`^Quitar Trompeta.*${n}`) });
 
@@ -230,7 +234,7 @@ describe('SongEditor: sugerencia de tonalidad', () => {
     await user.click(screen.getByRole('button', { name: 'Usar RE' }));
 
     expect(aviso()).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /^RE$/ })).toBeInTheDocument();
+    expect(within(selectorTonalidad()).getByRole('button', { name: /^RE$/ })).toBeInTheDocument();
     expect(mockUpdateSong).not.toHaveBeenCalled();
   });
 
@@ -352,11 +356,11 @@ describe('SongEditor: tonalidades en C-D-E', () => {
     mockGetSongById.mockResolvedValue({ ...SONG, voices: { bb_trumpet: { 1: EN_RE } } });
     await renderEditor();
 
-    await waitFor(() => expect(screen.getByRole('button', { name: /^C$/ })).toBeInTheDocument());
+    await waitFor(() => expect(within(selectorTonalidad()).getByRole('button', { name: /^C$/ })).toBeInTheDocument());
     const usar = screen.getByRole('button', { name: 'Usar D' });
 
     await user.click(usar);
-    expect(screen.getByRole('button', { name: /^D$/ })).toBeInTheDocument();
+    expect(within(selectorTonalidad()).getByRole('button', { name: /^D$/ })).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: /^Guardar$/ }));
     await waitFor(() => expect(mockUpdateSong).toHaveBeenCalled());
@@ -501,5 +505,144 @@ describe('SongEditor: acordes', () => {
     const guardado = mockUpdateSong.mock.calls.at(-1)[1];
     expect(guardado.acordes).toBe('SIb FA');
     expect(guardado.content).toBe(SONG.voices.bb_trumpet[1]);
+  });
+});
+
+// El texto guardado salía mezclado ("Do Re Mi" en unas, "DO RE MI" en otras)
+// según quién lo hubiera escrito. Al guardar, las notas van en su forma única.
+describe('SongEditor: las notas se guardan como DO RE MI', () => {
+  it('normaliza las voces, el contenido y los acordes, sin tocar la letra', async () => {
+    const user = userEvent.setup();
+    mockGetSongById.mockResolvedValue({
+      ...SONG,
+      content: '## Solo\nDo Sol Sib\nMi alma se goza',
+      voices: { bb_trumpet: { 1: '## Solo\nDo Sol Sib\nMi alma se goza', 2: 'Re# Mi' } },
+      acordes: 'Sib Fa LAm',
+      lyricsOnly: 'Mi alma se goza',
+    });
+    await renderEditor();
+    await user.click(screen.getByRole('button', { name: /^Guardar$/ }));
+
+    await waitFor(() => expect(mockUpdateSong).toHaveBeenCalled());
+    const guardado = mockUpdateSong.mock.calls.at(-1)[1];
+    expect(guardado.content).toBe('## Solo\nDO SOL SIb\nMi alma se goza');
+    expect(guardado.voices.bb_trumpet[1]).toBe('## Solo\nDO SOL SIb\nMi alma se goza');
+    expect(guardado.voices.bb_trumpet[2]).toBe('RE# MI');
+    expect(guardado.acordes).toBe('SIb FA LAm');
+    expect(guardado.lyricsOnly).toBe('Mi alma se goza');
+  });
+});
+
+// La barra de botones: secciones, notas y modulación. Con el textarea de los
+// tests (sin CodeMirror) se inserta al final del texto.
+describe('SongEditor: barra para escribir', () => {
+  const barra = () => screen.getByRole('toolbar', { name: 'Insertar en el texto' });
+  const boton = (nombre) => within(barra()).getByRole('button', { name: nombre });
+
+  it('inserta secciones en su línea y notas con su espacio', async () => {
+    const user = userEvent.setup();
+    mockGetSongById.mockResolvedValue({ ...SONG, voices: { bb_trumpet: { 1: 'DO SOL' } } });
+    await renderEditor();
+
+    await user.click(boton('Coro'));
+    await user.click(boton('RE'));
+    await user.click(boton('FA'));
+    await user.click(boton('Sostenido'));
+    await user.click(boton('SI'));
+    await user.click(boton('Bemol'));
+
+    expect(screen.getByLabelText('editor')).toHaveValue('DO SOL\n## Coro\nRE FA# SIb ');
+  });
+
+  it('"Fin de sección" pone el ## suelto', async () => {
+    const user = userEvent.setup();
+    mockGetSongById.mockResolvedValue({ ...SONG, voices: { bb_trumpet: { 1: 'DO' } } });
+    await renderEditor();
+    await user.click(boton('Fin de sección'));
+    expect(screen.getByLabelText('editor')).toHaveValue('DO\n##\n');
+  });
+
+  it('la modulación pregunta la tonalidad, con la de la canción ya marcada', async () => {
+    const user = userEvent.setup();
+    mockGetSongById.mockResolvedValue({ ...SONG, key: 'LAm', voices: { bb_trumpet: { 1: 'LA SI DO' } } });
+    await renderEditor();
+
+    await user.click(boton(/Modulación/));
+    const tonalidades = screen.getByRole('group', { name: 'Tonalidad de la modulación' });
+    expect(within(tonalidades).getByRole('button', { name: 'LAm' })).toHaveClass('active');
+    expect(tonalidades).toHaveTextContent('trompeta en Sib');
+
+    await user.click(within(tonalidades).getByRole('button', { name: 'SIm' }));
+    expect(screen.getByLabelText('editor')).toHaveValue('LA SI DO\n## Modulación [SIm]\n');
+    expect(screen.queryByRole('group', { name: 'Tonalidad de la modulación' })).not.toBeInTheDocument();
+  });
+
+  it('tras una modulación, la siguiente arranca en esa tonalidad', async () => {
+    const user = userEvent.setup();
+    mockGetSongById.mockResolvedValue({ ...SONG, key: 'LAm', voices: { bb_trumpet: { 1: 'LA\n## Ascenso [SIm]\nSI' } } });
+    await renderEditor();
+    await user.click(boton(/Modulación/));
+    const tonalidades = screen.getByRole('group', { name: 'Tonalidad de la modulación' });
+    expect(within(tonalidades).getByRole('button', { name: 'SIm' })).toHaveClass('active');
+  });
+
+  it('en acordes la modulación va en concierto', async () => {
+    const user = userEvent.setup();
+    // La canción en RE de trompeta es DO de concierto
+    mockGetSongById.mockResolvedValue({ ...SONG, key: 'RE' });
+    await renderEditor();
+    await user.click(screen.getByRole('button', { name: /^Acordes$/ }));
+    await user.click(boton(/Modulación/));
+    const tonalidades = screen.getByRole('group', { name: 'Tonalidad de la modulación' });
+    expect(within(tonalidades).getByRole('button', { name: 'DO' })).toHaveClass('active');
+    expect(tonalidades).toHaveTextContent('concierto');
+  });
+
+  it('en "Solo letra" solo hay secciones', async () => {
+    const user = userEvent.setup();
+    await renderEditor();
+    await user.click(screen.getByRole('button', { name: /Solo letra/i }));
+    expect(within(barra()).getByRole('button', { name: 'Coro' })).toBeInTheDocument();
+    expect(within(barra()).queryByRole('button', { name: 'RE' })).not.toBeInTheDocument();
+    expect(within(barra()).queryByRole('button', { name: /Modulación/ })).not.toBeInTheDocument();
+  });
+
+  it('las notas salen en la notación del músico', async () => {
+    localStorage.setItem('notacionPreferida', 'english');
+    mockGetUserPreferences.mockResolvedValue({ defaultNotationSystem: 'english' });
+    const user = userEvent.setup();
+    mockGetSongById.mockResolvedValue({ ...SONG, voices: { bb_trumpet: { 1: '' } } });
+    await renderEditor();
+    await waitFor(() => expect(within(barra()).getByRole('button', { name: 'D' })).toBeInTheDocument());
+    await user.click(boton('D'));
+    expect(screen.getByLabelText('editor')).toHaveValue('D ');
+  });
+
+  it('la sugerencia de tonalidad no cuenta las notas de después de la modulación', async () => {
+    // En DO hasta la modulación; después, una melodía larga en RE
+    const EN_DO = 'DO RE MI FA SOL LA SI DO\nSOL MI DO RE MI DO\nDO MI SOL DO SOL MI RE DO\n';
+    const EN_RE = 'RE MI FA# SOL LA SI DO# RE\nLA FA# RE MI FA# RE\nRE FA# LA RE LA FA# MI RE\n'.repeat(3);
+    mockGetSongById.mockResolvedValue({ ...SONG, key: 'DO', voices: { bb_trumpet: { 1: `${EN_DO}## Modulación [RE]\n${EN_RE}` } } });
+    await renderEditor();
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+  });
+});
+
+describe('SongEditor: tonalidades para buscar', () => {
+  it('guarda todas las tonalidades de una canción que modula', async () => {
+    const user = userEvent.setup();
+    mockGetSongById.mockResolvedValue({ ...SONG, key: 'SIm', voices: { bb_trumpet: { 1: 'SI\n## [DO#m]\nDO#' } } });
+    await renderEditor();
+    await user.click(screen.getByRole('button', { name: /^Guardar$/ }));
+    await waitFor(() => expect(mockUpdateSong).toHaveBeenCalled());
+    expect(mockUpdateSong.mock.calls.at(-1)[1].tonalidades).toEqual(['SIm', 'DO#m']);
+  });
+
+  it('sin modulaciones, el campo queda vacío (se busca por la tonalidad)', async () => {
+    const user = userEvent.setup();
+    await renderEditor();
+    await user.click(screen.getByRole('button', { name: /^Guardar$/ }));
+    await waitFor(() => expect(mockUpdateSong).toHaveBeenCalled());
+    expect(mockUpdateSong.mock.calls.at(-1)[1].tonalidades).toBeNull();
   });
 });

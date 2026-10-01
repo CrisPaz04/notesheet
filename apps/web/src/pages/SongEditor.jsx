@@ -24,7 +24,12 @@ import {
   limpiarVersiones,
   unirVersiones,
   TEMPO_MIN,
-  TEMPO_MAX
+  TEMPO_MAX,
+  normalizarNotas,
+  partirEnTramos,
+  getVisualKeyForInstrument,
+  CHORDS_SOURCE_INSTRUMENT,
+  tonalidadesDe
 } from "@notesheet/core";
 import KeySelector from "../components/KeySelector";
 import LoadingSpinner from "../components/LoadingSpinner";
@@ -39,6 +44,8 @@ import useSongVoices, { LYRICS_TAB, ACORDES_TAB } from "../hooks/useSongVoices";
 import SubirVariosPdf from "../components/partituras/SubirVariosPdf";
 import Desplegable from "../components/Desplegable";
 import Icono from "../components/Icono";
+import BarraEditor from "../components/cancion/BarraEditor";
+import { aplicarEdicion } from "../utils/insertarEnEditor";
 
 // Instrumentos soportados para voces adicionales
 const VOICE_INSTRUMENTS = Object.entries(TRANSPOSING_INSTRUMENTS)
@@ -127,6 +134,11 @@ function SongEditor() {
   const navigate = useNavigate();
   const { id } = useParams();
   const editorRef = useRef(null);
+  // CodeMirror, el editor que hay dentro de SimpleMDE: la barra de botones
+  // inserta donde está su cursor. El callback tiene que ser estable, como
+  // `options`, o el componente rehace el editor.
+  const codemirrorRef = useRef(null);
+  const guardarCodemirror = useCallback((cm) => { codemirrorRef.current = cm; }, []);
 
   // Alta/baja de voces, pestaña activa y contenido de cada una
   const {
@@ -156,7 +168,11 @@ function SongEditor() {
   // no hay notas que leer.
   const sugerenciaTonalidad = useMemo(() => {
     if (format !== SONG_FORMAT_CHORDS) return null;
-    const textos = Object.values(voices || {}).flatMap((porVoz) => Object.values(porVoz || {}));
+    // Solo lo de antes de la primera modulación: las notas de después van en
+    // otra tonalidad y confundirían la cuenta
+    const textos = Object.values(voices || {})
+      .flatMap((porVoz) => Object.values(porVoz || {}))
+      .map((texto) => partirEnTramos(texto, key).find((tramo) => tramo.numero === 0)?.cuerpo || "");
     return sugerirTonalidad(textos, key);
   }, [voices, key, format]);
 
@@ -294,8 +310,19 @@ function SongEditor() {
   const handleSave = async (e) => {
     e.preventDefault();
 
+    // Las notas se guardan en su forma única ("Do Re" → "DO RE"): el texto
+    // guardado salía mezclado según quién lo escribiera. Solo las líneas de
+    // notas; la letra no se toca.
+    const voicesNormalizadas = Object.fromEntries(
+      Object.entries(voices || {}).map(([instrumento, porVoz]) => [
+        instrumento,
+        Object.fromEntries(Object.entries(porVoz || {}).map(([n, texto]) => [n, normalizarNotas(texto)]))
+      ])
+    );
+    const acordesNormalizados = normalizarNotas(acordes);
+
     // Get the primary voice content
-    const primaryContent = voices[primaryInstrument]?.[primaryVoiceNumber] || "";
+    const primaryContent = voicesNormalizadas[primaryInstrument]?.[primaryVoiceNumber] || "";
     const esPdf = format === SONG_FORMAT_PDF;
 
     // En una canción en PDF el cuerpo son los archivos, no el texto. Y no se
@@ -333,9 +360,15 @@ function SongEditor() {
         // voz principal metía la plantilla de la canción nueva, que luego
         // reaparecía como una vista de letra fantasma.
         content: esPdf ? "" : primaryContent,
+        // Todas sus tonalidades, para buscarla y filtrarla por las de sus
+        // modulaciones; sin modulaciones, nada (basta con `key`)
+        tonalidades: (() => {
+          const todas = esPdf ? [] : tonalidadesDe(primaryContent, key);
+          return todas.length > 1 ? todas : null;
+        })(),
         lyricsOnly,
-        acordes,
-        voices,
+        acordes: acordesNormalizados,
+        voices: voicesNormalizadas,
         format,
         pdfs,
         primaryInstrument,
@@ -492,6 +525,36 @@ function SongEditor() {
   // Handler para cambios en el editor
   const handleEditorChange = (value) => {
     updateCurrentTabContent(value);
+  };
+
+  // Aplica lo que pide la barra de botones donde está el cursor. Sin
+  // CodeMirror (en los tests, o si aún no ha arrancado), al final del texto.
+  const editarTexto = (crearEdicion) => {
+    const cm = codemirrorRef.current;
+    if (cm && cm.getWrapperElement()?.isConnected) {
+      const inicio = cm.indexFromPos(cm.getCursor("from"));
+      const fin = cm.indexFromPos(cm.getCursor("to"));
+      const edicion = crearEdicion(cm.getValue(), inicio, fin);
+      cm.replaceRange(edicion.insertar, cm.posFromIndex(edicion.desde), cm.posFromIndex(edicion.hasta));
+      cm.setCursor(cm.posFromIndex(edicion.cursor));
+      return;
+    }
+    const texto = getCurrentTabContent() || "";
+    updateCurrentTabContent(aplicarEdicion(texto, crearEdicion(texto, texto.length, texto.length)));
+  };
+
+  // La tonalidad del tramo donde está el cursor: la de la canción, o la de la
+  // última modulación que haya encima. En la pestaña de acordes, en concierto.
+  const tonalidadEnCursor = () => {
+    const cm = codemirrorRef.current;
+    const texto = getCurrentTabContent() || "";
+    const antes = cm && cm.getWrapperElement()?.isConnected
+      ? cm.getValue().slice(0, cm.indexFromPos(cm.getCursor("from")))
+      : texto;
+    const delPrincipio = currentTab === ACORDES_TAB
+      ? getVisualKeyForInstrument(key, CHORDS_SOURCE_INSTRUMENT)
+      : key;
+    return partirEnTramos(antes, delPrincipio).at(-1).key;
   };
 
   // Handler para cuando el editor pierde el foco
@@ -869,13 +932,23 @@ function SongEditor() {
                   : ""}
               />
             ) : (
-              <SimpleMDE
-                ref={editorRef}
-                value={getCurrentTabContent()}
-                onChange={handleEditorChange}
-                onBlur={handleEditorBlur}
-                options={EDITOR_OPTIONS}
-              />
+              <>
+                <BarraEditor
+                  onEditar={editarTexto}
+                  notacion={notacion}
+                  conNotas={currentTab !== LYRICS_TAB}
+                  tonalidadEnCursor={tonalidadEnCursor}
+                  referencia={currentTab === ACORDES_TAB ? "concierto" : "la referencia de trompeta en Sib"}
+                />
+                <SimpleMDE
+                  ref={editorRef}
+                  value={getCurrentTabContent()}
+                  onChange={handleEditorChange}
+                  onBlur={handleEditorBlur}
+                  getCodemirrorInstance={guardarCodemirror}
+                  options={EDITOR_OPTIONS}
+                />
+              </>
             )}
           </div>
 

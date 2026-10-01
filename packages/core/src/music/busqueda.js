@@ -1,6 +1,7 @@
 // packages/core/src/music/busqueda.js
 
 import { nombrarTonalidad } from './notation';
+import { tonalidadesDeCancion } from './modulaciones';
 
 /**
  * Buscar canciones del repertorio como las recuerda el músico: por el título,
@@ -58,9 +59,12 @@ export function puntuarCancion(cancion, termino, { notacion = 'latin' } = {}) {
   if (normalizarBusqueda(cancion.version).includes(termino)) return 40;
   if (normalizarBusqueda(cancion.album).includes(termino)) return 30;
   if (normalizarBusqueda(cancion.type).includes(termino)) return 20;
-  if (normalizarBusqueda(cancion.key).includes(termino)) return 20;
+  // Por cualquiera de sus tonalidades: también las de las modulaciones
+  const tonalidades = tonalidadesDeCancion(cancion);
+  if (tonalidades.some((tonalidad) => normalizarBusqueda(tonalidad).includes(termino))) return 20;
   // Quien lee en C-D-E busca "Bm", no "SIm"
-  if (notacion === 'english' && normalizarBusqueda(nombrarTonalidad(cancion.key, notacion)).includes(termino)) return 20;
+  if (notacion === 'english'
+    && tonalidades.some((tonalidad) => normalizarBusqueda(nombrarTonalidad(tonalidad, notacion)).includes(termino))) return 20;
   // Por un verso suelto, solo a partir de 4 letras: los nombres de nota (DO,
   // RE, MI...) aparecen dentro de cualquier palabra, y "re" devolvía
   // "siempre" y "adoraré"

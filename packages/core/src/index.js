@@ -18,6 +18,7 @@ export * from './music/versiones';
 export * from './music/datosCancion';
 export * from './music/busqueda';
 export * from './music/ortografia';
+export * from './music/modulaciones';
 
 // Audio utilities
 export * from './audio/audioContext';

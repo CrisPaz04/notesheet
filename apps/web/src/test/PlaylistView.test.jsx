@@ -305,3 +305,29 @@ describe('PlaylistView: la voz de cada músico', () => {
     expect(localStorage.getItem('numeroDeVoz')).toBe('2');
   });
 });
+
+describe('PlaylistView: modulaciones', () => {
+  const SION = { id: 's3', title: 'Regocíjate Sión', key: 'LAm', content: 'LA SI DO\n## Ascenso [SIm]\nSI DO# RE' };
+
+  const conSion = (entrada) => {
+    mockGetPlaylistById.mockResolvedValue({ ...LISTA, songs: [{ id: 's3', title: 'Regocíjate Sión', key: 'LAm', originalKey: 'LAm', ...entrada }] });
+    mockGetSongById.mockResolvedValue(SION);
+  };
+
+  it('sin ajuste, la modulación sube con la canción y se ven las dos tonalidades', async () => {
+    conSion({});
+    render(<PlaylistView />);
+    await screen.findByText('Regocíjate Sión');
+    await waitFor(() => expect(contenidoDeCancion(1)).toBe('SI DO# RE'));
+    expect(screen.getByText('LAm → SIm')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Ascenso, modula a SIm' })).toBeInTheDocument();
+  });
+
+  it('con el ajuste de la lista, la modulación va a donde dijo el director', async () => {
+    conSion({ modulaciones: { 1: -2 } });
+    render(<PlaylistView />);
+    await screen.findByText('Regocíjate Sión');
+    await waitFor(() => expect(contenidoDeCancion(1)).toBe('LA SI DO'));
+    expect(screen.getByRole('heading', { name: 'Ascenso, modula a LAm' })).toBeInTheDocument();
+  });
+});

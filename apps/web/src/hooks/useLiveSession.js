@@ -8,6 +8,7 @@ import {
   updateParticipant,
   setActiveSong,
   setSongKey,
+  setModulacion,
   setSessionSongs,
   endSession,
   isParticipantOnline,
@@ -250,6 +251,13 @@ export default function useLiveSession(code, { user, autoJoin = true } = {}) {
       setSongKey(code, { songs: actuales, songId, key, expectedVersion, user })
   ), [ejecutar, code, user]);
 
+  // Lleva una modulación de una canción a otra tonalidad (ajuste en semitonos
+  // desde donde iría con la canción; 0 la devuelve ahí)
+  const cambiarModulacion = useCallback((songId, numero, ajuste) => ejecutar(
+    ({ expectedVersion, songs: actuales }) =>
+      setModulacion(code, { songs: actuales, songId, numero, ajuste, expectedVersion, user })
+  ), [ejecutar, code, user]);
+
   const moverCancion = useCallback((desde, hasta) => ejecutar(
     ({ expectedVersion, songs: actuales, activeSongId: activa }) => {
       if (desde === hasta) return Promise.resolve();
@@ -375,6 +383,7 @@ export default function useLiveSession(code, { user, autoJoin = true } = {}) {
     siguiente,
     anterior,
     cambiarTonalidad,
+    cambiarModulacion,
     moverCancion,
     agregarCancion,
     quitarCancion,

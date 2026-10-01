@@ -1,10 +1,12 @@
 import { forwardRef } from "react";
 import PlaylistKeySelector from "../PlaylistKeySelector";
-import { nombrarTonalidad, elegirVista } from "@notesheet/core";
+import { nombrarTonalidad, elegirVista, modulacionesDeLaEntrada } from "@notesheet/core";
 import PdfEnLista from "../PdfEnLista";
 import Desplegable from "../Desplegable";
 import { SeccionesCancion, AvisoVista } from "../SeccionesCancion";
 import Icono from "../Icono";
+import SelectorModulacion from "../SelectorModulacion";
+import { recorridoTonalidades } from "../../utils/recorridoTonalidades";
 
 /**
  * Una canción dentro de la sesión, con sus controles a la vista.
@@ -29,6 +31,7 @@ const LiveSongCard = forwardRef(function LiveSongCard({
   alineacion = "left",
   vista = "principal",
   onCambiarTonalidad,
+  onCambiarModulacion,
   onQuitar,
   onMover,
   onElegirVoz,
@@ -41,6 +44,8 @@ const LiveSongCard = forwardRef(function LiveSongCard({
   // Notas (o partitura), letra o acordes, según lo que eligió este músico.
   // Si la canción no tiene lo pedido, la principal y un aviso.
   const cargada = Boolean(song.rendered || song.pdf);
+  // Un selector por modulación, con la tonalidad compartida como la de la canción
+  const modulaciones = song.pdf ? [] : modulacionesDeLaEntrada(song.cargada, tonalidadCompartida, song.modulaciones);
   const eleccion = elegirVista(vista, song.vistas);
 
   return (
@@ -77,10 +82,26 @@ const LiveSongCard = forwardRef(function LiveSongCard({
             )}
           </div>
 
+          {onCambiarModulacion && modulaciones.map((modulacion) => (
+            <div key={modulacion.numero} className="live-card-keys">
+              <SelectorModulacion
+                modulacion={modulacion}
+                tonalidadInicio={tonalidadCompartida}
+                onChange={(ajuste) => onCambiarModulacion(song.id, modulacion.numero, ajuste)}
+                notacion={notacion}
+                className="desplegable--compacto desplegable--live"
+              />
+            </div>
+          ))}
+
           {difieren && (
             <div className="live-card-keys">
               <span className="live-control-label">Tú</span>
-              <span className="live-key-badge live-key-mine">{nombrarTonalidad(tonalidadPropia, notacion)}</span>
+              <span className="live-key-badge live-key-mine">
+                {song.rendered?.tonalidadesLeidas?.length > 1
+                  ? recorridoTonalidades(song.rendered.tonalidadesLeidas, notacion)
+                  : nombrarTonalidad(tonalidadPropia, notacion)}
+              </span>
             </div>
           )}
 
@@ -149,10 +170,10 @@ const LiveSongCard = forwardRef(function LiveSongCard({
           {/* Solo se abre cuando la canción está cerca de la pantalla: una
               sesión puede llevar varios PDF. */}
           {song.pdf && <PdfEnLista path={song.pdf.path} title={song.title} />}
-          <SeccionesCancion formatted={song.rendered?.formatted} alineacion={alineacion} fontSize={fontSize} />
+          <SeccionesCancion formatted={song.rendered?.formatted} alineacion={alineacion} fontSize={fontSize} notacion={notacion} />
         </>
       ) : (
-        <SeccionesCancion formatted={song.vistas[eleccion.vista]} alineacion={alineacion} fontSize={fontSize} />
+        <SeccionesCancion formatted={song.vistas[eleccion.vista]} alineacion={alineacion} fontSize={fontSize} notacion={notacion} />
       )}
     </article>
   );

@@ -1,18 +1,47 @@
+import { nombrarTonalidad } from "@notesheet/core";
 import Icono from "./Icono";
 // Las secciones de una canción ya formateada (notas, letra o acordes), como
 // se pintan en la lista y en la sesión en vivo.
+
+/**
+ * El título de una sección y, si en ella modula la canción, la tonalidad en
+ * que se lee desde ahí ("Modulación · DO#m"), en la notación del músico.
+ *
+ * @param {Object} props
+ * @param {{title?: string, tonalidad?: string}} props.section
+ * @param {'latin'|'english'} [props.notacion]
+ * @param {'h3'|'h4'} [props.nivel]
+ */
+export function TituloSeccion({ section, notacion = "latin", nivel = "h4" }) {
+  const { title, tonalidad } = section || {};
+  if (!title && !tonalidad) return null;
+  const Etiqueta = nivel;
+  return (
+    <Etiqueta className="song-section-title">
+      {title}
+      {tonalidad && (
+        <span className="song-section-tonalidad">
+          {title && <span aria-hidden="true"> · </span>}
+          <span className="visually-hidden">{title ? ", modula a" : "Modula a"}</span>{" "}
+          {nombrarTonalidad(tonalidad, notacion)}
+        </span>
+      )}
+    </Etiqueta>
+  );
+}
 
 /**
  * @param {Object} props
  * @param {Object|null} props.formatted - Lo que devuelve `formatSong`
  * @param {string} props.alineacion - 'left' | 'center' | 'right'
  * @param {number} props.fontSize
+ * @param {'latin'|'english'} [props.notacion] - Para nombrar la tonalidad de las modulaciones
  */
-export function SeccionesCancion({ formatted, alineacion, fontSize }) {
+export function SeccionesCancion({ formatted, alineacion, fontSize, notacion = "latin" }) {
   if (!formatted?.sections?.length) return null;
   return formatted.sections.map((section, i) => (
     <section key={i} className="song-section-modern">
-      {section.title && <h4 className="song-section-title">{section.title}</h4>}
+      <TituloSeccion section={section} notacion={notacion} />
       <div className={`song-section-content alinear-${alineacion}`} style={{ fontSize: `${fontSize}px` }}>
         {section.content}
       </div>

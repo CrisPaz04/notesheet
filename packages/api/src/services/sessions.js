@@ -38,7 +38,7 @@ import {
   serverTimestamp,
   Timestamp
 } from 'firebase/firestore';
-import { limpiarMensajeDirector } from '@notesheet/core';
+import { limpiarMensajeDirector, limpiarModulaciones } from '@notesheet/core';
 import { db } from '../firebase/config';
 import { publishOwnSongs } from './songs';
 
@@ -145,12 +145,18 @@ const participantRef = (code, uid) => doc(db, SESSIONS, code, PARTICIPANTS, uid)
  * versión vieja): lo que se guarde aquí es lo que van a leer doce clientes,
  * así que se fija la forma en un solo sitio.
  */
-const sanitizeSong = (song) => ({
-  id: song.id,
-  title: song.title || '',
-  key: song.key || song.originalKey || '',
-  originalKey: song.originalKey || song.key || ''
-});
+const sanitizeSong = (song) => {
+  const limpia = {
+    id: song.id,
+    title: song.title || '',
+    key: song.key || song.originalKey || '',
+    originalKey: song.originalKey || song.key || ''
+  };
+  // A dónde lleva la banda cada modulación (ver `modulaciones.js` en core).
+  // Solo si hay algo: sin ajustes, se mueven con la canción.
+  const modulaciones = limpiarModulaciones(song.modulaciones);
+  return modulaciones ? { ...limpia, modulaciones } : limpia;
+};
 
 const sanitizeSongs = (songs) =>
   (Array.isArray(songs) ? songs : []).filter((s) => s?.id).map(sanitizeSong);
@@ -338,6 +344,21 @@ export const setSongKey = (code, { songs, songId, key, expectedVersion, user }) 
   const actualizadas = sanitizeSongs(songs).map((song) =>
     song.id === songId ? { ...song, key } : song
   );
+  return applySessionChange(code, expectedVersion, conSongIds(actualizadas), user);
+};
+
+/**
+ * Lleva una modulación de una canción a otra tonalidad dentro de la sesión.
+ *
+ * `ajuste` son semitonos desde donde iría moviéndose con la canción: 0 la
+ * devuelve a eso. Como `key`, es compartido, y cada cliente lo pasa por
+ * `renderSongContent` con su instrumento.
+ */
+export const setModulacion = (code, { songs, songId, numero, ajuste, expectedVersion, user }) => {
+  const actualizadas = sanitizeSongs(songs.map((song) => {
+    if (song.id !== songId) return song;
+    return { ...song, modulaciones: { ...(song.modulaciones || {}), [numero]: ajuste } };
+  }));
   return applySessionChange(code, expectedVersion, conSongIds(actualizadas), user);
 };
 

@@ -58,3 +58,16 @@ describe('puntuarCancion', () => {
     expect(exacta).toBeGreaterThan(empieza);
   });
 });
+
+describe('búsqueda por las tonalidades de una canción que modula', () => {
+  const SION = { id: 'm', title: 'Mas tú, Jehová', key: 'SIm', tonalidades: ['SIm', 'DO#m'], type: 'Adoración' };
+
+  it('la encuentra por la tonalidad de la modulación, no solo por la del principio', () => {
+    expect(puntuarCancion(SION, normalizarBusqueda('DO#m'))).toBe(20);
+    expect(puntuarCancion(SION, normalizarBusqueda('SIm'))).toBe(20);
+  });
+
+  it('en C-D-E también', () => {
+    expect(puntuarCancion(SION, normalizarBusqueda('C#m'), { notacion: 'english' })).toBe(20);
+  });
+});

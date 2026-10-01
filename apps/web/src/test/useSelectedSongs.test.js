@@ -227,3 +227,22 @@ describe('useSelectedSongs', () => {
     });
   });
 });
+
+describe('useSelectedSongs: modulaciones', () => {
+  it('guarda el ajuste de una modulación solo en esa canción, y 0 lo quita', () => {
+    const { result } = conTres();
+    act(() => result.current.changeModulacion('s1', 1, -2));
+    expect(result.current.selectedSongs[0].modulaciones).toEqual({ 1: -2 });
+    expect(result.current.selectedSongs[1]).not.toHaveProperty('modulaciones');
+
+    act(() => result.current.changeModulacion('s1', 1, 0));
+    expect(result.current.selectedSongs[0]).not.toHaveProperty('modulaciones');
+  });
+
+  it('cambiar la tonalidad de la canción conserva los ajustes', () => {
+    const { result } = conTres();
+    act(() => result.current.changeModulacion('s2', 1, 1));
+    act(() => result.current.changeKey('s2', 'LA'));
+    expect(result.current.selectedSongs[1]).toMatchObject({ key: 'LA', modulaciones: { 1: 1 } });
+  });
+});
