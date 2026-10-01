@@ -65,6 +65,7 @@ beforeEach(async () => {
     const st = ctx.storage();
     await uploadString(ref(st, 'partituras/enSesion/a.pdf'), 'pdf', 'raw', { contentType: PDF });
     await uploadString(ref(st, 'partituras/fuera/b.pdf'), 'pdf', 'raw', { contentType: PDF });
+    await uploadString(ref(st, 'partituras/privada/c.pdf'), 'pdf', 'raw', { contentType: PDF });
   });
 });
 
@@ -184,6 +185,15 @@ describe('partituras en Storage', () => {
 
   it('con cuenta, cualquiera publicada', async () => {
     await assertSucceeds(getBytes(ref(conCuenta().storage(), 'partituras/fuera/b.pdf')));
+  });
+
+  // Lo que ningún dueño ve desde su cuenta: que otro músico no abra lo privado
+  it('con otra cuenta, la de una canción privada ajena no', async () => {
+    await assertFails(getBytes(ref(conCuenta().storage(), 'partituras/privada/c.pdf')));
+  });
+
+  it('el dueño sí abre la de su canción privada', async () => {
+    await assertSucceeds(getBytes(ref(conCuenta('dueno').storage(), 'partituras/privada/c.pdf')));
   });
 
   it('un invitado no sube partituras', async () => {

@@ -48,3 +48,42 @@ export async function crearDocumento(coleccion, id, datos) {
     body: JSON.stringify({ fields: campos(datos) }),
   });
 }
+
+const BUCKET = 'demo-notesheet.appspot.com';
+
+/** Sube un archivo al emulador de Storage como administrador. */
+export async function subirArchivo(ruta, contenido, contentType) {
+  const url = `http://127.0.0.1:9199/upload/storage/v1/b/${BUCKET}/o?uploadType=media&name=${encodeURIComponent(ruta)}`;
+  await pedir(url, {
+    method: 'POST',
+    headers: { Authorization: 'Bearer owner', 'Content-Type': contentType },
+    body: contenido,
+  });
+}
+
+/**
+ * Un PDF de una página con una línea de texto, válido para pdf.js: cabecera,
+ * cuatro objetos, la tabla de referencias con los desplazamientos de cada uno
+ * y el tráiler.
+ */
+export function pdfDePrueba(texto) {
+  const flujo = `BT /F1 24 Tf 72 720 Td (${texto}) Tj ET`;
+  const objetos = [
+    '<< /Type /Catalog /Pages 2 0 R >>',
+    '<< /Type /Pages /Kids [3 0 R] /Count 1 >>',
+    '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>',
+    `<< /Length ${flujo.length} >>\nstream\n${flujo}\nendstream`,
+    '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>',
+  ];
+  let pdf = '%PDF-1.4\n';
+  const desplazamientos = objetos.map((cuerpo, i) => {
+    const aqui = pdf.length;
+    pdf += `${i + 1} 0 obj\n${cuerpo}\nendobj\n`;
+    return aqui;
+  });
+  const xref = pdf.length;
+  pdf += `xref\n0 ${objetos.length + 1}\n0000000000 65535 f \n`;
+  pdf += desplazamientos.map((d) => `${String(d).padStart(10, '0')} 00000 n \n`).join('');
+  pdf += `trailer\n<< /Size ${objetos.length + 1} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF\n`;
+  return Buffer.from(pdf, 'latin1');
+}

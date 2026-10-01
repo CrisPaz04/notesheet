@@ -16,9 +16,12 @@ partitura real: subirla, guardarla en Storage y verla pintada. El plan que lo
 guió es `PLAN-PARTITURAS-PDF.md`, que sirve ya solo para saber **por qué** está
 así y con qué se tropezó al ponerlo en marcha.
 
-Lo único de la cadena de permisos que **no** se ha visto funcionar todavía es
-abrir una partitura desde otra cuenta de la banda: que la regla deje leer lo
-publicado y no lo privado. Ese fallo no lo ve el dueño de la canción.
+Abrir una partitura **desde otra cuenta** (lo que el dueño nunca ve desde la suya)
+está probado en los emuladores con las reglas de verdad: `e2e/partituraOtraCuenta.spec.js`
+(otro músico ve pintada la de una canción publicada y no abre la de una privada) y dos
+tests de Storage en `reglas.test.mjs`; los dos validados rompiendo la regla de lectura.
+Lo propio de producción (el permiso entre servicios, el CORS) es lo mismo que usa el
+dueño cada vez que abre una suya.
 
 - De cada canción **no hay un PDF, hay una matriz**: instrumento × nº de voz ×
   variante (`partitura` y `conNotas`, esta última con los nombres de las notas
@@ -482,9 +485,12 @@ su propio servidor de Vite en el puerto 5199 con `VITE_EMULADORES=1` y un proyec
 con esa variable, y **se niega** si el proyecto no es `demo-…`: así un `.env` real nunca
 acaba recibiendo datos de prueba. Los datos se siembran por la API REST de los emuladores
 (`e2e/emuladores.js`, con `Bearer owner`, que se salta las reglas) y se vacían antes de
-cada test. Hoy cubren la portada y el domingo entero con dos navegadores: el director abre
+cada test. Hoy cubren la portada, el domingo entero con dos navegadores (el director abre
 la sesión desde su lista, un músico sin cuenta entra con el código y, cuando el director
-cambia la tonalidad, a él le cambia sola. Validado rompiendo el cambio de tonalidad: falla.
+cambia la tonalidad, a él le cambia sola; validado rompiendo el cambio de tonalidad) y las
+partituras desde otra cuenta. Los PDF se suben al emulador de Storage con `subirArchivo`,
+y `pdfDePrueba` genera uno mínimo que pdf.js pinta. Ojo: `npx playwright test` a secas no
+arranca los emuladores (sale `fetch failed`); hay que pasar por `npm run test:e2e`.
 
 `.github/workflows/pruebas.yml` corre en cada push y PR: lint, Vitest, reglas y punta a
 punta. Si falla, deja el informe de Playwright (capturas y traza) como artefacto.
