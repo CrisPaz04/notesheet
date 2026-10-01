@@ -1,0 +1,21 @@
+[
+  {"query": "Aprobado, haz commit y push", "should_trigger": true},
+  {"query": "Commit y push", "should_trigger": true},
+  {"query": "Commit y push. Luego ajustemos el circulo de quintas, me gusta mas con el pentagrama", "should_trigger": true},
+  {"query": "ya probe el afinador en la tablet y funciona bien, sube todo a produccion", "should_trigger": true},
+  {"query": "haz el commit y el push y fijate que netlify lo despliegue bien", "should_trigger": true},
+  {"query": "Listo, publica los cambios del footer", "should_trigger": true},
+  {"query": "ok, súbelo", "should_trigger": true},
+  {"query": "/publicar", "should_trigger": true},
+  {"query": "Aprobado. Commit, push y comprueba el deploy", "should_trigger": true},
+  {"query": "Comprueba el deploy", "should_trigger": false},
+  {"query": "por que fallo el ultimo deploy de netlify? la web sigue con la version vieja", "should_trigger": false},
+  {"query": "Haz commit pero no lo subas todavia, quiero probar mas en la tablet", "should_trigger": false},
+  {"query": "escribe el mensaje del commit pero no lo hagas, lo hago yo desde github desktop", "should_trigger": false},
+  {"query": "crea una rama y abre un PR con lo del metronomo, no lo quiero en master aun", "should_trigger": false},
+  {"query": "despliega las reglas de firestore que cambiamos", "should_trigger": false},
+  {"query": "publica la lista del domingo para que la vea la banda", "should_trigger": false},
+  {"query": "sube el PDF de la partitura de trompeta 2 de Agnus Dei", "should_trigger": false},
+  {"query": "revierte el ultimo commit, rompio el dashboard", "should_trigger": false},
+  {"query": "que queda sin commit?", "should_trigger": false}
+]
