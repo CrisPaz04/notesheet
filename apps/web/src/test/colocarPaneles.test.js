@@ -69,4 +69,25 @@ describe('colocarPaneles', () => {
   it('alturaInicial: si encima no cabe, abajo', () => {
     expect(alturaInicial([{ top: 50, alto: 600 }], 150, LIM)).toBe(574);
   });
+
+  // Las fronteras exactas: los encontró una campaña de mutantes, que cambiaba
+  // un >= por > (o un < por <=) sin que ningún test lo notara
+
+  it('alturaInicial: si cabe justo hasta arriba, encima', () => {
+    expect(alturaInicial([{ top: 8 + HUECO + 150, alto: 100 }], 150, LIM)).toBe(8);
+  });
+
+  it('ladoPorPosicion: justo en la mitad, a la derecha', () => {
+    expect(ladoPorPosicion(600, 1200)).toBe('derecha');
+  });
+
+  it('separar: soltado arriba con otro encima, y caben justos', () => {
+    // 100 + 12 + 604 = 716, el alto exacto entre los límites
+    const r = separar([
+      { id: 'a', top: 8, alto: 604 },
+      { id: 'b', top: 0, alto: 100 }
+    ], 'a', LIM);
+    expect(r.b).toBe(8);
+    expect(r.a).toBe(8 + 100 + HUECO);
+  });
 });

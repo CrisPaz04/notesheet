@@ -46,25 +46,46 @@ export const separar = (paneles, fijoId, limites) => {
 
   // Si los de debajo no caben entre el fijo y el borde, el fijo sube lo que
   // haga falta: mejor moverlo un poco que dejar dos paneles uno encima del
-  // otro (pasa cuando un panel crece al terminar de cargar).
+  // otro (pasa cuando un panel crece al terminar de cargar). Y al revés con
+  // los de encima: soltado arriba del todo con otro un poco más alto, el
+  // fijo baja para dejarle sitio (antes se quedaban pisados aunque hubiera
+  // pantalla de sobra; lo encontró un test de propiedades).
   const sitioDebajo = debajo.reduce((suma, p) => suma + p.alto + HUECO, 0);
-  const topFijo = Math.max(
-    limites.minTop,
-    Math.min(fijo.top, limites.maxBottom - sitioDebajo - fijo.alto)
-  );
+  const sitioEncima = encima.reduce((suma, p) => suma + p.alto + HUECO, 0);
+  const masAlto = limites.maxBottom - sitioDebajo - fijo.alto;
+  const masBajo = limites.minTop + sitioEncima;
+  const topFijo = masBajo <= masAlto
+    ? Math.max(masBajo, Math.min(fijo.top, masAlto))
+    : Math.max(limites.minTop, Math.min(fijo.top, masAlto));
 
   const resultado = { [fijo.id]: topFijo };
 
+  // Cada panel deja sitio a los que aún faltan por colocar de su lado: si se
+  // quedara en su altura, el siguiente podía no caber y acabar pisándolo.
+  // Después, `acotar` con los límites reales: si no caben todos, que se
+  // solapen antes que salirse de la pantalla.
+  const sitioDe = (lista) => lista.reduce((suma, p) => suma + p.alto + HUECO, 0);
+
   let borde = topFijo + fijo.alto + HUECO;
-  debajo.forEach((p) => {
-    const top = acotar(Math.max(p.top, borde), p.alto, limites);
+  debajo.forEach((p, k) => {
+    const resto = sitioDe(debajo.slice(k + 1));
+    const top = acotar(
+      acotar(Math.max(p.top, borde), p.alto, { ...limites, maxBottom: limites.maxBottom - resto }),
+      p.alto,
+      limites
+    );
     resultado[p.id] = top;
     borde = top + p.alto + HUECO;
   });
 
   borde = topFijo - HUECO;
-  encima.forEach((p) => {
-    const top = acotar(Math.min(p.top, borde - p.alto), p.alto, limites);
+  encima.forEach((p, k) => {
+    const resto = sitioDe(encima.slice(k + 1));
+    const top = acotar(
+      acotar(Math.min(p.top, borde - p.alto), p.alto, { ...limites, minTop: limites.minTop + resto }),
+      p.alto,
+      limites
+    );
     resultado[p.id] = top;
     borde = top - HUECO;
   });

@@ -188,7 +188,26 @@ Bootstrap acaban saliendo en los seis. Usa las variables:
 - `rgba(var(--overlay-rgb), a)` para fondos y textos translúcidos: es blanco
   en los temas oscuros y negro en los claros.
 - `--surface-raised` / `--surface-hover` / `--border-strong` para menús y
-  desplegables; `--color-danger` para borrar o salir.
+  desplegables; `--color-danger` para borrar o salir y `--color-success` para lo
+  que está bien o publicado ("Pública", en línea). Cada tema tiene los suyos con
+  4,5:1 sobre sus fondos y tarjetas: el `#dc3545` y el verde fijos bajaban de 2:1.
+- **Contraste**: el texto normal pide 4,5:1 en los seis temas (medido con la skill
+  ui-ux-pro-max). El acento como texto sobre su propio fondo tintado no llega: lo
+  activo de un selector va con `--text-light-primary` y lo marca el fondo.
+  `.text-secondary`, `.text-muted` y `<code>` de Bootstrap están conectados al tema
+  en `_bootstrap-theme.css`.
+- Lo que solo aparece al pasar el ratón va con `@media (hover: hover) and (pointer:
+  fine)`, no por ancho: en una tablet de más de 768 px no hay ratón, y el botón de
+  borrar del Dashboard era invisible pero se podía tocar.
+- **44 px** como mínimo en lo que se toca en la canción, la lista, la sesión en vivo,
+  la barra de herramientas y sus paneles (piano y afinador y metrónomo mini incluidos):
+  se usa en el atril, de pie y con el instrumento en la otra mano. Los desplegables
+  compactos miden 36: dentro de esas vistas se suben con un selector más específico
+  (`.mi-voz .desplegable--compacto .desplegable-boton`), porque con la misma
+  especificidad gana el de `_desplegable.css`.
+- `prefers-reduced-motion` (`base/_reset.css`) quita animaciones y transiciones,
+  salvo los indicadores de carga. Un estado que importe (el pulso del metrónomo)
+  tiene que ser una clase, no solo una animación.
 - `--accent-on-dark` para lo que va sobre las dos tarjetas que son oscuras en
   todos los temas (el login y la demo de la portada).
 - Una corrección solo para temas claros va con
@@ -469,12 +488,28 @@ SPA (el orden importa).
 ## Notes
 
 - No TypeScript - pure JavaScript
-- Vitest configured; 1928 tests in `apps/web/src/test/` (run with `npm run test:run`)
+- Vitest configured; 1953 tests in `apps/web/src/test/` (run with `npm run test:run`)
 - Los tests se validan con **mutaciones**: se rompe el código a propósito y se comprueba
   que algún test falla. Ha destapado cuatro tests que pasaban por la razón equivocada,
   y un bug de verdad en `scores.js` (las voces se ordenaban como texto, así que la 10
   iba antes que la 2). Merece la pena hacerlo con cualquier lógica no trivial que añadas.
-  `scripts/mutantes-scores.sh` es un ejemplo de cómo automatizarlo.
+  `scripts/mutantes-scores.sh` es un ejemplo de cómo automatizarlo, y
+  `scripts/mutantes-paneles-ortografia.py` otro (22 mutantes; los 3 que sobreviven
+  son equivalentes y el script explica por qué). **Stryker no encaja**: `@notesheet/core`
+  llega por un enlace del workspace, así que solo ve los mutantes en modo "en el sitio",
+  y en ese modo copia todo el proyecto, lo restaura al terminar (pisa lo que se edite
+  mientras corre), deja `// @ts-nocheck` en cada archivo si se corta, y tarda horas.
+- **Tests de propiedades** (`propiedades.test.js`, con `fast-check`): en vez de ejemplos,
+  una regla que vale para cualquier entrada, y el generador busca la que la rompe. Hoy:
+  la transposición (ida y vuelta, dos saltos = uno, cada nota sube n, la letra no se
+  toca), la ortografía (cada nombre suena en su tecla, la escala usa las siete letras,
+  la tonalidad transpuesta tiene su nombre habitual) y los paneles flotantes. En estos
+  encontró al primer intento un bug de verdad: si caben todos, ninguno se pisa, y no se
+  cumplía (soltado arriba del todo, el panel de encima se quedaba solapado). Un fallo
+  imprime el caso mínimo y la semilla para repetirlo; `FC_RUNS=5000` para una pasada
+  larga. Encajan donde hay ida y vuelta, invariantes o un comprobador barato. También
+  cubren la notación (DO-RE-MI ↔ C-D-E), qué voz lee cada músico, "Versión de", los
+  nombres de los PDF y el mensaje del director.
 - Cuidado con `waitFor` para comprobar que algo **no** pasa: `waitFor(() =>
   expect(fn).toHaveBeenCalledTimes(1))` se da por bueno nada más empezar, antes de que
   llegara la segunda llamada, así que pasa igual aunque el bug exista. Hay que esperar
