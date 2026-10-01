@@ -139,7 +139,14 @@ function SongEditor() {
   // inserta donde está su cursor. El callback tiene que ser estable, como
   // `options`, o el componente rehace el editor.
   const codemirrorRef = useRef(null);
-  const guardarCodemirror = useCallback((cm) => { codemirrorRef.current = cm; }, []);
+  // Mover el cursor no cambia el texto, así que no repinta; las teclas negras
+  // de la barra se nombran por la tonalidad del tramo donde está, y tras una
+  // modulación es otra. Este contador fuerza el repintado.
+  const [, setMovimientosCursor] = useState(0);
+  const guardarCodemirror = useCallback((cm) => {
+    codemirrorRef.current = cm;
+    cm.on("cursorActivity", () => setMovimientosCursor((n) => n + 1));
+  }, []);
 
   // Alta/baja de voces, pestaña activa y contenido de cada una
   const {
@@ -942,6 +949,7 @@ function SongEditor() {
                   notacion={notacion}
                   conNotas={currentTab !== LYRICS_TAB}
                   tonalidadEnCursor={tonalidadEnCursor}
+                  tonalidad={currentTab === LYRICS_TAB ? key : tonalidadEnCursor()}
                   referencia={currentTab === ACORDES_TAB ? "concierto" : "la referencia de trompeta en Sib"}
                 />
                 <SimpleMDE

@@ -488,6 +488,12 @@ cambia la tonalidad, a él le cambia sola. Validado rompiendo el cambio de tonal
 
 `.github/workflows/pruebas.yml` corre en cada push y PR: lint, Vitest, reglas y punta a
 punta. Si falla, deja el informe de Playwright (capturas y traza) como artefacto.
+**En CI no hay `.env`**: un test que monte un componente que acabe importando
+`@notesheet/api` (aunque sea de lejos, como la tarjeta en vivo por el visor de PDF)
+inicializa Firebase y el archivo entero falla con `auth/invalid-api-key`, aunque en local
+pase. Hay que mockear `@notesheet/api` en ese test. Para comprobarlo antes de subir: apartar
+el `.env` un momento y pasar `npm run test:run`. Publicar no acaba en el deploy: también
+hay que mirar que CI queda en verde (Netlify despliega aunque CI falle).
 
 ## Registro de errores (Sentry)
 
@@ -554,7 +560,7 @@ SPA (el orden importa).
 ## Notes
 
 - No TypeScript - pure JavaScript
-- Vitest configured; 2103 tests in `apps/web/src/test/` (run with `npm run test:run`)
+- Vitest configured; 2110 tests in `apps/web/src/test/` (run with `npm run test:run`)
 - Los tests se validan con **mutaciones**: se rompe el código a propósito y se comprueba
   que algún test falla. Ha destapado cuatro tests que pasaban por la razón equivocada,
   y un bug de verdad en `scores.js` (las voces se ordenaban como texto, así que la 10
@@ -624,9 +630,13 @@ SPA (el orden importa).
   repertorio las cifras con que se eligió el margen: si tocas el perfil o el
   margen y empeoran, salta ahí.
 - **Barra del editor** (`components/cancion/BarraEditor.jsx`): botones para las
-  secciones (`## Coro`…, "Fin de sección" = `##`), las notas en la notación del músico con
-  `#` y `b` que se pegan a la anterior, y "Modulación" (elige la tonalidad, preelegida la
-  del tramo del cursor). Insertan donde está el cursor de CodeMirror
+  secciones (`## Coro`…, "Fin de sección" = `##`), un **teclado de una octava** para las
+  notas (en la notación del músico, sin sonido) con `#` y `b` aparte que se pegan a la
+  anterior, y "Modulación" (elige la tonalidad, preelegida la del tramo del cursor). Las
+  blancas llevan siempre su nombre natural; las negras, el de la ortografía de la
+  tonalidad del tramo donde está el cursor (DO# en RE, REb en LAb, las de banda en DO),
+  así que cambian al pasar una modulación: el editor repinta en cada `cursorActivity`.
+  Marfil y negro en todos los temas, como el piano de las herramientas. Insertan donde está el cursor de CodeMirror
   (`getCodemirrorInstance`, callback estable) sin quitarle el foco (`mousedown`
   con `preventDefault`); la lógica es pura, en `utils/insertarEnEditor.js`.
   **Al guardar**, las notas se escriben en su forma única (`normalizarNotas`: "Re" →
@@ -818,7 +828,10 @@ SPA (el orden importa).
   no con "la primera vez": en desarrollo React monta los efectos dos veces.
 - **El Dashboard pinta por tandas**: 24 canciones y el resto al acercarse al final
   (`IntersectionObserver`; sin él, todas). Crear las 120 tarjetas de golpe eran ~100 ms
-  de pantalla trabada en un PC. Buscar y filtrar miran todas. Las tarjetas llevan
+  de pantalla trabada en un PC. Buscar y filtrar miran todas. Al cambiar la búsqueda, el
+  filtro o el orden se vuelve a la primera tanda **durante el render**, no en un
+  `useEffect`: el efecto llegaba después del aviso del observador (con 1200 px de margen
+  el centinela suele estar ya a la vista), pisaba su tanda y la lista se quedaba en 24. Las tarjetas llevan
   `content-visibility: auto`, y la rejilla ya no anima cada tarjeta al entrar.
 - **Toda vista tiene un acceso**: `rutasAccesibles.test.js` comprueba que cada ruta fija
   de `App.jsx` tiene un enlace en algún sitio. `/live` (entrar con el código) está en el
@@ -842,12 +855,12 @@ ahorra volver a buscarlo.
 
 ### Datos
 
-- **Marcar las modulaciones del repertorio.** La función está hecha, pero ninguna
-  canción de la app la usa todavía. Las claras, por sus notas: Regocíjate Sión
-  (`## Ascenso [SIm]`), Venid aclamemos (`[FA#m]`), Yo me alegro en tu poder
-  (`## Cambio [FA#m]`) y Mas tú, Jehová (`## Do# menor` → `## Modulación [DO#m]`).
-  Regocíjate oh moradora de Sión, de LA a DO (`## Ascenso [DO]`, confirmado por la
-  banda). Cristo vive hoy: su "Ascenso" sigue en FA, no es modulación.
+- **Marcar las modulaciones del repertorio.** Hecha la primera desde la app
+  (Regocíjate oh moradora de Sión, LA → DO). Las marca la banda desde el editor, al
+  auditar el repertorio canción por canción. Quedan las claras por sus notas:
+  Regocíjate Sión (`## Ascenso [SIm]`), Venid aclamemos (`[FA#m]`), Yo me alegro en tu
+  poder (`## Cambio [FA#m]`) y Mas tú, Jehová (`## Do# menor` → `## Modulación [DO#m]`).
+  Cristo vive hoy: su "Ascenso" sigue en FA, no es modulación.
 
 ### Música
 

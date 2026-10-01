@@ -55,6 +55,13 @@ Con el conector de Netlify (herramientas `netlify-project-services-reader` y
    `/assets/` busca algún texto o clase propia de lo que se acaba de cambiar
    (las vistas van en sus propios archivos: busca en los que enlaza el
    principal).
+4. **CI** (GitHub Actions, `pruebas.yml`): Netlify despliega aunque CI falle, así
+   que un deploy listo no dice nada de los tests. Busca la ejecución del commit
+   (`gh run list --commit <sha>`) y espera a que acabe (`gh run watch <id>
+   --exit-status`, unos 4–5 min). Si falla, mira `gh run view <id> --log-failed`
+   y dilo en el informe. Ya pasó: un test que cargaba Firebase sin `.env` falló
+   en CI dos push seguidos sin que nadie lo viera. Antes de subir, si se tocaron
+   tests de componentes, pasa la suite con el `.env` apartado.
 
 ## 4. Informe
 

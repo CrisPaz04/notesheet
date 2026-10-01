@@ -668,3 +668,49 @@ describe('SongEditor: cabeceras en mayúsculas', () => {
     expect(guardado.lyricsOnly).toBe('## Coro\nAleluya');
   });
 });
+
+// Las notas de la barra son un teclado de una octava. Las negras se nombran
+// según la tonalidad del tramo donde está el cursor (con el textarea de los
+// tests, el final del texto).
+describe('SongEditor: teclado de notas', () => {
+  const teclado = () => screen.getByRole('group', { name: 'Notas' });
+  const negras = () => [...teclado().querySelectorAll('.tecla-negra')].map((b) => b.textContent);
+
+  it('siete blancas y cinco negras, en la tonalidad de la canción', async () => {
+    mockGetSongById.mockResolvedValue({ ...SONG, key: 'RE', voices: { bb_trumpet: { 1: 'RE MI' } } });
+    await renderEditor();
+    expect([...teclado().querySelectorAll('.tecla-blanca')].map((b) => b.textContent))
+      .toEqual(['DO', 'RE', 'MI', 'FA', 'SOL', 'LA', 'SI']);
+    expect(negras()).toEqual(['DO#', 'RE#', 'FA#', 'SOL#', 'LA#']);
+  });
+
+  it('en una tonalidad de bemoles, las negras son bemoles', async () => {
+    mockGetSongById.mockResolvedValue({ ...SONG, key: 'FA', voices: { bb_trumpet: { 1: 'FA SOL' } } });
+    await renderEditor();
+    expect(negras()).toEqual(['REb', 'MIb', 'SOLb', 'LAb', 'SIb']);
+  });
+
+  it('en DO, las de banda', async () => {
+    mockGetSongById.mockResolvedValue({ ...SONG, key: 'DO', voices: { bb_trumpet: { 1: 'DO' } } });
+    await renderEditor();
+    expect(negras()).toEqual(['DO#', 'MIb', 'FA#', 'LAb', 'SIb']);
+  });
+
+  it('tras una modulación, las de su tonalidad; y la tecla inserta lo que dice', async () => {
+    const user = userEvent.setup();
+    mockGetSongById.mockResolvedValue({ ...SONG, key: 'RE', voices: { bb_trumpet: { 1: 'RE\n## [MIb]\nMIb' } } });
+    await renderEditor();
+    expect(negras()).toEqual(['REb', 'MIb', 'SOLb', 'LAb', 'SIb']);
+
+    await user.click(within(teclado()).getByRole('button', { name: 'LAb' }));
+    expect(screen.getByLabelText('editor')).toHaveValue('RE\n## [MIb]\nMIb LAb ');
+  });
+
+  it('en C-D-E, con sus nombres', async () => {
+    localStorage.setItem('notacionPreferida', 'english');
+    mockGetUserPreferences.mockResolvedValue({ defaultNotationSystem: 'english' });
+    mockGetSongById.mockResolvedValue({ ...SONG, key: 'FA', voices: { bb_trumpet: { 1: '' } } });
+    await renderEditor();
+    await waitFor(() => expect(negras()).toEqual(['Db', 'Eb', 'Gb', 'Ab', 'Bb']));
+  });
+});
