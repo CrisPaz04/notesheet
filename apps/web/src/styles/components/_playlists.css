@@ -274,9 +274,11 @@
     background: rgba(var(--overlay-rgb), 0.05);
   }
   
+  /* El número con el texto del tema: el acento sobre su propio fondo tintado
+     se quedaba por debajo de 4,5:1 en varios temas claros */
   .playlist-song-number {
     background: rgba(var(--color-primary-rgb), 0.2);
-    color: var(--color-primary);
+    color: var(--text-light-primary);
     width: 32px;
     height: 32px;
     border-radius: 50%;

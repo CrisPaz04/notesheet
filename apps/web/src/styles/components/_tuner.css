@@ -331,9 +331,8 @@
 }
 
 /* Fix button text color for light themes */
-[data-bs-theme="rainforest-light"] .tuner-container .btn-primary,
-[data-bs-theme="newspaper-light"] .tuner-container .btn-primary {
-  color: #ffffff !important;
+[data-bs-theme$="-light"] .tuner-container .btn-primary {
+  color: var(--on-primary) !important;
 }
 
 /* Override form switch colors */
@@ -634,24 +633,18 @@
 /* ===== Theme-specific styles for form controls ===== */
 
 /* Light themes - form controls */
-[data-bs-theme="light"] .tuner-controls .form-control-modern,
-[data-bs-theme="rainforest-light"] .tuner-controls .form-control-modern,
-[data-bs-theme="newspaper-light"] .tuner-controls .form-control-modern {
+[data-bs-theme$="light"] .tuner-controls .form-control-modern {
   background: rgba(255, 255, 255, 0.9);
   color: var(--text-light-primary);
 }
 
-[data-bs-theme="light"] .tuner-controls .form-control-modern option,
-[data-bs-theme="rainforest-light"] .tuner-controls .form-control-modern option,
-[data-bs-theme="newspaper-light"] .tuner-controls .form-control-modern option {
+[data-bs-theme$="light"] .tuner-controls .form-control-modern option {
   background: var(--bg-dark-primary);
   color: var(--text-light-primary);
 }
 
 /* Light themes - header */
-[data-bs-theme="light"] .tuner-header,
-[data-bs-theme="rainforest-light"] .tuner-header,
-[data-bs-theme="newspaper-light"] .tuner-header {
+[data-bs-theme$="light"] .tuner-header {
   background: rgba(255, 255, 255, 0.9);
 }
 

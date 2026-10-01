@@ -9,7 +9,7 @@ import {
   SCORE_VARIANT_LABELS,
   DEFAULT_SCORE_VARIANT
 } from "@notesheet/core";
-import { useThemeWithAuth } from "../hooks/useThemeWithAuth";
+import { useThemeWithAuth, THEME_FAMILIES } from "../hooks/useThemeWithAuth";
 import LoadingSpinner from "../components/LoadingSpinner";
 import PreferencesInstrumentSelector from "../components/PreferencesInstrumentSelector";
 import Icono from "../components/Icono";
@@ -298,9 +298,7 @@ function UserPreferences() {
                     {Object.entries(themesByCategory).map(([category, themes]) => (
                       <div key={category} className="theme-category">
                         <div className="theme-category-title">
-                          {category === 'classic' && 'Temas clásicos'}
-                          {category === 'rainforest' && 'Temas de bosque'}
-                          {category === 'newspaper' && 'Temas de periódico'}
+                          {THEME_FAMILIES[category] || category}
                         </div>
                         
                         <div className="theme-options-grid">

@@ -20,6 +20,7 @@ const temaActual = { valor: 'light' };
 const mockChangeTheme = vi.fn(async (t) => { temaActual.valor = t; });
 
 vi.mock('../hooks/useThemeWithAuth', () => ({
+  THEME_FAMILIES: { Claros: 'Claros', Oscuros: 'Oscuros' },
   useThemeWithAuth: () => ({
     theme: temaActual.valor,
     changeTheme: mockChangeTheme,

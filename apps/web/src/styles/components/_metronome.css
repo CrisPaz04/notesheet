@@ -374,9 +374,8 @@
 }
 
 /* Fix button text color for light themes */
-[data-bs-theme="rainforest-light"] .metronome-container .btn-primary,
-[data-bs-theme="newspaper-light"] .metronome-container .btn-primary {
-  color: #ffffff !important;
+[data-bs-theme$="-light"] .metronome-container .btn-primary {
+  color: var(--on-primary) !important;
 }
 
 /* Override form controls (inputs and selects) */
@@ -875,74 +874,52 @@
 /* ===== Theme-specific styles for form controls ===== */
 
 /* Light themes - form controls */
-[data-bs-theme="light"] .metronome-controls .form-control-modern,
-[data-bs-theme="rainforest-light"] .metronome-controls .form-control-modern,
-[data-bs-theme="newspaper-light"] .metronome-controls .form-control-modern {
+[data-bs-theme$="light"] .metronome-controls .form-control-modern {
   background: rgba(255, 255, 255, 0.9);
   color: var(--text-light-primary);
 }
 
-[data-bs-theme="light"] .metronome-controls .form-control-modern option,
-[data-bs-theme="rainforest-light"] .metronome-controls .form-control-modern option,
-[data-bs-theme="newspaper-light"] .metronome-controls .form-control-modern option {
+[data-bs-theme$="light"] .metronome-controls .form-control-modern option {
   background: var(--bg-dark-primary);
   color: var(--text-light-primary);
 }
 
 /* Light themes - header */
-[data-bs-theme="light"] .metronome-header,
-[data-bs-theme="rainforest-light"] .metronome-header,
-[data-bs-theme="newspaper-light"] .metronome-header {
+[data-bs-theme$="light"] .metronome-header {
   background: rgba(255, 255, 255, 0.9);
 }
 
 /* Light themes - tap tempo button */
-[data-bs-theme="light"] .btn-tap-tempo,
-[data-bs-theme="rainforest-light"] .btn-tap-tempo,
-[data-bs-theme="newspaper-light"] .btn-tap-tempo {
+[data-bs-theme$="light"] .btn-tap-tempo {
   background: transparent;
   border-color: var(--border-light);
   color: var(--text-light-primary);
 }
 
-[data-bs-theme="light"] .btn-tap-tempo:hover:not(:disabled),
-[data-bs-theme="rainforest-light"] .btn-tap-tempo:hover:not(:disabled),
-[data-bs-theme="newspaper-light"] .btn-tap-tempo:hover:not(:disabled) {
+[data-bs-theme$="light"] .btn-tap-tempo:hover:not(:disabled) {
   background: rgba(0, 0, 0, 0.05);
   border-color: var(--color-primary);
   color: var(--color-primary);
 }
 
 /* Light themes - tempo trainer inputs */
-[data-bs-theme="light"] .trainer-input,
-[data-bs-theme="rainforest-light"] .trainer-input,
-[data-bs-theme="newspaper-light"] .trainer-input,
-[data-bs-theme="light"] .trainer-input-small,
-[data-bs-theme="rainforest-light"] .trainer-input-small,
-[data-bs-theme="newspaper-light"] .trainer-input-small {
+[data-bs-theme$="light"] .trainer-input,
+[data-bs-theme$="light"] .trainer-input-small {
   background: rgba(255, 255, 255, 0.9);
   color: var(--text-light-primary);
 }
 
-[data-bs-theme="light"] .trainer-input:focus,
-[data-bs-theme="rainforest-light"] .trainer-input:focus,
-[data-bs-theme="newspaper-light"] .trainer-input:focus,
-[data-bs-theme="light"] .trainer-input-small:focus,
-[data-bs-theme="rainforest-light"] .trainer-input-small:focus,
-[data-bs-theme="newspaper-light"] .trainer-input-small:focus {
+[data-bs-theme$="light"] .trainer-input:focus,
+[data-bs-theme$="light"] .trainer-input-small:focus {
   background: rgba(255, 255, 255, 1);
 }
 
 /* Light themes - trainer buttons */
-[data-bs-theme="light"] .btn-trainer-start,
-[data-bs-theme="rainforest-light"] .btn-trainer-start,
-[data-bs-theme="newspaper-light"] .btn-trainer-start {
+[data-bs-theme$="light"] .btn-trainer-start {
   color: #ffffff;
 }
 
-[data-bs-theme="light"] .btn-trainer-control:hover:not(:disabled),
-[data-bs-theme="rainforest-light"] .btn-trainer-control:hover:not(:disabled),
-[data-bs-theme="newspaper-light"] .btn-trainer-control:hover:not(:disabled) {
+[data-bs-theme$="light"] .btn-trainer-control:hover:not(:disabled) {
   background: rgba(0, 0, 0, 0.05);
 }
 

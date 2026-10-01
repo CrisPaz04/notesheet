@@ -179,10 +179,19 @@ packages/ui/          # Shared UI components (planned)
 
 **Styling:** Bootstrap 5.3 base + custom CSS organized in modules. CSS variables for light/dark theming.
 
-**Temas.** Hay seis (`light`, `dark`, `rainforest-light/dark`, `newspaper-light/dark`)
-y cada uno define las mismas variables en `base/_variables.css`. **No escribas
-colores a mano** en una regla general: el turquesa del oscuro o el azul de
-Bootstrap acaban saliendo en los seis. Usa las variables:
+**Temas.** Hay veinte, en diez familias con versión clara y oscura: Clásicos
+(`light`, `dark`), Bosque (`rainforest-*`), Periódico (`newspaper-*`), Alto contraste
+(`contraste-*`, todo a 7:1: sol en la pantalla o poca vista), Escenario (`escenario-*`,
+el oscuro en negro puro y ámbar para cultos con poca luz), Latón, Madera, Púrpura, Vino y
+Océano. La lista está en `useThemeWithAuth.js` (`AVAILABLE_THEMES` y `THEME_FAMILIES`) y
+cada uno define las mismas variables en `base/_variables.css`. Los catorce nuevos son
+**solo variables**: las reglas base de los componentes ya las usan, así que no hace falta
+copiar por tema las ~40 reglas que arrastran los seis primeros. Para añadir uno: sus
+variables (con contraste comprobado), su miniatura y su familia; `temas.test.js` falla si
+falta algo. El id acaba en `-light` o `-dark`: de eso cuelgan las reglas comunes de los
+claros (`$="light"`) y el `color-scheme`. **No escribas colores a mano** en una regla
+general: el turquesa del oscuro o el azul de Bootstrap acaban saliendo en todos. Usa las
+variables:
 - `--color-primary`, `--color-primary-dark` y `rgba(var(--color-primary-rgb), a)`
   para el acento; `--on-primary` para el texto que va encima.
 - `rgba(var(--overlay-rgb), a)` para fondos y textos translúcidos: es blanco
@@ -488,7 +497,7 @@ SPA (el orden importa).
 ## Notes
 
 - No TypeScript - pure JavaScript
-- Vitest configured; 1963 tests in `apps/web/src/test/` (run with `npm run test:run`)
+- Vitest configured; 2006 tests in `apps/web/src/test/` (run with `npm run test:run`)
 - Los tests se validan con **mutaciones**: se rompe el código a propósito y se comprueba
   que algún test falla. Ha destapado cuatro tests que pasaban por la razón equivocada,
   y un bug de verdad en `scores.js` (las voces se ordenaban como texto, así que la 10

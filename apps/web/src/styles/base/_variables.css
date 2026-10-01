@@ -1411,3 +1411,440 @@
 [data-bs-theme="light"] :is(.editor-tab.active, .playlist-card-title, .enlace-ver-en) {
   color: var(--color-primary-dark);
 }
+
+/* --- Temas añadidos ------------------------------------------------------
+   Cada uno es solo variables: las reglas base de los componentes ya las usan.
+   Se generaron desde una paleta corta comprobando el contraste (4,5:1, y 7:1
+   en Alto contraste): si cambias un color, comprueba que sigue llegando. */
+
+/* Alto contraste claro: Negro sobre blanco: para el sol en la pantalla o poca vista */
+[data-bs-theme="contraste-light"] {
+  --color-primary: #0a3a8c;
+  --color-primary-dark: #072a66;
+  --color-primary-light: rgba(10, 58, 140, 0.1);
+  --bg-dark-primary: #ffffff;
+  --bg-dark-secondary: #f2f2f2;
+  --bg-dark-tertiary: #e6e6e6;
+  --text-light-primary: #000000;
+  --text-light-secondary: #141414;
+  --text-light-muted: #2e2e2e;
+  --border-light: rgba(0, 0, 0, 0.5);
+  --border-light-hover: rgba(0, 0, 0, 0.75);
+  --shadow-light: 0 4px 6px rgba(0, 0, 0, 0.08);
+  --shadow-medium: 0 8px 25px rgba(0, 0, 0, 0.12);
+  --shadow-heavy: 0 15px 35px rgba(0, 0, 0, 0.16);
+  --surface-raised: #f2f2f2;
+  --surface-hover: #e6e6e6;
+  --border-strong: rgba(0, 0, 0, 0.7);
+  --color-primary-rgb: 10, 58, 140;
+  --on-primary: #ffffff;
+  --color-danger: #8f0000;
+  --color-success: #084d08;
+  --overlay-rgb: 0, 0, 0;
+  --accent-on-dark: #9cc3ff;
+}
+
+/* Alto contraste oscuro: Blanco y amarillo sobre negro, todo a 7:1 */
+[data-bs-theme="contraste-dark"] {
+  --color-primary: #ffd60a;
+  --color-primary-dark: #e6bf00;
+  --color-primary-light: rgba(255, 214, 10, 0.1);
+  --bg-dark-primary: #000000;
+  --bg-dark-secondary: #0f0f0f;
+  --bg-dark-tertiary: #1c1c1c;
+  --text-light-primary: #ffffff;
+  --text-light-secondary: #f0f0f0;
+  --text-light-muted: #d0d0d0;
+  --border-light: rgba(255, 214, 10, 0.45);
+  --border-light-hover: rgba(255, 214, 10, 0.7);
+  --shadow-light: 0 4px 6px rgba(0, 0, 0, 0.25);
+  --shadow-medium: 0 8px 25px rgba(0, 0, 0, 0.35);
+  --shadow-heavy: 0 15px 35px rgba(0, 0, 0, 0.45);
+  --surface-raised: #0f0f0f;
+  --surface-hover: #1c1c1c;
+  --border-strong: rgba(255, 214, 10, 0.7);
+  --color-primary-rgb: 255, 214, 10;
+  --on-primary: #000000;
+  --color-danger: #ff8f87;
+  --color-success: #6ee36e;
+  --overlay-rgb: 255, 255, 255;
+  --accent-on-dark: #ffd60a;
+}
+
+/* Escenario claro: Blanco cálido y tinta oscura, sin deslumbrar de día */
+[data-bs-theme="escenario-light"] {
+  --color-primary: #8a4b00;
+  --color-primary-dark: #6b3a00;
+  --color-primary-light: rgba(138, 75, 0, 0.1);
+  --bg-dark-primary: #fffdf7;
+  --bg-dark-secondary: #faf3e6;
+  --bg-dark-tertiary: #f2e7d3;
+  --text-light-primary: #1b1408;
+  --text-light-secondary: #3b2a12;
+  --text-light-muted: #5c4524;
+  --border-light: rgba(27, 20, 8, 0.15);
+  --border-light-hover: rgba(27, 20, 8, 0.25);
+  --shadow-light: 0 4px 6px rgba(27, 20, 8, 0.08);
+  --shadow-medium: 0 8px 25px rgba(27, 20, 8, 0.12);
+  --shadow-heavy: 0 15px 35px rgba(27, 20, 8, 0.16);
+  --surface-raised: #faf3e6;
+  --surface-hover: #f2e7d3;
+  --border-strong: rgba(27, 20, 8, 0.25);
+  --color-primary-rgb: 138, 75, 0;
+  --on-primary: #fffdf7;
+  --color-danger: #a3261e;
+  --color-success: #2f622b;
+  --overlay-rgb: 0, 0, 0;
+  --accent-on-dark: #ffb347;
+}
+
+/* Escenario oscuro: Negro puro y notas en ámbar, para cultos con poca luz */
+[data-bs-theme="escenario-dark"] {
+  --color-primary: #ffb347;
+  --color-primary-dark: #e69a2e;
+  --color-primary-light: rgba(255, 179, 71, 0.1);
+  --bg-dark-primary: #000000;
+  --bg-dark-secondary: #0c0906;
+  --bg-dark-tertiary: #17110b;
+  --text-light-primary: #ffd9a3;
+  --text-light-secondary: #f0bf7a;
+  --text-light-muted: #d9a560;
+  --border-light: rgba(255, 179, 71, 0.2);
+  --border-light-hover: rgba(255, 179, 71, 0.3);
+  --shadow-light: 0 4px 6px rgba(0, 0, 0, 0.25);
+  --shadow-medium: 0 8px 25px rgba(0, 0, 0, 0.35);
+  --shadow-heavy: 0 15px 35px rgba(0, 0, 0, 0.45);
+  --surface-raised: #0c0906;
+  --surface-hover: #17110b;
+  --border-strong: rgba(255, 179, 71, 0.35);
+  --color-primary-rgb: 255, 179, 71;
+  --on-primary: #000000;
+  --color-danger: #ff8a75;
+  --color-success: #c2db8a;
+  --overlay-rgb: 255, 255, 255;
+  --accent-on-dark: #ffb347;
+}
+
+/* Latón claro: Marfil con tinta azul marino y oro viejo */
+[data-bs-theme="laton-light"] {
+  --color-primary: #7a5500;
+  --color-primary-dark: #5c4000;
+  --color-primary-light: rgba(122, 85, 0, 0.1);
+  --bg-dark-primary: #fbf8f1;
+  --bg-dark-secondary: #f4eee1;
+  --bg-dark-tertiary: #eae1cd;
+  --text-light-primary: #121c33;
+  --text-light-secondary: #25314d;
+  --text-light-muted: #454d63;
+  --border-light: rgba(18, 28, 51, 0.15);
+  --border-light-hover: rgba(18, 28, 51, 0.25);
+  --shadow-light: 0 4px 6px rgba(18, 28, 51, 0.08);
+  --shadow-medium: 0 8px 25px rgba(18, 28, 51, 0.12);
+  --shadow-heavy: 0 15px 35px rgba(18, 28, 51, 0.16);
+  --surface-raised: #f4eee1;
+  --surface-hover: #eae1cd;
+  --border-strong: rgba(18, 28, 51, 0.25);
+  --color-primary-rgb: 122, 85, 0;
+  --on-primary: #fbf8f1;
+  --color-danger: #a3261e;
+  --color-success: #2b642b;
+  --overlay-rgb: 0, 0, 0;
+  --accent-on-dark: #e2b650;
+}
+
+/* Latón oscuro: Azul marino profundo con dorado de trompeta */
+[data-bs-theme="laton-dark"] {
+  --color-primary: #e2b650;
+  --color-primary-dark: #c99a2e;
+  --color-primary-light: rgba(226, 182, 80, 0.1);
+  --bg-dark-primary: #0e1828;
+  --bg-dark-secondary: #152238;
+  --bg-dark-tertiary: #1d2e48;
+  --text-light-primary: #f4ebd8;
+  --text-light-secondary: #dccb9f;
+  --text-light-muted: #c0ab7c;
+  --border-light: rgba(226, 182, 80, 0.2);
+  --border-light-hover: rgba(226, 182, 80, 0.3);
+  --shadow-light: 0 4px 6px rgba(0, 0, 0, 0.25);
+  --shadow-medium: 0 8px 25px rgba(0, 0, 0, 0.35);
+  --shadow-heavy: 0 15px 35px rgba(0, 0, 0, 0.45);
+  --surface-raised: #152238;
+  --surface-hover: #1d2e48;
+  --border-strong: rgba(226, 182, 80, 0.35);
+  --color-primary-rgb: 226, 182, 80;
+  --on-primary: #0e1828;
+  --color-danger: #ff8a80;
+  --color-success: #9ad48a;
+  --overlay-rgb: 255, 255, 255;
+  --accent-on-dark: #e2b650;
+}
+
+/* Madera claro: Crema y madera clara con acento cobre */
+[data-bs-theme="madera-light"] {
+  --color-primary: #8f4216;
+  --color-primary-dark: #6e320f;
+  --color-primary-light: rgba(143, 66, 22, 0.1);
+  --bg-dark-primary: #faf6f0;
+  --bg-dark-secondary: #f3ebe0;
+  --bg-dark-tertiary: #e9dccb;
+  --text-light-primary: #2a1c11;
+  --text-light-secondary: #47311f;
+  --text-light-muted: #664a33;
+  --border-light: rgba(42, 28, 17, 0.15);
+  --border-light-hover: rgba(42, 28, 17, 0.25);
+  --shadow-light: 0 4px 6px rgba(42, 28, 17, 0.08);
+  --shadow-medium: 0 8px 25px rgba(42, 28, 17, 0.12);
+  --shadow-heavy: 0 15px 35px rgba(42, 28, 17, 0.16);
+  --surface-raised: #f3ebe0;
+  --surface-hover: #e9dccb;
+  --border-strong: rgba(42, 28, 17, 0.25);
+  --color-primary-rgb: 143, 66, 22;
+  --on-primary: #faf6f0;
+  --color-danger: #a3261e;
+  --color-success: #38642a;
+  --overlay-rgb: 0, 0, 0;
+  --accent-on-dark: #e8a274;
+}
+
+/* Madera oscuro: Madera oscura con cobre */
+[data-bs-theme="madera-dark"] {
+  --color-primary: #dc915a;
+  --color-primary-dark: #c27a43;
+  --color-primary-light: rgba(220, 145, 90, 0.1);
+  --bg-dark-primary: #1e1510;
+  --bg-dark-secondary: #291d16;
+  --bg-dark-tertiary: #35271d;
+  --text-light-primary: #f3e7d9;
+  --text-light-secondary: #ddc4a8;
+  --text-light-muted: #c4a588;
+  --border-light: rgba(220, 145, 90, 0.2);
+  --border-light-hover: rgba(220, 145, 90, 0.3);
+  --shadow-light: 0 4px 6px rgba(0, 0, 0, 0.25);
+  --shadow-medium: 0 8px 25px rgba(0, 0, 0, 0.35);
+  --shadow-heavy: 0 15px 35px rgba(0, 0, 0, 0.45);
+  --surface-raised: #291d16;
+  --surface-hover: #35271d;
+  --border-strong: rgba(220, 145, 90, 0.35);
+  --color-primary-rgb: 220, 145, 90;
+  --on-primary: #1e1510;
+  --color-danger: #ff8f80;
+  --color-success: #a8cf86;
+  --overlay-rgb: 255, 255, 255;
+  --accent-on-dark: #dc915a;
+}
+
+/* Púrpura claro: Lavanda clara con morado de adoración */
+[data-bs-theme="purpura-light"] {
+  --color-primary: #5b2a8c;
+  --color-primary-dark: #43206a;
+  --color-primary-light: rgba(91, 42, 140, 0.1);
+  --bg-dark-primary: #faf7fc;
+  --bg-dark-secondary: #f2ecf7;
+  --bg-dark-tertiary: #e7def0;
+  --text-light-primary: #1f1430;
+  --text-light-secondary: #3a2a52;
+  --text-light-muted: #574870;
+  --border-light: rgba(31, 20, 48, 0.15);
+  --border-light-hover: rgba(31, 20, 48, 0.25);
+  --shadow-light: 0 4px 6px rgba(31, 20, 48, 0.08);
+  --shadow-medium: 0 8px 25px rgba(31, 20, 48, 0.12);
+  --shadow-heavy: 0 15px 35px rgba(31, 20, 48, 0.16);
+  --surface-raised: #f2ecf7;
+  --surface-hover: #e7def0;
+  --border-strong: rgba(31, 20, 48, 0.25);
+  --color-primary-rgb: 91, 42, 140;
+  --on-primary: #faf7fc;
+  --color-danger: #a3261e;
+  --color-success: #2f622b;
+  --overlay-rgb: 0, 0, 0;
+  --accent-on-dark: #c4a0ef;
+}
+
+/* Púrpura oscuro: Morado profundo con lila */
+[data-bs-theme="purpura-dark"] {
+  --color-primary: #c4a0ef;
+  --color-primary-dark: #a982dc;
+  --color-primary-light: rgba(196, 160, 239, 0.1);
+  --bg-dark-primary: #17111f;
+  --bg-dark-secondary: #21182c;
+  --bg-dark-tertiary: #2c2139;
+  --text-light-primary: #efe8f7;
+  --text-light-secondary: #d4c3ea;
+  --text-light-muted: #b9a6d3;
+  --border-light: rgba(196, 160, 239, 0.2);
+  --border-light-hover: rgba(196, 160, 239, 0.3);
+  --shadow-light: 0 4px 6px rgba(0, 0, 0, 0.25);
+  --shadow-medium: 0 8px 25px rgba(0, 0, 0, 0.35);
+  --shadow-heavy: 0 15px 35px rgba(0, 0, 0, 0.45);
+  --surface-raised: #21182c;
+  --surface-hover: #2c2139;
+  --border-strong: rgba(196, 160, 239, 0.35);
+  --color-primary-rgb: 196, 160, 239;
+  --on-primary: #17111f;
+  --color-danger: #ff8f87;
+  --color-success: #a8d68f;
+  --overlay-rgb: 255, 255, 255;
+  --accent-on-dark: #c4a0ef;
+}
+
+/* Vino claro: Rosado pálido con granate */
+[data-bs-theme="vino-light"] {
+  --color-primary: #7d1d2b;
+  --color-primary-dark: #5e1520;
+  --color-primary-light: rgba(125, 29, 43, 0.1);
+  --bg-dark-primary: #fbf7f5;
+  --bg-dark-secondary: #f4ebe7;
+  --bg-dark-tertiary: #ebdcd5;
+  --text-light-primary: #2a0f12;
+  --text-light-secondary: #4a1d22;
+  --text-light-muted: #6b3a3f;
+  --border-light: rgba(42, 15, 18, 0.15);
+  --border-light-hover: rgba(42, 15, 18, 0.25);
+  --shadow-light: 0 4px 6px rgba(42, 15, 18, 0.08);
+  --shadow-medium: 0 8px 25px rgba(42, 15, 18, 0.12);
+  --shadow-heavy: 0 15px 35px rgba(42, 15, 18, 0.16);
+  --surface-raised: #f4ebe7;
+  --surface-hover: #ebdcd5;
+  --border-strong: rgba(42, 15, 18, 0.25);
+  --color-primary-rgb: 125, 29, 43;
+  --on-primary: #fbf7f5;
+  --color-danger: #a8321a;
+  --color-success: #2f622b;
+  --overlay-rgb: 0, 0, 0;
+  --accent-on-dark: #e3b964;
+}
+
+/* Vino oscuro: Granate oscuro con dorado */
+[data-bs-theme="vino-dark"] {
+  --color-primary: #e3b964;
+  --color-primary-dark: #c99d45;
+  --color-primary-light: rgba(227, 185, 100, 0.1);
+  --bg-dark-primary: #1c0f12;
+  --bg-dark-secondary: #28151a;
+  --bg-dark-tertiary: #351c23;
+  --text-light-primary: #f6e8e6;
+  --text-light-secondary: #e3c4c0;
+  --text-light-muted: #c9a39f;
+  --border-light: rgba(227, 185, 100, 0.2);
+  --border-light-hover: rgba(227, 185, 100, 0.3);
+  --shadow-light: 0 4px 6px rgba(0, 0, 0, 0.25);
+  --shadow-medium: 0 8px 25px rgba(0, 0, 0, 0.35);
+  --shadow-heavy: 0 15px 35px rgba(0, 0, 0, 0.45);
+  --surface-raised: #28151a;
+  --surface-hover: #351c23;
+  --border-strong: rgba(227, 185, 100, 0.35);
+  --color-primary-rgb: 227, 185, 100;
+  --on-primary: #1c0f12;
+  --color-danger: #ff8f80;
+  --color-success: #a8cf86;
+  --overlay-rgb: 255, 255, 255;
+  --accent-on-dark: #e3b964;
+}
+
+/* Océano claro: Azul agua con petróleo */
+[data-bs-theme="oceano-light"] {
+  --color-primary: #0b6477;
+  --color-primary-dark: #084a58;
+  --color-primary-light: rgba(11, 100, 119, 0.1);
+  --bg-dark-primary: #f5fafb;
+  --bg-dark-secondary: #e9f3f5;
+  --bg-dark-tertiary: #dbeaee;
+  --text-light-primary: #0b2530;
+  --text-light-secondary: #1d3f4d;
+  --text-light-muted: #3b5b68;
+  --border-light: rgba(11, 37, 48, 0.15);
+  --border-light-hover: rgba(11, 37, 48, 0.25);
+  --shadow-light: 0 4px 6px rgba(11, 37, 48, 0.08);
+  --shadow-medium: 0 8px 25px rgba(11, 37, 48, 0.12);
+  --shadow-heavy: 0 15px 35px rgba(11, 37, 48, 0.16);
+  --surface-raised: #e9f3f5;
+  --surface-hover: #dbeaee;
+  --border-strong: rgba(11, 37, 48, 0.25);
+  --color-primary-rgb: 11, 100, 119;
+  --on-primary: #f5fafb;
+  --color-danger: #a3261e;
+  --color-success: #2b642b;
+  --overlay-rgb: 0, 0, 0;
+  --accent-on-dark: #7fd3e3;
+}
+
+/* Océano oscuro: Azul petróleo profundo con coral */
+[data-bs-theme="oceano-dark"] {
+  --color-primary: #ff9e80;
+  --color-primary-dark: #f08465;
+  --color-primary-light: rgba(255, 158, 128, 0.1);
+  --bg-dark-primary: #0b1c22;
+  --bg-dark-secondary: #11272f;
+  --bg-dark-tertiary: #18343e;
+  --text-light-primary: #e3f2f5;
+  --text-light-secondary: #b5d9e0;
+  --text-light-muted: #93bfc8;
+  --border-light: rgba(255, 158, 128, 0.2);
+  --border-light-hover: rgba(255, 158, 128, 0.3);
+  --shadow-light: 0 4px 6px rgba(0, 0, 0, 0.25);
+  --shadow-medium: 0 8px 25px rgba(0, 0, 0, 0.35);
+  --shadow-heavy: 0 15px 35px rgba(0, 0, 0, 0.45);
+  --surface-raised: #11272f;
+  --surface-hover: #18343e;
+  --border-strong: rgba(255, 158, 128, 0.35);
+  --color-primary-rgb: 255, 158, 128;
+  --on-primary: #0b1c22;
+  --color-danger: #ff8a8a;
+  --color-success: #9ad48a;
+  --overlay-rgb: 255, 255, 255;
+  --accent-on-dark: #ff9e80;
+}
+
+/* La barra, el logo y el avatar de los temas añadidos, planos como los demás */
+[data-bs-theme="contraste-light"] .navbar-dark-custom,
+[data-bs-theme="contraste-dark"] .navbar-dark-custom,
+[data-bs-theme="escenario-light"] .navbar-dark-custom,
+[data-bs-theme="escenario-dark"] .navbar-dark-custom,
+[data-bs-theme="laton-light"] .navbar-dark-custom,
+[data-bs-theme="laton-dark"] .navbar-dark-custom,
+[data-bs-theme="madera-light"] .navbar-dark-custom,
+[data-bs-theme="madera-dark"] .navbar-dark-custom,
+[data-bs-theme="purpura-light"] .navbar-dark-custom,
+[data-bs-theme="purpura-dark"] .navbar-dark-custom,
+[data-bs-theme="vino-light"] .navbar-dark-custom,
+[data-bs-theme="vino-dark"] .navbar-dark-custom,
+[data-bs-theme="oceano-light"] .navbar-dark-custom,
+[data-bs-theme="oceano-dark"] .navbar-dark-custom {
+  background: var(--bg-dark-secondary);
+  border-bottom-color: var(--color-primary);
+}
+[data-bs-theme="contraste-light"] .navbar-brand-custom,
+[data-bs-theme="contraste-dark"] .navbar-brand-custom,
+[data-bs-theme="escenario-light"] .navbar-brand-custom,
+[data-bs-theme="escenario-dark"] .navbar-brand-custom,
+[data-bs-theme="laton-light"] .navbar-brand-custom,
+[data-bs-theme="laton-dark"] .navbar-brand-custom,
+[data-bs-theme="madera-light"] .navbar-brand-custom,
+[data-bs-theme="madera-dark"] .navbar-brand-custom,
+[data-bs-theme="purpura-light"] .navbar-brand-custom,
+[data-bs-theme="purpura-dark"] .navbar-brand-custom,
+[data-bs-theme="vino-light"] .navbar-brand-custom,
+[data-bs-theme="vino-dark"] .navbar-brand-custom,
+[data-bs-theme="oceano-light"] .navbar-brand-custom,
+[data-bs-theme="oceano-dark"] .navbar-brand-custom {
+  background: none;
+  -webkit-text-fill-color: currentColor;
+  color: var(--color-primary);
+}
+[data-bs-theme="contraste-light"] :is(.user-avatar, .user-avatar-large),
+[data-bs-theme="contraste-dark"] :is(.user-avatar, .user-avatar-large),
+[data-bs-theme="escenario-light"] :is(.user-avatar, .user-avatar-large),
+[data-bs-theme="escenario-dark"] :is(.user-avatar, .user-avatar-large),
+[data-bs-theme="laton-light"] :is(.user-avatar, .user-avatar-large),
+[data-bs-theme="laton-dark"] :is(.user-avatar, .user-avatar-large),
+[data-bs-theme="madera-light"] :is(.user-avatar, .user-avatar-large),
+[data-bs-theme="madera-dark"] :is(.user-avatar, .user-avatar-large),
+[data-bs-theme="purpura-light"] :is(.user-avatar, .user-avatar-large),
+[data-bs-theme="purpura-dark"] :is(.user-avatar, .user-avatar-large),
+[data-bs-theme="vino-light"] :is(.user-avatar, .user-avatar-large),
+[data-bs-theme="vino-dark"] :is(.user-avatar, .user-avatar-large),
+[data-bs-theme="oceano-light"] :is(.user-avatar, .user-avatar-large),
+[data-bs-theme="oceano-dark"] :is(.user-avatar, .user-avatar-large) {
+  background: var(--color-primary);
+  color: var(--on-primary);
+}
