@@ -17,10 +17,6 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
-    "@codemirror/basic-setup": "^0.20.0",
-    "@codemirror/lang-markdown": "^6.3.2",
-    "@codemirror/state": "^6.5.2",
-    "@codemirror/view": "^6.36.5",
     "@hello-pangea/dnd": "^18.0.1",
     "@notesheet/api": "^0.1.0",
     "@notesheet/core": "^0.1.0",
@@ -47,6 +43,7 @@
     "eslint": "^9.21.0",
     "eslint-plugin-react-hooks": "^5.1.0",
     "eslint-plugin-react-refresh": "^0.4.19",
+    "fast-check": "^4.10.2",
     "globals": "^15.15.0",
     "jsdom": "^27.4.0",
     "vite": "^6.2.0",
