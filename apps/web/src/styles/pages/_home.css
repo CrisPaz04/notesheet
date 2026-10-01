@@ -1,265 +1,374 @@
-/* src/styles/pages/_home.css */
+/* src/styles/pages/_home.css
+ *
+ * La portada. Lo único llamativo es la demo (una parte en el atril); lo demás,
+ * sobrio. Todo con las variables del tema: sale igual de bien en los seis.
+ */
 
-/* Home Page Styles - Dark Theme */
-.home-hero {
-    background: linear-gradient(135deg, var(--bg-dark-primary) 0%, var(--bg-dark-secondary) 50%, var(--bg-dark-tertiary) 100%);
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    position: relative;
-    overflow: hidden;
-  }
-  
-  .home-hero::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%2364ffda' fill-opacity='0.05'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-    z-index: 1;
-  }
-  
-  .hero-content {
-    position: relative;
-    z-index: 2;
-  }
-  
-  .hero-title {
-    font-size: 3.5rem;
-    font-weight: 700;
-    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    margin-bottom: 1.5rem;
-  }
-  
-  .hero-subtitle {
-    font-size: 1.25rem;
-    color: var(--text-light-secondary);
-    margin-bottom: 2rem;
-    font-weight: 300;
-  }
-  
-  .cta-buttons {
-    gap: 1rem;
-    margin-bottom: 1.25rem;
+/* --- Botones de la cabecera --- */
+
+.btn-hero-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+  border: none;
+  border-radius: var(--radius-lg);
+  padding: 0.75rem 1.75rem;
+  font-weight: 600;
+  transition: var(--transition-fast);
+  color: var(--bg-dark-primary);
+  text-decoration: none;
+}
+
+.btn-hero-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 22px rgba(var(--color-primary-rgb), 0.3);
+  color: var(--bg-dark-primary);
+  text-decoration: none;
+}
+
+/* Secundario: un "outline" con borde y texto del color de la marca, que se ven
+   en los seis temas (con blanco al 30% el borde desaparecía en los claros) */
+.btn-hero-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  background: transparent;
+  border: 2px solid var(--color-primary);
+  border-radius: var(--radius-lg);
+  padding: 0.75rem 1.75rem;
+  font-weight: 600;
+  transition: var(--transition-fast);
+  color: var(--color-primary);
+  text-decoration: none;
+}
+
+/* Al pasar el ratón se rellena; --bg-dark-primary es el contraste del tema */
+.btn-hero-secondary:hover {
+  background: var(--color-primary);
+  transform: translateY(-2px);
+  color: var(--bg-dark-primary);
+  text-decoration: none;
+}
+
+/* --- Cabecera --- */
+
+.portada-cabecera {
+  background: linear-gradient(160deg, var(--bg-dark-primary) 0%, var(--bg-dark-secondary) 100%);
+  border-bottom: 1px solid var(--border-light);
+  padding: 4rem 0;
+}
+
+.portada-cabecera-rejilla {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 3.5rem;
+  align-items: center;
+}
+
+.portada-titulo {
+  color: var(--text-light-primary);
+  font-size: clamp(2.1rem, 4.2vw, 3.25rem);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+  margin-bottom: 1.25rem;
+}
+
+.portada-subtitulo {
+  color: var(--text-light-secondary);
+  font-size: 1.2rem;
+  line-height: 1.55;
+  max-width: 34em;
+  margin-bottom: 2rem;
+}
+
+.portada-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+/* Entrar a una sesión con el código, sin cuenta: una fila propia, separada de
+   los botones por una línea, con el ícono delante y su acción al final */
+.portada-codigo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  border-top: 1px solid var(--border-light);
+  padding-top: 1.25rem;
+  max-width: 34em;
+}
+
+.portada-codigo-icono {
+  color: var(--color-primary);
+  font-size: 1.25rem;
+}
+
+.portada-codigo-texto {
+  flex: 1 1 14rem;
+  margin: 0;
+  color: var(--text-light-secondary);
+}
+
+.portada-codigo-boton {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 1rem;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  color: var(--text-light-primary);
+  font-weight: 600;
+  text-decoration: none;
+  transition: var(--transition-fast);
+}
+
+.portada-codigo-boton:hover {
+  background: var(--surface-hover);
+  border-color: var(--color-primary);
+  color: var(--text-light-primary);
+}
+
+/* --- La demo: una parte en el atril --- */
+
+.demo-atril {
+  background: var(--surface-raised);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-xl);
+  padding: 1.5rem;
+  box-shadow: var(--shadow-heavy);
+}
+
+.demo-atril-titulo {
+  color: var(--text-light-primary);
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin-bottom: 0.9rem;
+}
+
+.demo-atril-instrumentos {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.4rem;
+  margin-bottom: 1rem;
+}
+
+.demo-atril-instrumento {
+  min-height: 44px;
+  padding: 0.4rem 0.5rem;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--text-light-secondary);
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.demo-atril-instrumento:hover {
+  background: var(--surface-hover);
+  color: var(--text-light-primary);
+}
+
+/* El elegido lo marcan el fondo y el borde; el texto, con el del tema */
+.demo-atril-instrumento[aria-pressed="true"] {
+  background: rgba(var(--color-primary-rgb), 0.18);
+  border-color: var(--color-primary);
+  color: var(--text-light-primary);
+}
+
+.demo-atril-hoja {
+  background: var(--bg-dark-primary);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  padding: 1.1rem 1.25rem 1.25rem;
+}
+
+.demo-atril-cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  border-bottom: 1px solid var(--border-light);
+  padding-bottom: 0.6rem;
+  margin-bottom: 0.9rem;
+}
+
+.demo-atril-cancion {
+  color: var(--text-light-primary);
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+.demo-atril-tonalidad {
+  color: var(--text-light-primary);
+  background: rgba(var(--color-primary-rgb), 0.15);
+  border-radius: 999px;
+  padding: 0.15rem 0.75rem;
+  font-weight: 600;
+  font-size: 0.95rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Como se leen en la canción: grandes, con aire entre notas y líneas */
+.demo-atril-notas {
+  margin: 0;
+  color: var(--text-light-primary);
+  font-size: clamp(1.15rem, 2.1vw, 1.4rem);
+  font-weight: 600;
+  line-height: 1.8;
+  word-spacing: 0.35em;
+  white-space: pre-line;
+}
+
+.demo-atril-nota {
+  margin: 0.9rem 0 0;
+  color: var(--text-light-secondary);
+  font-size: 0.9rem;
+}
+
+/* --- Secciones --- */
+
+.portada-seccion {
+  background: var(--bg-dark-primary);
+  padding: 4rem 0;
+}
+
+.portada-seccion--atril {
+  background: var(--bg-dark-secondary);
+}
+
+.portada-seccion-titulo {
+  color: var(--text-light-primary);
+  font-size: clamp(1.5rem, 2.6vw, 2rem);
+  font-weight: 700;
+  margin-bottom: 2rem;
+}
+
+/* Un domingo: tres pasos de verdad, así que van numerados */
+.portada-pasos {
+  list-style: none;
+  counter-reset: paso;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 2rem;
+  margin: 0;
+  padding: 0;
+}
+
+.portada-paso {
+  counter-increment: paso;
+  position: relative;
+  padding-top: 3.25rem;
+}
+
+.portada-paso::before {
+  content: counter(paso);
+  position: absolute;
+  top: 0;
+  left: 0;
+  color: var(--color-primary);
+  font-size: 2.25rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.portada-paso-icono {
+  position: absolute;
+  top: 0.3rem;
+  left: 2.25rem;
+  color: var(--text-light-secondary);
+  font-size: 1.5rem;
+}
+
+.portada-paso-titulo,
+.portada-atril-titulo {
+  color: var(--text-light-primary);
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: 0.4rem;
+}
+
+.portada-paso-texto,
+.portada-atril-texto {
+  color: var(--text-light-secondary);
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* En el atril: una lista, no seis tarjetas iguales */
+.portada-atril {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.75rem 2.5rem;
+  margin: 0;
+  padding: 0;
+}
+
+.portada-atril-item {
+  display: flex;
+  gap: 0.9rem;
+  align-items: flex-start;
+}
+
+.portada-atril-icono {
+  flex-shrink: 0;
+  color: var(--color-primary);
+  font-size: 1.6rem;
+  margin-top: 0.1rem;
+}
+
+/* --- Tablet en vertical: la demo debajo, a lo ancho; el atril en dos --- */
+@media (max-width: 991.98px) {
+  .portada-cabecera-rejilla {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2.5rem;
   }
 
-  /* Entrar a una sesión con el código, sin cuenta */
-  .hero-live-link {
-    margin-bottom: 2.5rem;
-    color: var(--text-light-muted);
-    font-size: 0.95rem;
+  .portada-atril {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* --- Móvil: todo en una columna --- */
+@media (max-width: 575.98px) {
+  .portada-cabecera {
+    padding: 2.5rem 0;
   }
 
-  .hero-live-link a {
-    color: var(--color-primary);
-    font-weight: 600;
-    text-decoration: none;
+  .portada-seccion {
+    padding: 2.75rem 0;
   }
 
-  .hero-live-link a:hover {
-    text-decoration: underline;
+  .portada-subtitulo {
+    font-size: 1.05rem;
   }
-  
-  .btn-hero-primary {
-    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
-    border: none;
-    border-radius: var(--radius-lg);
-    padding: 1rem 2rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    transition: var(--transition-fast);
-    color: var(--bg-dark-primary);
-    text-decoration: none;
+
+  .portada-acciones .btn-hero-primary,
+  .portada-acciones .btn-hero-secondary {
+    flex: 1 1 100%;
   }
-  
-  .btn-hero-primary:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 15px 25px rgba(var(--color-primary-rgb), 0.3);
-    color: var(--bg-dark-primary);
-    text-decoration: none;
+
+  .demo-atril {
+    padding: 1.1rem;
   }
-  
-  /* Botón secundario junto al primario: es un "outline", así que el borde y
-     el texto van del color de la marca y se ven siempre.
-  
-     Antes el borde era blanco al 30%, invisible sobre el fondo claro, y el
-     texto usaba --text-light-primary, que en tema claro es negro. El botón
-     parecía apagado y el borde solo aparecía al pasar el ratón. */
-  .btn-hero-secondary {
-    background: transparent;
-    border: 2px solid var(--color-primary);
-    border-radius: var(--radius-lg);
-    padding: 1rem 2rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    transition: var(--transition-fast);
-    color: var(--color-primary);
-    text-decoration: none;
+
+  .demo-atril-instrumentos {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-  
-  /* Al pasar el ratón se rellena, como haría cualquier outline.
-     --bg-dark-primary es el color de contraste del tema: blanco sobre el azul
-     del tema claro, oscuro sobre el menta del tema oscuro. Es el mismo truco
-     que ya usa .btn-hero-primary. */
-  .btn-hero-secondary:hover {
-    background: var(--color-primary);
-    border-color: var(--color-primary);
-    transform: translateY(-3px);
-    color: var(--bg-dark-primary);
-    text-decoration: none;
+
+  .portada-pasos,
+  .portada-atril {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.75rem;
   }
-  
-  /* Home Hero Compact - Reduced spacing */
-  .home-hero-compact {
-    background: linear-gradient(135deg, var(--bg-dark-primary) 0%, var(--bg-dark-secondary) 50%, var(--bg-dark-tertiary) 100%);
-    min-height: 70vh; /* Reducido de 100vh */
-    display: flex;
-    align-items: center;
-    position: relative;
-    overflow: hidden;
-    padding: 2rem 0; /* Reducido el padding */
-  }
-  
-  .home-hero-compact::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%2364ffda' fill-opacity='0.05'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-    z-index: 1;
-  }
-  
-  /* Features Section */
-  .features-section {
-    background: var(--bg-dark-primary);
-    padding: 3rem 0; /* Reducido de 5rem a 3rem */
-  }
-  
-  .feature-card {
-    background: rgba(var(--overlay-rgb), 0.05);
-    border: 1px solid var(--border-light);
-    border-radius: var(--radius-xl);
-    padding: 2rem;
-    height: 100%;
-    transition: var(--transition-fast);
-    backdrop-filter: blur(10px);
-  }
-  
-  .feature-card:hover {
-    transform: translateY(-10px);
-    box-shadow: var(--shadow-heavy);
-    border-color: rgba(var(--color-primary-rgb), 0.3);
-  }
-  
-  .feature-icon {
-    font-size: 3rem;
-    color: var(--color-primary);
-    margin-bottom: 1.5rem;
-  }
-  
-  /* `text-white` daba por hecho un fondo oscuro, pero .features-section usa
-     --bg-dark-primary, que en tema claro es blanco: el titulo quedaba blanco
-     sobre blanco, invisible. --text-light-primary si se adapta al tema. */
-  .features-heading,
-  .stat-block {
-    color: var(--text-light-primary);
-  }
-  
-  .feature-title {
-    color: var(--text-light-primary);
-    font-weight: 600;
-    margin-bottom: 1rem;
-  }
-  
-  .feature-description {
-    color: var(--text-light-secondary);
-    line-height: 1.6;
-  }
-  
-  .demo-section {
-    background: linear-gradient(135deg, var(--bg-dark-secondary) 0%, var(--bg-dark-tertiary) 100%);
-    padding: 5rem 0;
-  }
-  
-  .demo-card {
-    background: rgba(30, 30, 30, 0.9);
-    border: 1px solid var(--border-light);
-    border-radius: var(--radius-xl);
-    overflow: hidden;
-    box-shadow: var(--shadow-heavy);
-  }
-  
-  .demo-header {
-    background: #2a2a2a;
-    padding: 1rem 1.5rem;
-    border-bottom: 1px solid var(--border-light);
-    display: flex;
-    align-items: center;
-  }
-  
-  /* La tarjeta de demo tiene fondo oscuro fijo (rgba(30,30,30,.9)), no sigue
-     el tema. Por eso su texto no puede usar --color-primary ni
-     --text-light-secondary: en tema claro pasan a oscuros y la demo quedaba
-     ilegible sobre su propio fondo negro. `--accent-on-dark` es el acento de
-     cada tema en su versión clara; antes era un azul fijo en los seis. */
-  .demo-title {
-    color: var(--accent-on-dark);
-    margin: 0;
-    font-size: 1.1rem;
-    font-weight: 600;
-  }
-  
-  .demo-content {
-    padding: 1.5rem;
-  }
-  
-  .notation-demo {
-    font-family: 'Courier New', monospace;
-    color: var(--accent-on-dark);
-    background: rgba(0, 0, 0, 0.3);
-    padding: 1rem;
-    border-radius: var(--radius-md);
-    border-left: 4px solid var(--accent-on-dark);
-    white-space: pre-line;
-    line-height: 1.4;
-  }
-  
-  .chord-line {
-    color: var(--accent-on-dark);
-    font-weight: bold;
-  }
-  
-  .lyric-line {
-    color: #ced4da;
-    margin-bottom: 0.5rem;
-  }
-  
-  @media (max-width: 768px) {
-    .hero-title {
-      font-size: 2.5rem;
-    }
-    
-    .hero-subtitle {
-      font-size: 1.1rem;
-    }
-    
-    .cta-buttons {
-      flex-direction: column;
-      align-items: center;
-    }
-    
-    .btn-hero-primary,
-    .btn-hero-secondary {
-      width: 100%;
-      max-width: 300px;
-    }
-  }
+}

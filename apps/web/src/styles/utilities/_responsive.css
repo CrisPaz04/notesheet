@@ -3,27 +3,8 @@
 /* Global Responsive Utilities */
 
 @media (max-width: 767.98px) {
-    /* Hero responsive */
-    .hero-title {
-      font-size: 2.5rem;
-    }
-    
-    .hero-subtitle {
-      font-size: 1.1rem;
-    }
-    
-    .cta-buttons {
-      flex-direction: column;
-      align-items: center;
-    }
-    
-    .btn-hero-primary,
-    .btn-hero-secondary {
-      width: 100%;
-      max-width: 300px;
-    }
-  
-    /* El Dashboard lleva lo suyo en components/_dashboard.css */
+    /* La portada lleva lo suyo en pages/_home.css; el Dashboard, en
+       components/_dashboard.css */
 
     /* Navbar responsive */
     .navbar-nav-custom {

@@ -488,7 +488,7 @@ SPA (el orden importa).
 ## Notes
 
 - No TypeScript - pure JavaScript
-- Vitest configured; 1953 tests in `apps/web/src/test/` (run with `npm run test:run`)
+- Vitest configured; 1963 tests in `apps/web/src/test/` (run with `npm run test:run`)
 - Los tests se validan con **mutaciones**: se rompe el código a propósito y se comprueba
   que algún test falla. Ha destapado cuatro tests que pasaban por la razón equivocada,
   y un bug de verdad en `scores.js` (las voces se ordenaban como texto, así que la 10
@@ -724,6 +724,13 @@ SPA (el orden importa).
   así que se lee y se enseña en UTC (`formatearDiaLista`, `diaParaInput`); en hora local
   en Honduras salía el día anterior. `hoyParaInput` da el hoy del reloj del músico (con
   `toISOString` era mañana a partir de las 18:00). Todas las fechas, en `es-ES`.
+- **La portada** (`/home`, `pages/Home.jsx`) es para músicos de **otras iglesias**: lo
+  primero es lo que la distingue, cada instrumento lee su parte en su tonalidad, y se
+  enseña con el motor de verdad (`components/home/DemoInstrumentos.jsx`: un trozo de
+  «Grande es el Señor» del repertorio, solo notas, pasado por `renderSongContent` para
+  trompeta, saxo alto, corno y flauta). Después, el domingo en tres pasos (numerados
+  porque son una secuencia) y lo que hay en el atril. Sin ejemplos en inglés ni cifras de
+  plantilla ("12+ · ∞ · 100%"): `Home.test.jsx` lo vigila.
 - **Toda vista tiene un acceso**: `rutasAccesibles.test.js` comprueba que cada ruta fija
   de `App.jsx` tiene un enlace en algún sitio. `/live` (entrar con el código) está en el
   menú ("En vivo") y en la portada, para quien no tiene cuenta.
