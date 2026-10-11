@@ -566,7 +566,7 @@ SPA (el orden importa).
 ## Notes
 
 - No TypeScript - pure JavaScript
-- Vitest configured; 2110 tests in `apps/web/src/test/` (run with `npm run test:run`)
+- Vitest configured; 2113 tests in `apps/web/src/test/` (run with `npm run test:run`)
 - Los tests se validan con **mutaciones**: se rompe el código a propósito y se comprueba
   que algún test falla. Ha destapado cuatro tests que pasaban por la razón equivocada,
   y un bug de verdad en `scores.js` (las voces se ordenaban como texto, así que la 10
@@ -846,7 +846,12 @@ SPA (el orden importa).
   enseñaba un instante el tema por defecto (azul marino).
 - Offline: Firestore usa `persistentLocalCache` y la app es una PWA instalable
   (`vite-plugin-pwa`). El service worker **no** debe interceptar Firebase: Firestore ya
-  tiene su caché y la autenticación necesita red.
+  tiene su caché y la autenticación necesita red. El service worker lo registra la app
+  (`lib/registrarServiceWorker.js`, `injectRegister: false`), con un catch: el script que
+  inyectaba el plugin no gestionaba el rechazo, y un WebView de Android que no admitía el
+  registro dejó un error sin gestionar en Sentry. No se usa `registerSW` de
+  `virtual:pwa-register`: con `autoUpdate` recarga la página al activarse una versión
+  nueva, en mitad del culto.
 - `packages/ui` sigue vacío a propósito (ver el comentario en su `index.js`)
 - Spanish comments appear in some files
 - En la interfaz, el formato de texto se llama **"Notas"** (no "Acordes"): el

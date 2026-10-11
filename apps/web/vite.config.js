@@ -35,6 +35,9 @@ export default defineConfig(({ mode }) => {
         // El músico no va a ver un aviso de "hay una versión nueva" en mitad
         // del culto: la app se actualiza sola en la siguiente carga.
         registerType: 'autoUpdate',
+        // El registro lo hace la app (lib/registrarServiceWorker.js), con su
+        // catch: el script que inyectaba el plugin no gestionaba el rechazo.
+        injectRegister: false,
         includeAssets: ['favicon.ico', 'apple-touch-icon-180x180.png', 'logo.svg'],
         manifest: {
           name: 'NoteSheet',

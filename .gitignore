@@ -82,3 +82,6 @@ ui-debug.log
 
 # Copias de seguridad de datos de producción: nunca al repositorio público
 copias/
+
+# Estado local del plugin oh-my-claudecode: no es de la app
+.omc/
